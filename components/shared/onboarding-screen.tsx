@@ -20,11 +20,31 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 
-const { width } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_SLIDES = 3;
+// Height reserved for the animated text carousel (headline + subtitle)
+const TEXT_CAROUSEL_HEIGHT = 160;
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
+interface SlideData {
+  illustration: React.ComponentType;
+  headline: string;
+  subtitle: string;
+  ctaLabel: string;
+  hasSkip: boolean;
+  blob1Opacity: number;
+  blob2Opacity: number;
+  contourTop: { top: string; rotate: string };
+  contourBottom: { bottom: string; rotate: string };
+  floatingCards: React.ReactNode;
+}
 
 interface OnboardingScreenProps {
   onDone: () => void;
+  onSignIn?: () => void;
 }
 
 interface FloatingCardProps {
@@ -37,6 +57,10 @@ interface FloatingCardProps {
   label: string;
   value?: string;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Reusable sub-components                                            */
+/* ------------------------------------------------------------------ */
 
 function FloatingCard({ top, bottom, left, right, iconBg, icon, label, value }: FloatingCardProps) {
   return (
@@ -77,87 +101,6 @@ function MiniLogo() {
   );
 }
 
-function ShieldIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M5.5 7.5L6.5 8.5L9 6" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function SyncIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-      <Path d="M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function HeartIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#EF4444" strokeWidth={1.2} fill="none" />
-      <Path d="M7 6V8" stroke="#EF4444" strokeWidth={1.2} strokeLinecap="round" />
-      <Circle cx={7} cy={5} r={0.6} fill="#EF4444" />
-    </Svg>
-  );
-}
-
-function FeedIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Rect x={3} y={4} width={8} height={6} rx={1.5} stroke="#2E7D32" strokeWidth={1.2} fill="none" />
-      <Path d="M5 7H9" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function MortalityIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M7 3L8.5 7L13 8.5L8.5 10L7 13L5.5 10L1 8.5L5.5 7Z" stroke="#EF4444" strokeWidth={1.2} strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Circle cx={7} cy={7} r={4} stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M5.5 7L6.5 8L9 5.5" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function CoinIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Rect x={3} y={5} width={8} height={6} rx={1.5} stroke="#F9A825" strokeWidth={1.2} fill="none" />
-      <Circle cx={7} cy={3} r={2} stroke="#F9A825" strokeWidth={1.2} fill="none" />
-    </Svg>
-  );
-}
-
-function ShieldCheckSmall() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M6 8L7 9L9 6" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function ExpansionIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M3 8C3 4.5 5 3 7 3C9 3 11 4.5 11 8" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-      <Path d="M4 12C4 10 5.5 9 7 9C8.5 9 10 10 10 12" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" fill="none" />
-    </Svg>
-  );
-}
-
 function ArrowRightIcon() {
   return (
     <Svg width={18} height={18} viewBox="0 0 18 18">
@@ -166,6 +109,10 @@ function ArrowRightIcon() {
     </Svg>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  SVG illustrations (unchanged, one per slide)                       */
+/* ------------------------------------------------------------------ */
 
 function Slide0Ill() {
   return (
@@ -262,7 +209,92 @@ function Slide2Ill() {
   );
 }
 
-const SLIDES = [
+/* ------------------------------------------------------------------ */
+/*  Slide data (separated from UI rendering)                           */
+/* ------------------------------------------------------------------ */
+
+function ShieldIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#16A34A" strokeWidth={1.2} fill="none" />
+      <Path d="M5.5 7.5L6.5 8.5L9 6" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </Svg>
+  );
+}
+
+function SyncIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Path d="M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
+      <Path d="M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#EF4444" strokeWidth={1.2} fill="none" />
+      <Path d="M7 6V8" stroke="#EF4444" strokeWidth={1.2} strokeLinecap="round" />
+      <Circle cx={7} cy={5} r={0.6} fill="#EF4444" />
+    </Svg>
+  );
+}
+
+function FeedIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Rect x={3} y={4} width={8} height={6} rx={1.5} stroke="#2E7D32" strokeWidth={1.2} fill="none" />
+      <Path d="M5 7H9" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function MortalityIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Path d="M7 3L8.5 7L13 8.5L8.5 10L7 13L5.5 10L1 8.5L5.5 7Z" stroke="#EF4444" strokeWidth={1.2} strokeLinejoin="round" fill="none" />
+    </Svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Circle cx={7} cy={7} r={4} stroke="#16A34A" strokeWidth={1.2} fill="none" />
+      <Path d="M5.5 7L6.5 8L9 5.5" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </Svg>
+  );
+}
+
+function CoinIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Rect x={3} y={5} width={8} height={6} rx={1.5} stroke="#F9A825" strokeWidth={1.2} fill="none" />
+      <Circle cx={7} cy={3} r={2} stroke="#F9A825" strokeWidth={1.2} fill="none" />
+    </Svg>
+  );
+}
+
+function ShieldCheckSmall() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#16A34A" strokeWidth={1.2} fill="none" />
+      <Path d="M6 8L7 9L9 6" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </Svg>
+  );
+}
+
+function ExpansionIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 14 14">
+      <Path d="M3 8C3 4.5 5 3 7 3C9 3 11 4.5 11 8" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
+      <Path d="M4 12C4 10 5.5 9 7 9C8.5 9 10 10 10 12" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" fill="none" />
+    </Svg>
+  );
+}
+
+const SLIDES: SlideData[] = [
   {
     illustration: Slide0Ill,
     headline: 'Secure Your\nFarm Investment',
@@ -319,8 +351,13 @@ const SLIDES = [
   },
 ];
 
-export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
+/* ------------------------------------------------------------------ */
+/*  Main component                                                     */
+/* ------------------------------------------------------------------ */
+
+export default function OnboardingScreen({ onDone, onSignIn }: OnboardingScreenProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  // Animated value that drives the horizontal offset of the text carousel
   const translateX = useRef(new Animated.Value(0)).current;
 
   const goToSlide = useCallback(
@@ -328,7 +365,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
       const clamped = Math.min(TOTAL_SLIDES - 1, Math.max(0, index));
       setCurrentIndex(clamped);
       Animated.spring(translateX, {
-        toValue: -clamped * width,
+        toValue: -clamped * SCREEN_WIDTH,
         useNativeDriver: true,
         tension: 50,
         friction: 10,
@@ -341,110 +378,125 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
     if (currentIndex < TOTAL_SLIDES - 1) goToSlide(currentIndex + 1);
   }, [currentIndex, goToSlide]);
 
+  // Refs keep the PanResponder closure fresh — avoids stale values
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
+  const goToSlideRef = useRef(goToSlide);
+  goToSlideRef.current = goToSlide;
+
+  // PanResponder only captures horizontal swipes, never taps
+  //   → onStart returns false so TouchableOpacity children receive taps
+  //   → onMove returns true only when horizontal movement exceeds vertical
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderRelease: (_, gesture) => {
-        if (gesture.dx > 50 && currentIndex > 0) {
-          goToSlide(currentIndex - 1);
-        } else if (gesture.dx < -50 && currentIndex < TOTAL_SLIDES - 1) {
-          goToSlide(currentIndex + 1);
+        if (gesture.dx > 50 && currentIndexRef.current > 0) {
+          goToSlideRef.current(currentIndexRef.current - 1);
+        } else if (gesture.dx < -50 && currentIndexRef.current < TOTAL_SLIDES - 1) {
+          goToSlideRef.current(currentIndexRef.current + 1);
         }
       },
     }),
   ).current;
 
+  const currentSlide = SLIDES[currentIndex];
+  const IllComponent = currentSlide.illustration;
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      <View style={styles.carousel} {...panResponder.panHandlers}>
-        <Animated.View style={[styles.track, { transform: [{ translateX }] }]}>
-          {SLIDES.map((s, i) => {
-            const IllComponent = s.illustration;
-            return (
-              <View key={i} style={styles.slide}>
-                <View style={[styles.blob1, { opacity: s.blob1Opacity }]} />
-                <View style={[styles.blob2, { opacity: s.blob2Opacity }]} />
+      {/* ---- Background decorations (change per slide, never move) ---- */}
+      <View style={[styles.blob1, { opacity: currentSlide.blob1Opacity }]} />
+      <View style={[styles.blob2, { opacity: currentSlide.blob2Opacity }]} />
+      <View style={[styles.contourLine1, currentSlide.contourTop as any]} />
+      <View style={[styles.contourLine2, currentSlide.contourBottom as any]} />
 
-                <View style={[styles.contourLine1, s.contourTop as any]} />
-                <View style={[styles.contourLine2, s.contourBottom as any]} />
+      {/* ---- Swipe-able content area ---- */}
+      {/*  Wrapped in PanResponder so users can swipe anywhere in this zone  */}
+      <View style={styles.mainArea} {...panResponder.panHandlers}>
+        {/* Top bar — fixed, never slides */}
+        <View style={styles.topBar}>
+          <MiniLogo />
+          <View style={styles.topRight}>
+            <Text style={styles.version}>v1.0</Text>
+            {currentSlide.hasSkip && (
+              <TouchableOpacity onPress={() => goToSlide(TOTAL_SLIDES - 1)}>
+                <Text style={styles.skipBtn}>Skip</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
-                <View style={styles.topBar}>
-                  <MiniLogo />
-                  <View style={styles.topRight}>
-                    <Text style={styles.version}>v1.0</Text>
-                    {s.hasSkip && (
-                      <TouchableOpacity onPress={() => goToSlide(TOTAL_SLIDES - 1)}>
-                        <Text style={styles.skipBtn}>Skip</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
+        {/* Illustration — fixed, swaps immediately with currentIndex */}
+        <View style={styles.illArea}>
+          <View style={styles.illGlow} />
+          <View style={styles.illSvgWrap}>
+            <IllComponent />
+          </View>
+          {currentSlide.floatingCards}
+        </View>
 
-                <View style={styles.illArea}>
-                  <View style={styles.illGlow} />
-                  <View style={styles.illSvgWrap}>
-                    <IllComponent />
-                  </View>
-                  {s.floatingCards}
-                </View>
-
-                <View style={styles.bottomContent}>
-                  <Text style={styles.headline}>{s.headline}</Text>
-                  <Text style={styles.subtitle}>{s.subtitle}</Text>
-                  <DotIndicator current={currentIndex} total={TOTAL_SLIDES} />
-                  <TouchableOpacity
-                    style={styles.ctaBtn}
-                    activeOpacity={0.95}
-                    onPress={() => {
-                      if (currentIndex === TOTAL_SLIDES - 1) {
-                        onDone();
-                      } else {
-                        nextSlide();
-                      }
-                    }}
-                  >
-                    <Text style={styles.ctaText}>{s.ctaLabel}</Text>
-                    {currentIndex < TOTAL_SLIDES - 1 && <ArrowRightIcon />}
-                  </TouchableOpacity>
-                  <View style={styles.signinRow}>
-                    <Text style={styles.signinText}>Already have an account? </Text>
-                    <TouchableOpacity onPress={onDone}>
-                      <Text style={styles.signinLink}>Sign In</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+        {/* ---- Text carousel — ONLY this section slides ---- */}
+        <View style={styles.textCarousel}>
+          <Animated.View
+            style={[
+              styles.textTrack,
+              { transform: [{ translateX }], width: TOTAL_SLIDES * SCREEN_WIDTH },
+            ]}
+          >
+            {SLIDES.map((s, i) => (
+              <View key={i} style={{ width: SCREEN_WIDTH, paddingHorizontal: 24 }}>
+                <Text style={styles.headline}>{s.headline}</Text>
+                <Text style={styles.subtitle}>{s.subtitle}</Text>
               </View>
-            );
-          })}
-        </Animated.View>
+            ))}
+          </Animated.View>
+        </View>
+      </View>
+
+      {/* ---- Bottom controls — fixed, always tappable ---- */}
+      <DotIndicator current={currentIndex} total={TOTAL_SLIDES} />
+
+      <TouchableOpacity
+        style={styles.ctaBtn}
+        activeOpacity={0.95}
+        onPress={() => {
+          if (currentIndex === TOTAL_SLIDES - 1) {
+            onDone();
+          } else {
+            nextSlide();
+          }
+        }}
+      >
+        <Text style={styles.ctaText}>{currentSlide.ctaLabel}</Text>
+        {currentIndex < TOTAL_SLIDES - 1 && <ArrowRightIcon />}
+      </TouchableOpacity>
+
+      <View style={styles.signinRow}>
+        <Text style={styles.signinText}>Already have an account? </Text>
+        <TouchableOpacity onPress={onSignIn ?? onDone}>
+          <Text style={styles.signinLink}>Sign In</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Styles                                                             */
+/* ------------------------------------------------------------------ */
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  carousel: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  track: {
-    flexDirection: 'row',
-    width: TOTAL_SLIDES * width,
-    height: '100%',
-  },
-  slide: {
-    width,
-    height: '100%',
-    paddingHorizontal: 24,
-    position: 'relative',
-  },
+
+  /* Background decorations — absolute, behind everything */
   blob1: {
     position: 'absolute',
     top: -50,
@@ -491,10 +543,19 @@ const styles = StyleSheet.create({
     zIndex: 0,
     opacity: 0.12,
   },
+
+  /* Swipe-able middle section */
+  mainArea: {
+    flex: 1,
+    zIndex: 1,
+  },
+
+  /* Top bar — fixed */
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 24,
     paddingTop: 10,
     flexShrink: 0,
     zIndex: 5,
@@ -525,6 +586,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#616161',
   },
+
+  /* Illustration — fixed, changes per slide */
   illArea: {
     flex: 1,
     alignItems: 'center',
@@ -581,12 +644,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1F2937',
   },
-  bottomContent: {
-    flexShrink: 0,
-    paddingBottom: 24,
-    alignItems: 'center',
+
+  /* ---- Text carousel — only this section slides ---- */
+  textCarousel: {
+    height: TEXT_CAROUSEL_HEIGHT,
+    overflow: 'hidden',
     zIndex: 5,
   },
+  textTrack: {
+    flexDirection: 'row',
+    height: '100%',
+  },
+
+  /* Bottom text */
   headline: {
     fontSize: 34,
     fontWeight: '800',
@@ -600,14 +670,16 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#616161',
     marginTop: 8,
-    maxWidth: 320,
     textAlign: 'center',
   },
+
+  /* Bottom controls — fixed, outside animated area */
   dotsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    marginTop: 22,
+    zIndex: 5,
   },
   dot: {
     width: 8,
@@ -621,7 +693,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E7D32',
   },
   ctaBtn: {
-    width: '100%',
+    marginHorizontal: 24,
     height: 56,
     borderRadius: 18,
     backgroundColor: '#2E7D32',
@@ -635,6 +707,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 30,
     elevation: 6,
+    zIndex: 5,
   },
   ctaText: {
     fontSize: 16,
@@ -644,7 +717,10 @@ const styles = StyleSheet.create({
   signinRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 14,
+    marginBottom: 24,
+    zIndex: 5,
   },
   signinText: {
     fontSize: 14,
