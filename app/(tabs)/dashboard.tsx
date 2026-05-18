@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg';
-import BottomTabBar from '../components/BottomTabBar';
+import BottomTabBar from '../../components/BottomTabBar';
 
 const { width } = Dimensions.get('window');
 

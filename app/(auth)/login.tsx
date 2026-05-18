@@ -22,7 +22,7 @@ export default function LoginScreen() {
 
   const handleLogin = () => {
     console.log('LOGIN PRESSED');
-    router.replace('/dashboard');
+    router.replace('/(tabs)/dashboard');
   };
 
   return (

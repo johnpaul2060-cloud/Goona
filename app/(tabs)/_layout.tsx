@@ -5,11 +5,15 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        animation: 'none',
+        tabBarStyle: { display: 'none' },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
-      <Tabs.Screen name="farm-feed" options={{ title: 'Farm Feed', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="dashboard" />
+      <Tabs.Screen name="farm-feed" />
+      <Tabs.Screen name="records" />
+      <Tabs.Screen name="savings" />
+      <Tabs.Screen name="team" />
     </Tabs>
   );
 }

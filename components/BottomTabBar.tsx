@@ -6,7 +6,7 @@ import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
 const { width: SCREEN_W } = Dimensions.get('window')
 const TAB_ITEMS = ['Home', 'Feed', 'Records', '₦ Savings', 'Team']
 
-const TAB_ROUTES = ['/dashboard', '/(tabs)/farm-feed', '/records', '/savings', '/team']
+const TAB_ROUTES = ['/(tabs)/dashboard', '/(tabs)/farm-feed', '/(tabs)/records', '/(tabs)/savings', '/(tabs)/team']
 
 function TabIcon({ i, active }: { i: number; active: boolean }) {
   const c = active ? '#00695C' : '#94A3B8'
@@ -47,7 +47,7 @@ export default function BottomTabBar({ hidden }: { hidden?: boolean }) {
             activeOpacity={0.7}
             onPress={() => {
               const route = TAB_ROUTES[i]
-              if (route && i !== activeIndex) router.replace(route as any)
+              if (route && i !== activeIndex) router.navigate(route as any)
             }}
           >
             {isActive && <View style={styles.navActivePill} />}

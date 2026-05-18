@@ -18,7 +18,7 @@ export default function FarmStructureScreen() {
   const [selected, setSelected] = useState<'solo' | 'team' | null>(null);
 
   const handleSolo = () => {
-    router.replace('/dashboard');
+    router.replace('/(tabs)/dashboard');
   };
 
   const handleTeam = () => {
@@ -26,7 +26,7 @@ export default function FarmStructureScreen() {
   };
 
   const handleSkip = () => {
-    router.replace('/dashboard');
+    router.replace('/(tabs)/dashboard');
   };
 
   return (
