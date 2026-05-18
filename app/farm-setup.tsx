@@ -2,10 +2,180 @@ import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, SafeAreaView,
   ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Dimensions,
+  Modal,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Path, Circle, Ellipse, Rect, Line } from 'react-native-svg';
+import CountryPicker from 'react-native-country-picker-modal';
+
+const STATES_DATA: Record<string, { label: string; value: string }[]> = {
+  NG: [
+    { label: 'Lagos', value: 'Lagos' },
+    { label: 'Oyo', value: 'Oyo' },
+    { label: 'Kaduna', value: 'Kaduna' },
+    { label: 'Kano', value: 'Kano' },
+    { label: 'Rivers', value: 'Rivers' },
+    { label: 'Abuja FCT', value: 'Abuja FCT' },
+    { label: 'Ogun', value: 'Ogun' },
+    { label: 'Kwara', value: 'Kwara' },
+    { label: 'Plateau', value: 'Plateau' },
+    { label: 'Enugu', value: 'Enugu' },
+    { label: 'Edo', value: 'Edo' },
+    { label: 'Delta', value: 'Delta' },
+    { label: 'Nasarawa', value: 'Nasarawa' },
+    { label: 'Benue', value: 'Benue' },
+    { label: 'Kogi', value: 'Kogi' },
+    { label: 'Niger', value: 'Niger' },
+    { label: 'Sokoto', value: 'Sokoto' },
+    { label: 'Katsina', value: 'Katsina' },
+    { label: 'Borno', value: 'Borno' },
+    { label: 'Yobe', value: 'Yobe' },
+    { label: 'Adamawa', value: 'Adamawa' },
+    { label: 'Taraba', value: 'Taraba' },
+    { label: 'Bauchi', value: 'Bauchi' },
+    { label: 'Gombe', value: 'Gombe' },
+    { label: 'Jigawa', value: 'Jigawa' },
+    { label: 'Zamfara', value: 'Zamfara' },
+    { label: 'Kebbi', value: 'Kebbi' },
+    { label: 'Cross River', value: 'Cross River' },
+    { label: 'Akwa Ibom', value: 'Akwa Ibom' },
+    { label: 'Bayelsa', value: 'Bayelsa' },
+    { label: 'Anambra', value: 'Anambra' },
+    { label: 'Abia', value: 'Abia' },
+    { label: 'Imo', value: 'Imo' },
+    { label: 'Ebonyi', value: 'Ebonyi' },
+    { label: 'Ekiti', value: 'Ekiti' },
+    { label: 'Ondo', value: 'Ondo' },
+    { label: 'Osun', value: 'Osun' },
+  ],
+  US: [
+    { label: 'Alabama', value: 'Alabama' },
+    { label: 'Alaska', value: 'Alaska' },
+    { label: 'Arizona', value: 'Arizona' },
+    { label: 'Arkansas', value: 'Arkansas' },
+    { label: 'California', value: 'California' },
+    { label: 'Colorado', value: 'Colorado' },
+    { label: 'Connecticut', value: 'Connecticut' },
+    { label: 'Delaware', value: 'Delaware' },
+    { label: 'Florida', value: 'Florida' },
+    { label: 'Georgia', value: 'Georgia' },
+    { label: 'Hawaii', value: 'Hawaii' },
+    { label: 'Idaho', value: 'Idaho' },
+    { label: 'Illinois', value: 'Illinois' },
+    { label: 'Indiana', value: 'Indiana' },
+    { label: 'Iowa', value: 'Iowa' },
+    { label: 'Kansas', value: 'Kansas' },
+    { label: 'Kentucky', value: 'Kentucky' },
+    { label: 'Louisiana', value: 'Louisiana' },
+    { label: 'Maine', value: 'Maine' },
+    { label: 'Maryland', value: 'Maryland' },
+    { label: 'Massachusetts', value: 'Massachusetts' },
+    { label: 'Michigan', value: 'Michigan' },
+    { label: 'Minnesota', value: 'Minnesota' },
+    { label: 'Mississippi', value: 'Mississippi' },
+    { label: 'Missouri', value: 'Missouri' },
+    { label: 'Montana', value: 'Montana' },
+    { label: 'Nebraska', value: 'Nebraska' },
+    { label: 'Nevada', value: 'Nevada' },
+    { label: 'New Hampshire', value: 'New Hampshire' },
+    { label: 'New Jersey', value: 'New Jersey' },
+    { label: 'New Mexico', value: 'New Mexico' },
+    { label: 'New York', value: 'New York' },
+    { label: 'North Carolina', value: 'North Carolina' },
+    { label: 'North Dakota', value: 'North Dakota' },
+    { label: 'Ohio', value: 'Ohio' },
+    { label: 'Oklahoma', value: 'Oklahoma' },
+    { label: 'Oregon', value: 'Oregon' },
+    { label: 'Pennsylvania', value: 'Pennsylvania' },
+    { label: 'Rhode Island', value: 'Rhode Island' },
+    { label: 'South Carolina', value: 'South Carolina' },
+    { label: 'South Dakota', value: 'South Dakota' },
+    { label: 'Tennessee', value: 'Tennessee' },
+    { label: 'Texas', value: 'Texas' },
+    { label: 'Utah', value: 'Utah' },
+    { label: 'Vermont', value: 'Vermont' },
+    { label: 'Virginia', value: 'Virginia' },
+    { label: 'Washington', value: 'Washington' },
+    { label: 'West Virginia', value: 'West Virginia' },
+    { label: 'Wisconsin', value: 'Wisconsin' },
+    { label: 'Wyoming', value: 'Wyoming' },
+  ],
+  GB: [
+    { label: 'England', value: 'England' },
+    { label: 'Scotland', value: 'Scotland' },
+    { label: 'Wales', value: 'Wales' },
+    { label: 'Northern Ireland', value: 'Northern Ireland' },
+  ],
+  CA: [
+    { label: 'Alberta', value: 'Alberta' },
+    { label: 'British Columbia', value: 'British Columbia' },
+    { label: 'Manitoba', value: 'Manitoba' },
+    { label: 'New Brunswick', value: 'New Brunswick' },
+    { label: 'Newfoundland & Labrador', value: 'Newfoundland & Labrador' },
+    { label: 'Nova Scotia', value: 'Nova Scotia' },
+    { label: 'Ontario', value: 'Ontario' },
+    { label: 'Prince Edward Island', value: 'Prince Edward Island' },
+    { label: 'Quebec', value: 'Quebec' },
+    { label: 'Saskatchewan', value: 'Saskatchewan' },
+  ],
+  AU: [
+    { label: 'New South Wales', value: 'New South Wales' },
+    { label: 'Queensland', value: 'Queensland' },
+    { label: 'South Australia', value: 'South Australia' },
+    { label: 'Tasmania', value: 'Tasmania' },
+    { label: 'Victoria', value: 'Victoria' },
+    { label: 'Western Australia', value: 'Western Australia' },
+  ],
+  GH: [
+    { label: 'Greater Accra', value: 'Greater Accra' },
+    { label: 'Ashanti', value: 'Ashanti' },
+    { label: 'Western', value: 'Western' },
+    { label: 'Eastern', value: 'Eastern' },
+    { label: 'Central', value: 'Central' },
+    { label: 'Northern', value: 'Northern' },
+    { label: 'Volta', value: 'Volta' },
+    { label: 'Upper East', value: 'Upper East' },
+    { label: 'Upper West', value: 'Upper West' },
+    { label: 'Brong-Ahafo', value: 'Brong-Ahafo' },
+  ],
+  KE: [
+    { label: 'Nairobi', value: 'Nairobi' },
+    { label: 'Central', value: 'Central' },
+    { label: 'Coast', value: 'Coast' },
+    { label: 'Eastern', value: 'Eastern' },
+    { label: 'North Eastern', value: 'North Eastern' },
+    { label: 'Nyanza', value: 'Nyanza' },
+    { label: 'Rift Valley', value: 'Rift Valley' },
+    { label: 'Western', value: 'Western' },
+  ],
+  ZA: [
+    { label: 'Eastern Cape', value: 'Eastern Cape' },
+    { label: 'Free State', value: 'Free State' },
+    { label: 'Gauteng', value: 'Gauteng' },
+    { label: 'KwaZulu-Natal', value: 'KwaZulu-Natal' },
+    { label: 'Limpopo', value: 'Limpopo' },
+    { label: 'Mpumalanga', value: 'Mpumalanga' },
+    { label: 'Northern Cape', value: 'Northern Cape' },
+    { label: 'North West', value: 'North West' },
+    { label: 'Western Cape', value: 'Western Cape' },
+  ],
+  IN: [
+    { label: 'Andhra Pradesh', value: 'Andhra Pradesh' },
+    { label: 'Assam', value: 'Assam' },
+    { label: 'Bihar', value: 'Bihar' },
+    { label: 'Gujarat', value: 'Gujarat' },
+    { label: 'Haryana', value: 'Haryana' },
+    { label: 'Karnataka', value: 'Karnataka' },
+    { label: 'Madhya Pradesh', value: 'Madhya Pradesh' },
+    { label: 'Maharashtra', value: 'Maharashtra' },
+    { label: 'Punjab', value: 'Punjab' },
+    { label: 'Rajasthan', value: 'Rajasthan' },
+    { label: 'Tamil Nadu', value: 'Tamil Nadu' },
+    { label: 'Uttar Pradesh', value: 'Uttar Pradesh' },
+    { label: 'West Bengal', value: 'West Bengal' },
+  ],
+};
 
 const LIVESTOCK_TYPES = [
   { id: 'poultry', label: 'Poultry', sub: 'Broilers, layers & hatchery', icon: '🐔' },
@@ -33,7 +203,11 @@ function BackIcon() {
 
 export default function FarmSetupScreen() {
   const [farmName, setFarmName] = useState('');
-  const [location, setLocation] = useState('');
+  const [countryCode, setCountryCode] = useState('NG');
+  const [countryName, setCountryName] = useState('Nigeria');
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [regionOpen, setRegionOpen] = useState(false);
+  const [regionSearch, setRegionSearch] = useState('');
   const [selectedType, setSelectedType] = useState('poultry');
   const [selectedSize, setSelectedSize] = useState('medium');
   const [workerCount, setWorkerCount] = useState(8);
@@ -108,30 +282,123 @@ export default function FarmSetupScreen() {
 
             <View style={styles.formSection}>
               <Text style={styles.formLabel}>Farm Location</Text>
-              <View style={styles.fieldWrap}>
-                <View style={styles.fieldIco}>
+
+              <View style={styles.locBlock}>
+                <Text style={styles.locFieldLabel}>Country</Text>
+                <View style={styles.locSelector}>
                   <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <Path d="M10 3C7 3 5 5 5 8C5 12 10 17 10 17C10 17 15 12 15 8C15 5 13 3 10 3Z" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
                     <Circle cx="10" cy="8" r="2" stroke="#A0AEA1" strokeWidth="1.2" fill="none" />
                   </Svg>
+                  <View style={styles.locSelectorContent}>
+                    <CountryPicker
+                      countryCode={countryCode as any}
+                      withFilter
+                      withFlag
+                      withEmoji
+                      withCountryNameButton
+                      withCallingCode={false}
+                      withAlphaFilter
+                      containerButtonStyle={styles.countryPickerBtn}
+                      onSelect={(c) => {
+                        setCountryCode(c.cca2);
+                        setCountryName(typeof c.name === 'string' ? c.name : c.cca2);
+                        setSelectedRegion('');
+                      }}
+                    />
+                  </View>
+                  <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <Path d="M3 4.5L6 7.5L9 4.5" stroke="#A0AEA1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
                 </View>
-                <View style={styles.fieldInputWrap}>
-                  <Text style={styles.fieldLbl}>Farm Location</Text>
-                  <TextInput
-                    style={styles.fieldInput}
-                    value={location}
-                    onChangeText={setLocation}
-                    placeholder="State, City or Region"
-                    placeholderTextColor="#A0AEA1"
-                  />
-                </View>
-                <TouchableOpacity style={styles.fieldRight}>
+              </View>
+
+              <View style={styles.locBlock}>
+                <Text style={styles.locFieldLabel}>State / Region</Text>
+                <TouchableOpacity
+                  style={styles.locSelector}
+                  activeOpacity={0.7}
+                  onPress={() => setRegionOpen(true)}
+                >
                   <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <Circle cx="14" cy="6" r="3" stroke="#A0AEA1" strokeWidth="1.3" fill="none" />
-                    <Path d="M16.5 8.5L18 10" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" />
+                    <Rect x="3" y="3" width="14" height="14" rx="2" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
+                    <Line x1="3" y1="8" x2="17" y2="8" stroke="#A0AEA1" strokeWidth="1.4" />
+                    <Line x1="10" y1="8" x2="10" y2="17" stroke="#A0AEA1" strokeWidth="1.4" />
+                  </Svg>
+                  <Text style={[styles.locSelectorText, !selectedRegion && { color: '#A0AEA1' }]} numberOfLines={1}>
+                    {selectedRegion || 'Select state or region'}
+                  </Text>
+                  <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <Path d="M3 4.5L6 7.5L9 4.5" stroke="#A0AEA1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </Svg>
                 </TouchableOpacity>
               </View>
+
+              <Modal
+                visible={regionOpen}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setRegionOpen(false)}
+              >
+                <View style={styles.regionOverlay}>
+                  <View style={styles.regionSheet}>
+                    <View style={styles.regionHandle} />
+                    <View style={styles.regionHeader}>
+                      <Text style={styles.regionTitle}>Select State / Region</Text>
+                      <TouchableOpacity onPress={() => setRegionOpen(false)} style={styles.regionClose}>
+                        <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                          <Path d="M5 5L15 15M15 5L5 15" stroke="#1B1B1B" strokeWidth="1.5" strokeLinecap="round" />
+                        </Svg>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.regionSearchWrap}>
+                      <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <Circle cx="7" cy="7" r="4.5" stroke="#A0AEA1" strokeWidth="1.5" fill="none" />
+                        <Path d="M10.5 10.5L14 14" stroke="#A0AEA1" strokeWidth="1.5" strokeLinecap="round" />
+                      </Svg>
+                      <TextInput
+                        style={styles.regionSearchInput}
+                        placeholder="Search regions..."
+                        placeholderTextColor="#A0AEA1"
+                        value={regionSearch}
+                        onChangeText={setRegionSearch}
+                        autoFocus
+                      />
+                    </View>
+                    <ScrollView
+                      style={styles.regionList}
+                      showsVerticalScrollIndicator={false}
+                      keyboardShouldPersistTaps="handled"
+                    >
+                      {(STATES_DATA[countryCode] || [])
+                        .filter((r) => !regionSearch || r.label.toLowerCase().includes(regionSearch.toLowerCase()))
+                        .map((r) => (
+                          <TouchableOpacity
+                            key={r.value}
+                            style={[styles.regionItem, selectedRegion === r.value && styles.regionItemSelected]}
+                            onPress={() => {
+                              setSelectedRegion(r.value);
+                              setRegionOpen(false);
+                              setRegionSearch('');
+                            }}
+                          >
+                            <Text style={[styles.regionItemText, selectedRegion === r.value && styles.regionItemTextSelected]}>
+                              {r.label}
+                            </Text>
+                            {selectedRegion === r.value && (
+                              <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <Path d="M3 8L7 12L13 4" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </Svg>
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      {(!STATES_DATA[countryCode] || STATES_DATA[countryCode].length === 0) && (
+                        <Text style={styles.regionEmpty}>No regions available for this country</Text>
+                      )}
+                    </ScrollView>
+                  </View>
+                </View>
+              </Modal>
             </View>
 
             <View style={styles.formSection}>
@@ -165,7 +432,8 @@ export default function FarmSetupScreen() {
                     activeOpacity={0.7}
                   >
                     <Text style={styles.sizeIcon}>{s.icon}</Text>
-                    <Text style={[styles.sizeCardLabel, selectedSize === s.id && styles.sizeCardLabelSelected]}>
+                    <Text style={[styles.sizeCardLabel, selectedSize === s.id && styles.sizeCardLabelSelected]}
+                      numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85}>
                       {s.label}
                     </Text>
                     <Text style={[styles.sizeCardSub, selectedSize === s.id && styles.sizeCardSubSelected]}>
@@ -358,7 +626,7 @@ const styles = StyleSheet.create({
   typeSubSelected: { color: 'rgba(255,255,255,0.8)' },
   sizeRow: { flexDirection: 'row', gap: 10 },
   sizeCard: {
-    flex: 1, borderRadius: 20, paddingVertical: 16, paddingHorizontal: 10,
+    flex: 1, borderRadius: 20, paddingVertical: 14, paddingHorizontal: 8,
     backgroundColor: 'white', alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04, shadowRadius: 12, elevation: 2,
@@ -368,10 +636,10 @@ const styles = StyleSheet.create({
     shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25, shadowRadius: 20, elevation: 8,
   },
-  sizeIcon: { fontSize: 20, marginBottom: 6 },
-  sizeCardLabel: { fontSize: 13, fontWeight: '700', color: '#1F2937' },
+  sizeIcon: { fontSize: 18, marginBottom: 4 },
+  sizeCardLabel: { fontSize: 11.5, fontWeight: '700', color: '#1F2937', lineHeight: 15, textAlign: 'center' },
   sizeCardLabelSelected: { color: 'white' },
-  sizeCardSub: { fontSize: 10, color: '#9CA3AF', marginTop: 2 },
+  sizeCardSub: { fontSize: 9, color: '#9CA3AF', marginTop: 2, lineHeight: 12, textAlign: 'center' },
   sizeCardSubSelected: { color: 'rgba(255,255,255,0.8)' },
   stepperWrap: {
     flexDirection: 'row', alignItems: 'center', height: 58, borderRadius: 16,
@@ -413,4 +681,50 @@ const styles = StyleSheet.create({
   },
   continueBtnText: { fontSize: 16, fontWeight: '600', color: 'white' },
   footerNote: { textAlign: 'center', fontSize: 12, color: '#A0AEA1', marginTop: 12, zIndex: 5 },
+  locBlock: { marginBottom: 16 },
+  locFieldLabel: { fontSize: 13, fontWeight: '600', color: '#94A3B8', marginBottom: 8 },
+  locSelector: {
+    flexDirection: 'row', alignItems: 'center', height: 60, borderRadius: 16,
+    backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0',
+    paddingLeft: 16, paddingRight: 12, gap: 12,
+  },
+  locSelectorContent: { flex: 1, minWidth: 0 },
+  locSelectorText: { fontSize: 17, fontWeight: '600', color: '#1F2937', flex: 1 },
+  countryPickerBtn: { justifyContent: 'center' },
+  regionOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+  },
+  regionSheet: {
+    backgroundColor: 'white', borderTopLeftRadius: 30, borderTopRightRadius: 30,
+    paddingHorizontal: 24, paddingBottom: 40, maxHeight: '75%',
+    shadowColor: '#000', shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.08, shadowRadius: 32, elevation: 16,
+  },
+  regionHandle: {
+    width: 40, height: 4, borderRadius: 2, backgroundColor: '#E2E8F0',
+    alignSelf: 'center', marginTop: 12, marginBottom: 8,
+  },
+  regionHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: 8, marginBottom: 16,
+  },
+  regionTitle: { fontSize: 18, fontWeight: '700', color: '#1B1B1B' },
+  regionClose: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
+  regionSearchWrap: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#F8FAF7', borderRadius: 14, paddingHorizontal: 14,
+    height: 48, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 12,
+  },
+  regionSearchInput: { flex: 1, fontSize: 15, color: '#1B1B1B', padding: 0, margin: 0 },
+  regionList: { flexGrow: 0 },
+  regionItem: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 14, paddingHorizontal: 4, borderBottomWidth: 1,
+    borderBottomColor: '#F1F3F5',
+  },
+  regionItemSelected: { backgroundColor: '#F0FDF4', marginHorizontal: -8, paddingHorizontal: 12, borderRadius: 12 },
+  regionItemText: { fontSize: 15, fontWeight: '500', color: '#1F2937' },
+  regionItemTextSelected: { color: '#2E7D32', fontWeight: '600' },
+  regionEmpty: { textAlign: 'center', color: '#9CA3AF', fontSize: 14, paddingVertical: 40 },
 });
