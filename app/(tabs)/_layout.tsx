@@ -12,7 +12,7 @@ export default function TabLayout() {
       <Tabs.Screen name="dashboard" />
       <Tabs.Screen name="farm-feed" />
       <Tabs.Screen name="records" />
-      <Tabs.Screen name="savings" />
+      <Tabs.Screen name="recapitalization" />
       <Tabs.Screen name="team" />
     </Tabs>
   );

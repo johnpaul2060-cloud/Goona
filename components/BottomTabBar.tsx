@@ -4,9 +4,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
 
 const { width: SCREEN_W } = Dimensions.get('window')
-const TAB_ITEMS = ['Home', 'Feed', 'Records', '₦ Savings', 'Team']
+const TAB_ITEMS = ['Home', 'Feed', 'Records', 'Recapt', 'Team']
 
-const TAB_ROUTES = ['/(tabs)/dashboard', '/(tabs)/farm-feed', '/(tabs)/records', '/(tabs)/savings', '/(tabs)/team']
+const TAB_ROUTES = ['/(tabs)/dashboard', '/(tabs)/farm-feed', '/(tabs)/records', '/(tabs)/recapitalization', '/(tabs)/team']
 
 function TabIcon({ i, active }: { i: number; active: boolean }) {
   const c = active ? '#00695C' : '#94A3B8'
@@ -29,7 +29,7 @@ export default function BottomTabBar({ hidden }: { hidden?: boolean }) {
   const activeIndex = (() => {
     if (pathname.includes('farm-feed')) return 1
     if (pathname.includes('records')) return 2
-    if (pathname.includes('savings')) return 3
+    if (pathname.includes('recapitalization') || pathname.includes('plan-recapt')) return 3
     if (pathname.includes('team')) return 4
     return 0
   })()
