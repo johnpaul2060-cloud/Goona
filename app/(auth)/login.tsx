@@ -15,8 +15,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [passwordVisible, setPasswordVisible] = useState(false);
+
+  const handleLogin = () => {
+    console.log('LOGIN PRESSED');
+    router.replace('/dashboard');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -28,21 +35,21 @@ export default function LoginScreen() {
       <View style={styles.dotGrid} />
       <View style={styles.glowCenter} />
 
-      <View style={styles.chip1}>
+      <View style={styles.chip1} pointerEvents="none">
         <Svg width={14} height={14} viewBox="0 0 14 14">
           <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#2E7D32" strokeWidth={1.3} fill="none" />
           <Path d="M5.5 7.5L6.5 8.5L9 6" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </Svg>
         <Text style={styles.chipText}>Secure Access</Text>
       </View>
-      <View style={styles.chip2}>
+      <View style={styles.chip2} pointerEvents="none">
         <Svg width={14} height={14} viewBox="0 0 14 14">
           <Path d="M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" />
           <Path d="M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" />
         </Svg>
         <Text style={styles.chipText}>Synced Offline</Text>
       </View>
-      <View style={styles.chip3}>
+      <View style={styles.chip3} pointerEvents="none">
         <Svg width={14} height={14} viewBox="0 0 14 14">
           <Rect x={2} y={3} width={10} height={8} rx={2} stroke="#2E7D32" strokeWidth={1.2} fill="none" />
           <Path d="M5 6L6.5 7.5L9.5 4.5" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
@@ -104,6 +111,8 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     autoComplete="username"
                     keyboardType="email-address"
+                    value={email}
+                    onChangeText={setEmail}
                   />
                 </View>
               </View>
@@ -126,6 +135,8 @@ export default function LoginScreen() {
                     placeholderTextColor="#A0AEA1"
                     secureTextEntry={!passwordVisible}
                     autoComplete="current-password"
+                    value={password}
+                    onChangeText={setPassword}
                   />
                 </View>
                 <TouchableOpacity
@@ -179,7 +190,7 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.loginBtn} activeOpacity={0.95}>
+            <TouchableOpacity style={styles.loginBtn} activeOpacity={0.85} onPress={handleLogin}>
               <Svg width={20} height={20} viewBox="0 0 20 20">
                 <Circle cx={10} cy={7} r={3} stroke="white" strokeWidth={1.4} fill="none" />
                 <Path d="M4 17C4 14 6.5 12 10 12C13.5 12 16 14 16 17" stroke="white" strokeWidth={1.4} strokeLinecap="round" fill="none" />
