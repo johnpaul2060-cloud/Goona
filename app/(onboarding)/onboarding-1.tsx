@@ -462,7 +462,7 @@ export default function OnboardingCarousel() {
   }, [goToSlide]);
 
   const handleCreateAccount = useCallback(() => {
-    router.replace('/(setup)/farm-setup');
+    router.push('/(auth)/create-account');
   }, []);
 
   const panResponder = useRef(
