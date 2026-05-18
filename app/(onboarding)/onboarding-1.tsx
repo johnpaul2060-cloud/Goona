@@ -430,6 +430,16 @@ export default function OnboardingCarousel() {
   const screenWidthRef = useRef(screenWidth);
   const isAnimating = useRef(false);
   const translateX = useRef(new Animated.Value(0)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
+  const animateButton = useCallback((toValue: number) => {
+    Animated.spring(buttonScale, {
+      toValue,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 160,
+    }).start();
+  }, [buttonScale]);
 
   screenWidthRef.current = screenWidth;
   currentSlideRef.current = currentSlide;
@@ -440,13 +450,13 @@ export default function OnboardingCarousel() {
       const target = Math.max(0, Math.min(index, TOTAL_SLIDES - 1));
       isAnimating.current = true;
       currentSlideRef.current = target;
+      setCurrentSlide(target);
       Animated.spring(translateX, {
         toValue: -target * screenWidth,
         useNativeDriver: true,
-        friction: 9,
-        tension: 40,
+        friction: 12,
+        tension: 120,
       }).start(() => {
-        setCurrentSlide(target);
         isAnimating.current = false;
       });
     },
@@ -476,16 +486,16 @@ export default function OnboardingCarousel() {
         const idx = currentSlideRef.current;
         const w = screenWidthRef.current;
         let offset = -idx * w + g.dx;
-        if (idx === 0) offset = Math.min(offset, g.dx * 0.3);
+        if (idx === 0) offset = Math.min(offset, g.dx * 0.5);
         if (idx === TOTAL_SLIDES - 1)
-          offset = Math.max(offset, -(TOTAL_SLIDES - 1) * w + g.dx * 0.3);
+          offset = Math.max(offset, -(TOTAL_SLIDES - 1) * w + g.dx * 0.5);
         translateX.setValue(offset);
       },
       onPanResponderRelease: (_, g) => {
         if (isAnimating.current) return;
         const idx = currentSlideRef.current;
         const w = screenWidthRef.current;
-        const threshold = w * 0.2;
+        const threshold = w * 0.15;
         if (g.dx < -threshold && idx < TOTAL_SLIDES - 1) {
           goToSlide(idx + 1);
         } else if (g.dx > threshold && idx > 0) {
@@ -494,6 +504,8 @@ export default function OnboardingCarousel() {
           Animated.spring(translateX, {
             toValue: -idx * w,
             useNativeDriver: true,
+            friction: 12,
+            tension: 120,
           }).start();
         }
       },
@@ -535,20 +547,26 @@ export default function OnboardingCarousel() {
       {/* ===== FIXED BOTTOM CONTROLS ===== */}
       <View style={styles.bottomControls}>
         <DotIndicators total={TOTAL_SLIDES} active={currentSlide} />
+        <Animated.View style={{ transform: [{ scale: buttonScale }], width: '100%' }}>
         {currentSlide === TOTAL_SLIDES - 1 ? (
-          <Pressable onPress={handleCreateAccount} style={styles.ctaButton}>
+          <Pressable onPress={handleCreateAccount} style={styles.ctaButton}
+            onPressIn={() => animateButton(0.97)}
+            onPressOut={() => animateButton(1)}>
             <LinearGradient colors={['#2E7D32', '#43A047']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaGradient}>
               <Text style={styles.ctaText}>Create Account</Text>
             </LinearGradient>
           </Pressable>
         ) : (
-          <Pressable onPress={nextSlide} style={styles.ctaButton}>
+          <Pressable onPress={nextSlide} style={styles.ctaButton}
+            onPressIn={() => animateButton(0.97)}
+            onPressOut={() => animateButton(1)}>
             <LinearGradient colors={['#2E7D32', '#43A047']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaGradient}>
               <Text style={styles.ctaText}>Next</Text>
               <ArrowRightIcon />
             </LinearGradient>
           </Pressable>
         )}
+        </Animated.View>
         <View style={styles.authRow}>
           <Text style={styles.authText}>
             Already have an account?

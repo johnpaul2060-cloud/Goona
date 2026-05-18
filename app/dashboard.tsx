@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
 import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg';
+import BottomTabBar from '../components/BottomTabBar';
 
 const { width } = Dimensions.get('window');
 
@@ -203,24 +203,7 @@ export default function DashboardScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View style={styles.bottomNav}>
-        {['Home', 'Feed', 'Records', '₦ Savings', 'Team'].map((tab, i) => (
-          <TouchableOpacity key={tab} style={[styles.navItem, i === 0 && styles.navItemActive]}>
-            {i === 0 && <View style={styles.navActivePill} />}
-            <View style={styles.navIcon}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                {i === 0 && <><Path d="M3 10L12 3L21 10V21C21 21.6 20.6 22 20 22H16V16H8V22H4C3.4 22 3 21.6 3 21V10Z" stroke="#00695C" strokeWidth="1.6" fill="none" /></>}
-                {i === 1 && <><Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="#94A3B8" strokeWidth="1.6" fill="none" strokeLinejoin="round" /><Path d="M8 9h8M8 13h5" stroke="#94A3B8" strokeWidth="1.6" strokeLinecap="round" /></>}
-                {i === 2 && <><Rect x="5" y="4" width="14" height="17" rx="2" stroke="#94A3B8" strokeWidth="1.6" fill="none" /><Line x1="8" y1="9" x2="16" y2="9" stroke="#94A3B8" strokeWidth="1.4" strokeLinecap="round" /><Line x1="8" y1="13" x2="14" y2="13" stroke="#94A3B8" strokeWidth="1.4" strokeLinecap="round" /></>}
-                {i === 3 && <><Circle cx="12" cy="12" r="9" stroke="#94A3B8" strokeWidth="1.6" fill="none" /><Line x1="9" y1="7.5" x2="9" y2="16.5" stroke="#94A3B8" strokeWidth="1.6" strokeLinecap="round" /><Line x1="15" y1="7.5" x2="15" y2="16.5" stroke="#94A3B8" strokeWidth="1.6" strokeLinecap="round" /><Line x1="7" y1="11.5" x2="17" y2="11.5" stroke="#94A3B8" strokeWidth="1.6" strokeLinecap="round" /><Line x1="7" y1="14" x2="17" y2="14" stroke="#94A3B8" strokeWidth="1.6" strokeLinecap="round" /></>}
-                {i === 4 && <><Circle cx="6" cy="8" r="2" stroke="#94A3B8" strokeWidth="1.6" fill="none" /><Circle cx="12" cy="8" r="2" stroke="#94A3B8" strokeWidth="1.6" fill="none" /><Circle cx="18" cy="8" r="2" stroke="#94A3B8" strokeWidth="1.6" fill="none" /><Path d="M3 17c0-1.8 1.5-3 3-3s3 1.2 3 3" stroke="#94A3B8" strokeWidth="1.6" fill="none" strokeLinecap="round" /><Path d="M9 17c0-1.8 1.5-3 3-3s3 1.2 3 3" stroke="#94A3B8" strokeWidth="1.6" fill="none" strokeLinecap="round" /><Path d="M15 17c0-1.8 1.5-3 3-3s3 1.2 3 3" stroke="#94A3B8" strokeWidth="1.6" fill="none" strokeLinecap="round" /></>}
-              </Svg>
-            </View>
-            <Text style={[styles.navLabel, i === 0 && styles.navLabelActive]}>{tab}</Text>
-            {i === 0 && <View style={styles.navIndicator} />}
-          </TouchableOpacity>
-        ))}
-      </View>
+      <BottomTabBar />
     </SafeAreaView>
   );
 }
@@ -320,23 +303,4 @@ const styles = StyleSheet.create({
   feedTitle: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
   feedDesc: { fontSize: 12, color: '#64748B', marginTop: 1 },
   feedTime: { fontSize: 11, color: '#94A3B8', flexShrink: 0 },
-  bottomNav: {
-    position: 'absolute', bottom: 18, left: 20, right: 20, height: 74,
-    flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.82)', borderRadius: 30,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.1, shadowRadius: 40, elevation: 8,
-    paddingHorizontal: 8,
-  },
-  navItem: { alignItems: 'center', gap: 2, minWidth: 48, paddingVertical: 6, position: 'relative' },
-  navIcon: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-  navLabel: { fontSize: 11, fontWeight: '500', color: '#94A3B8', zIndex: 1 },
-  navLabelActive: { color: '#00695C', fontWeight: '600' },
-  navIndicator: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#AEEA00', zIndex: 1 },
-  navActivePill: {
-    position: 'absolute', top: 2, left: '50%', transform: [{ translateX: -20 }],
-    width: 44, height: 36, borderRadius: 16, backgroundColor: '#2E7D32',
-    shadowColor: '#00695C', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 6,
-    zIndex: 0,
-  },
-  navItemActive: {},
 });
