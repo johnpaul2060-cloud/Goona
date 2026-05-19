@@ -1,13 +1,14 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Platform,
 } from 'react-native'
 import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
+import { LinearGradient } from 'expo-linear-gradient'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
-import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated'
+import Animated, { FadeInUp, FadeIn, FadeOutDown } from 'react-native-reanimated'
 import BottomTabBar from '../components/BottomTabBar'
 import ReminderTaskModal, { ReminderTask } from '../components/ReminderTaskModal'
 
@@ -81,6 +82,14 @@ export default function NotificationsScreen() {
   const [tasks, setTasks] = useState(QUICK_TASKS.map((t) => ({ ...t, done: false })))
   const [showCreate, setShowCreate] = useState(false)
   const [createdItems, setCreatedItems] = useState<ReminderTask[]>([])
+  const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' })
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = (message: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ visible: true, message })
+    toastTimer.current = setTimeout(() => setToast({ visible: false, message: '' }), 3000)
+  }
 
   const handleCreateItem = useCallback(async (item: ReminderTask) => {
     if (item.type === 'Reminder') {
@@ -129,6 +138,11 @@ export default function NotificationsScreen() {
     } catch {
       // silently fail - notification not critical
     }
+
+    const msg = item.type === 'Reminder'
+      ? 'Reminder scheduled successfully'
+      : 'Task published to farm team'
+    showToast(msg)
   }, [])
 
   const toggleReminder = (i: number) => {
@@ -295,10 +309,31 @@ export default function NotificationsScreen() {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => setShowCreate(true)}>
-        <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Path d="M5 10H15" stroke="white" strokeWidth="2" strokeLinecap="round" /><Path d="M10 5V15" stroke="white" strokeWidth="2" strokeLinecap="round" /></Svg>
-        <Text style={styles.fabLabel}>Create</Text>
+      <TouchableOpacity
+        style={styles.fabShell}
+        activeOpacity={0.85}
+        onPress={() => setShowCreate(true)}
+      >
+        <LinearGradient
+          colors={['#1B5E20', '#2E7D32', '#388E3C']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.fabGradient}
+        >
+          <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <Path d="M6 14H22" stroke="white" strokeWidth="3" strokeLinecap="round" />
+            <Path d="M14 6V22" stroke="white" strokeWidth="3" strokeLinecap="round" />
+          </Svg>
+        </LinearGradient>
       </TouchableOpacity>
+
+      {/* TOAST */}
+      {toast.visible && (
+        <Animated.View entering={FadeInUp.duration(300).springify()} exiting={FadeOutDown.duration(250)} style={styles.toast}>
+          <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Circle cx="8" cy="8" r="5" stroke="white" strokeWidth="1.3" fill="none" /><Path d="M5 8L7 10L11 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+          <Text style={styles.toastText}>{toast.message}</Text>
+        </Animated.View>
+      )}
 
       <BottomTabBar />
 
@@ -385,13 +420,43 @@ const styles = StyleSheet.create({
   taskLabelDone: { color: '#94A3B8', textDecorationLine: 'line-through' },
 
   /* fab */
-  fab: {
-    position: 'absolute', bottom: Platform.OS === 'ios' ? 106 : 86, right: 20,
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: 14, paddingHorizontal: 20,
-    backgroundColor: '#2E7D32', borderRadius: 100,
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 6,
+  fabShell: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 112 : 92,
+    right: 20,
     zIndex: 50,
   },
-  fabLabel: { fontSize: 15, fontWeight: '700', color: 'white' },
+  fabGradient: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.45,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+
+  /* toast */
+  toast: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 180 : 156,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    backgroundColor: '#1F2937',
+    borderRadius: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    zIndex: 100,
+  },
+  toastText: { fontSize: 14, fontWeight: '600', color: 'white' },
 })
