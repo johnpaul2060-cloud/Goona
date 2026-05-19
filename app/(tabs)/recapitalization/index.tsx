@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import {
   View, Text, TouchableOpacity, Pressable, ScrollView,
   StyleSheet, Dimensions, Keyboard,
@@ -9,10 +9,15 @@ import { BlurView } from 'expo-blur'
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
 import Animated, {
   useSharedValue, useAnimatedStyle, withDelay, withTiming,
-  withSpring, Easing,
+  withSpring, withRepeat, withSequence, Easing,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import BottomTabBar from '../../../components/BottomTabBar'
+import RecoveryCheckInModal from '../../../components/RecoveryCheckInModal'
+import {
+  useRecoveryStore, fmtDateFromParts,
+  computeStreak, generateInsights,
+} from '../../../store/useRecoveryStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const CARD_HORIZ_W = 148
@@ -188,20 +193,8 @@ const FINANCIAL_OVERVIEW = [
   { label: 'Operational Reserve', value: '₦500,000', trend: '+5%', trendUp: true, color: '#7C3AED', bars: [20, 35, 40, 50, 65], bg: '#F3E8FF' },
 ]
 
-const CALENDAR_DATA: { day: number; state: 'on-time' | 'extra' | 'partial' | 'missed' | 'no-data' | 'today' }[] = [
-  { day: 1, state: 'on-time' }, { day: 2, state: 'on-time' }, { day: 3, state: 'extra' },
-  { day: 4, state: 'on-time' }, { day: 5, state: 'missed' }, { day: 6, state: 'on-time' },
-  { day: 7, state: 'on-time' }, { day: 8, state: 'partial' }, { day: 9, state: 'on-time' },
-  { day: 10, state: 'on-time' }, { day: 11, state: 'extra' }, { day: 12, state: 'on-time' },
-  { day: 13, state: 'on-time' }, { day: 14, state: 'no-data' }, { day: 15, state: 'today' },
-  { day: 16, state: 'no-data' }, { day: 17, state: 'no-data' }, { day: 18, state: 'no-data' },
-  { day: 19, state: 'no-data' }, { day: 20, state: 'no-data' }, { day: 21, state: 'no-data' },
-  { day: 22, state: 'no-data' }, { day: 23, state: 'no-data' }, { day: 24, state: 'no-data' },
-  { day: 25, state: 'no-data' }, { day: 26, state: 'no-data' }, { day: 27, state: 'no-data' },
-  { day: 28, state: 'no-data' }, { day: 29, state: 'no-data' }, { day: 30, state: 'no-data' },
-  { day: 31, state: 'no-data' },
-]
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 const RECAPITALIZATION_STEPS = [
   { label: 'Next Cycle Capital', value: '₦1.8M', progress: 1, color: '#2E7D32' },
@@ -331,35 +324,43 @@ function FinancialOverviewCard({
   )
 }
 
-function RecapitalizationCalendar({ index }: { index: number }) {
+function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPress: (d: Date) => void }) {
   const animStyle = useStaggerEntry(index, 80)
+  const records = useRecoveryStore((s) => s.records)
+  const now = new Date()
+  const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
+  const streak = computeStreak(records)
+
+  const pulse = useSharedValue(1)
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(withTiming(0.35, { duration: 2000 }), withTiming(1, { duration: 2000 })),
+      -1, true,
+    )
+  }, [])
+  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }))
+
   const stateColors: Record<string, string> = {
-    'on-time': '#2E7D32',
-    'extra': '#AEEA00',
-    'partial': '#F59E0B',
-    'missed': '#EF4444',
-    'no-data': '#F1F5F9',
-    'today': '#2E7D32',
+    completed: '#2E7D32', exceeded: '#AEEA00',
+    partial: '#F59E0B', missed: '#EF4444', none: '#F1F5F9',
   }
   const stateLabels: Record<string, string> = {
-    'on-time': 'On Time',
-    'extra': 'Extra',
-    'partial': 'Partial',
-    'missed': 'Missed',
-    'no-data': 'No Data',
-    'today': 'Today',
+    completed: 'Completed', exceeded: 'Exceeded',
+    partial: 'Partial', missed: 'Missed',
   }
+
+  const days = Array.from({ length: 28 }, (_, i) => i + 1)
 
   return (
     <Animated.View style={[animStyle, styles.calCard]}>
       <View style={styles.calHead}>
         <View>
-          <Text style={styles.calTitle}>Recapitalization Calendar</Text>
-          <Text style={styles.calSub}>May 2026 — Capital Recovery</Text>
+          <Text style={styles.calTitle}>Recovery Tracker</Text>
+          <Text style={styles.calSub}>{MONTHS[now.getMonth()]} {now.getFullYear()} — Capital Recovery</Text>
         </View>
         <View style={styles.calStreak}>
           <FlameIcon />
-          <Text style={styles.calStreakText} numberOfLines={1}>12w streak</Text>
+          <Text style={styles.calStreakText} numberOfLines={1}>{streak}d streak</Text>
         </View>
       </View>
 
@@ -372,14 +373,34 @@ function RecapitalizationCalendar({ index }: { index: number }) {
       <View style={styles.calGrid}>
         {Array.from({ length: 4 }).map((_, weekIdx) => (
           <View key={weekIdx} style={styles.calWeekRow}>
-            {CALENDAR_DATA.slice(weekIdx * 7, weekIdx * 7 + 7).map((day, dayIdx) => {
-              const isToday = day.state === 'today'
-              const dotBg = stateColors[day.state] || '#F1F5F9'
+            {days.slice(weekIdx * 7, weekIdx * 7 + 7).map((dayNum) => {
+              const date = new Date(now.getFullYear(), now.getMonth(), dayNum)
+              const dateStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), dayNum)
+              const record = records[dateStr]
+              const status = record?.status || 'none'
+              const isToday = dateStr === todayStr
+              const isFuture = date > now
+
               return (
-                <View key={dayIdx} style={[styles.calDayCell, isToday && styles.calDayCellToday]}>
-                  <View style={[styles.calDayDot, { backgroundColor: dotBg, opacity: day.state === 'no-data' ? 0.3 : 1 }]} />
-                  <Text style={[styles.calDayNum, isToday && styles.calDayNumToday]}>{day.day}</Text>
-                </View>
+                <TouchableOpacity
+                  key={dayNum}
+                  style={[styles.calDayCell, isToday && styles.calDayCellToday]}
+                  activeOpacity={0.7}
+                  onPress={() => { if (!isFuture) onDayPress(date) }}
+                  disabled={isFuture}
+                >
+                  {isToday && <Animated.View style={[styles.calDayPulse, pulseStyle]} />}
+                  <View style={[
+                    styles.calDayDot,
+                    { backgroundColor: stateColors[status] },
+                    status === 'none' && { opacity: 0.15 },
+                  ]} />
+                  <Text style={[
+                    styles.calDayNum,
+                    isToday && styles.calDayNumToday,
+                    isFuture && { opacity: 0.25 },
+                  ]}>{dayNum}</Text>
+                </TouchableOpacity>
               )
             })}
           </View>
@@ -387,7 +408,7 @@ function RecapitalizationCalendar({ index }: { index: number }) {
       </View>
 
       <View style={styles.calLegend}>
-        {['on-time', 'extra', 'partial', 'missed'].map((key) => (
+        {['completed', 'exceeded', 'partial', 'missed'].map((key) => (
           <View key={key} style={styles.calLegendItem}>
             <View style={[styles.calLegendDot, { backgroundColor: stateColors[key] }]} />
             <Text style={styles.calLegendText}>{stateLabels[key]}</Text>
@@ -591,6 +612,15 @@ export default function RecapitalizationDashboardScreen() {
   const TOP = insets.top
   const TOP_BAR_H = 56
 
+  const [checkInDate, setCheckInDate] = useState<Date | null>(null)
+  const [showCheckIn, setShowCheckIn] = useState(false)
+  const handleDayPress = useCallback((d: Date) => {
+    setCheckInDate(d)
+    setShowCheckIn(true)
+  }, [])
+
+  const behavioralMessages = generateInsights(useRecoveryStore.getState().records)
+
   return (
     <View style={styles.container}>
       <BlurView
@@ -647,22 +677,50 @@ export default function RecapitalizationDashboardScreen() {
           <QuickActionButton label="Generate Report" icon={ReportIcon} index={3} />
         </ScrollView>
 
-        <RecapitalizationCalendar index={1} />
+        <RecoveryTrackerCalendar index={1} onDayPress={handleDayPress} />
         <RecapitalizationProgressCard index={2} />
         <TransactionCard index={3} />
 
         <AISmartInsightCard index={4} />
 
+        <BehavioralInsightsCard index={5} messages={behavioralMessages} />
+
         <View style={styles.sectionHead}>
           <Text style={styles.secTitle}>GOONA IQ Insights</Text>
         </View>
-        <InsightCard index={5} />
+        <InsightCard index={6} />
 
         <GrowthTargetCard index={6} />
       </ScrollView>
 
+      <RecoveryCheckInModal
+        visible={showCheckIn}
+        date={checkInDate}
+        onClose={() => setShowCheckIn(false)}
+      />
+
       <BottomTabBar hidden={keyboardH > 0} />
     </View>
+  )
+}
+
+function BehavioralInsightsCard({ index, messages }: { index: number; messages: string[] }) {
+  const animStyle = useStaggerEntry(index, 105)
+  if (messages.length === 0) return null
+  return (
+    <Animated.View style={[animStyle, styles.behaviorCard]}>
+      <View style={styles.secHead}>
+        <Text style={styles.secTitle}>Recovery Discipline</Text>
+      </View>
+      {messages.map((msg, i) => (
+        <View key={i} style={[styles.behaviorRow, i === messages.length - 1 && { borderBottomWidth: 0 }]}>
+          <View style={styles.behaviorIconWrap}>
+            <SparkleIcon />
+          </View>
+          <Text style={styles.behaviorText}>{msg}</Text>
+        </View>
+      ))}
+    </Animated.View>
   )
 }
 
@@ -776,6 +834,10 @@ const styles = StyleSheet.create({
   calDayDot: { width: 6, height: 6, borderRadius: 3, position: 'absolute', top: 2 },
   calDayNum: { fontSize: 12, fontWeight: '500', color: '#1F2937' },
   calDayNumToday: { color: '#2E7D32', fontWeight: '700' },
+  calDayPulse: {
+    position: 'absolute', width: 34, height: 34, borderRadius: 17,
+    borderWidth: 2, borderColor: 'rgba(46,125,50,0.25)',
+  },
   calLegend: { flexDirection: 'row', gap: 14, marginTop: 12, flexWrap: 'wrap' },
   calLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   calLegendDot: { width: 7, height: 7, borderRadius: 3.5 },
@@ -864,4 +926,17 @@ const styles = StyleSheet.create({
   goalMeta: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   goalSaved: { fontSize: 11, color: '#64748B' },
   goalTarget: { fontSize: 11, color: '#94A3B8' },
+
+  behaviorCard: {
+    backgroundColor: 'white', borderRadius: 28, padding: 20, marginTop: 18,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06, shadowRadius: 28, elevation: 3,
+  },
+  behaviorRow: {
+    flexDirection: 'row', gap: 10,
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    alignItems: 'flex-start',
+  },
+  behaviorIconWrap: { width: 20, height: 20, marginTop: 1 },
+  behaviorText: { fontSize: 13, fontWeight: '500', color: '#1F2937', lineHeight: 19, flex: 1 },
 })
