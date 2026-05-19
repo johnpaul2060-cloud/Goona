@@ -1,11 +1,13 @@
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg';
 import BottomTabBar from '../../components/BottomTabBar';
 
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
+  const router = useRouter();
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -23,7 +25,7 @@ export default function DashboardScreen() {
             <Text style={styles.greetingName}>James</Text>
             <Text style={styles.greetingStatus}>Your farm is performing well today.</Text>
           </View>
-          <TouchableOpacity style={styles.notifBtn}>
+          <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/notifications')}>
             <Svg width="22" height="22" viewBox="0 0 22 22" fill="none">
               <Path d="M11 3C7.7 3 5 5.7 5 9V13.5L3 16H19L17 13.5V9C17 5.7 14.3 3 11 3Z" stroke="#1F2937" strokeWidth="1.6" fill="none" />
               <Path d="M9 16C9 17.1 9.9 18 11 18C12.1 18 13 17.1 13 16" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" fill="none" />
@@ -78,12 +80,17 @@ export default function DashboardScreen() {
 
         <View style={styles.actionsGrid}>
           {[
-            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A' },
-            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF' },
-            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B' },
-            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A' },
+            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: undefined },
+            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/daily-records' as const },
+            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/(tabs)/sales-revenue' as const },
+            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: undefined },
           ].map((a, i) => (
-            <TouchableOpacity key={i} style={styles.actionCard} activeOpacity={0.8}>
+            <TouchableOpacity
+              key={i}
+              style={styles.actionCard}
+              activeOpacity={0.8}
+              onPress={a.route ? () => router.push(a.route) : undefined}
+            >
               <View style={[styles.actionIcon, { backgroundColor: a.color }]}>
                 <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <Circle cx="12" cy="12" r="8" stroke={a.iconColor} strokeWidth="1.6" fill="none" />
