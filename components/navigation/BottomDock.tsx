@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { router, usePathname } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, Easing, interpolate, Extrapolation } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, withSequence, withDelay, Easing, interpolate, Extrapolation } from 'react-native-reanimated'
 import Svg, { Path, Circle, Rect, Line, G } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect } from 'react'
@@ -48,55 +48,48 @@ function DockIcon({ i, active }: { i: number; active: boolean }) {
   )
 }
 
-function ActiveGlow() {
+function ActiveOrb() {
   const pulse = useSharedValue(1)
 
   useEffect(() => {
     pulse.value = withRepeat(
-      withTiming(1.18, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
-      -1, true,
+      withSequence(
+        withTiming(1.06, { duration: 120 }),
+        withTiming(1.0, { duration: 120 }),
+        withTiming(1.10, { duration: 140 }),
+        withTiming(1.0, { duration: 180 }),
+        withDelay(450, withTiming(1.0, { duration: 1 })),
+      ),
+      -1,
     )
   }, [])
 
-  const glowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }],
-    opacity: interpolate(pulse.value, [1, 1.18], [0.35, 0.10], Extrapolation.CLAMP),
-  }))
-
-  const innerGlowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(pulse.value, [1, 1.18], [1, 1.08], Extrapolation.CLAMP) }],
-    opacity: interpolate(pulse.value, [1, 1.18], [0.6, 0.25], Extrapolation.CLAMP),
+  const orbStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: -4 },
+      { scale: pulse.value },
+    ],
+    shadowOpacity: interpolate(pulse.value, [1, 1.10], [0.35, 0.55], Extrapolation.CLAMP),
+    shadowRadius: interpolate(pulse.value, [1, 1.10], [22, 30], Extrapolation.CLAMP),
   }))
 
   return (
-    <>
-      <Animated.View style={[styles.glowOuter, glowStyle]} />
-      <Animated.View style={[styles.glowInner, innerGlowStyle]} />
+    <Animated.View style={[styles.activeOrb, orbStyle]}>
       <LinearGradient
         colors={['#2E7D32', '#1B5E20']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.activePlate}
+        style={[StyleSheet.absoluteFill, { borderRadius: 999 }]}
       />
-    </>
+      <View style={styles.orbGlowOuter} pointerEvents="none" />
+      <View style={styles.orbGlowInner} pointerEvents="none" />
+    </Animated.View>
   )
 }
 
 export default function BottomDock({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname()
   const insets = useSafeAreaInsets()
-  const dockFloat = useSharedValue(0)
-
-  useEffect(() => {
-    dockFloat.value = withRepeat(
-      withTiming(-4, { duration: 3500, easing: Easing.inOut(Easing.sin) }),
-      -1, true,
-    )
-  }, [])
-
-  const dockAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: dockFloat.value }],
-  }))
 
   const activeIndex = (() => {
     if (pathname === '/(tabs)' || pathname === '/(tabs)/dashboard' || pathname === '/dashboard') return 0
@@ -112,12 +105,12 @@ export default function BottomDock({ hidden }: { hidden?: boolean }) {
   const bottom = insets.bottom > 0 ? insets.bottom : 16
 
   return (
-    <Animated.View style={[styles.container, dockAnimStyle, { bottom }]}>
+    <View style={[styles.container, { bottom }]}>
       <LinearGradient
         colors={['rgba(255,255,255,0.72)', 'rgba(248,250,252,0.48)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={StyleSheet.absoluteFill}
+        style={[StyleSheet.absoluteFill, { borderRadius: 34 }]}
         pointerEvents="none"
       />
       <View style={styles.blurOverlay} pointerEvents="none" />
@@ -137,7 +130,7 @@ export default function BottomDock({ hidden }: { hidden?: boolean }) {
           />
         )
       })}
-    </Animated.View>
+    </View>
   )
 }
 
@@ -169,9 +162,11 @@ function DockTabButton({ label, index, isActive, onPress }: {
       style={styles.tabTouch}
     >
       <Animated.View style={[styles.tabItem, animStyle]}>
-        {isActive && <ActiveGlow />}
-        <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
-          <DockIcon i={index} active={isActive} />
+        <View style={styles.iconOrbWrap}>
+          {isActive && <ActiveOrb />}
+          <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
+            <DockIcon i={index} active={isActive} />
+          </View>
         </View>
         <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]} numberOfLines={1}>
           {label}
@@ -190,7 +185,6 @@ const styles = StyleSheet.create({
     shadowColor: '#1B5E20', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.12, shadowRadius: 48,
     paddingHorizontal: 6,
     zIndex: 999, elevation: 999,
-    overflow: 'hidden',
   },
   blurOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -209,6 +203,11 @@ const styles = StyleSheet.create({
     gap: 3,
     width: '100%',
     paddingVertical: 6,
+    position: 'relative',
+  },
+  iconOrbWrap: {
+    width: 44, height: 44,
+    alignItems: 'center', justifyContent: 'center',
     position: 'relative',
   },
   iconWrap: {
@@ -232,35 +231,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.15,
   },
-  glowOuter: {
+  activeOrb: {
     position: 'absolute',
-    top: 2,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#2E7D32',
-    zIndex: 0,
-  },
-  glowInner: {
-    position: 'absolute',
-    top: 4,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#388E3C',
-    zIndex: 0,
-  },
-  activePlate: {
-    position: 'absolute',
-    top: 0,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    top: -7, left: -7,
+    width: 58, height: 58,
+    borderRadius: 999,
     zIndex: 1,
     shadowColor: '#2E7D32',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 22,
+    elevation: 10,
+  },
+  orbGlowOuter: {
+    position: 'absolute',
+    top: -8, left: -8,
+    width: 74, height: 74,
+    borderRadius: 999,
+    backgroundColor: 'rgba(46,125,50,0.08)',
+    zIndex: 0,
+  },
+  orbGlowInner: {
+    position: 'absolute',
+    top: -4, left: -4,
+    width: 66, height: 66,
+    borderRadius: 999,
+    backgroundColor: 'rgba(56,142,60,0.15)',
+    zIndex: 0,
   },
 })
