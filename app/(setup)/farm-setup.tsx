@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path, Circle, Line } from 'react-native-svg';
 
 function BackIcon() {
   return (
@@ -120,6 +120,19 @@ export default function FarmSetupScreen() {
                 <Path d="M7 13L12 9L7 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.newCycleBtn}
+              activeOpacity={0.85}
+              onPress={() => router.push('/create-batch')}
+            >
+              <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <Circle cx="8" cy="8" r="5" stroke="#2E7D32" strokeWidth="1.4" fill="none" />
+                <Line x1="8" y1="5.5" x2="8" y2="10.5" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
+                <Line x1="5.5" y1="8" x2="10.5" y2="8" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
+              </Svg>
+              <Text style={styles.newCycleBtnText}>New Production Cycle</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -197,4 +210,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 30, elevation: 6,
   },
   continueBtnText: { fontSize: 16, fontWeight: '600', color: 'white' },
+  newCycleBtn: {
+    width: '100%', height: 50, borderRadius: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    marginTop: 12, backgroundColor: '#F0FDF4',
+    borderWidth: 1.5, borderColor: '#2E7D32',
+  },
+  newCycleBtnText: { fontSize: 14, fontWeight: '600', color: '#2E7D32' },
 });

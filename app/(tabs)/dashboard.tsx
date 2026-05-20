@@ -3,11 +3,29 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg';
 import BottomTabBar from '../../components/BottomTabBar';
+import { useBatchStore } from '../../store/useBatchStore';
 
 const { width } = Dimensions.get('window');
 
+function weeksSince(dateStr: string): number {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  return Math.floor(diff / (7 * 24 * 60 * 60 * 1000))
+}
+
+function parseWeeks(duration: string): number {
+  const n = parseInt(duration, 10)
+  return isNaN(n) ? 8 : n
+}
+
+function computeProgress(startDate: string, duration: string): number {
+  const total = parseWeeks(duration)
+  const elapsed = weeksSince(startDate)
+  return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)))
+}
+
 export default function DashboardScreen() {
   const router = useRouter();
+  const batches = useBatchStore((s) => s.batches)
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -80,7 +98,7 @@ export default function DashboardScreen() {
 
         <View style={styles.actionsGrid}>
           {[
-            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: undefined },
+            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/create-batch' as const },
             { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/daily-records' as const },
             { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/(tabs)/sales-revenue' as const },
             { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: undefined },
@@ -130,36 +148,47 @@ export default function DashboardScreen() {
 
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Active Batches</Text>
-          <TouchableOpacity><Text style={styles.secLink}>See All</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/batches')}><Text style={styles.secLink}>See All</Text></TouchableOpacity>
         </View>
 
-        {[
-          { name: 'Layer Farm Batch A', badge: 'Healthy', badgeColor: '#16A34A', badgeBg: '#F0FDF4', type: 'Broilers', birds: '420', age: 'Week 4', progress: 65, progColor: '#16A34A', borderColor: '#16A34A' },
-          { name: 'Broiler Pen B', badge: 'Mid-Stage', badgeColor: '#F59E0B', badgeBg: '#FFFBEB', type: 'Broilers', birds: '310', age: 'Week 2', progress: 32, progColor: '#F59E0B', borderColor: '#F59E0B' },
-        ].map((b, i) => (
-          <View key={i} style={[styles.batchCard, { borderLeftColor: b.borderColor }]}>
+        {batches.slice(0, 2).map((b) => {
+          const prog = computeProgress(b.startDate, b.duration)
+          const badgeClr = prog > 80 ? '#F59E0B' : prog > 40 ? '#16A34A' : '#1A56FF'
+          const badgeBg = prog > 80 ? '#FFFBEB' : prog > 40 ? '#F0FDF4' : '#EEF3FF'
+          const badgeTxt = prog > 80 ? 'Near Harvest' : prog > 40 ? 'Active' : 'Early Stage'
+          const borderClr = prog > 80 ? '#F59E0B' : '#16A34A'
+          const weeks = weeksSince(b.startDate)
+          const totalW = parseWeeks(b.duration)
+          return (
+          <TouchableOpacity
+            key={b.id}
+            style={[styles.batchCard, { borderLeftColor: borderClr }]}
+            activeOpacity={0.85}
+            onPress={() => router.push({ pathname: '/batch-details/[id]', params: { id: b.id } })}
+          >
             <View style={styles.batchTop}>
-              <Text style={styles.batchName}>{b.name}</Text>
-              <View style={[styles.batchBadge, { backgroundColor: b.badgeBg }]}>
-                <Text style={[styles.batchBadgeText, { color: b.badgeColor }]}>{b.badge}</Text>
+              <Text style={styles.batchName}>{b.batchName}</Text>
+              <View style={[styles.batchBadge, { backgroundColor: badgeBg }]}>
+                <Text style={[styles.batchBadgeText, { color: badgeClr }]}>{badgeTxt}</Text>
               </View>
             </View>
             <View style={styles.batchDetails}>
-              <View><Text style={styles.batchDetailLbl}>Type</Text><Text style={styles.batchDetailVal}>{b.type}</Text></View>
-              <View><Text style={styles.batchDetailLbl}>Birds</Text><Text style={styles.batchDetailVal}>{b.birds}</Text></View>
-              <View><Text style={styles.batchDetailLbl}>Age</Text><Text style={styles.batchDetailVal}>{b.age}</Text></View>
+              <View><Text style={styles.batchDetailLbl}>Type</Text><Text style={styles.batchDetailVal}>{b.livestockType}</Text></View>
+              <View><Text style={styles.batchDetailLbl}>Birds</Text><Text style={styles.batchDetailVal}>{b.quantity}</Text></View>
+              <View><Text style={styles.batchDetailLbl}>Week</Text><Text style={styles.batchDetailVal}>{Math.min(weeks + 1, totalW)}/{totalW}</Text></View>
             </View>
             <View style={styles.batchProgress}>
               <View style={styles.batchProgHead}>
                 <Text style={{ fontSize: 11, color: '#94A3B8' }}>Feed Cycle Progress</Text>
-                <Text style={{ fontSize: 11, color: '#94A3B8' }}>{b.progress}%</Text>
+                <Text style={{ fontSize: 11, color: '#94A3B8' }}>{prog}%</Text>
               </View>
               <View style={styles.batchProgTrack}>
-                <View style={[styles.batchProgFill, { width: `${b.progress}%`, backgroundColor: b.progColor }]} />
+                <View style={[styles.batchProgFill, { width: `${prog}%`, backgroundColor: borderClr }]} />
               </View>
             </View>
-          </View>
-        ))}
+          </TouchableOpacity>
+          )
+        })}
 
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Smart Insights</Text>
