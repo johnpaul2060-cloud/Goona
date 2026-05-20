@@ -11,7 +11,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
   FadeInUp, FadeIn,
 } from 'react-native-reanimated'
-import BottomTabBar from '../../components/BottomTabBar'
+import BottomDock from '../../components/navigation/BottomDock'
 import { useBatchStore, Batch } from '../../store/useBatchStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -453,7 +453,7 @@ export default function BatchesScreen() {
         </Animated.View>
       </TouchableOpacity>
 
-      <BottomTabBar />
+      <BottomDock />
     </View>
   )
 }
@@ -623,3 +623,5 @@ const styles = StyleSheet.create({
     shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 10,
   },
 })
+
+

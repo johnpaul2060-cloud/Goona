@@ -12,7 +12,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, withSpring, withDelay, FadeInUp, FadeIn,
 } from 'react-native-reanimated'
-import BottomTabBar from '../../components/BottomTabBar'
+import BottomDock from '../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -586,7 +586,7 @@ export default function TeamScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      <BottomTabBar hidden={false} />
+      <BottomDock hidden={false} />
     </View>
   )
 }
@@ -699,3 +699,5 @@ const invStyles = StyleSheet.create({
   },
   btnSecondaryText: { fontWeight: '600', fontSize: 12, color: '#1A2E00' },
 })
+
+

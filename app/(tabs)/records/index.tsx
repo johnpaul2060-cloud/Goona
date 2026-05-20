@@ -10,7 +10,7 @@ import Animated, {
   withSpring, Easing,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import BottomTabBar from '../../../components/BottomTabBar'
+import BottomDock from '../../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const CARD_HORIZ_W = 148
@@ -689,7 +689,7 @@ export default function RecordsDashboardScreen() {
       </ScrollView>
 
       {/* ── BOTTOM TAB ── */}
-      <BottomTabBar hidden={keyboardH > 0} />
+      <BottomDock hidden={keyboardH > 0} />
 
       {/* ── MODAL ── */}
       <RecordModal visible={modalVisible} onClose={() => setModalVisible(false)} />
@@ -869,3 +869,5 @@ const styles = StyleSheet.create({
   modalSyncAction: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
   modalSyncMeta: { fontSize: 12, color: '#94A3B8', marginTop: 1 },
 })
+
+

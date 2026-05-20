@@ -11,7 +11,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
   FadeInUp, FadeIn,
 } from 'react-native-reanimated'
-import BottomTabBar from '../components/BottomTabBar'
+import BottomDock from '../components/navigation/BottomDock'
 
 /* ─── Icons ─── */
 function BackIcon() {
@@ -418,7 +418,7 @@ export default function SettingsScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      <BottomTabBar />
+      <BottomDock />
     </View>
   )
 }
@@ -469,3 +469,5 @@ const styles = StyleSheet.create({
   dangerLabel: { fontSize: 13, fontWeight: '600', color: '#991B1B' },
   dangerAction: { fontSize: 12, color: '#DC2626', fontWeight: '500', paddingVertical: 4, paddingHorizontal: 12, borderRadius: 8, overflow: 'hidden' },
 })
+
+

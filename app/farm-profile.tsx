@@ -8,7 +8,7 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import BottomTabBar from '../components/BottomTabBar'
+import BottomDock from '../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -383,7 +383,7 @@ export default function FarmProfileScreen() {
         <View style={{ height: 160 }} />
       </ScrollView>
 
-      <BottomTabBar />
+      <BottomDock />
     </View>
   )
 }
@@ -563,3 +563,5 @@ const styles = StyleSheet.create({
   actionPillPrimaryText: { fontSize: 13, fontWeight: '500', color: 'white' },
   actionPillText: { fontSize: 13, fontWeight: '500', color: '#1F2937' },
 })
+
+

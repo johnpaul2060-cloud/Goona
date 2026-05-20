@@ -7,7 +7,7 @@ import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated'
-import BottomTabBar from '../../components/BottomTabBar'
+import BottomDock from '../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const CARD_W = (SCREEN_W - 52) / 2
@@ -295,7 +295,7 @@ export default function SalesRevenueScreen() {
         </Svg>
       </TouchableOpacity>
 
-      <BottomTabBar />
+      <BottomDock />
     </View>
   )
 }
@@ -413,3 +413,5 @@ const styles = StyleSheet.create({
     shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 8,
   },
 })
+
+

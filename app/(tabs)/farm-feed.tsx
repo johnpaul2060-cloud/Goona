@@ -10,7 +10,7 @@ import AnimatedReanimated, {
   withSpring, Easing,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import BottomTabBar from '../../components/BottomTabBar'
+import BottomDock from '../../components/navigation/BottomDock'
 
 /* ── HOOKS ── */
 function useStaggerEntry(index: number, baseDelay = 100) {
@@ -362,7 +362,9 @@ export default function FarmFeedScreen() {
         </AnimatedReanimated.View>
       </BlurView>
 
-      <BottomTabBar hidden={keyboardH > 0} />
+      <BottomDock hidden={keyboardH > 0} />
     </View>
   )
 }
+
+

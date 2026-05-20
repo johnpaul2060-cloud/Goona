@@ -11,7 +11,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
   FadeInUp,
 } from 'react-native-reanimated'
-import BottomTabBar from '../../components/BottomTabBar'
+import BottomDock from '../../components/navigation/BottomDock'
 import { useBatchStore } from '../../store/useBatchStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -536,7 +536,7 @@ export default function BatchDetailsScreen() {
         <View style={{ height: 160 }} />
       </ScrollView>
 
-      <BottomTabBar />
+      <BottomDock />
     </View>
   )
 }

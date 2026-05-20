@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import * as ImagePicker from 'expo-image-picker'
-import BottomTabBar from '../components/BottomTabBar'
+import BottomDock from '../components/navigation/BottomDock'
 import BatchPickerModal from '../components/BatchPickerModal'
 
 /* ─── Press Scale ─── */
@@ -541,7 +541,7 @@ export default function DailyRecordsScreen() {
         onClose={() => setShowBatchPicker(false)}
       />
 
-      <BottomTabBar />
+      <BottomDock />
     </View>
   )
 }
@@ -645,3 +645,5 @@ const styles = StyleSheet.create({
   entrySync: { flexDirection: 'row', alignItems: 'center', gap: 3, flexShrink: 0 },
   entrySyncText: { fontSize: 10, fontWeight: '500', color: '#16A34A' },
 })
+
+

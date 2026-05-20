@@ -12,7 +12,7 @@ import Animated, {
   withSpring, withRepeat, withSequence, Easing,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import BottomTabBar from '../../../components/BottomTabBar'
+import BottomDock from '../../../components/navigation/BottomDock'
 import RecoveryCheckInModal from '../../../components/RecoveryCheckInModal'
 import {
   useRecoveryStore, fmtDateFromParts,
@@ -699,7 +699,7 @@ export default function RecapitalizationDashboardScreen() {
         onClose={() => setShowCheckIn(false)}
       />
 
-      <BottomTabBar hidden={keyboardH > 0} />
+      <BottomDock hidden={keyboardH > 0} />
     </View>
   )
 }
@@ -940,3 +940,5 @@ const styles = StyleSheet.create({
   behaviorIconWrap: { width: 20, height: 20, marginTop: 1 },
   behaviorText: { fontSize: 13, fontWeight: '500', color: '#1F2937', lineHeight: 19, flex: 1 },
 })
+
+

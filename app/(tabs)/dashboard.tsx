@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dim
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg';
-import BottomTabBar from '../../components/BottomTabBar';
+import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
 
 const { width } = Dimensions.get('window');
@@ -239,7 +239,7 @@ export default function DashboardScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <BottomTabBar />
+      <BottomDock />
     </SafeAreaView>
   );
 }
@@ -340,3 +340,5 @@ const styles = StyleSheet.create({
   feedDesc: { fontSize: 12, color: '#64748B', marginTop: 1 },
   feedTime: { fontSize: 11, color: '#94A3B8', flexShrink: 0 },
 });
+
+

@@ -9,7 +9,7 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import Animated, { FadeInUp, FadeIn, FadeOutDown } from 'react-native-reanimated'
-import BottomTabBar from '../components/BottomTabBar'
+import BottomDock from '../components/navigation/BottomDock'
 import ReminderTaskModal, { ReminderTask } from '../components/ReminderTaskModal'
 
 const FILTERS = ['All', 'Critical', 'Operations', 'Financial', 'AI', 'Team']
@@ -335,7 +335,7 @@ export default function NotificationsScreen() {
         </Animated.View>
       )}
 
-      <BottomTabBar />
+      <BottomDock />
 
       <ReminderTaskModal visible={showCreate} onClose={() => setShowCreate(false)} onSave={handleCreateItem} />
     </View>
@@ -460,3 +460,5 @@ const styles = StyleSheet.create({
   },
   toastText: { fontSize: 14, fontWeight: '600', color: 'white' },
 })
+
+

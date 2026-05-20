@@ -13,7 +13,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
   FadeInDown, FadeInUp,
 } from 'react-native-reanimated'
-import BottomTabBar from '../components/BottomTabBar'
+import BottomDock from '../components/navigation/BottomDock'
 
 function BackIcon() {
   return (
@@ -371,7 +371,7 @@ export default function PlanRecaptScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <BottomTabBar hidden={keyboardH > 0} />
+      <BottomDock hidden={keyboardH > 0} />
     </View>
   )
 }
@@ -596,3 +596,5 @@ const styles = StyleSheet.create({
   },
   btnSecondaryText: { fontSize: 14, fontWeight: '600', color: '#64748B' },
 })
+
+
