@@ -514,7 +514,7 @@ export default function TeamScreen() {
                   <Path d="M7 10L9 12L13 8" stroke="#00695C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                 </Svg>
               }
-              onPress={() => router.push('/farm-profile' as any)}
+              onPress={() => router.push('/farm-profile')}
             />
             <View style={{ width: 14 }} />
             <QACard

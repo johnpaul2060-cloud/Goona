@@ -10,6 +10,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="dashboard" />
+      <Tabs.Screen name="batches" />
       <Tabs.Screen name="farm-feed" />
       <Tabs.Screen name="records" />
       <Tabs.Screen name="sales-revenue" />
