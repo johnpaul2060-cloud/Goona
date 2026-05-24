@@ -110,9 +110,9 @@ export default function DashboardScreen() {
 
         <View style={styles.actionsGrid}>
           {[
-            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/create-batch' as const },
-            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/daily-records' as const },
-            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/(tabs)/sales-revenue' as const },
+            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/records' as const },
+            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/records' as const },
+            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/records' as const },
             { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: '/(tabs)/team' as const },
           ].map((a, i) => {
             const p = pressScales[i]

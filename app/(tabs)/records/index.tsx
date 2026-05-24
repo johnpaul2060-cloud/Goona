@@ -7,9 +7,10 @@ import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
 import { BlurView } from 'expo-blur'
 import Animated, {
   useSharedValue, useAnimatedStyle, withDelay, withTiming,
-  withSpring, Easing,
+  withSpring, Easing, FadeInUp,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { router } from 'expo-router'
 import BottomDock from '../../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -269,6 +270,55 @@ const MODAL_DETAIL = {
   photos: ['🐓', '🌾', '📋'],
 }
 
+/* ── ECOSYSTEM LINKS ── */
+const ECOSYSTEM_LINKS = [
+  {
+    id: 'daily-ops',
+    icon: '\u{1F4CB}',
+    label: 'Daily Operations',
+    desc: 'Feed, mortality, medication, water, egg logs',
+    route: '/daily-records',
+    color: '#16A34A',
+    bg: '#F0FDF4',
+  },
+  {
+    id: 'batch-mgmt',
+    icon: '\u{1F4E6}',
+    label: 'Batch Management',
+    desc: 'Active batches, history, performance analytics',
+    route: '/create-batch',
+    color: '#1A56FF',
+    bg: '#EEF3FF',
+  },
+  {
+    id: 'sales',
+    icon: '\u{1F4B0}',
+    label: 'Sales & Revenue',
+    desc: 'Revenue tracking, payments, outstanding balances',
+    route: '/(tabs)/sales-revenue',
+    color: '#F59E0B',
+    bg: '#FFFBEB',
+  },
+  {
+    id: 'recapt',
+    icon: '\u{1F3E6}',
+    label: 'Recapitalization',
+    desc: 'Savings progress, contributions, investments',
+    route: '/recapitalization',
+    color: '#7C3AED',
+    bg: '#F3E8FF',
+  },
+  {
+    id: 'analytics',
+    icon: '\u{1F4CA}',
+    label: 'Operational Analytics',
+    desc: 'Charts, trends, insights, historical comparisons',
+    route: '/daily-records',
+    color: '#0F766E',
+    bg: '#DDF5F0',
+  },
+]
+
 /* ── COMPONENTS ── */
 function SummaryCard({
   item,
@@ -527,6 +577,34 @@ function RecordModal({
   )
 }
 
+/* ── Ecosystem Card ── */
+function EcosystemCard({ item, index }: { item: (typeof ECOSYSTEM_LINKS)[0]; index: number }) {
+  const animStyle = useStaggerEntry(index, 300)
+  const { style: pressStyle, onPressIn, onPressOut } = usePressScale()
+  return (
+    <Animated.View style={[animStyle, pressStyle]}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => router.push(item.route as any)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={styles.ecosystemCard}
+      >
+        <View style={[styles.ecosystemIcon, { backgroundColor: item.bg }]}>
+          <Text style={styles.ecosystemEmoji}>{item.icon}</Text>
+        </View>
+        <View style={styles.ecosystemInfo}>
+          <Text style={styles.ecosystemLabel}>{item.label}</Text>
+          <Text style={styles.ecosystemDesc}>{item.desc}</Text>
+        </View>
+        <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <Path d="M6 4L10 8L6 12" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+}
+
 /* ── MAIN SCREEN ── */
 export default function RecordsDashboardScreen() {
   const insets = useSafeAreaInsets()
@@ -569,7 +647,7 @@ export default function RecordsDashboardScreen() {
     searchScale.value = withSpring(1, { damping: 15, stiffness: 200 })
   }, [])
 
-  const TOP_BAR_H = 56
+  const [headerH, setHeaderH] = useState(0)
   const TOP = insets.top
 
   return (
@@ -578,6 +656,7 @@ export default function RecordsDashboardScreen() {
       <BlurView
         intensity={55}
         tint="light"
+        onLayout={(e) => { if (headerH === 0) setHeaderH(e.nativeEvent.layout.height) }}
         style={[styles.headerBlur, { top: 0, paddingTop: TOP + 8 }]}
       >
         <View style={styles.headerRow}>
@@ -627,11 +706,22 @@ export default function RecordsDashboardScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollInner,
-          { paddingTop: TOP + TOP_BAR_H + 140, paddingBottom: keyboardH > 0 ? keyboardH + 140 : 160 },
+          { paddingTop: headerH ? headerH + 12 : TOP + 140, paddingBottom: keyboardH > 0 ? keyboardH + 140 : 160 },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* ── RECORDS ECOSYSTEM ── */}
+        <Animated.View entering={FadeInUp.duration(500).delay(100).springify()} style={styles.ecosystemSection}>
+          <View style={styles.ecosystemHeader}>
+            <Text style={styles.ecosystemTitle}>Records Ecosystem</Text>
+            <Text style={styles.ecosystemSub}>Quick access to every operational records module</Text>
+          </View>
+          {ECOSYSTEM_LINKS.map((item, i) => (
+            <EcosystemCard key={item.id} item={item} index={i} />
+          ))}
+        </Animated.View>
+
         {/* Analytics Cards */}
         <ScrollView
           horizontal
@@ -868,6 +958,23 @@ const styles = StyleSheet.create({
   modalSyncInfo: { flex: 1 },
   modalSyncAction: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
   modalSyncMeta: { fontSize: 12, color: '#94A3B8', marginTop: 1 },
+
+  /* ECOSYSTEM HUB */
+  ecosystemSection: { marginBottom: 20, marginTop: 4 },
+  ecosystemHeader: { marginBottom: 12 },
+  ecosystemTitle: { fontSize: 18, fontWeight: '700', color: '#1B1B1B' },
+  ecosystemSub: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
+  ecosystemCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: 'white', borderRadius: 20, padding: 14,
+    marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 14, elevation: 2,
+  },
+  ecosystemIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  ecosystemEmoji: { fontSize: 18 },
+  ecosystemInfo: { flex: 1 },
+  ecosystemLabel: { fontSize: 14, fontWeight: '700', color: '#1B1B1B' },
+  ecosystemDesc: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
 })
 
 

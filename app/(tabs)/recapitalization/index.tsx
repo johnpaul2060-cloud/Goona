@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, Pressable, ScrollView,
-  StyleSheet, Dimensions, Keyboard,
+  StyleSheet, Dimensions, Keyboard, PanResponder, Modal, Platform,
 } from 'react-native'
 import { router } from 'expo-router'
 import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
@@ -10,6 +10,7 @@ import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
 import Animated, {
   useSharedValue, useAnimatedStyle, withDelay, withTiming,
   withSpring, withRepeat, withSequence, Easing,
+  FadeInRight, FadeInLeft, SlideInUp,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import BottomDock from '../../../components/navigation/BottomDock'
@@ -53,15 +54,54 @@ function AnimatedProgressFill({ progress, color }: { progress: number; color: st
   return <Animated.View style={[{ backgroundColor: color }, styles.progressFill, style]} />
 }
 
-function BellIcon() {
+function AnimatedBell() {
+  const records = useRecoveryStore((s) => s.records)
+  const now = new Date()
+  const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
+  let missedCount = 0
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+    const ds = fmtDateFromParts(d.getFullYear(), d.getMonth(), d.getDate())
+    if (records[ds]?.status === 'missed') missedCount++
+  }
+  const todayRec = records[todayStr]
+  const isDue = !todayRec || todayRec.status === 'none' || !todayRec.status
+  const count = missedCount + (isDue ? 1 : 0)
+
+  const pulse = useSharedValue(1)
+  useEffect(() => {
+    if (count > 0) {
+      pulse.value = withRepeat(withSequence(withTiming(0.4, { duration: 2000 }), withTiming(1, { duration: 2000 })), -1, true)
+    } else { pulse.value = 1 }
+  }, [count])
+  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }))
+
   return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Path d="M10 3C7.2 3 5 5.2 5 8V12.5L3.5 15H16.5L15 12.5V8C15 5.2 12.8 3 10 3Z" stroke="#1F2937" strokeWidth="1.5" fill="none" />
-      <Path d="M8.5 15C8.5 15.8 9.2 16.5 10 16.5C10.8 16.5 11.5 15.8 11.5 15" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <Circle cx="15.5" cy="4.5" r="2.5" fill="#EF4444" stroke="white" strokeWidth="1.5" />
-    </Svg>
+    <View style={{ width: 20, height: 20 }}>
+      <Animated.View style={pulseStyle}>
+        <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <Path d="M10 3C7.2 3 5 5.2 5 8V12.5L3.5 15H16.5L15 12.5V8C15 5.2 12.8 3 10 3Z" stroke={count > 0 ? '#DC2626' : '#1F2937'} strokeWidth="1.5" fill="none" />
+          <Path d="M8.5 15C8.5 15.8 9.2 16.5 10 16.5C10.8 16.5 11.5 15.8 11.5 15" stroke={count > 0 ? '#DC2626' : '#1F2937'} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        </Svg>
+      </Animated.View>
+      {count > 0 && (
+        <View style={bellStyles.badge}>
+          <Text style={bellStyles.badgeText}>{count > 9 ? '9+' : count}</Text>
+        </View>
+      )}
+    </View>
   )
 }
+const bellStyles = StyleSheet.create({
+  badge: {
+    position: 'absolute', top: -6, right: -6,
+    minWidth: 17, height: 17, borderRadius: 8.5,
+    backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 3,
+    shadowColor: '#DC2626', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4,
+  },
+  badgeText: { fontSize: 9, fontWeight: '800', color: '#fff', includeFontPadding: false },
+})
 
 function MoreIcon() {
   return (
@@ -331,6 +371,40 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
   const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
   const streak = computeStreak(records)
 
+  const [viewYear, setViewYear] = useState(now.getFullYear())
+  const [viewMonth, setViewMonth] = useState(now.getMonth())
+  const [navDir, setNavDir] = useState<'next' | 'prev'>('next')
+  const [detailDate, setDetailDate] = useState<Date | null>(null)
+  const [showDetail, setShowDetail] = useState(false)
+
+  const isCurMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth()
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+  const firstDow = new Date(viewYear, viewMonth, 1).getDay()
+  const monthName = MONTHS[viewMonth]
+
+  const goPrev = () => {
+    setNavDir('prev')
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) }
+    else setViewMonth(m => m - 1)
+  }
+  const goNext = () => {
+    setNavDir('next')
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) }
+    else setViewMonth(m => m + 1)
+  }
+
+  const handleDayTap = (day: number) => {
+    const d = new Date(viewYear, viewMonth, day)
+    setDetailDate(d)
+    setShowDetail(true)
+  }
+
+  const stateColors: Record<string, string> = {
+    completed: '#2E7D32', exceeded: '#AEEA00',
+    partial: '#F59E0B', missed: '#EF4444',
+    upcoming: '#D97706', forecast: '#D1D5DB', none: '#F1F5F9',
+  }
+
   const pulse = useSharedValue(1)
   useEffect(() => {
     pulse.value = withRepeat(
@@ -340,82 +414,289 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
   }, [])
   const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }))
 
-  const stateColors: Record<string, string> = {
-    completed: '#2E7D32', exceeded: '#AEEA00',
-    partial: '#F59E0B', missed: '#EF4444', none: '#F1F5F9',
+  /* Readiness */
+  const computeReadiness = (recs: Record<string, DayRecord>): number => {
+    const cStreak = computeStreak(recs)
+    const td = now.getDate()
+    if (td === 0) return 0
+    let ws = 0, ms = 0
+    for (let d = 1; d <= td; d++) {
+      const ds = fmtDateFromParts(now.getFullYear(), now.getMonth(), d)
+      const r = recs[ds]
+      const w = 1 + d / td
+      ms += w
+      if (r?.status === 'completed') ws += w
+      else if (r?.status === 'exceeded') ws += w * 1.2
+      else if (r?.status === 'partial') ws += w * 0.5
+    }
+    return Math.min((ms > 0 ? ws / ms : 0) + Math.min(cStreak * 0.015, 0.15), 1)
   }
-  const stateLabels: Record<string, string> = {
-    completed: 'Completed', exceeded: 'Exceeded',
-    partial: 'Partial', missed: 'Missed',
-  }
+  const readiness = computeReadiness(records)
+  const weeksToRestart = Math.max(Math.round((1 - readiness) * 40), 1)
 
-  const days = Array.from({ length: 28 }, (_, i) => i + 1)
+  /* Swipe */
+  const panResp = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 10 && Math.abs(gs.dy) < 20,
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dx > 60) goPrev()
+        else if (gs.dx < -60) goNext()
+      },
+    }),
+  ).current
 
   return (
     <Animated.View style={[animStyle, styles.calCard]}>
-      <View style={styles.calHead}>
-        <View>
-          <Text style={styles.calTitle}>Recovery Tracker</Text>
-          <Text style={styles.calSub}>{MONTHS[now.getMonth()]} {now.getFullYear()} — Capital Recovery</Text>
+      {/* Navigation Header */}
+      <View style={styles.calNavRow}>
+        <TouchableOpacity onPress={goPrev} style={styles.calNavBtn} activeOpacity={0.7}>
+          <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <Path d="M10 12L6 8L10 4" stroke="#1F2937" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={goNext} style={styles.calNavBtn} activeOpacity={0.7}>
+          <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <Path d="M6 4L10 8L6 12" stroke="#1F2937" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+        </TouchableOpacity>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text style={styles.calTitle}>{monthName} {viewYear}</Text>
+          <Text style={styles.calSub}>Capital Recovery</Text>
         </View>
         <View style={styles.calStreak}>
           <FlameIcon />
-          <Text style={styles.calStreakText} numberOfLines={1}>{streak}d streak</Text>
+          <Text style={styles.calStreakText} numberOfLines={1}>{streak}d</Text>
         </View>
       </View>
 
-      <View style={styles.calDayLabels}>
-        {DAY_LABELS.map((d, i) => (
-          <Text key={i} style={styles.calDayLabel}>{d}</Text>
-        ))}
+      {/* Timeline Info */}
+      <View style={styles.calTimeline}>
+        <View style={styles.calTimelineItem}>
+          <Text style={styles.calTimelineValue}>{Math.round(readiness * 100)}%</Text>
+          <Text style={styles.calTimelineLabel}>Readiness</Text>
+        </View>
+        <View style={styles.calTimelineDivider} />
+        <View style={styles.calTimelineItem}>
+          <Text style={styles.calTimelineValue}>{weeksToRestart}wk</Text>
+          <Text style={styles.calTimelineLabel}>Est. Restart</Text>
+        </View>
+        <View style={styles.calTimelineDivider} />
+        <View style={styles.calTimelineItem}>
+          <Text style={styles.calTimelineValue}>{streak}d</Text>
+          <Text style={styles.calTimelineLabel}>Streak</Text>
+        </View>
       </View>
 
-      <View style={styles.calGrid}>
-        {Array.from({ length: 4 }).map((_, weekIdx) => (
-          <View key={weekIdx} style={styles.calWeekRow}>
-            {days.slice(weekIdx * 7, weekIdx * 7 + 7).map((dayNum) => {
-              const date = new Date(now.getFullYear(), now.getMonth(), dayNum)
-              const dateStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), dayNum)
-              const record = records[dateStr]
-              const status = record?.status || 'none'
-              const isToday = dateStr === todayStr
-              const isFuture = date > now
+      {/* Calendar Grid with Swipe */}
+      <Animated.View
+        key={`cal-${viewYear}-${viewMonth}`}
+        entering={navDir === 'next' ? FadeInRight.duration(350).springify().damping(18) : FadeInLeft.duration(350).springify().damping(18)}
+        {...panResp.panHandlers}
+      >
+        <View style={styles.calDayLabels}>
+          {DAY_LABELS.map((d, i) => (
+            <Text key={i} style={styles.calDayLabel}>{d}</Text>
+          ))}
+        </View>
 
-              return (
-                <TouchableOpacity
-                  key={dayNum}
-                  style={[styles.calDayCell, isToday && styles.calDayCellToday]}
-                  activeOpacity={0.7}
-                  onPress={() => { if (!isFuture) onDayPress(date) }}
-                  disabled={isFuture}
-                >
-                  {isToday && <Animated.View style={[styles.calDayPulse, pulseStyle]} />}
-                  <View style={[
-                    styles.calDayDot,
-                    { backgroundColor: stateColors[status] },
-                    status === 'none' && { opacity: 0.15 },
-                  ]} />
-                  <Text style={[
-                    styles.calDayNum,
-                    isToday && styles.calDayNumToday,
-                    isFuture && { opacity: 0.25 },
-                  ]}>{dayNum}</Text>
-                </TouchableOpacity>
-              )
-            })}
-          </View>
-        ))}
-      </View>
+        <View style={styles.calGrid}>
+          {(() => {
+            const blanks = firstDow === 0 ? 6 : firstDow - 1
+            const allDays = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+            const totalSlots = blanks + daysInMonth
+            const weeks = Math.ceil(totalSlots / 7)
+            const trailing = weeks * 7 - totalSlots
+            const cells: (number | null)[] = [
+              ...Array(blanks).fill(null),
+              ...allDays,
+              ...Array(trailing).fill(null),
+            ]
+            return Array.from({ length: weeks }, (_, w) => (
+              <View key={w} style={{ flexDirection: 'row' }}>
+                {cells.slice(w * 7, w * 7 + 7).map((cell, i) => {
+                  if (cell === null) return <View key={`e-${w}-${i}`} style={styles.calDayCell} />
+                  const day = cell
+                  const date = new Date(viewYear, viewMonth, day)
+                  const dateStr = fmtDateFromParts(viewYear, viewMonth, day)
+                  const record = records[dateStr]
+                  const isToday = dateStr === todayStr
+                  const isFuture = date > now
 
+                  let status = 'none'
+                  if (isFuture) status = day % 7 === 1 ? 'upcoming' : 'forecast'
+                  else if (record) status = record.status
+
+                  return (
+                    <TouchableOpacity
+                      key={day}
+                      style={[styles.calDayCell, isToday && styles.calDayCellToday]}
+                      activeOpacity={0.7}
+                      onPress={() => handleDayTap(day)}
+                    >
+                      {isToday && <Animated.View style={[styles.calDayPulse, pulseStyle]} />}
+                      <View style={[
+                        styles.calDayDot,
+                        { backgroundColor: stateColors[status] },
+                        (status === 'none' || status === 'forecast') && { opacity: 0.12 },
+                      ]} />
+                      <Text style={[
+                        styles.calDayNum,
+                        isToday && styles.calDayNumToday,
+                        isFuture && { opacity: 0.5 },
+                        status === 'missed' && { color: '#DC2626' },
+                        status === 'upcoming' && { color: '#D97706', fontWeight: '600' },
+                      ]}>{day}</Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            ))
+          })()}
+        </View>
+      </Animated.View>
+
+      {/* Legend */}
       <View style={styles.calLegend}>
-        {['completed', 'exceeded', 'partial', 'missed'].map((key) => (
-          <View key={key} style={styles.calLegendItem}>
-            <View style={[styles.calLegendDot, { backgroundColor: stateColors[key] }]} />
-            <Text style={styles.calLegendText}>{stateLabels[key]}</Text>
+        {[
+          { k: 'completed', l: 'Saved' },
+          { k: 'exceeded', l: 'Exceeded' },
+          { k: 'partial', l: 'Partial' },
+          { k: 'missed', l: 'Missed' },
+          ...(isCurMonth ? [{ k: 'upcoming' as string, l: 'Upcoming' }] : []),
+        ].map(({ k, l }) => (
+          <View key={k} style={styles.calLegendItem}>
+            <View style={[styles.calLegendDot, { backgroundColor: stateColors[k] }]} />
+            <Text style={styles.calLegendText}>{l}</Text>
           </View>
         ))}
       </View>
+
+      {/* Detail Modal */}
+      <DayDetailModal
+        visible={showDetail}
+        date={detailDate}
+        records={records}
+        onClose={() => setShowDetail(false)}
+        onCheckIn={onDayPress}
+      />
     </Animated.View>
+  )
+}
+
+/* ─── Day Detail Modal ─── */
+function DayDetailModal({
+  visible, date, records, onClose, onCheckIn,
+}: {
+  visible: boolean; date: Date | null; records: Record<string, DayRecord>
+  onClose: () => void; onCheckIn: (d: Date) => void
+}) {
+  if (!visible || !date) return null
+
+  const now = new Date()
+  const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
+  const dateStr = fmtDateFromParts(date.getFullYear(), date.getMonth(), date.getDate())
+  const record = records[dateStr]
+  const isToday = dateStr === todayStr
+  const isPast = date < new Date(now.getFullYear(), now.getMonth(), now.getDate()) && !isToday
+  const isFuture = date > now
+
+  const status = record?.status || (isFuture ? 'upcoming' : 'none')
+  const amount = record?.amount
+  const expected = 85000
+  const streak = computeStreak(records)
+
+  const sc: Record<string, string> = {
+    completed: '#2E7D32', exceeded: '#AEEA00',
+    partial: '#F59E0B', missed: '#EF4444',
+    upcoming: '#D97706', forecast: '#D1D5DB', none: '#94A3B8',
+  }
+  const sl: Record<string, string> = {
+    completed: 'Saved Successfully', exceeded: 'Exceeded Target',
+    partial: 'Partial Contribution', missed: 'Missed Contribution',
+    upcoming: 'Upcoming Savings', forecast: 'Forecast Day', none: 'No Record',
+  }
+
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+  let insight = ''
+  if (status === 'missed') insight = 'This missed contribution may delay your production cycle restart by approximately 3 days.'
+  else if (status === 'completed' && streak > 7) insight = 'Your consistency is building strong financial runway for the next batch.'
+  else if (status === 'exceeded') insight = 'Over-contributing accelerates your recapitalization timeline. Excellent discipline.'
+  else if (status === 'partial') insight = 'Partial contributions help, but try to meet the full target for optimal recovery pacing.'
+  else if (isFuture) insight = 'Scheduled savings day. Early contributions reduce financial pressure later in the week.'
+  else insight = 'Every recovery day brings you closer to your next production cycle. Stay consistent.'
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
+        <Animated.View entering={SlideInUp.duration(300).springify().damping(18)} style={styles.modalSheet}>
+          <View style={styles.modalHandleRow}>
+            <View style={styles.modalHandle} />
+          </View>
+          <TouchableOpacity style={styles.modalCloseBtn} onPress={onClose} activeOpacity={0.7}>
+            <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <Line x1="4" y1="4" x2="14" y2="14" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
+              <Line x1="14" y1="4" x2="4" y2="14" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
+            </Svg>
+          </TouchableOpacity>
+
+          <View style={styles.modalDateHead}>
+            <Text style={styles.modalDateDay}>{dayNames[date.getDay()]}</Text>
+            <Text style={styles.modalDateFull}>{monthShort[date.getMonth()]} {date.getDate()}, {date.getFullYear()}</Text>
+            <View style={[styles.modalStatusBadge, { backgroundColor: `${sc[status]}18` as any }]}>
+              <Text style={[styles.modalStatusText, { color: sc[status] }]}>{sl[status]}</Text>
+            </View>
+          </View>
+
+          <View style={styles.modalAmountSection}>
+            <View style={styles.modalAmountRow}>
+              <Text style={styles.modalAmountLabel}>Expected Contribution</Text>
+              <Text style={styles.modalAmountValue}>{'\u20A6'}{expected.toLocaleString()}</Text>
+            </View>
+            {amount !== undefined && (
+              <View style={styles.modalAmountRow}>
+                <Text style={styles.modalAmountLabel}>Actual Saved</Text>
+                <Text style={[styles.modalAmountValue, { color: sc[status] }]}>
+                  {'\u20A6'}{amount.toLocaleString()}
+                </Text>
+              </View>
+            )}
+            {isFuture && (
+              <View style={styles.modalAmountRow}>
+                <Text style={styles.modalAmountLabel}>Status</Text>
+                <Text style={[styles.modalAmountValue, { color: '#D97706', fontSize: 13 }]}>Scheduled</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.modalInsight}>
+            <View style={styles.modalInsightHeader}>
+              <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <Circle cx="7" cy="7" r="5.5" stroke="#2E7D32" strokeWidth="1.2" fill="none" />
+                <Line x1="7" y1="5" x2="7" y2="8" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
+                <Circle cx="7" cy="10.5" r="0.6" fill="#2E7D32" />
+              </Svg>
+              <Text style={styles.modalInsightLabel}>GOONA IQ</Text>
+            </View>
+            <Text style={styles.modalInsightText}>{insight}</Text>
+          </View>
+
+          {(isToday || isPast) && (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.modalActionBtn}
+              onPress={() => { onCheckIn(date); onClose() }}
+            >
+              <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.modalActionGrad}>
+                <Text style={styles.modalActionText}>{isToday ? 'Check In Today' : 'Check In'}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        </Animated.View>
+      </View>
+    </Modal>
   )
 }
 
@@ -633,8 +914,8 @@ export default function RecapitalizationDashboardScreen() {
             <Text style={styles.headerTitle}>Recapitalization</Text>
             <Text style={styles.headerSub}>Plan your production capital recovery</Text>
           </View>
-          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-            <BellIcon />
+          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7} onPress={() => router.push('/recapt-notifications')}>
+            <AnimatedBell />
           </TouchableOpacity>
         </View>
       </BlurView>
@@ -817,31 +1098,79 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06, shadowRadius: 28, elevation: 3,
   },
-  calHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  calTitle: { fontSize: 17, fontWeight: '700', color: '#1F2937' },
-  calSub: { fontSize: 12, color: '#64748B', marginTop: 1 },
-  calStreak: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#FFFBEB', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 100, flexShrink: 1, maxWidth: '45%' },
+  calNavRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  calNavBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
+  calTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937' },
+  calSub: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
+  calStreak: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#FFFBEB', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 100, flexShrink: 1 },
   calStreakText: { fontSize: 11, fontWeight: '600', color: '#F59E0B' },
-  calDayLabels: { flexDirection: 'row', marginTop: 16, marginBottom: 8 },
-  calDayLabel: { width: CAL_W, textAlign: 'center', fontSize: 11, color: '#94A3B8', fontWeight: '500' },
+  calTimeline: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
+    marginTop: 14, marginBottom: 6,
+    backgroundColor: '#F8FAF7', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)',
+  },
+  calTimelineItem: { alignItems: 'center', flex: 1 },
+  calTimelineDivider: { width: 1, height: 24, backgroundColor: '#E2E8E0' },
+  calTimelineValue: { fontSize: 16, fontWeight: '800', color: '#1F2937' },
+  calTimelineLabel: { fontSize: 9, color: '#94A3B8', marginTop: 1, textTransform: 'uppercase', letterSpacing: 0.3 },
+  calDayLabels: { flexDirection: 'row', marginTop: 12, marginBottom: 6 },
+  calDayLabel: { width: CAL_W, textAlign: 'center', fontSize: 10, color: '#94A3B8', fontWeight: '500' },
   calGrid: {},
-  calWeekRow: { flexDirection: 'row', marginBottom: 4 },
   calDayCell: {
-    width: CAL_W, height: 36, alignItems: 'center', justifyContent: 'center',
-    borderRadius: 10,
+    width: CAL_W, height: 34, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 8,
   },
   calDayCellToday: { backgroundColor: '#E8F5E9' },
-  calDayDot: { width: 6, height: 6, borderRadius: 3, position: 'absolute', top: 2 },
+  calDayDot: { width: 5, height: 5, borderRadius: 2.5, position: 'absolute', top: 2 },
   calDayNum: { fontSize: 12, fontWeight: '500', color: '#1F2937' },
   calDayNumToday: { color: '#2E7D32', fontWeight: '700' },
   calDayPulse: {
-    position: 'absolute', width: 34, height: 34, borderRadius: 17,
-    borderWidth: 2, borderColor: 'rgba(46,125,50,0.25)',
+    position: 'absolute', width: 30, height: 30, borderRadius: 15,
+    borderWidth: 2, borderColor: 'rgba(46,125,50,0.2)',
   },
-  calLegend: { flexDirection: 'row', gap: 14, marginTop: 12, flexWrap: 'wrap' },
-  calLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  calLegendDot: { width: 7, height: 7, borderRadius: 3.5 },
-  calLegendText: { fontSize: 10, color: '#94A3B8' },
+  calLegend: { flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap' },
+  calLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  calLegendDot: { width: 6, height: 6, borderRadius: 3 },
+  calLegendText: { fontSize: 9, color: '#94A3B8' },
+
+  /* Day Detail Modal */
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.3)' },
+  modalSheet: {
+    backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.08, shadowRadius: 30, elevation: 10,
+  },
+  modalHandleRow: { alignItems: 'center', marginBottom: 8 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' },
+  modalCloseBtn: {
+    position: 'absolute', top: 16, right: 16,
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+  },
+  modalDateHead: { alignItems: 'center', marginBottom: 16 },
+  modalDateDay: { fontSize: 14, fontWeight: '600', color: '#64748B', textTransform: 'uppercase', letterSpacing: 1 },
+  modalDateFull: { fontSize: 22, fontWeight: '800', color: '#1F2937', marginTop: 2 },
+  modalStatusBadge: { paddingVertical: 4, paddingHorizontal: 14, borderRadius: 50, marginTop: 8 },
+  modalStatusText: { fontSize: 12, fontWeight: '700' },
+  modalAmountSection: {
+    backgroundColor: '#F8FAF7', borderRadius: 16, padding: 16, marginBottom: 14,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)',
+  },
+  modalAmountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  modalAmountLabel: { fontSize: 12, color: '#64748B' },
+  modalAmountValue: { fontSize: 15, fontWeight: '700', color: '#1F2937' },
+  modalInsight: {
+    backgroundColor: '#F0FDF4', borderRadius: 16, padding: 14, marginBottom: 16,
+    borderLeftWidth: 3, borderLeftColor: '#2E7D32',
+  },
+  modalInsightHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  modalInsightLabel: { fontSize: 10, fontWeight: '700', color: '#2E7D32' },
+  modalInsightText: { fontSize: 12, color: '#374151', lineHeight: 18 },
+  modalActionBtn: { borderRadius: 14, overflow: 'hidden' },
+  modalActionGrad: { paddingVertical: 14, alignItems: 'center' },
+  modalActionText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
   reinvestCard: {
     backgroundColor: 'white', borderRadius: 28, padding: 20, marginTop: 18,
