@@ -110,27 +110,49 @@ export default function DashboardScreen() {
 
         <View style={styles.actionsGrid}>
           {[
-            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/records' as const },
-            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/records' as const },
-            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/records' as const },
-            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: '/(tabs)/team' as const },
+            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/create-batch' as const, icon: (c: string) => (
+              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <Circle cx="12" cy="12" r="8" stroke={c} strokeWidth="1.6" fill="none" />
+                <Line x1="12" y1="8" x2="12" y2="16" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+                <Line x1="8" y1="12" x2="16" y2="12" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+              </Svg>
+            )},
+            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/daily-records' as const, icon: (c: string) => (
+              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <Rect x="5" y="3" width="14" height="18" rx="2" stroke={c} strokeWidth="1.5" fill="none" />
+                <Line x1="8" y1="9" x2="16" y2="9" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+                <Line x1="8" y1="13" x2="14" y2="13" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+                <Line x1="8" y1="17" x2="12" y2="17" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+              </Svg>
+            )},
+            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/record-sale' as const, icon: (c: string) => (
+              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <Path d="M3 17L9 11L13 15L21 7" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <Circle cx="21" cy="7" r="2" stroke={c} strokeWidth="1.3" fill="none" />
+                <Line x1="3" y1="21" x2="21" y2="21" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
+              </Svg>
+            )},
+            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: '/team' as const, icon: (c: string) => (
+              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <Circle cx="10" cy="8" r="3.5" stroke={c} strokeWidth="1.5" fill="none" />
+                <Circle cx="17" cy="8" r="3.5" stroke={c} strokeWidth="1.5" fill="none" />
+                <Path d="M3 20c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+                <Path d="M17 14c3.9 0 7 2.7 7 6" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+              </Svg>
+            )},
           ].map((a, i) => {
             const p = pressScales[i]
             return (
-              <Animated.View key={i} style={p.style}>
+              <Animated.View key={i} style={[p.style, { position: 'relative' }]}>
                 <TouchableOpacity
-                  style={styles.actionCard}
+                  style={[styles.actionCard]}
                   activeOpacity={0.9}
                   onPress={() => router.push(a.route)}
                   onPressIn={p.onPressIn}
                   onPressOut={p.onPressOut}
                 >
                   <View style={[styles.actionIcon, { backgroundColor: a.color }]}>
-                    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <Circle cx="12" cy="12" r="8" stroke={a.iconColor} strokeWidth="1.6" fill="none" />
-                      <Line x1="12" y1="8" x2="12" y2="16" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" />
-                      <Line x1="8" y1="12" x2="16" y2="12" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" />
-                    </Svg>
+                    {a.icon(a.iconColor)}
                   </View>
                   <Text style={styles.actionLabel}>{a.label}</Text>
                 </TouchableOpacity>
@@ -269,7 +291,7 @@ const styles = StyleSheet.create({
     borderRadius: 150, backgroundColor: 'rgba(232,245,233,0.3)', zIndex: 0,
   },
   scroll: { flex: 1 },
-  scrollInner: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 0 },
+  scrollInner: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 100 },
   greeting: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 5 },
   greetingSub: { fontSize: 14, fontWeight: '500', color: '#616161' },
   greetingName: { fontSize: 30, fontWeight: '800', color: '#1B1B1B', marginTop: -2 },
@@ -305,8 +327,10 @@ const styles = StyleSheet.create({
   actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, zIndex: 5 },
   actionCard: {
     width: (width - 64) / 2, backgroundColor: 'white', borderRadius: 22, padding: 20,
-    alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05, shadowRadius: 30, elevation: 3,
+    alignItems: 'center',
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08, shadowRadius: 24, elevation: 4,
+    borderWidth: 1, borderColor: 'rgba(46,125,50,0.06)',
   },
   actionIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   actionLabel: { fontSize: 15, fontWeight: '600', color: '#1F2937' },
