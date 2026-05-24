@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dim
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
 
@@ -23,9 +24,20 @@ function computeProgress(startDate: string, duration: string): number {
   return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)))
 }
 
+function usePressScale(scaleTo = 0.96) {
+  const scale = useSharedValue(1)
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  return {
+    style,
+    onPressIn: () => { scale.value = withSpring(scaleTo, { damping: 15, stiffness: 200 }) },
+    onPressOut: () => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }) },
+  }
+}
+
 export default function DashboardScreen() {
   const router = useRouter();
   const batches = useBatchStore((s) => s.batches)
+  const pressScales = [usePressScale(), usePressScale(), usePressScale(), usePressScale()]
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -101,24 +113,30 @@ export default function DashboardScreen() {
             { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/create-batch' as const },
             { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/daily-records' as const },
             { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/(tabs)/sales-revenue' as const },
-            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: undefined },
-          ].map((a, i) => (
-            <TouchableOpacity
-              key={i}
-              style={styles.actionCard}
-              activeOpacity={0.8}
-              onPress={a.route ? () => router.push(a.route) : undefined}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: a.color }]}>
-                <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <Circle cx="12" cy="12" r="8" stroke={a.iconColor} strokeWidth="1.6" fill="none" />
-                  <Line x1="12" y1="8" x2="12" y2="16" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" />
-                  <Line x1="8" y1="12" x2="16" y2="12" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" />
-                </Svg>
-              </View>
-              <Text style={styles.actionLabel}>{a.label}</Text>
-            </TouchableOpacity>
-          ))}
+            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: '/(tabs)/team' as const },
+          ].map((a, i) => {
+            const p = pressScales[i]
+            return (
+              <Animated.View key={i} style={p.style}>
+                <TouchableOpacity
+                  style={styles.actionCard}
+                  activeOpacity={0.9}
+                  onPress={() => router.push(a.route)}
+                  onPressIn={p.onPressIn}
+                  onPressOut={p.onPressOut}
+                >
+                  <View style={[styles.actionIcon, { backgroundColor: a.color }]}>
+                    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <Circle cx="12" cy="12" r="8" stroke={a.iconColor} strokeWidth="1.6" fill="none" />
+                      <Line x1="12" y1="8" x2="12" y2="16" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" />
+                      <Line x1="8" y1="12" x2="16" y2="12" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" />
+                    </Svg>
+                  </View>
+                  <Text style={styles.actionLabel}>{a.label}</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )
+          })}
         </View>
 
         <View style={styles.secHead}>

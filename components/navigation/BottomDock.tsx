@@ -94,9 +94,9 @@ export default function BottomDock({ hidden }: { hidden?: boolean }) {
   const activeIndex = (() => {
     if (pathname === '/(tabs)' || pathname === '/(tabs)/dashboard' || pathname === '/dashboard') return 0
     if (pathname.includes('farm-feed') || pathname.includes('farmchat')) return 1
-    if (pathname.includes('records')) return 2
+    if (pathname.includes('records') || pathname.includes('sales') || pathname.includes('record-sale')) return 2
     if (pathname.includes('recapitalization') || pathname.includes('recapt') || pathname.includes('plan-recapt')) return 3
-    if (pathname.includes('team') || pathname.includes('teams') || pathname.includes('settings') || pathname.includes('goona-iq') || pathname.includes('academy') || pathname.includes('farm-profile') || pathname.includes('device-management') || pathname.includes('permissions')) return 4
+    if (pathname.includes('team') || pathname.includes('teams') || pathname.includes('worker') || pathname.includes('settings') || pathname.includes('goona-iq') || pathname.includes('academy') || pathname.includes('farm-profile') || pathname.includes('device-management') || pathname.includes('permissions')) return 4
     return 0
   })()
 

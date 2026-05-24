@@ -1,18 +1,62 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, Dimensions,
+  StyleSheet, Dimensions, useWindowDimensions,
 } from 'react-native'
 import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
-import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Animated, {
+  useSharedValue, useAnimatedStyle, withSpring, withRepeat,
+  withSequence, withTiming, FadeInUp, FadeIn, Easing,
+} from 'react-native-reanimated'
 import BottomDock from '../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const CARD_W = (SCREEN_W - 52) / 2
 
+/* ─── Press Scale Hook ─── */
+function usePressScale(scaleTo = 0.96) {
+  const scale = useSharedValue(1)
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  return {
+    style,
+    onPressIn: () => { scale.value = withSpring(scaleTo, { damping: 15, stiffness: 200 }) },
+    onPressOut: () => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }) },
+  }
+}
+
+/* ─── FAB Float Hook ─── */
+function useFabFloat() {
+  const translateY = useSharedValue(0)
+  useEffect(() => {
+    translateY.value = withRepeat(
+      withSequence(
+        withTiming(-5, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1, true,
+    )
+  }, [])
+  return useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }))
+}
+
 export default function SalesRevenueScreen() {
+  const insets = useSafeAreaInsets()
+  const { width: winW } = useWindowDimensions()
+  const cardW = (winW - 52) / 2
+  const fabFloat = useFabFloat()
+  const backPress = usePressScale()
+
+  const QA_ACTIONS = [
+    { label: 'Record Sale', bg: '#F0FDF4', iconColor: '#16A34A', route: '/record-sale' as const },
+    { label: 'Payments', bg: '#FFFBEB', iconColor: '#F59E0B', route: '/payments' as const },
+    { label: 'Reports', bg: '#EEF3FF', iconColor: '#1A56FF', route: '/sales-reports' as const },
+    { label: 'Invoices', bg: '#F0FDF4', iconColor: '#16A34A', route: undefined },
+  ]
+  const qaPress = QA_ACTIONS.map(() => usePressScale())
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -23,16 +67,24 @@ export default function SalesRevenueScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollInner}
+        contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 24 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
-          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.back()}>
-            <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
-          </TouchableOpacity>
+          <Animated.View style={backPress.style}>
+            <TouchableOpacity
+              style={styles.navBack}
+              activeOpacity={0.7}
+              onPress={() => router.back()}
+              onPressIn={backPress.onPressIn}
+              onPressOut={backPress.onPressOut}
+            >
+              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </TouchableOpacity>
+          </Animated.View>
           <Text style={styles.topTitle}>Sales & Revenue</Text>
           <TouchableOpacity style={styles.chartBtn} activeOpacity={0.8}>
             <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -98,22 +150,28 @@ export default function SalesRevenueScreen() {
 
         <Animated.View entering={FadeInUp.duration(500).delay(200).springify()}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.qaScroll} contentContainerStyle={{ gap: 12 }}>
-            {[
-              { label: 'Record Sale', bg: '#F0FDF4', iconColor: '#16A34A', route: undefined },
-              { label: 'Payments', bg: '#FFFBEB', iconColor: '#F59E0B', route: undefined },
-              { label: 'Reports', bg: '#EEF3FF', iconColor: '#1A56FF', route: undefined },
-              { label: 'Invoices', bg: '#F0FDF4', iconColor: '#16A34A', route: undefined },
-            ].map((a, i) => (
-              <TouchableOpacity key={i} style={styles.qaCard} activeOpacity={0.85}>
-                <View style={[styles.qaIcon, { backgroundColor: a.bg }]}>
-                  {i === 0 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Circle cx="10" cy="10" r="6" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Line x1="10" y1="7" x2="10" y2="13" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Line x1="7" y1="10" x2="13" y2="10" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /></Svg>}
-                  {i === 1 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="5" width="12" height="10" rx="2" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Path d="M4 10H16" stroke={a.iconColor} strokeWidth="1.4" /></Svg>}
-                  {i === 2 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Path d="M3 14H17" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" /><Path d="M5 11L7 7L9 9L13 4" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>}
-                  {i === 3 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="4" width="12" height="12" rx="2" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Line x1="8" y1="8" x2="12" y2="8" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Line x1="8" y1="11" x2="10" y2="11" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /></Svg>}
-                </View>
-                <Text style={styles.qaLabel}>{a.label}</Text>
-              </TouchableOpacity>
-            ))}
+            {QA_ACTIONS.map((a, i) => {
+              const p = qaPress[i]
+              return (
+                <Animated.View key={a.label} style={p.style}>
+                  <TouchableOpacity
+                    style={styles.qaCard}
+                    activeOpacity={0.85}
+                    onPress={() => a.route && router.push(a.route as any)}
+                    onPressIn={p.onPressIn}
+                    onPressOut={p.onPressOut}
+                  >
+                    <View style={[styles.qaIcon, { backgroundColor: a.bg }]}>
+                      {i === 0 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Circle cx="10" cy="10" r="6" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Line x1="10" y1="7" x2="10" y2="13" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Line x1="7" y1="10" x2="13" y2="10" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /></Svg>}
+                      {i === 1 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="5" width="12" height="10" rx="2" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Path d="M4 10H16" stroke={a.iconColor} strokeWidth="1.4" /></Svg>}
+                      {i === 2 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Path d="M3 14H17" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" /><Path d="M5 11L7 7L9 9L13 4" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>}
+                      {i === 3 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="4" width="12" height="12" rx="2" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Line x1="8" y1="8" x2="12" y2="8" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Line x1="8" y1="11" x2="10" y2="11" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /></Svg>}
+                    </View>
+                    <Text style={styles.qaLabel}>{a.label}</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              )
+            })}
           </ScrollView>
         </Animated.View>
 
@@ -288,12 +346,20 @@ export default function SalesRevenueScreen() {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => router.push('/create-batch')}>
-        <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <Line x1="14" y1="8" x2="14" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-          <Line x1="8" y1="14" x2="20" y2="14" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-        </Svg>
-      </TouchableOpacity>
+      <Animated.View style={[styles.fab, { bottom: insets.bottom + 100 }, fabFloat]}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push('/create-batch')}
+          onPressIn={backPress.onPressIn}
+          onPressOut={backPress.onPressOut}
+          style={styles.fabTouch}
+        >
+          <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <Line x1="14" y1="8" x2="14" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            <Line x1="8" y1="14" x2="20" y2="14" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+          </Svg>
+        </TouchableOpacity>
+      </Animated.View>
 
       <BottomDock />
     </View>
@@ -322,7 +388,7 @@ const styles = StyleSheet.create({
 
   /* hero card */
   heroCard: { backgroundColor: '#2E7D32', borderRadius: 32, padding: 24, marginTop: 18, overflow: 'hidden', shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.25, shadowRadius: 45, elevation: 8 },
-  heroDots: { position: 'absolute', inset: 0, opacity: 0.04, zIndex: 0 },
+  heroDots: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.04, zIndex: 0 },
   heroGl: { position: 'absolute', top: -20, right: -10, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(255,255,255,0.08)', pointerEvents: 'none' },
   heroCc: { position: 'absolute', borderRadius: 50, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1 },
@@ -406,11 +472,13 @@ const styles = StyleSheet.create({
 
   /* fab */
   fab: {
-    position: 'absolute', bottom: 96, right: 20, zIndex: 15,
+    position: 'absolute', right: 20, zIndex: 15,
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 8,
+  },
+  fabTouch: {
     width: 64, height: 64, borderRadius: 32,
     backgroundColor: '#2E7D32',
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 8,
   },
 })
 

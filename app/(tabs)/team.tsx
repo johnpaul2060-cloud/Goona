@@ -498,7 +498,7 @@ export default function TeamScreen() {
                   <Path d="M7 9H13M7 12H11" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2" strokeLinecap="round" />
                 </Svg>
               }
-              onPress={() => router.push('/academy' as any)}
+              onPress={() => router.push('/goona-academy')}
             />
           </View>
           <View style={{ height: 14 }} />
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,105,92,0.06)',
   },
   bgDotGrid: {
-    position: 'absolute', inset: 0, zIndex: 0, opacity: 0.5,
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, opacity: 0.5,
   },
   bgDot: {
     position: 'absolute', width: 2, height: 2,

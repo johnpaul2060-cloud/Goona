@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.28, shadowRadius: 45, elevation: 8,
   },
   heroDots: {
-    position: 'absolute', inset: 0, opacity: 0.04, zIndex: 0,
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.04, zIndex: 0,
   },
   heroCc: { position: 'absolute', borderRadius: 50, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
   heroGl: {
