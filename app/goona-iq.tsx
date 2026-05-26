@@ -71,8 +71,6 @@ const FINANCIALS = [
   { label: 'Revenue Prob.', value: '76%', forecast: '88%', trend: 0.76 },
 ]
 
-const FOCUS_MODES = ['Mortality', 'Profitability', 'Feed Mgmt', 'Worker', 'Recapitalization', 'Growth']
-
 /* ─── Context-aware AI responses ─── */
 const AI_CONTEXT_RESPONSES: Record<string, { insight: string; recommendation: string }> = {
   mortality: {
@@ -133,12 +131,11 @@ function usePressScale() {
 /* ─── MAIN SCREEN ─── */
 export default function GOONAIQScreen() {
   const [visibleInsights, setVisibleInsights] = useState(INSIGHTS.slice(0, 4))
-  const [focusMode, setFocusMode] = useState('Mortality')
+
   const [currentTip, setCurrentTip] = useState(0)
   const [aiState, setAiState] = useState<AIState>('idle')
   const [aiQuery, setAiQuery] = useState('')
   const [aiResponse, setAiResponse] = useState<{ insight: string; recommendation: string } | null>(null)
-  const [keyboardVisible, setKeyboardVisible] = useState(false)
   const insightIdx = useRef(4)
   const inputRef = useRef<TextInput>(null)
 
@@ -169,8 +166,8 @@ export default function GOONAIQScreen() {
   }, [])
 
   /* ─── AI query handler ─── */
-  const handleSend = () => {
-    const q = aiQuery.trim().toLowerCase()
+  const handleSend = (query?: string) => {
+    const q = (query || aiQuery).trim().toLowerCase()
     if (!q) return
     Keyboard.dismiss()
     setAiQuery('')
@@ -214,12 +211,6 @@ export default function GOONAIQScreen() {
     }, 2500)
   }
 
-  useEffect(() => {
-    const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true))
-    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false))
-    return () => { show.remove(); hide.remove() }
-  }, [])
-
   const { style: backStyle, onPressIn: backIn, onPressOut: backOut } = usePressScale()
 
   return (
@@ -246,7 +237,7 @@ export default function GOONAIQScreen() {
       >
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollInner, { paddingBottom: 24 }]}
+        contentContainerStyle={[styles.scrollInner, { paddingBottom: 180 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -427,46 +418,27 @@ export default function GOONAIQScreen() {
         {/* ─── 9. WEATHER INTELLIGENCE ─── */}
         <GoonaIQWeatherSection />
 
-        {/* ─── 10. OPERATIONAL FOCUS MODE ─── */}
+        {/* ─── 10. ASK GOONA AI — VOICE-ENABLED ASSISTANT ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(850).springify()} style={styles.sectionHdr}>
-          <Text style={styles.sectionTitle}>Focus Mode</Text>
-          <Text style={styles.sectionSub} numberOfLines={1}>AI prioritizes: {focusMode}</Text>
+          <Text style={styles.sectionTitle}>Ask GOONA AI</Text>
+          <View style={styles.aiStatusBadge}>
+            <PulseDot color="#22C55E" size={4} />
+            <Text style={styles.aiStatusText}>Online</Text>
+          </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(600).delay(900).springify()}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.focusScroll}>
-            {FOCUS_MODES.map((mode) => (
-              <TouchableOpacity
-                key={mode}
-                style={[styles.focusPill, focusMode === mode && styles.focusPillActive]}
-                onPress={() => setFocusMode(mode)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.focusPillText, focusMode === mode && styles.focusPillTextActive]} numberOfLines={1}>
-                  {mode}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </Animated.View>
-
-        {/* ─── spacer so content doesn't hide behind AI bar ─── */}
-        <View style={{ height: 0 }} />
+        <AIInteractionBar
+          aiState={aiState}
+          aiQuery={aiQuery}
+          aiResponse={aiResponse}
+          onQueryChange={setAiQuery}
+          onSend={handleSend}
+          onMic={handleMic}
+          onDismiss={handleDismiss}
+          inputRef={inputRef}
+        />
       </ScrollView>
 
-      {/* ─── AI INTERACTION BAR ─── */}
-      <AIInteractionBar
-        aiState={aiState}
-        aiQuery={aiQuery}
-        aiResponse={aiResponse}
-        onQueryChange={setAiQuery}
-        onSend={handleSend}
-        onMic={handleMic}
-        onDismiss={handleDismiss}
-        inputRef={inputRef}
-      />
-
-      <View style={{ height: keyboardVisible ? 22 : 98 }} />
       </KeyboardAvoidingView>
 
       <BottomDock />
@@ -1198,19 +1170,17 @@ const styles = StyleSheet.create({
   /* financial grid */
   financialGrid: { gap: 8 },
 
-  /* focus mode */
-  focusScroll: { paddingBottom: 4 },
-  focusPill: {
-    paddingVertical: 9, paddingHorizontal: 18, borderRadius: 50,
-    backgroundColor: 'white', marginRight: 8,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03, shadowRadius: 8, elevation: 1,
+  /* ask goona ai */
+  aiStatusBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(34,197,94,0.08)', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 50, flexShrink: 0 },
+  aiStatusText: { fontSize: 9, fontWeight: '700', color: '#22C55E' },
+  aiSuggestionGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
+  aiSuggestionChip: {
+    flexBasis: '47%', paddingVertical: 14, paddingHorizontal: 14,
+    backgroundColor: 'white', borderRadius: 16,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03, shadowRadius: 12, elevation: 2,
+    borderLeftWidth: 3, borderLeftColor: '#2E7D32',
   },
-  focusPillActive: {
-    backgroundColor: '#2E7D32', borderColor: '#2E7D32',
-    shadowColor: '#2E7D32', shadowOpacity: 0.2, shadowRadius: 16,
-  },
-  focusPillText: { fontSize: 12, fontWeight: '600', color: '#475569' },
-  focusPillTextActive: { color: '#fff' },
+  aiSuggestionText: { fontSize: 12, fontWeight: '600', color: '#1B1B1B', lineHeight: 17 },
 })

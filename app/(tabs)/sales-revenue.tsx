@@ -3,9 +3,8 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, useWindowDimensions,
 } from 'react-native'
-import Svg, { Circle } from 'react-native-svg'
 import GoonaIcon from '../../components/ui/GoonaIcon'
-import { ArrowLeft, Plus, BarChart3, TrendingUp, Sparkles, Calendar, Receipt, ShieldCheck, Users, FileText, Wallet } from 'lucide-react-native'
+import { ArrowLeft, Plus, BarChart3, TrendingUp, Sparkles, Calendar, Receipt, ShieldCheck, Users, FileText } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -270,55 +269,6 @@ export default function SalesRevenueScreen() {
           </View>
         </Animated.View>
 
-        {/* REINVESTMENT SUMMARY */}
-        <Animated.View entering={FadeInUp.duration(500).delay(520).springify()}>
-          <View style={styles.secHead}>
-            <Text style={styles.secTitle}>Reinvestment Summary</Text>
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(500).delay(550).springify()} style={styles.reinvestCard}>
-          <View style={styles.reinvestHead}>
-            <Text style={styles.reinvestTitle}>Next Production Cycle Fund</Text>
-            <View style={styles.reinvestBadge}>
-              <Text style={styles.reinvestBadgeText}>On Track</Text>
-            </View>
-          </View>
-
-          <View style={styles.reinvestBody}>
-            <View style={styles.reinvestRing}>
-              <Svg width="80" height="80" viewBox="0 0 80 80">
-                <Circle cx="40" cy="40" r="34" stroke="#E2E8F0" strokeWidth="5" fill="none" />
-                <Circle cx="40" cy="40" r="34" stroke="#2E7D32" strokeWidth="5" fill="none" strokeDasharray="213.6" strokeDashoffset="59.8" strokeLinecap="round" />
-              </Svg>
-              <View style={styles.reinvestRingText}>
-                <Text style={styles.reinvestRingPct}>72%</Text>
-                <Text style={styles.reinvestRingLbl}>Saved</Text>
-              </View>
-            </View>
-
-            <View style={styles.reinvestMetrics}>
-              {[
-                { label: 'Goal Amount', val: '₦350,000' },
-                { label: 'Amount Saved', val: '₦252,000' },
-                { label: 'Weekly Target', val: '₦18,000' },
-                { label: 'Remaining', val: '₦98,000' },
-              ].map((r, i) => (
-                <View key={i} style={styles.reinvestRow}>
-                  <Text style={styles.reinvestRowLbl}>{r.label}</Text>
-                  <Text style={styles.reinvestRowVal}>{r.val}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.reinvestChart}>
-            {[30, 38, 35, 50, 55, 60, 72, 68, 75, 82].map((h, i) => (
-              <View key={i} style={[styles.reinvestBar, { height: `${h}%` as any, backgroundColor: i >= 4 ? '#2E7D32' : '#E2E8E0' }]} />
-            ))}
-          </View>
-        </Animated.View>
-
         {/* SMART INSIGHTS */}
         <Animated.View style={{ marginTop: 18 }} entering={FadeInUp.duration(500).delay(600).springify()}>
           <View style={styles.secHead}>
@@ -444,24 +394,6 @@ const styles = StyleSheet.create({
   custSpend: { fontSize: 14, fontWeight: '600' },
   custChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 20, marginTop: 12 },
   custBar: { flex: 1, borderRadius: 2 },
-
-  /* reinvestment */
-  reinvestCard: { backgroundColor: '#E8F5E9', borderRadius: 28, padding: 22, borderWidth: 1, borderColor: 'rgba(46,125,50,0.06)', shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 2 },
-  reinvestHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  reinvestTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937' },
-  reinvestBadge: { paddingVertical: 3, paddingHorizontal: 12, borderRadius: 100, backgroundColor: '#DCFCE7' },
-  reinvestBadgeText: { fontSize: 11, fontWeight: '600', color: '#16A34A' },
-  reinvestBody: { flexDirection: 'row', alignItems: 'center', gap: 24, marginTop: 16 },
-  reinvestRing: { width: 80, height: 80, position: 'relative', flexShrink: 0 },
-  reinvestRingText: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  reinvestRingPct: { fontSize: 18, fontWeight: '800', color: '#1F2937' },
-  reinvestRingLbl: { fontSize: 7, fontWeight: '500', color: '#94A3B8' },
-  reinvestMetrics: { flex: 1 },
-  reinvestRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  reinvestRowLbl: { fontSize: 13, color: '#64748B' },
-  reinvestRowVal: { fontSize: 13, fontWeight: '600', color: '#1F2937' },
-  reinvestChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 32, marginTop: 14 },
-  reinvestBar: { flex: 1, borderRadius: 3 },
 
   /* insight */
   insightCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, borderRadius: 24, padding: 18, marginBottom: 10 },
