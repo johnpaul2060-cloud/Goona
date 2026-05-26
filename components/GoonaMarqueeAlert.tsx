@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from './ui/GoonaIcon'
 import { CircleAlert, ChevronRight } from 'lucide-react-native'
 import { useTickerStore } from '../store/useTickerStore'
+import { getWeatherInfo, isWeatherMessage, isHighSeverity } from '../utils/weatherIntelligence'
 
 export interface GoonaMarqueeAlertProps {
   messages?: string[]
@@ -38,6 +39,12 @@ export default function GoonaMarqueeAlert({
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const current = messages[msgIndex % messages.length]
+
+  const isWeather = isWeatherMessage(current)
+  const isHigh = isHighSeverity(current)
+  const weatherIcon = isWeather ? getWeatherInfo(current) : null
+  const displayIcon = weatherIcon ? weatherIcon.icon : CircleAlert
+  const displayIconColor = weatherIcon ? weatherIcon.color : '#2E7D32'
 
   const cycle = useCallback(() => {
     paused.current = true
@@ -104,7 +111,9 @@ export default function GoonaMarqueeAlert({
       style={styles.wrapper}
     >
       <LinearGradient
-        colors={['rgba(232,245,233,0.9)', 'rgba(240,253,244,0.7)', 'rgba(232,245,233,0.6)']}
+        colors={isHigh
+          ? ['rgba(254,242,242,0.95)', 'rgba(255,241,242,0.8)', 'rgba(254,242,242,0.65)']
+          : ['rgba(232,245,233,0.9)', 'rgba(240,253,244,0.7)', 'rgba(232,245,233,0.6)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={[StyleSheet.absoluteFill, { borderRadius: 20 }]}
@@ -112,7 +121,7 @@ export default function GoonaMarqueeAlert({
       />
       <View style={styles.inner}>
         <View style={styles.iconWrap}>
-          <GoonaIcon icon={CircleAlert} size={14} color="#2E7D32" />
+          <GoonaIcon icon={displayIcon} size={14} color={displayIconColor} />
         </View>
         <View style={styles.textContainer} onLayout={onContainerLayout}>
           <Animated.View style={[styles.textRow, animStyle]}>

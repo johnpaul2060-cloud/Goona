@@ -7,7 +7,7 @@ import {
 import { router } from 'expo-router'
 import Svg, { Circle } from 'react-native-svg'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
-import { Bell, MoreHorizontal, BadgeDollarSign, TrendingUp, TrendingDown, Check, Flame, Sparkles, Plus, ShieldCheck, FileText, Target, ChevronLeft, ChevronRight, X, Info, Wallet } from 'lucide-react-native'
+import { Bell, MoreHorizontal, TrendingUp, TrendingDown, Check, Flame, Sparkles, Plus, ShieldCheck, FileText, Target, ChevronLeft, ChevronRight, X, Info, Wallet } from 'lucide-react-native'
 import { BlurView } from 'expo-blur'
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
 import Animated, {

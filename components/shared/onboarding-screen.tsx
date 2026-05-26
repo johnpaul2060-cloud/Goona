@@ -20,7 +20,7 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 import GoonaIcon from '../ui/GoonaIcon';
-import { ArrowRight, Shield, RefreshCw, Heart, Wheat, Skull, CircleCheck, CircleDollarSign, ShieldCheck, Users } from 'lucide-react-native';
+import { ArrowRight, Shield, RefreshCw, Heart, Wheat, Skull, CircleCheck, PiggyBank, ShieldCheck, Users } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_SLIDES = 3;
@@ -255,7 +255,7 @@ const SLIDES: SlideData[] = [
     contourBottom: { bottom: '18%', rotate: '-10deg' },
     floatingCards: (
       <>
-        <FloatingCard top="24%" right={3} iconBg="#FFFBEB" icon={<GoonaIcon icon={CircleDollarSign} size={14} color="#F9A825" />} label="Reinvestment" value="42% Complete" />
+        <FloatingCard top="24%" right={3} iconBg="#FFFBEB" icon={<GoonaIcon icon={PiggyBank} size={14} color="#F9A825" />} label="Reinvestment" value="42% Complete" />
         <FloatingCard bottom="34%" left={0} iconBg="#F0FDF4" icon={<GoonaIcon icon={ShieldCheck} size={14} color="#16A34A" />} label="Savings Goal On Track" />
         <FloatingCard bottom="30%" right={2} iconBg="#EEF3FF" icon={<GoonaIcon icon={Users} size={14} color="#1A56FF" />} label="Farm Expansion" />
       </>

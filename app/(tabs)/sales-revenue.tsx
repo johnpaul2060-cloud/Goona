@@ -5,7 +5,7 @@ import {
 } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import GoonaIcon from '../../components/ui/GoonaIcon'
-import { ArrowLeft, Plus, BarChart3, TrendingUp, Sparkles, Calendar, DollarSign, ShieldCheck, Users, FileText, Wallet } from 'lucide-react-native'
+import { ArrowLeft, Plus, BarChart3, TrendingUp, Sparkles, Calendar, Receipt, ShieldCheck, Users, FileText, Wallet } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -53,7 +53,7 @@ export default function SalesRevenueScreen() {
 
   const QA_ACTIONS = [
     { label: 'Record Sale', bg: '#F0FDF4', iconColor: '#16A34A', route: '/record-sale' as const },
-    { label: 'Payments', bg: '#FFFBEB', iconColor: '#F59E0B', route: '/payments' as const },
+    { label: 'Expenses', bg: '#FFFBEB', iconColor: '#F59E0B', route: '/(tabs)/records/expenses' as const },
     { label: 'Reports', bg: '#EEF3FF', iconColor: '#1A56FF', route: '/sales-reports' as const },
     { label: 'Invoices', bg: '#F0FDF4', iconColor: '#16A34A', route: undefined },
   ]
@@ -78,7 +78,7 @@ export default function SalesRevenueScreen() {
             <TouchableOpacity
               style={styles.navBack}
               activeOpacity={0.7}
-              onPress={() => router.back()}
+               onPress={() => router.replace('/(tabs)/records' as any)}
               onPressIn={backPress.onPressIn}
               onPressOut={backPress.onPressOut}
             >
@@ -95,7 +95,7 @@ export default function SalesRevenueScreen() {
         <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.headerSection}>
           <Text style={styles.headerLabel}>Financial Overview</Text>
           <Text style={styles.headerTitle}>Track Farm{"\n"}Revenue</Text>
-          <Text style={styles.headerSub}>Monitor livestock sales, customer payments, profitability, and reinvestment growth.</Text>
+            <Text style={styles.headerSub}>Monitor livestock sales, operational expenses, profitability, and reinvestment growth.</Text>
         </Animated.View>
 
         {/* REVENUE HERO */}
@@ -184,14 +184,14 @@ export default function SalesRevenueScreen() {
             { metric: '₦820k', label: 'Weekly Revenue', trend: '↑ +12%', trendColor: '#16A34A', bg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 55, 80], barActive: [2, 4] },
             { metric: '₦480k', label: 'Avg. Batch Profit', trend: '↑ +8%', trendColor: '#16A34A', bg: '#EEF3FF', iconColor: '#1A56FF', bars: [40, 55, 70, 65, 85], barActive: [2, 4] },
             { metric: 'Layer B', label: 'Top Selling Batch', trend: 'Best Performer', trendColor: '#16A34A', bg: '#FFFBEB', iconColor: '#F59E0B', bars: [] },
-            { metric: '₦120k', label: 'Pending Payments', trend: '3 Customers', trendColor: '#F59E0B', bg: '#FFF1F2', iconColor: '#EF4444', bars: [] },
+            { metric: '₦120k', label: 'Pending Expenses', trend: '3 Creditors', trendColor: '#F59E0B', bg: '#FFF1F2', iconColor: '#EF4444', bars: [] },
           ].map((a, i) => (
             <Animated.View key={i} entering={FadeInUp.duration(500).delay(280 + i * 60).springify()} style={styles.analyticsCard}>
               <View style={[styles.anIcon, { backgroundColor: a.bg }]}>
                 {i === 0 && <GoonaIcon icon={TrendingUp} size={16} color={a.iconColor} />}
                 {i === 1 && <GoonaIcon icon={ShieldCheck} size={16} color={a.iconColor} />}
                 {i === 2 && <GoonaIcon icon={Users} size={16} color={a.iconColor} />}
-                {i === 3 && <GoonaIcon icon={DollarSign} size={16} color={a.iconColor} />}
+                {i === 3 && <GoonaIcon icon={Receipt} size={16} color={a.iconColor} />}
               </View>
               <Text style={styles.anMetric}>{a.metric}</Text>
               <Text style={styles.anLabel}>{a.label}</Text>

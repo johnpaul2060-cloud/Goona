@@ -6,9 +6,10 @@ import {
 import Svg, { Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
-import { ArrowLeft, Wheat, ShieldCheck, TrendingUp, Shield, Egg, MoreHorizontal, ClipboardList, Skull, BadgeDollarSign } from 'lucide-react-native'
+import { ArrowLeft, Wheat, ShieldCheck, TrendingUp, Shield, Egg, MoreHorizontal, ClipboardList, Skull, Wallet } from 'lucide-react-native'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
   FadeInUp,
@@ -254,6 +255,7 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
 const CIRCUMFERENCE = 2 * Math.PI * 30
 
 export default function BatchDetailsScreen() {
+  const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const storeBatch = useBatchStore((s) => s.getBatchById(id ?? ''))
 
@@ -276,12 +278,12 @@ export default function BatchDetailsScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollInner}
+        contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 8 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
-          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.replace('/records/batches' as any)}>
             <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>{batch.name}</Text>
@@ -379,7 +381,7 @@ export default function BatchDetailsScreen() {
                   {i === 0 && <GoonaIcon icon={ClipboardList} size={20} color={a.iconColor} />}
                   {i === 1 && <GoonaIcon icon={Wheat} size={20} color={a.iconColor} />}
                   {i === 2 && <GoonaIcon icon={Skull} size={20} color={a.iconColor} />}
-                  {i === 3 && <GoonaIcon icon={BadgeDollarSign} size={20} color={a.iconColor} />}
+                  {i === 3 && <GoonaIcon icon={Wallet} size={20} color={a.iconColor} />}
                   {i === 4 && <GoonaIcon icon={TrendingUp} size={20} color={a.iconColor} />}
                 </View>
                 <Text style={styles.qaLabel}>{a.label}</Text>

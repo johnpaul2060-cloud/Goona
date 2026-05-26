@@ -24,8 +24,9 @@ export default function LoginScreen() {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleLogin = () => {
-    console.log('LOGIN PRESSED');
-    router.replace('/(tabs)/dashboard');
+    try {
+      router.replace('/(tabs)/dashboard');
+    } catch {}
   };
 
   return (
@@ -62,7 +63,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.topNav}>
-            <TouchableOpacity style={styles.navBack} onPress={() => router.back()}>
+            <TouchableOpacity style={styles.navBack} onPress={() => { try { router.back() } catch {} }}>
               <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={styles.navLogo}>
@@ -136,9 +137,9 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
               <View style={styles.forgotRow}>
-                <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
-                  <Text style={styles.forgotLink}>Forgot Password?</Text>
-                </TouchableOpacity>
+              <TouchableOpacity onPress={() => { try { router.push('/(auth)/forgot-password') } catch {} }}>
+                <Text style={styles.forgotLink}>Forgot Password?</Text>
+              </TouchableOpacity>
               </View>
             </View>
 
@@ -182,13 +183,13 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.qaGrid}>
-              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => router.push('/goona-academy')}>
+              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => { try { router.push('/goona-academy') } catch {} }}>
                 <View style={styles.qaIconWrap}>
                   <GoonaIcon icon={BookOpen} size={22} color="#2E7D32" />
                 </View>
                 <Text style={styles.qaLabel}>Academy</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => router.push('/goona-iq')}>
+              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => { try { router.push('/goona-iq') } catch {} }}>
                 <View style={styles.qaIconWrap}>
                   <Svg width={22} height={22} viewBox="0 0 22 22">
                     <Path d="M11 2C11 2 6 7 6 11C6 13.5 7.5 15.5 9 17C8.5 15.5 8 14.5 8 13.5C8 10 10 6.5 11 2Z" fill="#2E7D32" />
@@ -233,7 +234,7 @@ export default function LoginScreen() {
             <Text style={styles.bottomText}>
               Don't have an account?{' '}
             </Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/create-account')}>
+            <TouchableOpacity onPress={() => { try { router.push('/(auth)/create-account') } catch {} }}>
               <Text style={styles.bottomLink}>Create Account</Text>
             </TouchableOpacity>
           </View>

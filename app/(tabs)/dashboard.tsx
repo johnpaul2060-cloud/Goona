@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dim
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import GoonaIcon from '../../components/ui/GoonaIcon';
-import { Bell, BarChart3, Plus, ClipboardList, Users, Sparkles, FileText } from 'lucide-react-native';
+import { Bell, BarChart3, ClipboardList, Sparkles, FileText, Receipt, Award, ShoppingCart } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
@@ -105,10 +105,10 @@ export default function DashboardScreen() {
 
         <View style={styles.actionsGrid}>
           {[
-            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/create-batch' as const, icon: (c: string) => <GoonaIcon icon={Plus} size={24} color={c} /> },
-            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/daily-records' as const, icon: (c: string) => <GoonaIcon icon={ClipboardList} size={24} color={c} /> },
-            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/record-sale' as const, icon: (c: string) => <GoonaIcon icon={BarChart3} size={24} color={c} /> },
-            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: '/team' as const, icon: (c: string) => <GoonaIcon icon={Users} size={24} color={c} /> },
+            { label: 'Record Sale', color: '#F0FDF4', iconColor: '#16A34A', route: '/(tabs)/records/sales' as any, icon: (c: string) => <GoonaIcon icon={ShoppingCart} size={24} color={c} /> },
+            { label: 'Farm Expenses', color: '#FFF1F2', iconColor: '#EF4444', route: '/(tabs)/records/expenses' as const, icon: (c: string) => <GoonaIcon icon={Receipt} size={24} color={c} /> },
+            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/(tabs)/records/daily-operations' as const, icon: (c: string) => <GoonaIcon icon={ClipboardList} size={24} color={c} /> },
+            { label: 'Daily Challenge', color: '#F0FDF4', iconColor: '#16A34A', route: '/academy/daily-challenge' as const, icon: (c: string) => <GoonaIcon icon={Award} size={24} color={c} /> },
           ].map((a, i) => {
             const p = pressScales[i]
             return (

@@ -203,7 +203,7 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
     list.push({
       id: 'due-tomorrow', type: 'savings_upcoming', priority: 'upcoming',
       icon: '\u{1F4C5}', title: 'Next savings contribution due tomorrow',
-      desc: 'Your \u20A685,000 weekly recapitalization target resets tomorrow. Early payments build consistency.',
+      desc: 'Your \u20A685,000 weekly recapitalization target resets tomorrow. Early contributions build consistency.',
       time: 'Tomorrow',
       actions: [
         { label: 'Save Now', action: 'save', primary: true },

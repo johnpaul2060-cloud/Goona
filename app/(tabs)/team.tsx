@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, Pressable, ScrollView,
-  StyleSheet, Dimensions,
+  StyleSheet, Dimensions, Alert,
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import GoonaIcon from '../../components/ui/GoonaIcon'
-import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users } from 'lucide-react-native'
+import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users, UserPlus, ClipboardList, BarChart3, Clock, Bell, ChevronRight, ListChecks, Calendar, Activity, User } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -34,11 +34,18 @@ function PulseDot() {
 /* ─── Press scale hook ─── */
 function usePressScale() {
   const scale = useSharedValue(1)
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  const opacity = useSharedValue(1)
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: opacity.value }))
   return {
     style,
-    onPressIn: () => { scale.value = withSpring(0.97, { damping: 15, stiffness: 200 }) },
-    onPressOut: () => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }) },
+    onPressIn: () => {
+      scale.value = withSpring(0.96, { damping: 15, stiffness: 200 })
+      opacity.value = withTiming(0.85, { duration: 80 })
+    },
+    onPressOut: () => {
+      scale.value = withSpring(1, { damping: 15, stiffness: 200 })
+      opacity.value = withTiming(1, { duration: 100 })
+    },
   }
 }
 
@@ -137,35 +144,123 @@ const qaStyles = StyleSheet.create({
   tagTextDark: { color: '#00695C' },
 })
 
+/* ─── Team Tab ─── */
+type TeamTabType = 'workers' | 'supervisors' | 'tasks' | 'reports'
+
+const TABS: { key: TeamTabType; label: string; icon: any }[] = [
+  { key: 'workers', label: 'Workers', icon: Users },
+  { key: 'supervisors', label: 'Supervisors', icon: UserCheck },
+  { key: 'tasks', label: 'Tasks', icon: ListChecks },
+  { key: 'reports', label: 'Reports', icon: BarChart3 },
+]
+
+function TeamTabs({ active, onChange }: { active: TeamTabType; onChange: (t: TeamTabType) => void }) {
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ttStyles.scroll}>
+      {TABS.map((tab) => {
+        const isActive = active === tab.key
+        return (
+          <Pressable
+            key={tab.key}
+            onPress={() => onChange(tab.key)}
+            style={[ttStyles.pill, isActive && ttStyles.pillActive]}
+          >
+            <GoonaIcon icon={tab.icon} size={14} color={isActive ? '#fff' : '#64748B'} />
+            <Text style={[ttStyles.pillText, isActive && ttStyles.pillTextActive]}>{tab.label}</Text>
+          </Pressable>
+        )
+      })}
+    </ScrollView>
+  )
+}
+const ttStyles = StyleSheet.create({
+  scroll: { paddingBottom: 4, marginBottom: 14 },
+  pill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 8, paddingHorizontal: 16, borderRadius: 50,
+    backgroundColor: 'white', marginRight: 8,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02, shadowRadius: 6, elevation: 1,
+  },
+  pillActive: {
+    backgroundColor: '#00695C', borderColor: '#00695C',
+    shadowColor: '#00695C', shadowOpacity: 0.2, shadowRadius: 12,
+  },
+  pillText: { fontSize: 12, fontWeight: '600', color: '#475569' },
+  pillTextActive: { color: '#fff' },
+})
+
 /* ─── Worker Card ─── */
+const WORKER_DATA = [
+  { initials: 'CO', name: 'Chinedu Okoro', role: 'Senior Farmhand', online: true, lastSeen: 'Last log 12 mins ago', tags: ['Feed', 'Mortality', 'Records', 'Weight'], id: 'w1' },
+  { initials: 'AF', name: 'Aminat Fashola', role: 'Feed Specialist', online: true, lastSeen: 'Last log 3 mins ago', tags: ['Feed', 'Inventory', 'Records'], id: 'w2' },
+  { initials: 'KO', name: 'Kola Ogunleye', role: 'Veterinary Assistant', online: false, lastSeen: 'Last seen 4h ago', tags: ['Health', 'Mortality', 'Records'], id: 'w3' },
+]
+
+const SUPERVISOR_DATA = [
+  { initials: 'DO', name: 'David Okafor', role: 'Shift Supervisor', online: true, lastSeen: 'Online now', tags: ['Oversight', 'Reports', 'Scheduling'], id: 's1' },
+  { initials: 'FT', name: 'Funmi Towolawi', role: 'Quality Supervisor', online: true, lastSeen: 'Last log 20 mins ago', tags: ['Quality', 'Compliance', 'Training'], id: 's2' },
+]
+
+const TASK_DATA = [
+  { title: 'Morning feeding Batch A', assignee: 'Chinedu O.', priority: 'high' as const, due: 'Today 7AM' },
+  { title: 'Inventory count — feed store', assignee: 'Aminat F.', priority: 'medium' as const, due: 'Today 12PM' },
+  { title: 'Health check Batch C', assignee: 'Kola O.', priority: 'high' as const, due: 'Today 10AM' },
+  { title: 'Clean drinker lines', assignee: 'Chinedu O.', priority: 'low' as const, due: 'Tomorrow 6AM' },
+]
+
+const REPORT_DATA = [
+  { title: 'Daily Operations Report', author: 'David Okafor', date: 'Today 8AM', type: 'operations' as const },
+  { title: 'Feed Efficiency Analysis', author: 'Aminat F.', date: 'Yesterday 4PM', type: 'feed' as const },
+  { title: 'Worker Attendance Summary', author: 'System', date: 'Today 6AM', type: 'attendance' as const },
+]
+
 function WorkerCard({
-  initials, name, role, online, lastSeen, tags, index,
+  initials, name, role, online, lastSeen, tags, index, id,
 }: {
   initials: string; name: string; role: string; online: boolean
-  lastSeen: string; tags: string[]; index: number
+  lastSeen: string; tags: string[]; index: number; id: string
 }) {
+  const { style, onPressIn, onPressOut } = usePressScale()
+
+  const handlePress = () => {
+    Alert.alert(
+      'Worker Profile',
+      `${name}\n${role}\n\nProfile management, task history, and performance metrics coming soon.`,
+      [{ text: 'OK' }],
+    )
+  }
+
   return (
-    <Animated.View
-      entering={FadeInUp.duration(500).delay(500 + index * 80).springify()}
-    >
-      <TouchableOpacity style={wcStyles.card} activeOpacity={0.92}>
-        <WorkerAvatar initials={initials} online={online} />
-        <View style={wcStyles.info}>
-          <Text style={wcStyles.name}>{name}</Text>
-          <Text style={wcStyles.role}>{role}</Text>
-          <Text style={[wcStyles.status, { color: online ? '#22C55E' : '#94A3B8' }]}>
-            {online ? 'Online' : 'Offline'} &bull; {lastSeen}
-          </Text>
-          <View style={wcStyles.tags}>
-            {tags.map((t) => (
-              <View key={t} style={wcStyles.tag}>
-                <Text style={wcStyles.tagText}>{t}</Text>
-              </View>
-            ))}
+    <Animated.View entering={FadeInUp.duration(500).delay(500 + index * 80).springify()}>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <Animated.View style={[style, wcStyles.card]}>
+          <WorkerAvatar initials={initials} online={online} />
+          <View style={wcStyles.info}>
+            <Text style={wcStyles.name}>{name}</Text>
+            <Text style={wcStyles.role}>{role}</Text>
+            <View style={wcStyles.statusRow}>
+              <View style={[wcStyles.statusDot, { backgroundColor: online ? '#22C55E' : '#94A3B8' }]} />
+              <Text style={[wcStyles.status, { color: online ? '#22C55E' : '#94A3B8' }]}>
+                {online ? 'Online' : 'Offline'} &bull; {lastSeen}
+              </Text>
+            </View>
+            <View style={wcStyles.tags}>
+              {tags.map((t) => (
+                <View key={t} style={wcStyles.tag}>
+                  <Text style={wcStyles.tagText}>{t}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
-        <Text style={wcStyles.more}>{'\u22EE'}</Text>
-      </TouchableOpacity>
+          <ChevronRight size={16} color="#94A3B8" strokeWidth={2} />
+        </Animated.View>
+      </Pressable>
     </Animated.View>
   )
 }
@@ -180,25 +275,205 @@ const wcStyles = StyleSheet.create({
   info: { flex: 1 },
   name: { fontWeight: '600', fontSize: 14, color: '#1B1B1B' },
   role: { fontSize: 12, color: '#64748B', marginTop: 1 },
-  status: { fontSize: 11, fontWeight: '500', marginTop: 2 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  statusDot: { width: 5, height: 5, borderRadius: 2.5 },
+  status: { fontSize: 11, fontWeight: '500' },
   tags: { flexDirection: 'row', gap: 4, flexWrap: 'wrap', marginTop: 4 },
   tag: {
     paddingVertical: 2, paddingHorizontal: 8, borderRadius: 50,
     backgroundColor: 'rgba(0,105,92,0.05)',
   },
   tagText: { fontSize: 9, fontWeight: '600', color: '#00695C' },
-  more: { fontSize: 16, color: '#94A3B8', marginLeft: 4, padding: 4 },
 })
 
-/* ─── Insight Item ─── */
-function InsightItem({ text, index }: { text: string; index: number }) {
+/* ─── Supervisor Card ─── */
+function SupervisorCard({
+  initials, name, role, online, lastSeen, tags, index,
+}: {
+  initials: string; name: string; role: string; online: boolean
+  lastSeen: string; tags: string[]; index: number
+}) {
+  const { style, onPressIn, onPressOut } = usePressScale()
   return (
-    <Animated.View
-      entering={FadeInUp.duration(500).delay(700 + index * 80).springify()}
-      style={isStyles.item}
-    >
-      <GoonaIcon icon={Sparkles} size={16} color="#00695C" style={{ marginTop: 1, flexShrink: 0 }} />
-      <Text style={isStyles.text}>{text}</Text>
+    <Animated.View entering={FadeInUp.duration(500).delay(500 + index * 80).springify()}>
+      <Pressable
+        onPress={() => Alert.alert('Supervisor Profile', `${name}\n${role}\n\nSupervisor dashboard and team oversight coming soon.`)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <Animated.View style={[style, wcStyles.card, { borderLeftWidth: 3, borderLeftColor: '#00695C' }]}>
+          <WorkerAvatar initials={initials} online={online} />
+          <View style={wcStyles.info}>
+            <Text style={wcStyles.name}>{name}</Text>
+            <Text style={wcStyles.role}>{role}</Text>
+            <View style={wcStyles.statusRow}>
+              <View style={[wcStyles.statusDot, { backgroundColor: online ? '#22C55E' : '#94A3B8' }]} />
+              <Text style={[wcStyles.status, { color: online ? '#22C55E' : '#94A3B8' }]}>
+                {online ? 'Online' : 'Offline'} &bull; {lastSeen}
+              </Text>
+            </View>
+            <View style={wcStyles.tags}>
+              {tags.map((t) => (
+                <View key={t} style={[wcStyles.tag, { backgroundColor: 'rgba(0,105,92,0.08)' }]}>
+                  <Text style={[wcStyles.tagText, { color: '#0F766E' }]}>{t}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+          <ChevronRight size={16} color="#94A3B8" strokeWidth={2} />
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  )
+}
+
+/* ─── Task Card ─── */
+function TaskCard({
+  title, assignee, priority, due, index,
+}: {
+  title: string; assignee: string; priority: 'high' | 'medium' | 'low'; due: string; index: number
+}) {
+  const { style, onPressIn, onPressOut } = usePressScale()
+  const pColor = priority === 'high' ? '#EF4444' : priority === 'medium' ? '#F59E0B' : '#22C55E'
+
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(500 + index * 80).springify()}>
+      <Pressable
+        onPress={() => Alert.alert('Task Details', `${title}\nAssigned to: ${assignee}\nDue: ${due}\n\nTask management coming soon.`)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <Animated.View style={[style, tkStyles.card]}>
+          <View style={[tkStyles.priorityDot, { backgroundColor: pColor }]} />
+          <View style={tkStyles.body}>
+            <Text style={tkStyles.title}>{title}</Text>
+            <Text style={tkStyles.meta}>{assignee} &bull; {due}</Text>
+          </View>
+          <View style={[tkStyles.pill, { backgroundColor: `${pColor}15` }]}>
+            <Text style={[tkStyles.pillText, { color: pColor }]}>{priority}</Text>
+          </View>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  )
+}
+const tkStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'white', borderRadius: 16, padding: 14,
+    marginBottom: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02, shadowRadius: 12, elevation: 1,
+  },
+  priorityDot: { width: 4, height: 28, borderRadius: 2, flexShrink: 0 },
+  body: { flex: 1 },
+  title: { fontSize: 13, fontWeight: '600', color: '#1B1B1B' },
+  meta: { fontSize: 11, color: '#64748B', marginTop: 2 },
+  pill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 50 },
+  pillText: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase' },
+})
+
+/* ─── Report Card ─── */
+function ReportCard({
+  title, author, date, type, index,
+}: {
+  title: string; author: string; date: string; type: string; index: number
+}) {
+  const { style, onPressIn, onPressOut } = usePressScale()
+  const typeIcon = type === 'operations' ? ClipboardList : type === 'feed' ? BarChart3 : Calendar
+
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(500 + index * 80).springify()}>
+      <Pressable
+        onPress={() => Alert.alert('Report Preview', `${title}\nBy ${author}\n${date}\n\nFull report viewer coming soon.`)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <Animated.View style={[style, rpStyles.card]}>
+          <View style={rpStyles.iconWrap}>
+            <GoonaIcon icon={typeIcon} size={18} color="#00695C" />
+          </View>
+          <View style={rpStyles.body}>
+            <Text style={rpStyles.title}>{title}</Text>
+            <Text style={rpStyles.meta}>{author} &bull; {date}</Text>
+          </View>
+          <ChevronRight size={14} color="#94A3B8" strokeWidth={2} />
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  )
+}
+const rpStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'white', borderRadius: 16, padding: 14,
+    marginBottom: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02, shadowRadius: 12, elevation: 1,
+  },
+  iconWrap: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: 'rgba(0,105,92,0.08)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  body: { flex: 1 },
+  title: { fontSize: 13, fontWeight: '600', color: '#1B1B1B' },
+  meta: { fontSize: 11, color: '#64748B', marginTop: 2 },
+})
+
+/* ─── Tab Content ─── */
+function TabContent({ tab }: { tab: TeamTabType }) {
+  switch (tab) {
+    case 'workers':
+      return (
+        <>
+          {WORKER_DATA.map((w, i) => (
+            <WorkerCard key={w.id} {...w} index={i} />
+          ))}
+        </>
+      )
+    case 'supervisors':
+      return (
+        <>
+          {SUPERVISOR_DATA.map((s, i) => (
+            <SupervisorCard key={s.initials} {...s} index={i} />
+          ))}
+        </>
+      )
+    case 'tasks':
+      return (
+        <>
+          {TASK_DATA.map((t, i) => (
+            <TaskCard key={t.title} {...t} index={i} />
+          ))}
+        </>
+      )
+    case 'reports':
+      return (
+        <>
+          {REPORT_DATA.map((r, i) => (
+            <ReportCard key={r.title} {...r} index={i} />
+          ))}
+        </>
+      )
+  }
+}
+
+/* ─── Insight Item ─── */
+function InsightItem({ text, index, onPress }: { text: string; index: number; onPress?: () => void }) {
+  const { style, onPressIn, onPressOut } = usePressScale()
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(700 + index * 80).springify()}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <Animated.View style={[style, isStyles.item]}>
+          <GoonaIcon icon={Sparkles} size={16} color="#00695C" style={{ marginTop: 1, flexShrink: 0 }} />
+          <Text style={isStyles.text}>{text}</Text>
+        </Animated.View>
+      </Pressable>
     </Animated.View>
   )
 }
@@ -213,17 +488,86 @@ const isStyles = StyleSheet.create({
   text: { fontSize: 13, lineHeight: 18, color: '#1B1B1B', flex: 1 },
 })
 
+/* ─── Activity Feed ─── */
+const ACTIVITY_ITEMS = [
+  { icon: Clock, text: 'Worker attendance submitted for Batch A.', color: '#00695C' },
+  { icon: ClipboardList, text: 'Supervisor report completed by David O.', color: '#0F766E' },
+  { icon: User, text: 'Kola Ogunleye started morning health check.', color: '#22C55E' },
+  { icon: RefreshCw, text: 'Feed inventory synced across all batches.', color: '#0891B2' },
+  { icon: Bell, text: 'Task reminder: Clean drinker lines due in 2h.', color: '#F59E0B' },
+  { icon: Check, text: 'Aminat F. completed feed efficiency report.', color: '#16A34A' },
+  { icon: Users, text: 'New shift schedule published by supervisor.', color: '#6366F1' },
+  { icon: Shield, text: 'Biosecurity check passed for House 2 & 3.', color: '#2E7D32' },
+]
+
+function ActivityFeed() {
+  const [current, setCurrent] = useState(0)
+  const opacity = useSharedValue(1)
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      opacity.value = withSequence(
+        withTiming(0, { duration: 300 }),
+        withDelay(50, withTiming(1, { duration: 300 })),
+      )
+      setTimeout(() => {
+        setCurrent((prev) => (prev + 1) % ACTIVITY_ITEMS.length)
+      }, 350)
+    }, 4000)
+    return () => clearInterval(t)
+  }, [])
+
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
+  const item = ACTIVITY_ITEMS[current]
+
+  return (
+    <Animated.View style={[afStyles.card, animStyle]}>
+      <View style={afStyles.row}>
+        <View style={[afStyles.iconWrap, { backgroundColor: `${item.color}12` }]}>
+          <GoonaIcon icon={item.icon} size={14} color={item.color} />
+        </View>
+        <Text style={afStyles.text}>{item.text}</Text>
+      </View>
+      <View style={afStyles.dots}>
+        {ACTIVITY_ITEMS.map((_, i) => (
+          <View key={i} style={[afStyles.dot, i === current && { backgroundColor: '#00695C', width: 12 }]} />
+        ))}
+      </View>
+    </Animated.View>
+  )
+}
+const afStyles = StyleSheet.create({
+  card: {
+    backgroundColor: 'white', borderRadius: 18, padding: 16,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02, shadowRadius: 16, elevation: 1,
+  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  iconWrap: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  text: { fontSize: 13, color: '#1B1B1B', flex: 1, lineHeight: 18 },
+  dots: { flexDirection: 'row', gap: 4, marginTop: 10, justifyContent: 'center' },
+  dot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#D1D5DB' },
+})
+
 /* ─── Hero Card ─── */
 function HeroCard() {
+  const { style: farmPress, onPressIn: farmIn, onPressOut: farmOut } = usePressScale()
+
   return (
     <Animated.View entering={FadeInUp.duration(600).delay(250).springify()}>
+      <Pressable
+        onPress={() => router.push('/worker-dashboard' as any)}
+        onPressIn={farmIn}
+        onPressOut={farmOut}
+      >
+      <Animated.View style={[farmPress]}>
       <LinearGradient
         colors={['#00695C', '#0F766E', '#AEEA00']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={heroStyles.card}
       >
-        {/* bg glow orbs */}
         <View style={heroStyles.glow1} pointerEvents="none" />
         <View style={heroStyles.glow2} pointerEvents="none" />
 
@@ -237,19 +581,15 @@ function HeroCard() {
 
         <View style={heroStyles.pills}>
           {[
-            { label: 'Online Workers', value: '3' },
-            { label: 'Accountability', value: '94%' },
-            { label: 'Reminders', value: '4' },
-            { label: 'Batch Health', value: '97%' },
+            { label: 'Online Workers', value: '3', route: 'workers' },
+            { label: 'Accountability', value: '94%', route: 'reports' },
+            { label: 'Reminders', value: '4', route: 'tasks' },
+            { label: 'Batch Health', value: '97%', route: 'dashboard' },
           ].map((p) => (
-            <View key={p.label} style={heroStyles.pill}>
-              <Text style={heroStyles.pillLabel}>{p.label} </Text>
-              <Text style={heroStyles.pillValue}>{p.value}</Text>
-            </View>
+            <HeroPill key={p.label} label={p.label} value={p.value} route={p.route} />
           ))}
         </View>
 
-        {/* network nodes */}
         <View style={heroStyles.nodes}>
           {[
             { label: 'CO', glow: true },
@@ -261,17 +601,57 @@ function HeroCard() {
             n === null ? (
               <View key={`l${i}`} style={heroStyles.nodeLine} />
             ) : (
-              <View key={n.label} style={heroStyles.node}>
-                <Text style={heroStyles.nodeText}>{n.label}</Text>
-                {n.glow && <View style={heroStyles.nodeGlow} />}
-              </View>
+              <HeroNode key={n.label} label={n.label} glow={n.glow} />
             )
           )}
         </View>
       </LinearGradient>
+      </Animated.View>
+      </Pressable>
     </Animated.View>
   )
 }
+
+function HeroPill({ label, value, route }: { label: string; value: string; route: string }) {
+  const { style, onPressIn, onPressOut } = usePressScale()
+  return (
+    <Pressable
+      onPress={() => {
+        if (route === 'dashboard') {
+          router.push('/(tabs)/dashboard' as any)
+        } else if (route === 'workers' || route === 'tasks') {
+          Alert.alert(`${label}`, `${value}\n\nDetailed view coming soon.`)
+        } else {
+          Alert.alert(`${label}`, `${value}\n\nDetailed report coming soon.`)
+        }
+      }}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+    >
+      <Animated.View style={[style, heroStyles.pill]}>
+        <Text style={heroStyles.pillLabel}>{label} </Text>
+        <Text style={heroStyles.pillValue}>{value}</Text>
+      </Animated.View>
+    </Pressable>
+  )
+}
+
+function HeroNode({ label, glow }: { label: string; glow: boolean }) {
+  const { style, onPressIn, onPressOut } = usePressScale()
+  return (
+    <Pressable
+      onPress={() => Alert.alert('Worker Quick View', `${label}\n\nTap worker card below for full profile.`)}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+    >
+      <Animated.View style={[style, heroStyles.node]}>
+        <Text style={heroStyles.nodeText}>{label}</Text>
+        {glow && <View style={heroStyles.nodeGlow} />}
+      </Animated.View>
+    </Pressable>
+  )
+}
+
 const heroStyles = StyleSheet.create({
   card: {
     borderRadius: 34, padding: 28, marginTop: 20, overflow: 'hidden',
@@ -301,7 +681,6 @@ const heroStyles = StyleSheet.create({
   },
   farmName: {
     fontWeight: '800', fontSize: 30, color: '#fff', lineHeight: 32,
-    // Using the system font since Poppins may not be available
   },
   subtext: {
     fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2,
@@ -314,6 +693,7 @@ const heroStyles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 50,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
     paddingVertical: 5, paddingHorizontal: 12,
+    overflow: 'hidden',
   },
   pillLabel: { fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.7)' },
   pillValue: { fontSize: 10, fontWeight: '700', color: '#AEEA00' },
@@ -372,6 +752,22 @@ const tcStyles = StyleSheet.create({
 /* ─── MAIN SCREEN ─── */
 export default function TeamScreen() {
   const insets = useSafeAreaInsets()
+  const [activeTab, setActiveTab] = useState<TeamTabType>('workers')
+  const [insightIndex, setInsightIndex] = useState(0)
+
+  const INSIGHTS = [
+    { text: 'Worker accountability improved by 14% this cycle.', route: 'accountability' },
+    { text: 'Feed efficiency is above benchmark by 8%.', route: 'feed' },
+    { text: 'Your Academy score ranks top 12% in Oyo State.', route: 'academy' },
+  ]
+
+  /* cycle insights */
+  useEffect(() => {
+    const t = setInterval(() => {
+      setInsightIndex((prev) => (prev + 1) % INSIGHTS.length)
+    }, 5000)
+    return () => clearInterval(t)
+  }, [])
 
   const w1 = useSharedValue(0)
   const w2 = useSharedValue(0)
@@ -439,11 +835,19 @@ export default function TeamScreen() {
             <Text style={styles.headerTitle}>Team</Text>
             <Text style={styles.headerSub}>Manage your operational ecosystem.</Text>
           </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.addBtn} activeOpacity={0.85}>
-              <Text style={styles.addBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
+          <Pressable
+            style={({ pressed }) => [styles.addBtn, pressed && { transform: [{ scale: 0.92 }] }]}
+            onPress={() => {
+              switch (activeTab) {
+                case 'workers': Alert.alert('Add Worker', 'Worker onboarding form coming soon.') ; break
+                case 'supervisors': Alert.alert('Add Supervisor', 'Supervisor invitation form coming soon.') ; break
+                case 'tasks': Alert.alert('New Task', 'Task creation form coming soon.') ; break
+                case 'reports': Alert.alert('New Report', 'Report generator coming soon.') ; break
+              }
+            }}
+          >
+            <Text style={styles.addBtnText}>+</Text>
+          </Pressable>
         </Animated.View>
 
         {/* ─── HERO CARD ─── */}
@@ -506,14 +910,14 @@ export default function TeamScreen() {
           </View>
         </Animated.View>
 
-        {/* ─── FARM TEAM ─── */}
-        <Animated.View entering={FadeInUp.duration(500).delay(500).springify()} style={styles.sectionHdr}>
-          <Text style={styles.sectionTitle}>Farm Team</Text>
+        {/* ─── TEAM TABS ─── */}
+        <Animated.View entering={FadeInUp.duration(500).delay(450).springify()} style={styles.sectionHdr}>
+          <Text style={styles.sectionTitle}>Farm Personnel</Text>
         </Animated.View>
 
-        <WorkerCard initials="CO" name="Chinedu Okoro" role="Senior Farmhand" online lastSeen="Last log 12 mins ago" tags={['Feed', 'Mortality', 'Records', 'Weight']} index={0} />
-        <WorkerCard initials="AF" name="Aminat Fashola" role="Feed Specialist" online lastSeen="Last log 3 mins ago" tags={['Feed', 'Inventory', 'Records']} index={1} />
-        <WorkerCard initials="KO" name="Kola Ogunleye" role="Veterinary Assistant" online={false} lastSeen="Last seen 4h ago" tags={['Health', 'Mortality', 'Records']} index={2} />
+        <TeamTabs active={activeTab} onChange={setActiveTab} />
+
+        <TabContent tab={activeTab} />
 
         {/* ─── INVITE CARD ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(700).springify()}>
@@ -526,15 +930,28 @@ export default function TeamScreen() {
             <Text style={invStyles.title}>Expand Your Workforce</Text>
             <Text style={invStyles.sub}>Invite workers, supervisors, or consultants to your ecosystem.</Text>
             <View style={invStyles.acts}>
-              <TouchableOpacity style={invStyles.btnPrimary} activeOpacity={0.85}>
+              <Pressable
+                style={({ pressed }) => [invStyles.btnPrimary, pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] }]}
+                onPress={() => Alert.alert('QR Invite', 'Share your farm QR code with new team members.\n\nFeature coming soon.')}
+              >
                 <Text style={invStyles.btnPrimaryText}>Share QR Invite</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={invStyles.btnSecondary} activeOpacity={0.85}>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [invStyles.btnSecondary, pressed && { opacity: 0.7 }]}
+                onPress={() => Alert.alert('WhatsApp Invite', 'Send an invitation link via WhatsApp.\n\nFeature coming soon.')}
+              >
                 <Text style={invStyles.btnSecondaryText}>{'\uD83D\uDCAC'} WhatsApp Invite</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </LinearGradient>
         </Animated.View>
+
+        {/* ─── ACTIVITY FEED ─── */}
+        <Animated.View entering={FadeInUp.duration(500).delay(700).springify()} style={[styles.sectionHdr, { marginTop: 24 }]}>
+          <Text style={styles.sectionTitle}>Live Activity</Text>
+        </Animated.View>
+
+        <ActivityFeed />
 
         {/* ─── INSIGHTS ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(700).springify()} style={[styles.sectionHdr, { marginTop: 24 }]}>
@@ -542,18 +959,18 @@ export default function TeamScreen() {
         </Animated.View>
 
         <View style={styles.insightsList}>
-          <InsightItem
-            text="Worker accountability improved by 14% this cycle."
-            index={0}
-          />
-          <InsightItem
-            text="Feed efficiency is above benchmark by 8%."
-            index={1}
-          />
-          <InsightItem
-            text="Your Academy score ranks top 12% in Oyo State."
-            index={2}
-          />
+          {INSIGHTS.map((insight, i) => (
+            <InsightItem
+              key={insight.text}
+              text={insight.text}
+              index={i}
+              onPress={() => {
+                if (insight.route === 'accountability') Alert.alert('Accountability Insight', insight.text + '\n\nWorker performance analytics coming soon.')
+                else if (insight.route === 'feed') Alert.alert('Feed Efficiency', insight.text + '\n\nFeed analytics dashboard coming soon.')
+                else Alert.alert('Academy Score', insight.text + '\n\nLeaderboard and rankings coming soon.')
+              }}
+            />
+          ))}
         </View>
 
         <View style={{ height: 40 }} />
@@ -650,7 +1067,7 @@ const styles = StyleSheet.create({
   insightsList: { gap: 8 },
 })
 
-/* ─── Invite card styles (separate from main styles) ─── */
+/* ─── Invite card styles ─── */
 const invStyles = StyleSheet.create({
   card: {
     borderRadius: 28, padding: 24, marginTop: 14,
@@ -672,5 +1089,3 @@ const invStyles = StyleSheet.create({
   },
   btnSecondaryText: { fontWeight: '600', fontSize: 12, color: '#1A2E00' },
 })
-
-

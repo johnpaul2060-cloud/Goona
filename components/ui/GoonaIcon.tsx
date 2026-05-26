@@ -14,15 +14,16 @@ interface GoonaIconProps {
   style?: ViewStyle
 }
 
-export default function GoonaIcon({
-  icon: Icon,
-  size = 22,
-  color = '#94A3B8',
-  active,
-  glow,
-  strokeWidth = 2,
-  animated,
-  style,
+function StaticGoonaIcon({ icon: Icon, size = 22, color = '#94A3B8', strokeWidth = 2, style }: GoonaIconProps) {
+  return (
+    <View style={[{ width: size + 4, height: size + 4, alignItems: 'center', justifyContent: 'center' }, style]}>
+      <Icon size={size} color={color} strokeWidth={strokeWidth} />
+    </View>
+  )
+}
+
+function AnimatedGoonaIcon({
+  icon: Icon, size = 22, color = '#94A3B8', active, glow, strokeWidth = 2, animated, style,
 }: GoonaIconProps) {
   const pulse = useSharedValue(1)
 
@@ -51,14 +52,6 @@ export default function GoonaIcon({
     <Icon size={size} color={iconColor} strokeWidth={strokeWidth} />
   )
 
-  if (!active && !glow && !animated) {
-    return (
-      <View style={[{ width: size + 4, height: size + 4, alignItems: 'center', justifyContent: 'center' }, style]}>
-        {icon}
-      </View>
-    )
-  }
-
   const Wrapper = animated ? Animated.View : View
   const wrapperStyle = animated ? [wrapperBase(size), animStyle, style] : [wrapperBase(size), style]
 
@@ -78,6 +71,13 @@ export default function GoonaIcon({
       {icon}
     </Wrapper>
   )
+}
+
+export default function GoonaIcon(props: GoonaIconProps) {
+  if (!props.active && !props.glow && !props.animated) {
+    return <StaticGoonaIcon {...props} />
+  }
+  return <AnimatedGoonaIcon {...props} />
 }
 
 const wrapperBase = (size: number) => ({

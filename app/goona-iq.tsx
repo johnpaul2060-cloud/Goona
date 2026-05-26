@@ -5,7 +5,8 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Sparkles, Sprout, Mic, Send, ChevronRight, Package, Heart, MapPin, TrendingUp, AlertCircle } from 'lucide-react-native'
+import { ArrowLeft, Sparkles, Sprout, Mic, Send, Package, Heart, MapPin, TrendingUp } from 'lucide-react-native'
+import GoonaIQWeatherSection from '../components/GoonaIQWeatherSection'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -68,12 +69,6 @@ const FINANCIALS = [
   { label: 'Burn Rate', value: '₦420k', forecast: '₦380k', trend: 0.55 },
   { label: 'Cost Pressure', value: '₦187/bird', forecast: '₦165/bird', trend: 0.64 },
   { label: 'Revenue Prob.', value: '76%', forecast: '88%', trend: 0.76 },
-]
-
-const SCENARIOS = [
-  { title: 'Feed prices rise 15%', impact: 'Profit -₦320k', risk: 'high' as const, icon: 'trend' },
-  { title: 'Mortality increases 5%', impact: 'Loss -₦180k', risk: 'critical' as const, icon: 'alert' },
-  { title: 'Worker count reduces by 2', impact: 'Efficiency -22%', risk: 'moderate' as const, icon: 'users' },
 ]
 
 const FOCUS_MODES = ['Mortality', 'Profitability', 'Feed Mgmt', 'Worker', 'Recapitalization', 'Growth']
@@ -139,7 +134,6 @@ function usePressScale() {
 export default function GOONAIQScreen() {
   const [visibleInsights, setVisibleInsights] = useState(INSIGHTS.slice(0, 4))
   const [focusMode, setFocusMode] = useState('Mortality')
-  const [activeScenario, setActiveScenario] = useState<number | null>(null)
   const [currentTip, setCurrentTip] = useState(0)
   const [aiState, setAiState] = useState<AIState>('idle')
   const [aiQuery, setAiQuery] = useState('')
@@ -430,21 +424,8 @@ export default function GOONAIQScreen() {
           ))}
         </Animated.View>
 
-        {/* ─── 9. AI SCENARIO SIMULATION ─── */}
-        <Animated.View entering={FadeInUp.duration(500).delay(750).springify()} style={styles.sectionHdr}>
-          <Text style={styles.sectionTitle}>Scenario Simulator</Text>
-          <Text style={styles.sectionSub} numberOfLines={1}>What happens if&hellip;</Text>
-        </Animated.View>
-
-        {SCENARIOS.map((s, i) => (
-          <ScenarioCard
-            key={s.title}
-            {...s}
-            index={i}
-            active={activeScenario === i}
-            onPress={() => setActiveScenario(activeScenario === i ? null : i)}
-          />
-        ))}
+        {/* ─── 9. WEATHER INTELLIGENCE ─── */}
+        <GoonaIQWeatherSection />
 
         {/* ─── 10. OPERATIONAL FOCUS MODE ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(850).springify()} style={styles.sectionHdr}>
@@ -1057,45 +1038,6 @@ const fmStyles = StyleSheet.create({
   fill: { height: '100%', borderRadius: 100 },
 })
 
-/* ─── Scenario Card ─── */
-function ScenarioCard({
-  title, impact, risk, icon, index, active, onPress,
-}: {
-  title: string; impact: string; risk: 'high' | 'critical' | 'moderate'; icon: string; index: number; active: boolean; onPress: () => void
-}) {
-  const { style, onPressIn, onPressOut } = usePressScale()
-  const riskColor = risk === 'critical' ? '#EF4444' : risk === 'high' ? '#F59E0B' : '#22C55E'
-  const iconComp = icon === 'trend' ? TrendingUp : icon === 'alert' ? AlertCircle : MapPin
-
-  return (
-    <Animated.View entering={FadeInUp.duration(500).delay(800 + index * 80).springify()} style={[style, { marginBottom: 10 }]}>
-      <TouchableOpacity
-        style={[styles.scenarioCard, active && { borderColor: riskColor, backgroundColor: `${riskColor}06` as any }]}
-        onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        activeOpacity={0.85}
-      >
-        <View style={[styles.scenarioIcon, { backgroundColor: `${riskColor}12` as any }]}>
-          <GoonaIcon icon={iconComp} size={18} color={riskColor} />
-        </View>
-        <View style={styles.scenarioBody}>
-          <Text style={styles.scenarioTitle} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
-          {active && (
-            <Animated.View entering={FadeInUp.duration(300).springify()} style={styles.scenarioResult}>
-              <View style={[styles.scenarioBar, { backgroundColor: `${riskColor}20` as any }]}>
-                <View style={[styles.scenarioBarFill, { backgroundColor: riskColor, width: risk === 'critical' ? '85%' : risk === 'high' ? '60%' : '35%' }]} />
-              </View>
-              <Text style={[styles.scenarioImpact, { color: riskColor }]}>{impact}</Text>
-            </Animated.View>
-          )}
-        </View>
-        <GoonaIcon icon={ChevronRight} size={16} color={active ? riskColor : '#94A3B8'} />
-      </TouchableOpacity>
-    </Animated.View>
-  )
-}
-
 /* ─── Styles ─── */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9F5' },
@@ -1255,25 +1197,6 @@ const styles = StyleSheet.create({
 
   /* financial grid */
   financialGrid: { gap: 8 },
-
-  /* scenario */
-  scenarioCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: 'white', borderRadius: 20, padding: 18,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 16, elevation: 1,
-  },
-  scenarioIcon: {
-    width: 40, height: 40, borderRadius: 14,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  scenarioBody: { flex: 1 },
-  scenarioTitle: { fontSize: 13, fontWeight: '600', color: '#1B1B1B' },
-  scenarioResult: { marginTop: 8, gap: 4 },
-  scenarioBar: { height: 4, borderRadius: 100, overflow: 'hidden' },
-  scenarioBarFill: { height: '100%', borderRadius: 100 },
-  scenarioImpact: { fontSize: 11, fontWeight: '700' },
 
   /* focus mode */
   focusScroll: { paddingBottom: 4 },

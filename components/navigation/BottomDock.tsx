@@ -3,11 +3,13 @@ import { router, usePathname } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, withSequence, withDelay, interpolate, Extrapolation } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { House, MessagesSquare, ClipboardList, Users } from 'lucide-react-native'
 import { GoonaNairaIcon } from '../icons/GoonaNairaIcon'
 import GoonaIcon from '../ui/GoonaIcon'
 import GoonaMarqueeAlert from '../GoonaMarqueeAlert'
+import GoonaWeatherPanel from '../GoonaWeatherPanel'
+import { generateWeatherAlerts } from '../../utils/weatherIntelligence'
 
 const TAB_ROUTES = [
   { label: 'Home', route: '/(tabs)/dashboard' },
@@ -61,73 +63,101 @@ function ActiveOrb() {
 export default function BottomDock({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname()
   const insets = useSafeAreaInsets()
+  const [weatherPanelVisible, setWeatherPanelVisible] = useState(false)
 
   const activeIndex = (() => {
     if (pathname === '/(tabs)' || pathname === '/(tabs)/dashboard' || pathname === '/dashboard') return 0
     if (pathname.includes('farm-feed') || pathname.includes('farmchat')) return 1
-    if (pathname.includes('records') || pathname.includes('sales') || pathname.includes('record-sale') || pathname.includes('create-batch') || pathname.includes('daily-records')) return 2
+    if (pathname.includes('records') || pathname.includes('sales') || pathname.includes('record-sale') || pathname.includes('create-batch') || pathname.includes('daily-records') || pathname.includes('batch-details') || pathname.includes('/batches')) return 2
     if (pathname.includes('recapitalization') || pathname.includes('recapt') || pathname.includes('plan-recapt')) return 3
     if (pathname.includes('team') || pathname.includes('teams') || pathname.includes('worker') || pathname.includes('settings') || pathname.includes('goona-iq') || pathname.includes('academy') || pathname.includes('farm-profile') || pathname.includes('device-management') || pathname.includes('permissions')) return 4
     return 0
   })()
+
+  const tickerMessages = useMemo(() => {
+    const core = [
+      'Consistency builds stronger farms.',
+      'Your weekly ₦25,000 recap target is due tomorrow.',
+      'GOONA IQ: Feed efficiency may drop this week.',
+      '3 worker tasks completed today.',
+      'Recovery milestone unlocked. Keep going.',
+      'Small daily wins lead to big farm growth.',
+      'Recap target: 60% achieved this cycle.',
+      'Remember to check your batch health scores.',
+    ]
+    const weather = generateWeatherAlerts(4)
+    const merged: string[] = []
+    let ci = 0, wi = 0
+    while (ci < core.length || wi < weather.length) {
+      if (ci < core.length) merged.push(core[ci++])
+      if (wi < weather.length && (ci % 2 === 0 || ci === core.length)) merged.push(weather[wi++])
+    }
+    return merged
+  }, [])
 
   if (hidden) return null
 
   const bottom = insets.bottom > 0 ? insets.bottom : 16
 
   return (
-    <View style={[styles.outerWrapper, { bottom }]}>
-      <View style={styles.container}>
-        <LinearGradient
-          colors={['rgba(255,255,255,0.72)', 'rgba(248,250,252,0.48)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[StyleSheet.absoluteFill, { borderRadius: 34 }]}
-          pointerEvents="none"
+    <View style={styles.root} pointerEvents="box-none">
+      <View style={[styles.outerWrapper, { bottom }]}>
+        <View style={styles.container}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.72)', 'rgba(248,250,252,0.48)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 34 }]}
+            pointerEvents="none"
+          />
+          <View style={styles.blurOverlay} pointerEvents="none" />
+          {TAB_ROUTES.map((tab, i) => {
+            const isActive = i === activeIndex
+            return (
+              <DockTabButton
+                key={tab.label}
+                label={tab.label}
+                index={i}
+                isActive={isActive}
+                onPress={() => {
+                  if (i !== activeIndex) {
+                    router.navigate({ pathname: tab.route as any } as any)
+                  }
+                }}
+              />
+            )
+          })}
+        </View>
+        <GoonaMarqueeAlert
+          messages={tickerMessages}
+          onPress={(msg) => {
+            const t = msg.toLowerCase()
+            if (t.includes('recap') || t.includes('target')) {
+              router.navigate({ pathname: '/(tabs)/recapitalization' as any } as any)
+            } else if (t.includes('worker') || t.includes('task')) {
+              router.navigate({ pathname: '/(tabs)/team' as any } as any)
+            } else if (t.includes('goona iq') || t.includes('efficiency') || t.includes('insight')) {
+              router.navigate({ pathname: '/goona-iq' as any } as any)
+            } else if (t.includes('recovery') || t.includes('milestone')) {
+              router.navigate({ pathname: '/notifications' as any } as any)
+            } else if (t.includes('batch') || t.includes('health')) {
+              router.navigate({ pathname: '/(tabs)/dashboard' as any } as any)
+             } else if (t.includes('heat') || t.includes('temperature') || t.includes('humidity') ||
+                       t.includes('rain') || t.includes('wind') || t.includes('storm') ||
+                       t.includes('weather') || t.includes('climate') || t.includes('litter') ||
+                       t.includes('disease') || t.includes('biosecurity') || t.includes('flood') ||
+                       t.includes('stress') || t.includes('oxygen') || t.includes('dehydration') ||
+                       t.includes('feed') || t.includes('appetite') || t.includes('conversion') ||
+                       t.includes('harvest') || t.includes('risk') || t.includes('alert') ||
+                       t.includes('watch')) {
+              setWeatherPanelVisible(true)
+            }
+          }}
         />
-        <View style={styles.blurOverlay} pointerEvents="none" />
-        {TAB_ROUTES.map((tab, i) => {
-          const isActive = i === activeIndex
-          return (
-            <DockTabButton
-              key={tab.label}
-              label={tab.label}
-              index={i}
-              isActive={isActive}
-              onPress={() => {
-                if (i !== activeIndex) {
-                  router.navigate({ pathname: tab.route as any } as any)
-                }
-              }}
-            />
-          )
-        })}
       </View>
-      <GoonaMarqueeAlert
-        messages={[
-          'Consistency builds stronger farms.',
-          'Your weekly ₦25,000 recap target is due tomorrow.',
-          'GOONA IQ: Feed efficiency may drop this week.',
-          '3 worker tasks completed today.',
-          'Recovery milestone unlocked. Keep going.',
-          'Small daily wins lead to big farm growth.',
-          'Recap target: 60% achieved this cycle.',
-          'Remember to check your batch health scores.',
-        ]}
-        onPress={(msg) => {
-          const t = msg.toLowerCase()
-          if (t.includes('recap') || t.includes('target')) {
-            router.navigate({ pathname: '/(tabs)/recapitalization' as any } as any)
-          } else if (t.includes('worker') || t.includes('task')) {
-            router.navigate({ pathname: '/(tabs)/team' as any } as any)
-          } else if (t.includes('goona iq') || t.includes('efficiency')) {
-            router.navigate({ pathname: '/goona-iq' as any } as any)
-          } else if (t.includes('recovery') || t.includes('milestone')) {
-            router.navigate({ pathname: '/notifications' as any } as any)
-          } else if (t.includes('batch') || t.includes('health')) {
-            router.navigate({ pathname: '/(tabs)/dashboard' as any } as any)
-          }
-        }}
+      <GoonaWeatherPanel
+        visible={weatherPanelVisible}
+        onClose={() => setWeatherPanelVisible(false)}
       />
     </View>
   )
@@ -176,6 +206,12 @@ function DockTabButton({ label, index, isActive, onPress }: {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 999,
+    elevation: 999,
+  },
   outerWrapper: {
     position: 'absolute',
     left: 16,
