@@ -1,10 +1,13 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { router, usePathname } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, withSequence, withDelay, Easing, interpolate, Extrapolation } from 'react-native-reanimated'
-import Svg, { Path, Circle, Rect, Line, G } from 'react-native-svg'
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, withSequence, withDelay, interpolate, Extrapolation } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect } from 'react'
+import { House, MessagesSquare, ClipboardList, Users } from 'lucide-react-native'
+import { GoonaNairaIcon } from '../icons/GoonaNairaIcon'
+import GoonaIcon from '../ui/GoonaIcon'
+import GoonaMarqueeAlert from '../GoonaMarqueeAlert'
 
 const TAB_ROUTES = [
   { label: 'Home', route: '/(tabs)/dashboard' },
@@ -14,39 +17,7 @@ const TAB_ROUTES = [
   { label: 'Teams', route: '/team' },
 ]
 
-function DockIcon({ i, active }: { i: number; active: boolean }) {
-  const c = active ? '#FFFFFF' : '#94A3B8'
-  const w = 1.5
-  return (
-    <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      {i === 0 && <Path d="M3 10L12 3L21 10V21C21 21.6 20.6 22 20 22H16V16H8V22H4C3.4 22 3 21.6 3 21V10Z" stroke={c} strokeWidth={w} strokeLinejoin="round" />}
-      {i === 1 && <>
-        <Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke={c} strokeWidth={w} strokeLinejoin="round" />
-        <Path d="M8 9h8M8 13h5" stroke={c} strokeWidth={w} strokeLinecap="round" />
-      </>}
-      {i === 2 && <>
-        <Rect x="5" y="4" width="14" height="17" rx="2" stroke={c} strokeWidth={w} />
-        <Line x1="8" y1="9" x2="16" y2="9" stroke={c} strokeWidth={w} strokeLinecap="round" />
-        <Line x1="8" y1="13" x2="14" y2="13" stroke={c} strokeWidth={w} strokeLinecap="round" />
-      </>}
-      {i === 3 && <G>
-        <Line x1="8" y1="4" x2="8" y2="20" stroke={c} strokeWidth={w} strokeLinecap="round" />
-        <Line x1="16" y1="4" x2="16" y2="20" stroke={c} strokeWidth={w} strokeLinecap="round" />
-        <Line x1="8" y1="4" x2="16" y2="20" stroke={c} strokeWidth={w} strokeLinecap="round" />
-        <Line x1="7" y1="11" x2="17" y2="11" stroke={c} strokeWidth={w} strokeLinecap="round" />
-        <Line x1="7" y1="15" x2="17" y2="15" stroke={c} strokeWidth={w} strokeLinecap="round" />
-      </G>}
-      {i === 4 && <>
-        <Circle cx="6" cy="8" r="2" stroke={c} strokeWidth={w} />
-        <Circle cx="12" cy="8" r="2" stroke={c} strokeWidth={w} />
-        <Circle cx="18" cy="8" r="2" stroke={c} strokeWidth={w} />
-        <Path d="M3 17c0-1.8 1.5-3 3-3s3 1.2 3 3" stroke={c} strokeWidth={w} strokeLinecap="round" />
-        <Path d="M9 17c0-1.8 1.5-3 3-3s3 1.2 3 3" stroke={c} strokeWidth={w} strokeLinecap="round" />
-        <Path d="M15 17c0-1.8 1.5-3 3-3s3 1.2 3 3" stroke={c} strokeWidth={w} strokeLinecap="round" />
-      </>}
-    </Svg>
-  )
-}
+const TAB_ICONS = [House, MessagesSquare, ClipboardList, GoonaNairaIcon, Users]
 
 function ActiveOrb() {
   const pulse = useSharedValue(1)
@@ -105,31 +76,59 @@ export default function BottomDock({ hidden }: { hidden?: boolean }) {
   const bottom = insets.bottom > 0 ? insets.bottom : 16
 
   return (
-    <View style={[styles.container, { bottom }]}>
-      <LinearGradient
-        colors={['rgba(255,255,255,0.72)', 'rgba(248,250,252,0.48)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[StyleSheet.absoluteFill, { borderRadius: 34 }]}
-        pointerEvents="none"
+    <View style={[styles.outerWrapper, { bottom }]}>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0.72)', 'rgba(248,250,252,0.48)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[StyleSheet.absoluteFill, { borderRadius: 34 }]}
+          pointerEvents="none"
+        />
+        <View style={styles.blurOverlay} pointerEvents="none" />
+        {TAB_ROUTES.map((tab, i) => {
+          const isActive = i === activeIndex
+          return (
+            <DockTabButton
+              key={tab.label}
+              label={tab.label}
+              index={i}
+              isActive={isActive}
+              onPress={() => {
+                if (i !== activeIndex) {
+                  router.navigate({ pathname: tab.route as any } as any)
+                }
+              }}
+            />
+          )
+        })}
+      </View>
+      <GoonaMarqueeAlert
+        messages={[
+          'Consistency builds stronger farms.',
+          'Your weekly ₦25,000 recap target is due tomorrow.',
+          'GOONA IQ: Feed efficiency may drop this week.',
+          '3 worker tasks completed today.',
+          'Recovery milestone unlocked. Keep going.',
+          'Small daily wins lead to big farm growth.',
+          'Recap target: 60% achieved this cycle.',
+          'Remember to check your batch health scores.',
+        ]}
+        onPress={(msg) => {
+          const t = msg.toLowerCase()
+          if (t.includes('recap') || t.includes('target')) {
+            router.navigate({ pathname: '/(tabs)/recapitalization' as any } as any)
+          } else if (t.includes('worker') || t.includes('task')) {
+            router.navigate({ pathname: '/(tabs)/team' as any } as any)
+          } else if (t.includes('goona iq') || t.includes('efficiency')) {
+            router.navigate({ pathname: '/goona-iq' as any } as any)
+          } else if (t.includes('recovery') || t.includes('milestone')) {
+            router.navigate({ pathname: '/notifications' as any } as any)
+          } else if (t.includes('batch') || t.includes('health')) {
+            router.navigate({ pathname: '/(tabs)/dashboard' as any } as any)
+          }
+        }}
       />
-      <View style={styles.blurOverlay} pointerEvents="none" />
-      {TAB_ROUTES.map((tab, i) => {
-        const isActive = i === activeIndex
-        return (
-          <DockTabButton
-            key={tab.label}
-            label={tab.label}
-            index={i}
-            isActive={isActive}
-            onPress={() => {
-              if (i !== activeIndex) {
-                router.navigate({ pathname: tab.route as any } as any)
-              }
-            }}
-          />
-        )
-      })}
     </View>
   )
 }
@@ -165,7 +164,7 @@ function DockTabButton({ label, index, isActive, onPress }: {
         <View style={styles.iconOrbWrap}>
           {isActive && <ActiveOrb />}
           <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
-            <DockIcon i={index} active={isActive} />
+            <GoonaIcon icon={TAB_ICONS[index]} active={isActive} size={22} />
           </View>
         </View>
         <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]} numberOfLines={1}>
@@ -177,8 +176,15 @@ function DockTabButton({ label, index, isActive, onPress }: {
 }
 
 const styles = StyleSheet.create({
+  outerWrapper: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    zIndex: 999,
+    elevation: 999,
+  },
   container: {
-    position: 'absolute', left: 16, right: 16, height: 76,
+    height: 76,
     flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.55)',
     borderRadius: 34,

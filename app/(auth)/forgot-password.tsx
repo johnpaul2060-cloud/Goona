@@ -15,86 +15,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import GoonaIcon from '../../components/ui/GoonaIcon';
+import { ArrowLeft, Mail, Lock, Shield, Eye, EyeOff, CircleCheck, CircleX, Send, ShieldCheck, Lightbulb } from 'lucide-react-native';
 import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const OTP_AVAILABLE_WIDTH = SCREEN_WIDTH - 96;
 const OTP_GAP = 8;
 const OTP_BOX_SIZE = Math.min(50, Math.floor((OTP_AVAILABLE_WIDTH - OTP_GAP * 5) / 6));
-
-function BackIcon() {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-
-function MailIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Rect x="3" y="5" width="14" height="10" rx="2" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-      <Path d="M3 7L10 11L17 7" stroke="#A0AEA1" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function LockIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Rect x="4" y="8" width="12" height="8" rx="2" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-      <Path d="M7 8V6C7 4 8 3 10 3C12 3 13 4 13 6V8" stroke="#A0AEA1" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-      <Circle cx="10" cy="12" r="1.2" stroke="#A0AEA1" strokeWidth="1" />
-    </Svg>
-  );
-}
-
-function ShieldIcon() {
-  return (
-    <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#2E7D32" strokeWidth="1.2" fill="none" />
-      <Path d="M5.5 7.5L6.5 8.5L9 6" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function EyeOpenIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Path d="M3 10C3 10 5.5 5 10 5C14.5 5 17 10 17 10C17 10 14.5 15 10 15C5.5 15 3 10 3 10Z" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-      <Circle cx="10" cy="10" r="3" stroke="#A0AEA1" strokeWidth="1.2" fill="none" />
-    </Svg>
-  );
-}
-
-function EyeClosedIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Path d="M3 10C3 10 5.5 5 10 5C14.5 5 17 10 17 10C17 10 14.5 15 10 15C5.5 15 3 10 3 10Z" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-      <Circle cx="10" cy="10" r="3" stroke="#A0AEA1" strokeWidth="1.2" fill="none" />
-      <Line x1="16" y1="4" x2="4" y2="16" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function CheckCircleIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Circle cx="10" cy="10" r="6" stroke="#43A047" strokeWidth="1.4" fill="none" />
-      <Path d="M7 10L9 12L13 8" stroke="#43A047" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function ErrorCircleIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Circle cx="10" cy="10" r="6" stroke="#EF4444" strokeWidth="1.4" fill="none" />
-      <Path d="M8 8L12 12" stroke="#EF4444" strokeWidth="1.4" strokeLinecap="round" />
-      <Path d="M12 8L8 12" stroke="#EF4444" strokeWidth="1.4" strokeLinecap="round" />
-    </Svg>
-  );
-}
 
 function Spinner() {
   return (
@@ -344,7 +272,7 @@ export default function ForgotPasswordScreen() {
   const renderTopNav = () => (
     <View style={styles.topNav}>
       <TouchableOpacity style={styles.navBack} onPress={goBack}>
-        <BackIcon />
+        <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
       </TouchableOpacity>
       <View style={styles.navLogo}>
         <Svg width="24" height="24" viewBox="0 0 24 24">
@@ -405,7 +333,7 @@ export default function ForgotPasswordScreen() {
               <View style={styles.formCard}>
                 <View style={[styles.fieldWrap, emailFocused && styles.fieldWrapFocused]}>
                   <View style={styles.fieldIcon}>
-                    <MailIcon />
+                    <GoonaIcon icon={Mail} size={20} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>Email / Phone</Text>
@@ -435,18 +363,12 @@ export default function ForgotPasswordScreen() {
                   disabled={!email.trim() || isSending}
                   loading={isSending}
                 >
-                  {!isSending && (
-                    <Svg width="20" height="20" viewBox="0 0 20 20">
-                      <Path d="M3 10L5 12L8.5 9" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                      <Path d="M10 4H16C17 4 18 5 18 6V14C18 15 17 16 16 16H10" stroke="white" strokeWidth="1.4" fill="none" />
-                      <Path d="M12 10H18" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-                    </Svg>
-                  )}
+                  {!isSending && <GoonaIcon icon={Send} size={20} color="white" />}
                   <Text style={styles.primaryBtnText}>{isSending ? 'Sending...' : 'Send Reset Code'}</Text>
                 </PrimaryButton>
 
                 <View style={styles.securityPill}>
-                  <ShieldIcon />
+                  <GoonaIcon icon={Shield} size={14} color="#2E7D32" />
                   <Text style={styles.securityPillText}>Secure encrypted recovery</Text>
                 </View>
               </View>
@@ -500,7 +422,7 @@ export default function ForgotPasswordScreen() {
                 </PrimaryButton>
 
                 <View style={styles.securityPill}>
-                  <ShieldIcon />
+                  <GoonaIcon icon={Shield} size={14} color="#2E7D32" />
                   <Text style={styles.securityPillText}>End-to-end encrypted</Text>
                 </View>
               </View>
@@ -521,7 +443,7 @@ export default function ForgotPasswordScreen() {
               <View style={styles.formCard}>
                 <View style={[styles.fieldWrap, newPassFocused && styles.fieldWrapFocused]}>
                   <View style={styles.fieldIcon}>
-                    <LockIcon />
+                    <GoonaIcon icon={Lock} size={20} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>New Password</Text>
@@ -539,7 +461,7 @@ export default function ForgotPasswordScreen() {
                     />
                   </View>
                   <TouchableOpacity style={styles.fieldRight} onPress={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
+                    {showPassword ? <GoonaIcon icon={Eye} size={20} color="#A0AEA1" /> : <GoonaIcon icon={EyeOff} size={20} color="#A0AEA1" />}
                   </TouchableOpacity>
                 </View>
 
@@ -547,10 +469,7 @@ export default function ForgotPasswordScreen() {
 
                 <View style={[styles.fieldWrap, { marginTop: 14 }, confirmFocused && styles.fieldWrapFocused]}>
                   <View style={styles.fieldIcon}>
-                    <Svg width="20" height="20" viewBox="0 0 20 20">
-                      <Path d="M10 3L7 5V9C7 11.5 10 13 10 13C10 13 13 11.5 13 9V5L10 3Z" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-                      <Path d="M8.5 9L9.5 10L12 7.5" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                    </Svg>
+                    <GoonaIcon icon={Shield} size={20} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>Confirm Password</Text>
@@ -568,22 +487,15 @@ export default function ForgotPasswordScreen() {
                     />
                   </View>
                   <View style={styles.fieldRight}>
-                    {confirmMatch === true && <CheckCircleIcon />}
-                    {confirmMatch === false && <ErrorCircleIcon />}
-                    {confirmMatch === null && (
-                      <Svg width="20" height="20" viewBox="0 0 20 20">
-                        <Circle cx="10" cy="10" r="6" stroke="#CBD5E1" strokeWidth="1.4" fill="none" />
-                      </Svg>
-                    )}
+                    {confirmMatch === true && <GoonaIcon icon={CircleCheck} size={20} color="#43A047" />}
+                    {confirmMatch === false && <GoonaIcon icon={CircleX} size={20} color="#EF4444" />}
+                    {confirmMatch === null && <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.4, borderColor: '#CBD5E1' }} />}
                   </View>
                 </View>
 
                 <View style={styles.tipsCard}>
                   <View style={styles.tipsIcon}>
-                    <Svg width="18" height="18" viewBox="0 0 18 18">
-                      <Path d="M9 4L7 7V10C7 11.5 9 12.5 9 12.5C9 12.5 11 11.5 11 10V7L9 4Z" stroke="#2E7D32" strokeWidth="1.3" fill="none" />
-                      <Circle cx="9" cy="14" r="1" fill="#2E7D32" fillOpacity="0.3" />
-                    </Svg>
+                    <GoonaIcon icon={Lightbulb} size={18} color="#2E7D32" />
                   </View>
                   <View>
                     <Text style={styles.tipText}>{'  '}Use 8+ characters</Text>
@@ -596,10 +508,7 @@ export default function ForgotPasswordScreen() {
                   onPress={handleResetPassword}
                   disabled={!newPassword || confirmMatch !== true}
                 >
-                  <Svg width="20" height="20" viewBox="0 0 20 20">
-                    <Path d="M10 3L7 6V10C7 12.5 10 14 10 14C10 14 13 12.5 13 10V6L10 3Z" stroke="white" strokeWidth="1.4" fill="none" />
-                    <Path d="M8 9L9.5 10.5L12.5 7.5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  </Svg>
+                  <GoonaIcon icon={ShieldCheck} size={20} color="white" />
                   <Text style={styles.primaryBtnText}>Reset Password</Text>
                 </PrimaryButton>
               </View>
@@ -611,10 +520,7 @@ export default function ForgotPasswordScreen() {
             <View style={styles.successContainer}>
               <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
                 <View style={styles.successCircle}>
-                  <Svg width="36" height="36" viewBox="0 0 36 36">
-                    <Circle cx="18" cy="18" r="16" fill="#16A34A" fillOpacity="0.1" />
-                    <Path d="M11 18L15.5 22.5L25 13.5" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
+                  <GoonaIcon icon={CircleCheck} size={36} color="#16A34A" />
                 </View>
               </Animated.View>
 
@@ -628,27 +534,19 @@ export default function ForgotPasswordScreen() {
               <View style={styles.successCard}>
                 <View style={styles.successRow}>
                   <View style={[styles.successRowIcon, { backgroundColor: '#F0FDF4' }]}>
-                    <Svg width="18" height="18" viewBox="0 0 18 18">
-                      <Path d="M9 3L6 5V9C6 11 9 12.5 9 12.5C9 12.5 12 11 12 9V5L9 3Z" stroke="#16A34A" strokeWidth="1.4" fill="none" />
-                      <Path d="M7 9L8.5 10.5L11 7.5" stroke="#16A34A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                    </Svg>
+                    <GoonaIcon icon={ShieldCheck} size={18} color="#16A34A" />
                   </View>
                   <Text style={styles.successRowLabel}>Secure Access Restored</Text>
                 </View>
                 <View style={styles.successRow}>
                   <View style={[styles.successRowIcon, { backgroundColor: '#EEF3FF' }]}>
-                    <Svg width="18" height="18" viewBox="0 0 18 18">
-                      <Path d="M9 3L6 5V9C6 11 9 12.5 9 12.5C9 12.5 12 11 12 9V5L9 3Z" stroke="#1A56FF" strokeWidth="1.4" fill="none" />
-                    </Svg>
+                    <GoonaIcon icon={Shield} size={18} color="#1A56FF" />
                   </View>
                   <Text style={styles.successRowLabel}>Login Protection Active</Text>
                 </View>
                 <View style={styles.successRow}>
                   <View style={[styles.successRowIcon, { backgroundColor: '#FFF8E1' }]}>
-                    <Svg width="18" height="18" viewBox="0 0 18 18">
-                      <Path d="M4 9C4 6 6 4.5 9 4.5C12 4.5 14 6 14 9" stroke="#F9A825" strokeWidth="1.4" strokeLinecap="round" />
-                      <Path d="M5 12C5 10.5 6.5 9.5 9 9.5C11.5 9.5 13 10.5 13 12" stroke="#F9A825" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-                    </Svg>
+                    <GoonaIcon icon={Eye} size={18} color="#F9A825" />
                   </View>
                   <Text style={styles.successRowLabel}>Offline Sync Preserved</Text>
                 </View>

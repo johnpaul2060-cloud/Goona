@@ -19,6 +19,8 @@ import Svg, {
   Rect,
   Text as SvgText,
 } from 'react-native-svg';
+import GoonaIcon from '../ui/GoonaIcon';
+import { ArrowRight, Shield, RefreshCw, Heart, Wheat, Skull, CircleCheck, CircleDollarSign, ShieldCheck, Users } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_SLIDES = 3;
@@ -98,15 +100,6 @@ function MiniLogo() {
       </Svg>
       <Text style={styles.miniLogoText}>GOONA</Text>
     </View>
-  );
-}
-
-function ArrowRightIcon() {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18">
-      <Path d="M4 9H14" stroke="white" strokeWidth={1.5} strokeLinecap="round" />
-      <Path d="M10 5L14 9L10 13" stroke="white" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
   );
 }
 
@@ -213,87 +206,6 @@ function Slide2Ill() {
 /*  Slide data (separated from UI rendering)                           */
 /* ------------------------------------------------------------------ */
 
-function ShieldIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M5.5 7.5L6.5 8.5L9 6" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function SyncIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-      <Path d="M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function HeartIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#EF4444" strokeWidth={1.2} fill="none" />
-      <Path d="M7 6V8" stroke="#EF4444" strokeWidth={1.2} strokeLinecap="round" />
-      <Circle cx={7} cy={5} r={0.6} fill="#EF4444" />
-    </Svg>
-  );
-}
-
-function FeedIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Rect x={3} y={4} width={8} height={6} rx={1.5} stroke="#2E7D32" strokeWidth={1.2} fill="none" />
-      <Path d="M5 7H9" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function MortalityIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M7 3L8.5 7L13 8.5L8.5 10L7 13L5.5 10L1 8.5L5.5 7Z" stroke="#EF4444" strokeWidth={1.2} strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Circle cx={7} cy={7} r={4} stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M5.5 7L6.5 8L9 5.5" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function CoinIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Rect x={3} y={5} width={8} height={6} rx={1.5} stroke="#F9A825" strokeWidth={1.2} fill="none" />
-      <Circle cx={7} cy={3} r={2} stroke="#F9A825" strokeWidth={1.2} fill="none" />
-    </Svg>
-  );
-}
-
-function ShieldCheckSmall() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M6 8L7 9L9 6" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-
-function ExpansionIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14">
-      <Path d="M3 8C3 4.5 5 3 7 3C9 3 11 4.5 11 8" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-      <Path d="M4 12C4 10 5.5 9 7 9C8.5 9 10 10 10 12" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" fill="none" />
-    </Svg>
-  );
-}
-
 const SLIDES: SlideData[] = [
   {
     illustration: Slide0Ill,
@@ -307,9 +219,9 @@ const SLIDES: SlideData[] = [
     contourBottom: { bottom: '20%', rotate: '-8deg' },
     floatingCards: (
       <>
-        <FloatingCard top="28%" right={6} iconBg="#F0FDF4" icon={<ShieldIcon />} label="Records Secured" />
-        <FloatingCard bottom="22%" left={4} iconBg="#EEF3FF" icon={<SyncIcon />} label="Offline Sync Active" />
-        <FloatingCard bottom="46%" right={8} iconBg="#FFF1F2" icon={<HeartIcon />} label="Farm Protected" />
+        <FloatingCard top="28%" right={6} iconBg="#F0FDF4" icon={<GoonaIcon icon={Shield} size={14} color="#16A34A" />} label="Records Secured" />
+        <FloatingCard bottom="22%" left={4} iconBg="#EEF3FF" icon={<GoonaIcon icon={RefreshCw} size={14} color="#1A56FF" />} label="Offline Sync Active" />
+        <FloatingCard bottom="46%" right={8} iconBg="#FFF1F2" icon={<GoonaIcon icon={Heart} size={14} color="#EF4444" />} label="Farm Protected" />
       </>
     ),
   },
@@ -325,9 +237,9 @@ const SLIDES: SlideData[] = [
     contourBottom: { bottom: '15%', rotate: '-8deg' },
     floatingCards: (
       <>
-        <FloatingCard top="18%" right={2} iconBg="#E8F5E9" icon={<FeedIcon />} label="Feed" value="218 kg" />
-        <FloatingCard bottom="32%" left={2} iconBg="#FFF1F2" icon={<MortalityIcon />} label="Mortality" value="2 birds" />
-        <FloatingCard bottom="30%" right={4} iconBg="#F0FDF4" icon={<CheckIcon />} label="Growth +12%" />
+        <FloatingCard top="18%" right={2} iconBg="#E8F5E9" icon={<GoonaIcon icon={Wheat} size={14} color="#2E7D32" />} label="Feed" value="218 kg" />
+        <FloatingCard bottom="32%" left={2} iconBg="#FFF1F2" icon={<GoonaIcon icon={Skull} size={14} color="#EF4444" />} label="Mortality" value="2 birds" />
+        <FloatingCard bottom="30%" right={4} iconBg="#F0FDF4" icon={<GoonaIcon icon={CircleCheck} size={14} color="#16A34A" />} label="Growth +12%" />
       </>
     ),
   },
@@ -343,9 +255,9 @@ const SLIDES: SlideData[] = [
     contourBottom: { bottom: '18%', rotate: '-10deg' },
     floatingCards: (
       <>
-        <FloatingCard top="24%" right={3} iconBg="#FFFBEB" icon={<CoinIcon />} label="Reinvestment" value="42% Complete" />
-        <FloatingCard bottom="34%" left={0} iconBg="#F0FDF4" icon={<ShieldCheckSmall />} label="Savings Goal On Track" />
-        <FloatingCard bottom="30%" right={2} iconBg="#EEF3FF" icon={<ExpansionIcon />} label="Farm Expansion" />
+        <FloatingCard top="24%" right={3} iconBg="#FFFBEB" icon={<GoonaIcon icon={CircleDollarSign} size={14} color="#F9A825" />} label="Reinvestment" value="42% Complete" />
+        <FloatingCard bottom="34%" left={0} iconBg="#F0FDF4" icon={<GoonaIcon icon={ShieldCheck} size={14} color="#16A34A" />} label="Savings Goal On Track" />
+        <FloatingCard bottom="30%" right={2} iconBg="#EEF3FF" icon={<GoonaIcon icon={Users} size={14} color="#1A56FF" />} label="Farm Expansion" />
       </>
     ),
   },
@@ -473,7 +385,7 @@ export default function OnboardingScreen({ onDone, onSignIn }: OnboardingScreenP
         }}
       >
         <Text style={styles.ctaText}>{currentSlide.ctaLabel}</Text>
-        {currentIndex < TOTAL_SLIDES - 1 && <ArrowRightIcon />}
+        {currentIndex < TOTAL_SLIDES - 1 && <GoonaIcon icon={ArrowRight} size={18} color="white" />}
       </TouchableOpacity>
 
       <View style={styles.signinRow}>

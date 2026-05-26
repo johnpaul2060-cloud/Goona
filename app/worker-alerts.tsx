@@ -3,7 +3,8 @@ import {
   View, Text, TouchableOpacity, ScrollView, Pressable,
   StyleSheet, Dimensions, Modal, TextInput, Alert, Platform,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line, G, Defs, Stop } from 'react-native-svg'
+import GoonaIcon from '../components/ui/GoonaIcon'
+import { ArrowLeft, Clock, User, ClipboardList, AlertCircle, FileText, ChevronRight, RefreshCw, TriangleAlert, Mic, Square, Camera, CheckCircle } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -75,11 +76,7 @@ const PRIORITY_CONFIG: Record<PriorityLevel, { label: string; color: string; bg:
 
 /* ─── Back Icon ─── */
 function BackIcon() {
-  return (
-    <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
+  return <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
 }
 
 /* ─── Notification Overlay ─── */
@@ -121,10 +118,7 @@ function PushNotificationOverlay({
               <Text style={notifStyles.urgencyLabel}>NEW URGENT TASK</Text>
             </View>
             <TouchableOpacity onPress={onSnooze} activeOpacity={0.7} style={notifStyles.snoozeBtn}>
-              <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <Path d="M12 5V12L16 14" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" />
-                <Circle cx="12" cy="12" r="9" stroke="#64748B" strokeWidth="1.5" fill="none" />
-              </Svg>
+              <GoonaIcon icon={Clock} size={16} color="#64748B" />
             </TouchableOpacity>
           </View>
           <Text style={notifStyles.taskTitle}>Morning Feeding \u2014 Pen A</Text>
@@ -224,17 +218,11 @@ function PriorityHeroCard({ status, priority }: { status: TaskStatus; priority: 
 
         <View style={heroStyles.metaRow}>
           <View style={heroStyles.metaItem}>
-            <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <Circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" fill="none" />
-              <Path d="M12 7V12L15 15" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={Clock} size={14} color="rgba(255,255,255,0.5)" />
             <Text style={heroStyles.metaText}>Due: 7:30 AM</Text>
           </View>
           <View style={heroStyles.metaItem}>
-            <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <Path d="M20 21V19C20 16.8 18.2 15 16 15H8C5.8 15 4 16.8 4 19V21" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
-              <Circle cx="12" cy="7" r="4" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" fill="none" />
-            </Svg>
+            <GoonaIcon icon={User} size={14} color="rgba(255,255,255,0.5)" />
             <Text style={heroStyles.metaText}>Supervisor: Chinedu</Text>
           </View>
         </View>
@@ -302,10 +290,7 @@ function InstructionsSection() {
     <Animated.View entering={FadeInUp.duration(500).delay(250).springify()}>
       <View style={instrStyles.card}>
         <View style={instrStyles.header}>
-          <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <Rect x="3" y="3" width="18" height="18" rx="3" stroke="#2E7D32" strokeWidth="1.5" fill="none" />
-            <Path d="M8 8H16M8 12H14M8 16H12" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" />
-          </Svg>
+          <GoonaIcon icon={ClipboardList} size={18} color="#2E7D32" />
           <Text style={instrStyles.headerText}>Operational Instructions</Text>
         </View>
 
@@ -327,10 +312,7 @@ function InstructionsSection() {
         </View>
 
         <View style={instrStyles.notice}>
-          <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <Circle cx="12" cy="12" r="9" stroke="#F59E0B" strokeWidth="1.5" fill="none" />
-            <Path d="M12 8V12M12 16H12.01" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
-          </Svg>
+          <GoonaIcon icon={AlertCircle} size={14} color="#F59E0B" />
           <Text style={instrStyles.noticeText}>Batch warning: Low feed inventory — report to supervisor after completion.</Text>
         </View>
       </View>
@@ -369,19 +351,13 @@ function AttachmentCard({ title, type, pages, onPress }: { title: string; type: 
         onPressOut={onPressOut}
       >
         <View style={attStyles.iconWrap}>
-          <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <Path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V8L14 2Z" stroke="#2E7D32" strokeWidth="1.5" strokeLinejoin="round" fill="rgba(46,125,50,0.08)" />
-            <Path d="M14 2V8H19" stroke="#2E7D32" strokeWidth="1.5" strokeLinejoin="round" />
-            <Path d="M9 13H15M9 17H13" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" />
-          </Svg>
+          <GoonaIcon icon={FileText} size={20} color="#2E7D32" />
         </View>
         <View style={attStyles.info}>
           <Text style={attStyles.title} numberOfLines={1}>{title}</Text>
           <Text style={attStyles.meta}>{type} \u2022 {pages}</Text>
         </View>
-        <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <Path d="M9 18L15 12L9 6" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
+        <GoonaIcon icon={ChevronRight} size={16} color="#94A3B8" />
       </Pressable>
     </Animated.View>
   )
@@ -511,10 +487,7 @@ function SyncBar() {
         <View style={syncStyles.content}>
           <View style={syncStyles.left}>
             <View style={syncStyles.iconWrap}>
-              <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <Path d="M12 4V8M8 12H4M20 12H16M12 20V16M8 6L6 8M18 16L16 18M16 8L18 6M6 18L8 16" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" />
-                <Circle cx="12" cy="12" r="2" fill="#2E7D32" />
-              </Svg>
+              <GoonaIcon icon={RefreshCw} size={16} color="#2E7D32" />
             </View>
             <View>
               <Text style={syncStyles.title}>Offline Queued</Text>
@@ -566,10 +539,7 @@ function EscalationWarning() {
       <Animated.View style={[escStyles.card, animStyle]}>
         <View style={escStyles.content}>
           <View style={escStyles.iconWrap}>
-            <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <Path d="M12 2L1 21H23L12 2Z" stroke="#DC2626" strokeWidth="1.5" strokeLinejoin="round" fill="rgba(220,38,38,0.08)" />
-              <Path d="M12 9V13M12 17H12.01" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={TriangleAlert} size={20} color="#DC2626" />
           </View>
           <View style={escStyles.textWrap}>
             <Text style={escStyles.title}>Overdue by 25 minutes</Text>
@@ -660,17 +630,12 @@ function RecordingModal({ visible, onClose }: { visible: boolean; onClose: () =>
           <View style={modalStyles.actions}>
             {!isRecording ? (
               <TouchableOpacity style={modalStyles.recordBtn} activeOpacity={0.85} onPress={startRecording}>
-                <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <Circle cx="12" cy="12" r="10" stroke="white" strokeWidth="1.5" fill="rgba(255,255,255,0.1)" />
-                  <Circle cx="12" cy="12" r="6" fill="white" />
-                </Svg>
+                <GoonaIcon icon={Mic} size={24} color="#FFFFFF" />
                 <Text style={modalStyles.recordBtnText}>Start Recording</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={modalStyles.stopBtn} activeOpacity={0.85} onPress={stopRecording}>
-                <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <Rect x="7" y="7" width="10" height="10" rx="2" fill="white" />
-                </Svg>
+                <GoonaIcon icon={Square} size={24} color="#FFFFFF" />
                 <Text style={modalStyles.recordBtnText}>Stop & Save</Text>
               </TouchableOpacity>
             )}
@@ -953,11 +918,7 @@ export default function WorkerAlertsScreen() {
             label="Photo"
             gradient={['#2E7D32', '#1B5E20']}
             icon={
-              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <Rect x="3" y="5" width="18" height="14" rx="3" stroke="white" strokeWidth="1.5" fill="rgba(255,255,255,0.1)" />
-                <Circle cx="8.5" cy="10.5" r="1.5" stroke="white" strokeWidth="1.5" />
-                <Path d="M21 15L16 10L11 15M21 17L14 10L7 17" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={Camera} size={20} color="#FFFFFF" />
             }
             onPress={handlePhotoPress}
           />
@@ -966,12 +927,7 @@ export default function WorkerAlertsScreen() {
             label="Voice"
             gradient={['#7C3AED', '#4C1D95']}
             icon={
-              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <Path d="M12 2C10.9 2 10 2.9 10 4V12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12V4C14 2.9 13.1 2 12 2Z" stroke="white" strokeWidth="1.5" fill="rgba(255,255,255,0.1)" />
-                <Path d="M18 11C18 14.3 15.3 17 12 17C8.7 17 6 14.3 6 11" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                <Path d="M12 17V22" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                <Path d="M9 22H15" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              </Svg>
+              <GoonaIcon icon={Mic} size={20} color="#FFFFFF" />
             }
             onPress={handleVoicePress}
           />
@@ -980,10 +936,7 @@ export default function WorkerAlertsScreen() {
             label="Notes"
             gradient={['#1A56FF', '#1E3A8A']}
             icon={
-              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <Rect x="4" y="4" width="16" height="16" rx="3" stroke="white" strokeWidth="1.5" fill="rgba(255,255,255,0.1)" />
-                <Path d="M8 9H16M8 13H14M8 17H12" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              </Svg>
+              <GoonaIcon icon={FileText} size={20} color="#FFFFFF" />
             }
             onPress={() => setShowNotes(true)}
           />
@@ -1003,10 +956,7 @@ export default function WorkerAlertsScreen() {
           )}
           {taskStatus === 'completed' && (
             <View style={s.completedBanner}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Circle cx="12" cy="12" r="9" stroke="#16A34A" strokeWidth="1.5" fill="rgba(22,163,74,0.1)" />
-                <Path d="M8 12L11 15L16 9" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={CheckCircle} size={24} color="#16A34A" />
               <Text style={s.completedText}>Task Completed</Text>
               <Text style={s.completedSub}>Proof has been queued for sync</Text>
             </View>

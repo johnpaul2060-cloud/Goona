@@ -3,10 +3,11 @@ import {
   View, Text, TouchableOpacity, Pressable,
   StyleSheet, Platform,
 } from 'react-native'
-import Svg, { Path, Circle } from 'react-native-svg'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
 } from 'react-native-reanimated'
+import GoonaIcon from './ui/GoonaIcon'
+import { X, Check } from 'lucide-react-native'
 
 const BATCHES = [
   'Broiler Batch A',
@@ -15,23 +16,6 @@ const BATCHES = [
   'Turkey Unit',
   'Poultry Expansion Batch',
 ]
-
-function CloseIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Path d="M7 7L13 13" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round" />
-      <Path d="M13 7L7 13" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <Path d="M4 8L7 11L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
-}
 
 export default function BatchPickerModal({
   visible, selected, onSelect, onClose,
@@ -79,7 +63,7 @@ export default function BatchPickerModal({
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>Select Farm Batch</Text>
           <TouchableOpacity onPress={onClose} style={styles.sheetCloseBtn} activeOpacity={0.7}>
-            <CloseIcon />
+            <GoonaIcon icon={X} size={20} color="#94A3B8" />
           </TouchableOpacity>
         </View>
 
@@ -109,7 +93,7 @@ export default function BatchPickerModal({
                 </Text>
                 {active && (
                   <View style={styles.checkBadge}>
-                    <CheckIcon />
+                    <GoonaIcon icon={Check} size={16} color="white" />
                   </View>
                 )}
               </Pressable>

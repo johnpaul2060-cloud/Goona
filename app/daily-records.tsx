@@ -3,13 +3,14 @@ import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, Keyboard, Image, Alert,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
+import { ArrowLeft, Wheat, Skull, Pill, Egg, Droplets, Eye, Calendar, ChevronDown, ClipboardList, Mic, Camera, Upload, CheckCircle, Sparkles, Clock, FileText, X } from 'lucide-react-native'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming, withSequence, withRepeat,
   FadeInUp, FadeIn,
 } from 'react-native-reanimated'
+import GoonaIcon from '../components/ui/GoonaIcon'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import * as ImagePicker from 'expo-image-picker'
 import BottomDock from '../components/navigation/BottomDock'
@@ -30,32 +31,32 @@ function usePressScale() {
 const RECORD_TYPES = [
   {
     key: 'feed', label: 'Feed Usage',
-    icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="5" width="12" height="10" rx="2" stroke={c} strokeWidth="1.5" fill="none" /><Path d="M7 5V4C7 3 8 2.5 10 2.5C12 2.5 13 3 13 4V5" stroke={c} strokeWidth="1.5" fill="none" /></Svg>,
+    icon: Wheat,
     iconBg: '#FFFBEB', iconColor: '#F59E0B',
   },
   {
     key: 'mortality', label: 'Mortality',
-    icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Circle cx="10" cy="10" r="6" stroke={c} strokeWidth="1.5" fill="none" /><Line x1="10" y1="7" x2="10" y2="12" stroke={c} strokeWidth="1.3" strokeLinecap="round" /><Circle cx="10" cy="14" r="0.5" fill={c} /></Svg>,
+    icon: Skull,
     iconBg: '#FFF1F2', iconColor: '#EF4444',
   },
   {
     key: 'medication', label: 'Medication',
-    icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="7" y="3" width="6" height="14" rx="2" stroke={c} strokeWidth="1.5" fill="none" /><Line x1="7" y1="7" x2="13" y2="7" stroke={c} strokeWidth="1.3" strokeLinecap="round" /></Svg>,
+    icon: Pill,
     iconBg: '#EEF3FF', iconColor: '#1A56FF',
   },
   {
     key: 'eggs', label: 'Egg Production',
-    icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Ellipse cx="10" cy="11" rx="5" ry="6" stroke={c} strokeWidth="1.5" fill="none" /></Svg>,
+    icon: Egg,
     iconBg: '#F0FDF4', iconColor: '#16A34A',
   },
   {
     key: 'water', label: 'Water',
-    icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Path d="M10 4C10 4 6 9 6 12.5C6 14.5 8 16 10 16C12 16 14 14.5 14 12.5C14 9 10 4 10 4Z" stroke={c} strokeWidth="1.5" fill="none" /></Svg>,
+    icon: Droplets,
     iconBg: '#EEF3FF', iconColor: '#1A56FF',
   },
   {
     key: 'observation', label: 'Observation',
-    icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Path d="M4 16H16" stroke={c} strokeWidth="1.5" strokeLinecap="round" /><Line x1="10" y1="8" x2="10" y2="13" stroke={c} strokeWidth="1.3" strokeLinecap="round" /><Circle cx="10" cy="6" r="1.5" stroke={c} strokeWidth="1.3" /></Svg>,
+    icon: Eye,
     iconBg: '#F0FDF4', iconColor: '#16A34A',
   },
 ] as const
@@ -127,13 +128,7 @@ const INSIGHT_MAP: Record<string, { text: string; bars: number[] }> = {
   observation: { text: 'Regular observations improve early detection by 40%.', bars: [30, 50, 70, 85] },
 }
 
-/* ─── Form icon ─── */
-function FormIco() {
-  return <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Rect x="3" y="4" width="12" height="10" rx="1.5" stroke="#A0AEA1" strokeWidth="1.4" fill="none" /><Path d="M6 4V3C6 2.5 7 2 9 2C11 2 12 2.5 12 3V4" stroke="#A0AEA1" strokeWidth="1.4" fill="none" /></Svg>
-}
-function ClockIco() {
-  return <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Circle cx="9" cy="9" r="5.5" stroke="#A0AEA1" strokeWidth="1.4" fill="none" /><Path d="M9 6V9L11 11" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" /></Svg>
-}
+
 
 /* ─── MAIN ─── */
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -264,11 +259,11 @@ export default function DailyRecordsScreen() {
           {/* TOP NAV */}
           <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.back()}>
-              <Svg width="22" height="22" viewBox="0 0 24 24" fill="none"><Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+              <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
             </TouchableOpacity>
             <Text style={styles.topTitle}>Daily Farm Records</Text>
             <View style={styles.calBtn}>
-              <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="3" y="4" width="14" height="13" rx="2" stroke="#1F2937" strokeWidth="1.5" fill="none" /><Line x1="3" y1="8" x2="17" y2="8" stroke="#1F2937" strokeWidth="1.3" /><Line x1="7" y1="2" x2="7" y2="5" stroke="#1F2937" strokeWidth="1.3" strokeLinecap="round" /><Line x1="13" y1="2" x2="13" y2="5" stroke="#1F2937" strokeWidth="1.3" strokeLinecap="round" /></Svg>
+              <GoonaIcon icon={Calendar} size={20} color="#1F2937" />
             </View>
           </Animated.View>
 
@@ -283,23 +278,23 @@ export default function DailyRecordsScreen() {
           <Animated.View entering={FadeInUp.duration(500).delay(150).springify()} style={styles.selectorRow}>
             <TouchableOpacity style={styles.selectorCard} activeOpacity={0.85} onPress={() => setShowDatePicker(true)}>
               <View style={[styles.selIcon, { backgroundColor: '#EEF3FF' }]}>
-                <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Rect x="2" y="3" width="14" height="12" rx="2" stroke="#1A56FF" strokeWidth="1.4" fill="none" /><Line x1="2" y1="7" x2="16" y2="7" stroke="#1A56FF" strokeWidth="1.2" /></Svg>
+                <GoonaIcon icon={Calendar} size={18} color="#1A56FF" />
               </View>
               <View style={styles.selInfo}>
                 <Text style={styles.selLbl}>Date</Text>
                 <Text style={styles.selVal}>{formatDate(selectedDate)}</Text>
               </View>
-              <Svg width="14" height="14" viewBox="0 0 14 14" fill="none"><Path d="M4 6L7 9L10 6" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+              <ChevronDown size={14} color="#CBD5E1" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.selectorCard} activeOpacity={0.85} onPress={() => setShowBatchPicker(true)}>
               <View style={[styles.selIcon, { backgroundColor: '#F0FDF4' }]}>
-                <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Rect x="3" y="3" width="12" height="12" rx="2" stroke="#16A34A" strokeWidth="1.4" fill="none" /><Line x1="6" y1="7" x2="12" y2="7" stroke="#16A34A" strokeWidth="1.2" strokeLinecap="round" /><Line x1="6" y1="10" x2="10" y2="10" stroke="#16A34A" strokeWidth="1.2" strokeLinecap="round" /></Svg>
+                <GoonaIcon icon={ClipboardList} size={18} color="#16A34A" />
               </View>
               <View style={styles.selInfo}>
                 <Text style={styles.selLbl}>Batch</Text>
                 <Text style={styles.selVal} numberOfLines={1}>{selectedBatch}</Text>
               </View>
-              <Svg width="14" height="14" viewBox="0 0 14 14" fill="none"><Path d="M4 6L7 9L10 6" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+              <ChevronDown size={14} color="#CBD5E1" />
             </TouchableOpacity>
           </Animated.View>
 
@@ -345,7 +340,7 @@ export default function DailyRecordsScreen() {
                     onPress={() => setSelected(r.key)}
                   >
                     <View style={[styles.rcIcon, active ? styles.rcIconActive : { backgroundColor: r.iconBg }]}>
-                      {r.icon(active ? 'white' : r.iconColor)}
+                      <GoonaIcon icon={r.icon} size={20} color={active ? 'white' : r.iconColor} />
                     </View>
                     <Text style={[styles.rcLabel, active && styles.rcLabelActive]} numberOfLines={2}>{r.label}</Text>
                   </TouchableOpacity>
@@ -360,11 +355,11 @@ export default function DailyRecordsScreen() {
             {selected === 'feed' && (
               <>
                 <Text style={styles.formTitle}>Feed Usage Entry</Text>
-                <FormField label="Feed Type" placeholder="Select feed type" icon={<FormIco />} value={feedType} onChangeText={setFeedType} />
+                <FormField label="Feed Type" placeholder="Select feed type" icon={<GoonaIcon icon={Wheat} size={18} color="#A0AEA1" />} value={feedType} onChangeText={setFeedType} />
                 <FormField label="Quantity Used" placeholder="0 kg" suffix="kg" value={feedQty} onChangeText={setFeedQty} />
                 <FormField label="Feed Cost" placeholder="0.00" prefix={'\u20A6'} value={feedCost} onChangeText={setFeedCost} />
-                <FormField label="Time of Feeding" placeholder="Select time" icon={<ClockIco />} value={feedTime} onChangeText={setFeedTime} />
-                <FormField label="Notes" placeholder="Add observations\u2026" icon={<Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Path d="M4 14H14" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" /><Line x1="9" y1="7" x2="9" y2="11" stroke="#A0AEA1" strokeWidth="1.2" strokeLinecap="round" /><Circle cx="9" cy="5.5" r="1" stroke="#A0AEA1" strokeWidth="1.2" /></Svg>} multiline value={feedNote} onChangeText={setFeedNote} />
+                <FormField label="Time of Feeding" placeholder="Select time" icon={<GoonaIcon icon={Clock} size={18} color="#A0AEA1" />} value={feedTime} onChangeText={setFeedTime} />
+                <FormField label="Notes" placeholder="Add observations\u2026" icon={<GoonaIcon icon={FileText} size={18} color="#A0AEA1" />} multiline value={feedNote} onChangeText={setFeedNote} />
               </>
             )}
             {/* Mortality */}
@@ -372,7 +367,7 @@ export default function DailyRecordsScreen() {
               <>
                 <Text style={styles.formTitle}>Mortality Log</Text>
                 <FormField label="Number of Birds Lost" placeholder="0" value={mortCount} onChangeText={setMortCount} />
-                <FormField label="Suspected Cause" placeholder="e.g. Heat stress" icon={<Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Path d="M4 14H14" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" /><Line x1="9" y1="7" x2="9" y2="11" stroke="#A0AEA1" strokeWidth="1.2" strokeLinecap="round" /><Circle cx="9" cy="5.5" r="1" stroke="#A0AEA1" strokeWidth="1.2" /></Svg>} value={mortCause} onChangeText={setMortCause} />
+                <FormField label="Suspected Cause" placeholder="e.g. Heat stress" icon={<GoonaIcon icon={FileText} size={18} color="#A0AEA1" />} value={mortCause} onChangeText={setMortCause} />
               </>
             )}
             {/* Medication */}
@@ -410,7 +405,7 @@ export default function DailyRecordsScreen() {
           {/* SMART INSIGHT */}
           <Animated.View entering={FadeInUp.duration(500).delay(450).springify()} style={styles.smartCard}>
             <View style={styles.smartIcon}>
-              <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Path d="M9 3L7.5 7.5L3 9L7.5 10.5L9 15L10.5 10.5L15 9L10.5 7.5L9 3Z" fill="rgba(249,168,37,0.2)" stroke="#F9A825" strokeWidth="1.3" strokeLinejoin="round" /></Svg>
+              <GoonaIcon icon={Sparkles} size={18} color="#F9A825" />
             </View>
             <Text style={styles.smartText}>{insight.text}</Text>
             <View style={styles.smartChart}>
@@ -430,20 +425,11 @@ export default function DailyRecordsScreen() {
             >
               <Animated.View style={[styles.voicePulseRing, pulseAnimStyle]} />
               <View style={[styles.voiceBtn, recordingState !== 'idle' && styles.voiceBtnActive]}>
-                <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  {recordingState !== 'idle' ? (
-                    <>
-                      <Rect x="7" y="5" width="2.5" height="10" rx="1" fill="white" />
-                      <Rect x="10.5" y="5" width="2.5" height="10" rx="1" fill="white" />
-                    </>
-                  ) : (
-                    <>
-                      <Rect x="8" y="3" width="4" height="8" rx="2" stroke="white" strokeWidth="1.3" fill="none" />
-                      <Path d="M5 9C5 11.5 7 14 10 14C13 14 15 11.5 15 9" stroke="white" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                      <Line x1="10" y1="14" x2="10" y2="17" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-                    </>
-                  )}
-                </Svg>
+                {recordingState !== 'idle' ? (
+                  <GoonaIcon icon={Mic} size={20} color="white" />
+                ) : (
+                  <GoonaIcon icon={Mic} size={20} color="white" />
+                )}
               </View>
             </TouchableOpacity>
             <Text style={[styles.voiceText, recordingState !== 'idle' && styles.voiceTextActive]}>
@@ -465,11 +451,11 @@ export default function DailyRecordsScreen() {
           {/* PHOTO ATTACH */}
           <Animated.View entering={FadeInUp.duration(500).delay(550).springify()} style={styles.photoRow}>
             <TouchableOpacity style={styles.photoBtn} activeOpacity={0.85} onPress={handleCamera}>
-              <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Path d="M8 5V11" stroke="#1F2937" strokeWidth="1.3" strokeLinecap="round" /><Path d="M5 8H11" stroke="#1F2937" strokeWidth="1.3" strokeLinecap="round" /></Svg>
+              <GoonaIcon icon={Camera} size={16} color="#1F2937" />
               <Text style={styles.photoBtnText}>Camera</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.photoBtn} activeOpacity={0.85} onPress={handleUpload}>
-              <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Rect x="2" y="4" width="12" height="10" rx="2" stroke="#1F2937" strokeWidth="1.3" fill="none" /><Circle cx="8" cy="9" r="2.5" stroke="#1F2937" strokeWidth="1.2" fill="none" /></Svg>
+              <GoonaIcon icon={Upload} size={16} color="#1F2937" />
               <Text style={styles.photoBtnText}>Upload Photo</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -485,10 +471,7 @@ export default function DailyRecordsScreen() {
                     activeOpacity={0.7}
                     onPress={() => removeImage(uri)}
                   >
-                    <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <Path d="M3 3L9 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                      <Path d="M9 3L3 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                    </Svg>
+                    <GoonaIcon icon={X} size={12} color="white" />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -497,13 +480,13 @@ export default function DailyRecordsScreen() {
 
           {/* OFFLINE CHIP */}
           <Animated.View entering={FadeInUp.duration(500).delay(600).springify()} style={styles.offlineChip}>
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none"><Path d="M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" /><Path d="M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" /><Path d="M7 6V8" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" /><Line x1="13" y1="1" x2="1" y2="13" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" /></Svg>
+            <GoonaIcon icon={CheckCircle} size={14} color="#2E7D32" />
             <Text style={styles.offlineText}>Offline Sync Enabled</Text>
           </Animated.View>
 
           {/* SAVE */}
           <TouchableOpacity style={styles.saveBtn} activeOpacity={0.9}>
-            <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Circle cx="10" cy="10" r="6" stroke="white" strokeWidth="1.5" fill="none" /><Path d="M7 10L9 12L13 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>
+            <GoonaIcon icon={CheckCircle} size={20} color="white" />
             <Text style={styles.saveBtnText}>Save Daily Record</Text>
           </TouchableOpacity>
 
@@ -511,20 +494,20 @@ export default function DailyRecordsScreen() {
           <Text style={[styles.secTitle, { marginTop: 24 }]}>Recent Entries</Text>
 
           {[
-            { iconBg: '#FFFBEB', icon: (c: string) => <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Rect x="4" y="5" width="10" height="8" rx="1.5" stroke={c} strokeWidth="1.4" fill="none" /><Path d="M6 5V4C6 3 7 2.5 9 2.5C11 2.5 12 3 12 4V5" stroke={c} strokeWidth="1.4" fill="none" /></Svg>, iconColor: '#F59E0B', title: 'Feed Entry \u2014 8 bags grower feed', meta: 'Today, 8:30 AM  |  Broiler Batch A' },
-            { iconBg: '#EEF3FF', icon: (c: string) => <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Rect x="6" y="3" width="6" height="12" rx="2" stroke={c} strokeWidth="1.4" fill="none" /><Line x1="6" y1="7" x2="12" y2="7" stroke={c} strokeWidth="1.2" strokeLinecap="round" /></Svg>, iconColor: '#1A56FF', title: 'Medication \u2014 Newcastle vaccine', meta: 'Today, 7:15 AM  |  420 broilers' },
-            { iconBg: '#F0FDF4', icon: (c: string) => <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Ellipse cx="9" cy="10" rx="4" ry="5" stroke={c} strokeWidth="1.4" fill="none" /></Svg>, iconColor: '#16A34A', title: 'Egg Count \u2014 360 eggs (12 crates)', meta: 'Yesterday, 4:00 PM  |  Layer Batch B' },
+            { iconBg: '#FFFBEB', icon: Wheat, iconColor: '#F59E0B', title: 'Feed Entry \u2014 8 bags grower feed', meta: 'Today, 8:30 AM  |  Broiler Batch A' },
+            { iconBg: '#EEF3FF', icon: Pill, iconColor: '#1A56FF', title: 'Medication \u2014 Newcastle vaccine', meta: 'Today, 7:15 AM  |  420 broilers' },
+            { iconBg: '#F0FDF4', icon: Egg, iconColor: '#16A34A', title: 'Egg Count \u2014 360 eggs (12 crates)', meta: 'Yesterday, 4:00 PM  |  Layer Batch B' },
           ].map((entry, i) => (
             <Animated.View key={i} entering={FadeInUp.duration(500).delay(650 + i * 80).springify()} style={styles.entryCard}>
               <View style={[styles.entryIcon, { backgroundColor: entry.iconBg }]}>
-                {entry.icon(entry.iconColor)}
+                <GoonaIcon icon={entry.icon} size={18} color={entry.iconColor} />
               </View>
               <View style={styles.entryInfo}>
                 <Text style={styles.entryTitle}>{entry.title}</Text>
                 <Text style={styles.entryMeta}>{entry.meta}</Text>
               </View>
               <View style={styles.entrySync}>
-                <Svg width="10" height="10" viewBox="0 0 10 10" fill="none"><Circle cx="5" cy="5" r="3.5" stroke="#16A34A" strokeWidth="1" fill="none" /><Path d="M3.5 5L4.5 6L7 3.5" stroke="#16A34A" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>
+                <CheckCircle size={10} color="#16A34A" />
                 <Text style={styles.entrySyncText}>Synced</Text>
               </View>
             </Animated.View>

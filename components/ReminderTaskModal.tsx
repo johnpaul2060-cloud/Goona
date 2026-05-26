@@ -4,9 +4,10 @@ import {
   StyleSheet, Platform, Keyboard, ScrollView,
   KeyboardAvoidingView, Modal,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
+import GoonaIcon from './ui/GoonaIcon'
+import { X, Calendar, Clock, CircleCheck } from 'lucide-react-native'
 
 const CATEGORIES = ['Feeding', 'Medication', 'Mortality', 'Water', 'Records', 'Recap', 'Team', 'General']
 const REPEAT_OPTS = ['Once', 'Daily', 'Weekly', 'Monthly']
@@ -17,10 +18,6 @@ const PRIORITIES = [
   { label: 'High', color: '#F59E0B' },
   { label: 'Critical', color: '#EF4444' },
 ]
-
-function CloseIcon() {
-  return <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Path d="M7 7L13 13" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round" /><Path d="M13 7L7 13" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round" /></Svg>
-}
 
 function fmtDate(d: Date): string {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -142,7 +139,7 @@ export default function ReminderTaskModal({
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>Create Reminder / Task</Text>
             <TouchableOpacity onPress={handleClose} style={styles.sheetCloseBtn} activeOpacity={0.7}>
-              <CloseIcon />
+              <GoonaIcon icon={X} size={20} color="#94A3B8" />
             </TouchableOpacity>
           </View>
           <Text style={styles.sheetSub}>Schedule an operation or assign work to your farm team.</Text>
@@ -206,14 +203,14 @@ export default function ReminderTaskModal({
               <View style={styles.fieldHalf}>
                 <Text style={styles.fieldLabel}>Date</Text>
                 <TouchableOpacity style={styles.pickerBtn} activeOpacity={0.8} onPress={() => setShowDatePicker(true)}>
-                  <Svg width="14" height="14" viewBox="0 0 14 14" fill="none"><Rect x="2" y="3" width="10" height="9" rx="1.5" stroke="#1F2937" strokeWidth="1.3" fill="none" /><Line x1="2" y1="6" x2="12" y2="6" stroke="#1F2937" strokeWidth="1.2" /></Svg>
+                  <GoonaIcon icon={Calendar} size={14} color="#1F2937" />
                   <Text style={styles.pickerText}>{fmtDate(date)}</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.fieldHalf}>
                 <Text style={styles.fieldLabel}>Time</Text>
                 <TouchableOpacity style={styles.pickerBtn} activeOpacity={0.8} onPress={() => setShowTimePicker(true)}>
-                  <Svg width="14" height="14" viewBox="0 0 14 14" fill="none"><Circle cx="7" cy="7" r="4.5" stroke="#1F2937" strokeWidth="1.3" fill="none" /><Path d="M7 5V7L8.5 8.5" stroke="#1F2937" strokeWidth="1.2" strokeLinecap="round" /></Svg>
+                  <GoonaIcon icon={Clock} size={14} color="#1F2937" />
                   <Text style={styles.pickerText}>{fmtTime(time)}</Text>
                 </TouchableOpacity>
               </View>
@@ -315,10 +312,7 @@ export default function ReminderTaskModal({
                 end={{ x: 1, y: 1 }}
                 style={[styles.saveBtn, (!canSave || saving) && styles.saveBtnDisabled]}
               >
-                <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <Circle cx="10" cy="10" r="6" stroke={canSave && !saving ? 'white' : '#94A3B8'} strokeWidth="1.5" fill="none" />
-                  <Path d="M7 10L9 12L13 8" stroke={canSave && !saving ? 'white' : '#94A3B8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
+                <GoonaIcon icon={CircleCheck} size={20} color={canSave && !saving ? 'white' : '#94A3B8'} />
                 <Text style={[styles.saveBtnText, (!canSave || saving) && { color: '#94A3B8' }]}>
                   {btnLabel}
                 </Text>

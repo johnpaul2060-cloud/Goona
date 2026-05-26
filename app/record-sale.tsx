@@ -4,15 +4,16 @@ import {
   StyleSheet, Dimensions, useWindowDimensions, Modal,
   KeyboardAvoidingView, Platform, Alert, Pressable,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
+import { ArrowLeft, Plus, CheckCircle, Mic, Image, FileText } from 'lucide-react-native'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
   withSequence, withRepeat, FadeInUp, FadeIn, Easing,
 } from 'react-native-reanimated'
+import GoonaIcon from '../components/ui/GoonaIcon'
 import { LinearGradient } from 'expo-linear-gradient'
 import BottomDock from '../components/navigation/BottomDock'
 
@@ -71,14 +72,7 @@ function usePulse() {
   return useAnimatedStyle(() => ({ opacity: opacity.value }))
 }
 
-/* ─── Back Icon ─── */
-function BackIcon() {
-  return (
-    <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
-}
+
 
 /* ─── Live Dot ─── */
 function LiveDot() {
@@ -272,7 +266,7 @@ export default function RecordSaleScreen() {
                 onPressIn={backPress.onPressIn}
                 onPressOut={backPress.onPressOut}
               >
-                <BackIcon />
+                <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
               </TouchableOpacity>
             </Animated.View>
             <View style={s.navCenter}>
@@ -361,11 +355,8 @@ export default function RecordSaleScreen() {
                 </View>
               </View>
               {qty > 0 && (
-                <Animated.View entering={FadeIn.duration(300)} style={s.qwCalc}>
-                  <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <Path d="M8 3V13" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" />
-                    <Path d="M3 8H13" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" />
-                  </Svg>
+                  <Animated.View entering={FadeIn.duration(300)} style={s.qwCalc}>
+                    <GoonaIcon icon={Plus} size={16} color="#2E7D32" />
                   <Text style={s.qwCalcText}>
                     {qty} {product ? PRODUCT_DATA[product].unit + '(s)' : 'units'}
                     {totalWeight > 0 ? ` \u00D7 ${avgW}kg = ${totalWeight.toFixed(1)}kg` : ''}
@@ -480,26 +471,15 @@ export default function RecordSaleScreen() {
               <FormInput label="Operational Notes" value={notes} onChange={setNotes} placeholder="Add notes about this sale..." multiline />
               <View style={s.attachRow}>
                 <TouchableOpacity style={s.attachBtn} activeOpacity={0.85} onPress={pickImage}>
-                  <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <Rect x="3" y="3" width="12" height="12" rx="2" stroke="#2E7D32" strokeWidth="1.3" fill="none" />
-                    <Circle cx="7" cy="7" r="1.2" fill="#2E7D32" />
-                    <Path d="M3 12L6 9L9 12L12 9L15 12" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  </Svg>
+                  <GoonaIcon icon={Image} size={18} color="#2E7D32" />
                   <Text style={s.attachText}>Image</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.attachBtn} activeOpacity={0.85} onPress={() => Alert.alert('Coming Soon', 'Voice recording will be available soon.')}>
-                  <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <Rect x="6" y="2" width="6" height="10" rx="3" stroke="#2E7D32" strokeWidth="1.3" fill="none" />
-                    <Path d="M3 8V9C3 12.3 5.7 15 9 15C12.3 15 15 12.3 15 9V8" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                    <Line x1="9" y1="15" x2="9" y2="17" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
-                  </Svg>
+                  <GoonaIcon icon={Mic} size={18} color="#2E7D32" />
                   <Text style={s.attachText}>Voice</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.attachBtn} activeOpacity={0.85} onPress={pickImage}>
-                  <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <Path d="M4 14H14" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
-                    <Path d="M6 11L8 7L10 9L13 5" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  </Svg>
+                  <GoonaIcon icon={FileText} size={18} color="#2E7D32" />
                   <Text style={s.attachText}>Invoice</Text>
                 </TouchableOpacity>
               </View>
@@ -527,9 +507,7 @@ export default function RecordSaleScreen() {
                     <Text style={s.submitText}>Recording...</Text>
                   ) : (
                     <>
-                      <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <Path d="M3 14L7 10L10 13L17 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </Svg>
+                      <GoonaIcon icon={CheckCircle} size={20} color="white" />
                       <Text style={s.submitText}>Record Revenue</Text>
                     </>
                   )}
@@ -545,10 +523,7 @@ export default function RecordSaleScreen() {
         <View style={s.modalOverlay}>
           <Animated.View entering={FadeInUp.duration(500).springify().springify()} style={s.modalCard}>
             <View style={s.modalSuccessIcon}>
-              <Svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <Circle cx="24" cy="24" r="22" stroke="#AEEA00" strokeWidth="2" fill="none" />
-                <Path d="M16 24L22 30L32 18" stroke="#AEEA00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={CheckCircle} size={48} color="#AEEA00" />
             </View>
             <Text style={s.modalTitle}>Sale Recorded{'\n'}Successfully</Text>
             <Text style={s.modalAmount}>&#x20A6;{netRevenue.toLocaleString()}</Text>

@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView,
   Animated, Platform, StatusBar, Keyboard } from 'react-native'
-import Svg, { Path, Line, Rect, Circle, Defs, RadialGradient, Stop } from 'react-native-svg'
+import Svg, { Rect, Defs, RadialGradient, Stop } from 'react-native-svg'
+import GoonaIcon from '../../components/ui/GoonaIcon'
+import { ArrowLeft, Filter, Plus, Send, Lock, Sparkles, FileText, AlertCircle, Check, Activity } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { BlurView } from 'expo-blur'
 import { router } from 'expo-router'
@@ -28,20 +30,6 @@ function usePressScale() {
   const scale = useSharedValue(1)
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
   return { style, onPressIn: () => { scale.value = withSpring(0.97, { damping: 15, stiffness: 200 }) }, onPressOut: () => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }) } }
-}
-
-/* ── ICONS ── */
-function FilterIcon() {
-  return (<Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Path d="M2.5 4.5H13.5" stroke="#1F2937" strokeWidth="1.4" strokeLinecap="round" /><Path d="M5.5 8H10.5" stroke="#1F2937" strokeWidth="1.4" strokeLinecap="round" /><Path d="M7.5 11.5H8.5" stroke="#1F2937" strokeWidth="1.4" strokeLinecap="round" /></Svg>)
-}
-function PlusIcon() {
-  return (<Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Line x1="9" y1="4.5" x2="9" y2="13.5" stroke="#1B4332" strokeWidth="1.8" strokeLinecap="round" /><Line x1="4.5" y1="9" x2="13.5" y2="9" stroke="#1B4332" strokeWidth="1.8" strokeLinecap="round" /></Svg>)
-}
-function SendIcon() {
-  return (<Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Path d="M3 8L13.5 2.5L10 13.5L7 9L3 8Z" stroke="#1B4332" strokeWidth="1.5" strokeLinejoin="round" /></Svg>)
-}
-function LockIconSm() {
-  return (<Svg width="10" height="10" viewBox="0 0 10 10" fill="none"><Rect x="2" y="4" width="6" height="4" rx="0.8" stroke="#94A3B8" strokeWidth="0.8" fill="none" /><Path d="M3.5 4V3.2C3.5 2.8 4 2.5 5 2.5C6 2.5 6.5 2.8 6.5 3.2V4" stroke="#94A3B8" strokeWidth="0.8" fill="none" /></Svg>)
 }
 
 const CHIPS = ['+ Feed', '+ Medication', '+ Mortality', '+ Weight', '+ Note']
@@ -131,9 +119,7 @@ export default function FarmFeedScreen() {
             <View style={{ position: 'absolute', top: -20, right: -20, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.06)' }} pointerEvents="none" />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontSize: 17, fontWeight: '700', color: 'white', flex: 1 }}>{INSIGHT.headline}</Text>
-              <Svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0, marginLeft: 10 }}>
-                <Path d="M10 3L8.5 7.5L4 9L8.5 10.5L10 15L11.5 10.5L16 9L11.5 7.5L10 3Z" fill="rgba(255,255,255,0.3)" stroke="white" strokeWidth="1.3" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={Sparkles} size={20} color="#FFFFFF" />
             </View>
             <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 6, lineHeight: 20 }}>{INSIGHT.sub}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 32, marginTop: 14 }}>
@@ -154,13 +140,13 @@ export default function FarmFeedScreen() {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 14 }}>
             <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#DDF5F0', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Rect x="5" y="5" width="14" height="14" rx="3" stroke="#0F766E" strokeWidth="1.6" fill="none" /><Path d="M9 5V4C9 3 9.5 2.5 12 2.5C14.5 2.5 15 3 15 4V5" stroke="#0F766E" strokeWidth="1.6" fill="none" /><Line x1="9" y1="10" x2="15" y2="10" stroke="#0F766E" strokeWidth="1.4" strokeLinecap="round" /></Svg>
+              <GoonaIcon icon={FileText} size={24} color="#0F766E" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: '#1F2937' }}>15 bags of Topfeed Grower added</Text>
               <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 2 }}>Quantity: 45kg • Cost: ₦28,500</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-                <LockIconSm />
+                <GoonaIcon icon={Lock} size={10} color="#94A3B8" />
                 <Text style={{ fontSize: 12, color: '#94A3B8' }}>Cannot be edited</Text>
               </View>
             </View>
@@ -212,7 +198,7 @@ export default function FarmFeedScreen() {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 12 }}>
             <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: '#FFF1F2', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Svg width="18" height="18" viewBox="0 0 18 18" fill="none"><Circle cx="9" cy="9" r="6" stroke="#EF4444" strokeWidth="1.5" fill="none" /><Line x1="9" y1="6" x2="9" y2="10" stroke="#EF4444" strokeWidth="1.3" strokeLinecap="round" /><Circle cx="9" cy="12.5" r="0.6" fill="#EF4444" /></Svg>
+              <GoonaIcon icon={AlertCircle} size={18} color="#EF4444" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: '#DC2626' }}>3 mortalities reported</Text>
@@ -250,7 +236,7 @@ export default function FarmFeedScreen() {
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-            <Svg width="12" height="12" viewBox="0 0 12 12" fill="none"><Path d="M2 8L4 5L6 7L10 3" stroke="#94A3B8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+            <GoonaIcon icon={Check} size={12} color="#94A3B8" />
             <Text style={{ fontSize: 10, fontWeight: '500', color: '#94A3B8' }}>Camera Upload • Worker Submission</Text>
           </View>
         </Card>
@@ -265,13 +251,13 @@ export default function FarmFeedScreen() {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 14 }}>
             <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#EEF3FF', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Rect x="6" y="4" width="12" height="16" rx="2" stroke="#1A56FF" strokeWidth="1.6" fill="none" /><Line x1="9" y1="9" x2="15" y2="9" stroke="#1A56FF" strokeWidth="1.4" strokeLinecap="round" /><Line x1="9" y1="13" x2="13" y2="13" stroke="#1A56FF" strokeWidth="1.4" strokeLinecap="round" /></Svg>
+              <GoonaIcon icon={FileText} size={24} color="#1A56FF" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: '#1F2937' }}>Vaccination recorded for Batch A-392</Text>
               <Text style={{ fontSize: 14, color: '#6B7280', marginTop: 2 }}>Newcastle vaccine — 241 doses administered</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-                <LockIconSm />
+                <GoonaIcon icon={Lock} size={10} color="#94A3B8" />
                 <Text style={{ fontSize: 12, color: '#94A3B8' }}>Immutable record</Text>
               </View>
             </View>
@@ -288,7 +274,7 @@ export default function FarmFeedScreen() {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 14 }}>
             <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#F3E8FF', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Path d="M5 20H19" stroke="#7C3AED" strokeWidth="1.6" strokeLinecap="round" /><Rect x="8" y="6" width="8" height="14" rx="2" stroke="#7C3AED" strokeWidth="1.6" fill="none" /></Svg>
+              <GoonaIcon icon={Activity} size={24} color="#7C3AED" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: '#1F2937' }}>Sampled weight: 1.84 kg avg</Text>
@@ -303,16 +289,16 @@ export default function FarmFeedScreen() {
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <TouchableOpacity style={{ width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }} activeOpacity={0.7} onPress={() => router.back()}>
-              <Svg width="22" height="22" viewBox="0 0 22 22" fill="none"><Path d="M14 17L9 11L14 5" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+              <GoonaIcon icon={ArrowLeft} size={22} color="#1F2937" />
             </TouchableOpacity>
             <Text style={{ fontSize: 18, fontWeight: '600', color: '#1F2937' }}>Farm Feed</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.8)', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10, elevation: 2 }}>
-              <FilterIcon />
+              <GoonaIcon icon={Filter} size={16} color="#1F2937" />
             </View>
             <TouchableOpacity style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#AEEA00', alignItems: 'center', justifyContent: 'center', shadowColor: '#AEEA00', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.35, shadowRadius: 30, elevation: 4 }} activeOpacity={0.8}>
-              <PlusIcon />
+              <GoonaIcon icon={Plus} size={18} color="#1B4332" />
             </TouchableOpacity>
           </View>
         </View>
@@ -349,7 +335,7 @@ export default function FarmFeedScreen() {
               activeOpacity={0.8}
               onPress={() => setComposer('')}
             >
-              <SendIcon />
+              <GoonaIcon icon={Send} size={16} color="#1B4332" />
             </TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, marginTop: 6, paddingLeft: 2 }} style={{ overflow: 'visible' }}>

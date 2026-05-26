@@ -5,7 +5,9 @@ import {
   useWindowDimensions,
 } from 'react-native'
 import { router } from 'expo-router'
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
+import Svg, { Circle } from 'react-native-svg'
+import GoonaIcon from '../../../components/ui/GoonaIcon'
+import { Bell, MoreHorizontal, BadgeDollarSign, TrendingUp, TrendingDown, Check, Flame, Sparkles, Plus, ShieldCheck, FileText, Target, ChevronLeft, ChevronRight, X, Info, Wallet } from 'lucide-react-native'
 import { BlurView } from 'expo-blur'
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
 import Animated, {
@@ -92,10 +94,7 @@ function AnimatedBell() {
   return (
     <View style={{ width: 20, height: 20 }}>
       <Animated.View style={pulseStyle}>
-        <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <Path d="M10 3C7.2 3 5 5.2 5 8V12.5L3.5 15H16.5L15 12.5V8C15 5.2 12.8 3 10 3Z" stroke={count > 0 ? '#DC2626' : '#1F2937'} strokeWidth="1.5" fill="none" />
-          <Path d="M8.5 15C8.5 15.8 9.2 16.5 10 16.5C10.8 16.5 11.5 15.8 11.5 15" stroke={count > 0 ? '#DC2626' : '#1F2937'} strokeWidth="1.5" strokeLinecap="round" fill="none" />
-        </Svg>
+        <GoonaIcon icon={Bell} size={20} color={count > 0 ? '#DC2626' : '#1F2937'} />
       </Animated.View>
       {count > 0 && (
         <View style={bellStyles.badge}>
@@ -116,119 +115,6 @@ const bellStyles = StyleSheet.create({
   badgeText: { fontSize: 9, fontWeight: '800', color: '#fff', includeFontPadding: false },
 })
 
-function MoreIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Circle cx="9" cy="5" r="1.2" fill="#1F2937" />
-      <Circle cx="9" cy="9" r="1.2" fill="#1F2937" />
-      <Circle cx="9" cy="13" r="1.2" fill="#1F2937" />
-    </Svg>
-  )
-}
-
-function NairaIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Rect x="3" y="4" width="14" height="12" rx="2" stroke="#2E7D32" strokeWidth="1.5" fill="none" />
-      <Line x1="7" y1="7" x2="7" y2="13" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="13" y1="7" x2="13" y2="13" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="6" y1="9.5" x2="14" y2="9.5" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
-      <Line x1="6" y1="11.5" x2="14" y2="11.5" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function ArrowUpIcon() {
-  return (
-    <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <Path d="M7 11V3" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" />
-      <Path d="M3.5 6.5L7 3L10.5 6.5" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
-}
-
-function ArrowDownIcon() {
-  return (
-    <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <Path d="M7 3V11" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
-      <Path d="M10.5 7.5L7 11L3.5 7.5" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
-}
-
-function CheckSmallIcon() {
-  return (
-    <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-      <Circle cx="6" cy="6" r="4.5" stroke="#0F766E" strokeWidth="1" fill="none" />
-      <Path d="M4 6L5.5 7.5L8 4.5" stroke="#0F766E" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
-}
-
-function FlameIcon() {
-  return (
-    <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <Path d="M8 14C10.5 14 12.5 11.5 12.5 9C12.5 6.5 10 4 8 2C6 4 3.5 6.5 3.5 9C3.5 11.5 5.5 14 8 14Z" stroke="#F59E0B" strokeWidth="1.3" strokeLinejoin="round" fill="#FFFBEB" />
-    </Svg>
-  )
-}
-
-function SparkleIcon() {
-  return (
-    <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <Path d="M8 2L9.5 6.5L14 8L9.5 9.5L8 14L6.5 9.5L2 8L6.5 6.5L8 2Z" stroke="#2E7D32" strokeWidth="1.2" strokeLinejoin="round" fill="rgba(46,125,50,0.08)" />
-    </Svg>
-  )
-}
-
-function AddIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Line x1="9" y1="4.5" x2="9" y2="13.5" stroke="#16A34A" strokeWidth="1.8" strokeLinecap="round" />
-      <Line x1="4.5" y1="9" x2="13.5" y2="9" stroke="#16A34A" strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function ProfitIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Rect x="3" y="8" width="12" height="7" rx="1.5" stroke="#2E7D32" strokeWidth="1.4" fill="none" />
-      <Path d="M6 8V6C6 4.3 7.3 3 9 3C10.7 3 12 4.3 12 6V8" stroke="#2E7D32" strokeWidth="1.4" fill="none" />
-    </Svg>
-  )
-}
-
-function ForecastIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Line x1="3" y1="15" x2="15" y2="15" stroke="#2E7D32" strokeWidth="1.4" strokeLinecap="round" />
-      <Path d="M5 12L7.5 8L10 10L13 5" stroke="#2E7D32" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-      <Circle cx="14" cy="4" r="1.2" stroke="#2E7D32" strokeWidth="1" />
-    </Svg>
-  )
-}
-
-function ReportIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Rect x="4" y="3" width="10" height="12" rx="1.5" stroke="#2E7D32" strokeWidth="1.4" fill="none" />
-      <Line x1="6.5" y1="6.5" x2="11.5" y2="6.5" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
-      <Line x1="6.5" y1="9" x2="10" y2="9" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
-      <Line x1="6.5" y1="11.5" x2="9" y2="11.5" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function TargetIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Circle cx="9" cy="9" r="6" stroke="#2E7D32" strokeWidth="1.4" fill="none" />
-      <Circle cx="9" cy="9" r="3" stroke="#2E7D32" strokeWidth="1.2" fill="none" />
-      <Circle cx="9" cy="9" r="1.2" fill="#2E7D32" />
-    </Svg>
-  )
-}
 
 
 
@@ -331,10 +217,7 @@ function FinancialOverviewCard({
       <TouchableOpacity activeOpacity={0.9} style={styles.finCard}>
         <View style={styles.finCardTop}>
           <View style={[styles.finIconWrap, { backgroundColor: item.bg }]}>
-            <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <Rect x="3" y="4" width="10" height="8" rx="1.5" stroke={item.color} strokeWidth="1.3" fill="none" />
-              <Line x1="5.5" y1="7" x2="10.5" y2="7" stroke={item.color} strokeWidth="1.1" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={FileText} size={16} color={item.color} />
           </View>
           <Text style={[styles.finTrend, { color: item.trendUp ? '#16A34A' : '#EF4444' }]}>{item.trend}</Text>
         </View>
@@ -439,21 +322,17 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
       {/* Navigation Header */}
       <View style={styles.calNavRow}>
         <TouchableOpacity onPress={goPrev} style={styles.calNavBtn} activeOpacity={0.7}>
-          <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <Path d="M10 12L6 8L10 4" stroke="#1F2937" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
+          <GoonaIcon icon={ChevronLeft} size={16} color="#1F2937" />
         </TouchableOpacity>
         <TouchableOpacity onPress={goNext} style={styles.calNavBtn} activeOpacity={0.7}>
-          <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <Path d="M6 4L10 8L6 12" stroke="#1F2937" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
+          <GoonaIcon icon={ChevronRight} size={16} color="#1F2937" />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
           <Text style={styles.calTitle}>{monthName} {viewYear}</Text>
           <Text style={styles.calSub}>Capital Recovery</Text>
         </View>
         <View style={styles.calStreak}>
-          <FlameIcon />
+          <GoonaIcon icon={Flame} size={16} color="#F59E0B" />
           <Text style={styles.calStreakText} numberOfLines={1}>{streak}d</Text>
         </View>
       </View>
@@ -625,10 +504,7 @@ function DayDetailModal({
             <View style={styles.modalHandle} />
           </View>
           <TouchableOpacity style={styles.modalCloseBtn} onPress={onClose} activeOpacity={0.7}>
-            <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <Line x1="4" y1="4" x2="14" y2="14" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-              <Line x1="14" y1="4" x2="4" y2="14" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={X} size={18} color="#1F2937" />
           </TouchableOpacity>
 
           <View style={styles.modalDateHead}>
@@ -662,11 +538,7 @@ function DayDetailModal({
 
           <View style={styles.modalInsight}>
             <View style={styles.modalInsightHeader}>
-              <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <Circle cx="7" cy="7" r="5.5" stroke="#2E7D32" strokeWidth="1.2" fill="none" />
-                <Line x1="7" y1="5" x2="7" y2="8" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
-                <Circle cx="7" cy="10.5" r="0.6" fill="#2E7D32" />
-              </Svg>
+              <GoonaIcon icon={Info} size={14} color="#2E7D32" />
               <Text style={styles.modalInsightLabel}>GOONA IQ</Text>
             </View>
             <Text style={styles.modalInsightText}>{insight}</Text>
@@ -874,7 +746,7 @@ function GrowthTargetCard({ index }: { index: number }) {
           <View style={styles.goalTop}>
             <View style={styles.goalHeadLeft}>
               <View style={[styles.goalIconWrap, { backgroundColor: `${goal.color}15` as any }]}>
-                <TargetIcon />
+                <GoonaIcon icon={Target} size={18} color="#2E7D32" />
               </View>
               <View style={styles.goalInfo}>
                 <Text style={styles.goalTitle}>{goal.title}</Text>
@@ -896,7 +768,7 @@ function GrowthTargetCard({ index }: { index: number }) {
   )
 }
 
-function QuickActionButton({ label, icon: Icon, index, onPress }: { label: string; icon: React.FC; index: number; onPress?: () => void }) {
+function QuickActionButton({ label, icon, index, onPress }: { label: string; icon: React.ReactNode; index: number; onPress?: () => void }) {
   const animStyle = useStaggerEntry(index, 60)
   const s1 = useSharedValue(1)
   const o1 = useSharedValue(1)
@@ -910,7 +782,7 @@ function QuickActionButton({ label, icon: Icon, index, onPress }: { label: strin
         style={styles.quickAction}
       >
         <View style={styles.quickActionIcon}>
-          <Icon />
+          {icon}
         </View>
         <Text style={styles.quickActionLabel}>{label}</Text>
       </Pressable>
@@ -1011,10 +883,10 @@ export default function RecapitalizationDashboardScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizScrollInner}
         >
-          <QuickActionButton label="Plan Recapt" icon={AddIcon} index={0} onPress={() => router.push('/plan-recapt')} />
-          <QuickActionButton label="Allocate Profit" icon={ProfitIcon} index={1} />
-          <QuickActionButton label="View Forecast" icon={ForecastIcon} index={2} />
-          <QuickActionButton label="Generate Report" icon={ReportIcon} index={3} />
+          <QuickActionButton label="Plan Recapt" icon={<GoonaIcon icon={Plus} size={18} color="#16A34A" />} index={0} onPress={() => router.push('/plan-recapt')} />
+          <QuickActionButton label="Allocate Profit" icon={<GoonaIcon icon={ShieldCheck} size={18} color="#2E7D32" />} index={1} />
+          <QuickActionButton label="View Forecast" icon={<GoonaIcon icon={TrendingUp} size={18} color="#2E7D32" />} index={2} />
+          <QuickActionButton label="Generate Report" icon={<GoonaIcon icon={FileText} size={18} color="#2E7D32" />} index={3} />
         </ScrollView>
 
         <RecoveryTrackerCalendar index={1} onDayPress={handleDayPress} />
@@ -1071,7 +943,7 @@ function GoonaIqRecoveryInsight({ index }: { index: number }) {
       {messages.map((msg, i) => (
         <View key={i} style={[styles.behaviorRow, i === messages.length - 1 && { borderBottomWidth: 0 }]}>
           <View style={styles.behaviorIconWrap}>
-            <SparkleIcon />
+            <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
           </View>
           <Text style={styles.behaviorText}>{msg}</Text>
         </View>

@@ -3,7 +3,9 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, useWindowDimensions,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
+import Svg, { Circle } from 'react-native-svg'
+import GoonaIcon from '../../components/ui/GoonaIcon'
+import { ArrowLeft, Plus, BarChart3, TrendingUp, Sparkles, Calendar, DollarSign, ShieldCheck, Users, FileText, Wallet } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -80,18 +82,12 @@ export default function SalesRevenueScreen() {
               onPressIn={backPress.onPressIn}
               onPressOut={backPress.onPressOut}
             >
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
           </Animated.View>
           <Text style={styles.topTitle}>Sales & Revenue</Text>
           <TouchableOpacity style={styles.chartBtn} activeOpacity={0.8}>
-            <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <Path d="M3 16H17" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-              <Path d="M5 12L8 7L10 9L15 4" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <Circle cx="15" cy="4" r="1.5" fill="#2E7D32" />
-            </Svg>
+            <GoonaIcon icon={BarChart3} size={20} color="#1F2937" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -162,10 +158,10 @@ export default function SalesRevenueScreen() {
                     onPressOut={p.onPressOut}
                   >
                     <View style={[styles.qaIcon, { backgroundColor: a.bg }]}>
-                      {i === 0 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Circle cx="10" cy="10" r="6" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Line x1="10" y1="7" x2="10" y2="13" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Line x1="7" y1="10" x2="13" y2="10" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /></Svg>}
-                      {i === 1 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="5" width="12" height="10" rx="2" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Path d="M4 10H16" stroke={a.iconColor} strokeWidth="1.4" /></Svg>}
-                      {i === 2 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Path d="M3 14H17" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" /><Path d="M5 11L7 7L9 9L13 4" stroke={a.iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>}
-                      {i === 3 && <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="4" width="12" height="12" rx="2" stroke={a.iconColor} strokeWidth="1.5" fill="none" /><Line x1="8" y1="8" x2="12" y2="8" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Line x1="8" y1="11" x2="10" y2="11" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /></Svg>}
+                      {i === 0 && <GoonaIcon icon={Plus} size={20} color={a.iconColor} />}
+                      {i === 1 && <GoonaIcon icon={Calendar} size={20} color={a.iconColor} />}
+                      {i === 2 && <GoonaIcon icon={BarChart3} size={20} color={a.iconColor} />}
+                      {i === 3 && <GoonaIcon icon={FileText} size={20} color={a.iconColor} />}
                     </View>
                     <Text style={styles.qaLabel}>{a.label}</Text>
                   </TouchableOpacity>
@@ -192,10 +188,10 @@ export default function SalesRevenueScreen() {
           ].map((a, i) => (
             <Animated.View key={i} entering={FadeInUp.duration(500).delay(280 + i * 60).springify()} style={styles.analyticsCard}>
               <View style={[styles.anIcon, { backgroundColor: a.bg }]}>
-                {i === 0 && <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Path d="M3 12H13" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Path d="M5 9L7 5L9 7L13 3" stroke={a.iconColor} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></Svg>}
-                {i === 1 && <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Path d="M3 13H13" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Rect x="5" y="7" width="6" height="6" rx="1.2" stroke={a.iconColor} strokeWidth="1.3" fill="none" /><Path d="M7 7V6C7 5 7.5 4.5 8 4.5C8.5 4.5 9 5 9 6V7" stroke={a.iconColor} strokeWidth="1.3" fill="none" /></Svg>}
-                {i === 2 && <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Circle cx="8" cy="7" r="3" stroke={a.iconColor} strokeWidth="1.3" fill="none" /><Path d="M4 13C4 10.5 5.5 9.5 8 9.5C10.5 9.5 12 10.5 12 13" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" fill="none" /></Svg>}
-                {i === 3 && <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Path d="M3 13H13" stroke={a.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Rect x="5" y="8" width="6" height="5" rx="1" stroke={a.iconColor} strokeWidth="1.3" fill="none" /><Path d="M7 8V5C7 4.5 7.5 4 8 4C8.5 4 9 4.5 9 5V8" stroke={a.iconColor} strokeWidth="1.3" fill="none" /></Svg>}
+                {i === 0 && <GoonaIcon icon={TrendingUp} size={16} color={a.iconColor} />}
+                {i === 1 && <GoonaIcon icon={ShieldCheck} size={16} color={a.iconColor} />}
+                {i === 2 && <GoonaIcon icon={Users} size={16} color={a.iconColor} />}
+                {i === 3 && <GoonaIcon icon={DollarSign} size={16} color={a.iconColor} />}
               </View>
               <Text style={styles.anMetric}>{a.metric}</Text>
               <Text style={styles.anLabel}>{a.label}</Text>
@@ -330,9 +326,7 @@ export default function SalesRevenueScreen() {
         ].map((ins, i) => (
           <Animated.View key={i} entering={FadeInUp.duration(500).delay(640 + i * 70).springify()} style={[styles.insightCard, { backgroundColor: ins.bg }]}>
             <View style={styles.insightIcon}>
-              <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <Path d="M9 3L7.5 7.5L3 9L7.5 10.5L9 15L10.5 10.5L15 9L10.5 7.5L9 3Z" fill={ins.iconColor} fillOpacity="0.2" stroke={ins.iconColor} strokeWidth="1.3" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={Sparkles} size={18} color={ins.iconColor} />
             </View>
             <Text style={styles.insightText}>
               {ins.text.split(/(\d+%|\d+ weeks?)/).map((part, j) => (
@@ -354,10 +348,7 @@ export default function SalesRevenueScreen() {
           onPressOut={backPress.onPressOut}
           style={styles.fabTouch}
         >
-          <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <Line x1="14" y1="8" x2="14" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-            <Line x1="8" y1="14" x2="20" y2="14" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-          </Svg>
+          <GoonaIcon icon={Plus} size={28} color="#FFFFFF" />
         </TouchableOpacity>
       </Animated.View>
 

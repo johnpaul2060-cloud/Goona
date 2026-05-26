@@ -4,6 +4,8 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native'
 import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg'
+import { ArrowLeft, CheckCircle, TrendingUp } from 'lucide-react-native'
+import GoonaIcon from '../components/ui/GoonaIcon'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -203,9 +205,7 @@ export default function CreateBatchScreen() {
           {/* TOP NAV */}
           <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.back()}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <Text style={styles.topTitle}>Create New Batch</Text>
             <View style={styles.progressPill}>
@@ -522,10 +522,7 @@ export default function CreateBatchScreen() {
               <View style={styles.forecastHead}>
                 <Text style={styles.forecastTitle}>Projected Production Summary</Text>
                 <View style={styles.forecastIcon}>
-                  <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <Path d="M3 13H15" stroke="#16A34A" strokeWidth="1.4" strokeLinecap="round" />
-                    <Path d="M5 10L7 7L9 9L13 4" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
+                  <GoonaIcon icon={TrendingUp} size={18} color="#16A34A" />
                 </View>
               </View>
               <View style={styles.forecastGrid}>
@@ -550,12 +547,7 @@ export default function CreateBatchScreen() {
 
             {/* OFFLINE CHIP */}
             <Animated.View entering={FadeInUp.duration(500).delay(400).springify()} style={styles.offlineChip}>
-              <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <Path d="M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
-                <Path d="M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
-                <Path d="M7 6L7 8" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
-                <Line x1="13" y1="1" x2="1" y2="13" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" />
-              </Svg>
+              <GoonaIcon icon={CheckCircle} size={14} color="#2E7D32" />
               <Text style={styles.offlineText}>Offline Sync Ready</Text>
             </Animated.View>
 
@@ -566,10 +558,7 @@ export default function CreateBatchScreen() {
                 activeOpacity={0.9}
                 onPress={handleCreateBatch}
               >
-                <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <Circle cx="10" cy="10" r="6" stroke="white" strokeWidth="1.5" fill="none" />
-                  <Path d="M7 10L9 12L13 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </Svg>
+                <GoonaIcon icon={CheckCircle} size={20} color="white" />
                 <Text style={styles.primaryBtnText}>Create Batch</Text>
               </TouchableOpacity>
             </Animated.View>
@@ -587,10 +576,7 @@ export default function CreateBatchScreen() {
         <Animated.View style={[styles.successOverlay, successAnimStyle]}>
           <View style={styles.successCard}>
             <View style={styles.successIconCircle}>
-              <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <Circle cx="14" cy="14" r="12" stroke="white" strokeWidth="2" fill="none" />
-                <Path d="M9 14L12 17L19 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </Svg>
+              <GoonaIcon icon={CheckCircle} size={28} color="white" />
             </View>
             <Text style={styles.successTitle}>Batch created successfully</Text>
             <Text style={styles.successSub}>Opening Batch Manager...</Text>

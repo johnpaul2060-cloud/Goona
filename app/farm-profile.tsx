@@ -3,22 +3,15 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Linking,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
+import { ArrowLeft, Pencil, Star, CheckCircle, Plus, Download, Share2, Users, ClipboardList, ShieldCheck } from 'lucide-react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
+import GoonaIcon from '../components/ui/GoonaIcon'
 import BottomDock from '../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
-
-function StarIcon({ fill }: { fill: string }) {
-  return (
-    <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <Path d="M8 2L6.5 6.5L2 8L6.5 9.5L8 14L9.5 9.5L14 8L9.5 6.5L8 2Z" fill={fill} fillOpacity="0.2" stroke={fill} strokeWidth="1.3" strokeLinejoin="round" />
-    </Svg>
-  )
-}
 
 export default function FarmProfileScreen() {
   return (
@@ -37,16 +30,11 @@ export default function FarmProfileScreen() {
         {/* APP BAR */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.appBar}>
           <TouchableOpacity style={styles.appBack} activeOpacity={0.7} onPress={() => router.back()}>
-            <Svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <Path d="M14 17L9 11L14 5" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
+            <GoonaIcon icon={ArrowLeft} size={22} color="#1F2937" />
           </TouchableOpacity>
           <Text style={styles.appTitle}>Farm Profile</Text>
           <TouchableOpacity style={styles.appIconBtn} activeOpacity={0.85}>
-            <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <Path d="M4 16H16" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-              <Path d="M12 4L16 8L8 16H4V12L12 4Z" stroke="#1F2937" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
-            </Svg>
+            <GoonaIcon icon={Pencil} size={20} color="#1F2937" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -69,10 +57,7 @@ export default function FarmProfileScreen() {
             <Text style={styles.heroName}>Adewale Farms</Text>
             <Text style={styles.heroSub}>Modern Livestock Production & Farm Operations</Text>
             <View style={styles.heroBadge}>
-              <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <Circle cx="7" cy="7" r="5" stroke="white" strokeWidth="1.2" fill="none" />
-                <Path d="M5 7L6.5 8.5L9.5 5.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </Svg>
+              <GoonaIcon icon={CheckCircle} size={14} color="white" />
               <Text style={styles.heroBadgeText}>Verified Farm Identity</Text>
             </View>
 
@@ -142,30 +127,21 @@ export default function FarmProfileScreen() {
         <Animated.View entering={FadeInUp.duration(500).delay(230).springify()} style={styles.opsGrid}>
           <View style={styles.opsCard}>
             <View style={[styles.opsIcon, { backgroundColor: '#E8F5E9' }]}>
-              <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <Ellipse cx="10" cy="13" rx="5" ry="3.5" stroke="#2E7D32" strokeWidth="1.4" fill="none" />
-                <Circle cx="10" cy="9" r="3" stroke="#2E7D32" strokeWidth="1.4" fill="none" />
-              </Svg>
+              <GoonaIcon icon={Users} size={20} color="#2E7D32" />
             </View>
             <Text style={styles.opsTitle}>Livestock Types</Text>
             <Text style={styles.opsDetail}>Poultry, Layers, Broilers</Text>
           </View>
           <View style={styles.opsCard}>
             <View style={[styles.opsIcon, { backgroundColor: '#F0FDF4' }]}>
-              <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <Rect x="4" y="3" width="12" height="14" rx="2" stroke="#16A34A" strokeWidth="1.4" fill="none" />
-                <Line x1="7" y1="7" x2="13" y2="7" stroke="#16A34A" strokeWidth="1.2" strokeLinecap="round" />
-              </Svg>
+              <GoonaIcon icon={ClipboardList} size={20} color="#16A34A" />
             </View>
             <Text style={styles.opsTitle}>Active Batches</Text>
             <Text style={styles.opsDetail}>2 Cycles Running</Text>
           </View>
           <View style={styles.opsCard}>
             <View style={[styles.opsIcon, { backgroundColor: '#EEF3FF' }]}>
-              <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <Circle cx="10" cy="7" r="3" stroke="#1A56FF" strokeWidth="1.4" fill="none" />
-                <Path d="M5 15C5 12.5 7 11 10 11C13 11 15 12.5 15 15" stroke="#1A56FF" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-              </Svg>
+              <GoonaIcon icon={Users} size={20} color="#1A56FF" />
             </View>
             <Text style={styles.opsTitle}>Team Overview</Text>
             <Text style={styles.opsDetail}>3 Workers Online</Text>
@@ -177,10 +153,7 @@ export default function FarmProfileScreen() {
           </View>
           <View style={styles.opsCard}>
             <View style={[styles.opsIcon, { backgroundColor: '#F0FDF4' }]}>
-              <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <Path d="M10 3L7 6V10C7 12 10 14 10 14C10 14 13 12 13 10V6L10 3Z" stroke="#16A34A" strokeWidth="1.4" fill="none" />
-                <Path d="M8 9L9.5 10.5L12.5 7.5" stroke="#16A34A" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </Svg>
+              <GoonaIcon icon={ShieldCheck} size={20} color="#16A34A" />
             </View>
             <Text style={styles.opsTitle}>Offline Status</Text>
             <Text style={styles.opsDetail}>Fully Protected</Text>
@@ -259,10 +232,7 @@ export default function FarmProfileScreen() {
           <View style={styles.galleryItem}><Text style={styles.galleryEmoji}>👥</Text></View>
           <View style={styles.galleryItem}><Text style={styles.galleryEmoji}>🌾</Text></View>
           <TouchableOpacity style={[styles.galleryItem, styles.galleryAdd]} activeOpacity={0.7}>
-            <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <Line x1="10" y1="5" x2="10" y2="15" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-              <Line x1="5" y1="10" x2="15" y2="10" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={Plus} size={20} color="#94A3B8" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -283,32 +253,19 @@ export default function FarmProfileScreen() {
             <Text style={styles.trustTitle}>Operational Trust & Compliance</Text>
             <View style={styles.trustGrid}>
               <View style={styles.trustItem}>
-                <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <Path d="M8 3L5 5V8C5 10 8 11.5 8 11.5C8 11.5 11 10 11 8V5L8 3Z" stroke="#16A34A" strokeWidth="1.3" fill="none" />
-                  <Path d="M6.5 8L7.5 9L10 6.5" stroke="#16A34A" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </Svg>
+                <GoonaIcon icon={ShieldCheck} size={16} color="#16A34A" />
                 <Text style={styles.trustText}>Verified Records</Text>
               </View>
               <View style={styles.trustItem}>
-                <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <Path d="M8 3L5 5V8C5 10 8 11.5 8 11.5C8 11.5 11 10 11 8V5L8 3Z" stroke="#2E7D32" strokeWidth="1.3" fill="none" />
-                </Svg>
+                <GoonaIcon icon={ShieldCheck} size={16} color="#2E7D32" />
                 <Text style={styles.trustText}>Offline Protected</Text>
               </View>
               <View style={styles.trustItem}>
-                <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <Path d="M3 12H13" stroke="#2E7D32" strokeWidth="1.3" strokeLinecap="round" />
-                  <Rect x="5" y="7" width="6" height="5" rx="1.2" stroke="#2E7D32" strokeWidth="1.3" fill="none" />
-                </Svg>
+                <GoonaIcon icon={Download} size={16} color="#2E7D32" />
                 <Text style={styles.trustText}>Financial Tracking</Text>
               </View>
               <View style={styles.trustItem}>
-                <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <Circle cx="6" cy="5" r="2" stroke="#2E7D32" strokeWidth="1.2" fill="none" />
-                  <Circle cx="11" cy="5" r="2" stroke="#2E7D32" strokeWidth="1.2" fill="none" />
-                  <Path d="M3 12C3 10 4.5 9 6 9" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-                  <Path d="M10 9C11.5 9 13 10 13 12" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-                </Svg>
+                <GoonaIcon icon={Users} size={16} color="#2E7D32" />
                 <Text style={styles.trustText}>Team Accountability</Text>
               </View>
             </View>
@@ -324,7 +281,7 @@ export default function FarmProfileScreen() {
 
         <Animated.View entering={FadeInUp.duration(500).delay(530).springify()} style={[styles.insightCard, { backgroundColor: '#E8F5E9' }]}>
           <View style={styles.insightIcon}>
-            <StarIcon fill="#2E7D32" />
+            <GoonaIcon icon={Star} size={16} color="#2E7D32" />
           </View>
           <Text style={styles.insightText}>
             Your poultry operation efficiency improved by <Text style={{ fontWeight: '700', color: '#2E7D32' }}>12%</Text> this cycle.
@@ -333,7 +290,7 @@ export default function FarmProfileScreen() {
 
         <Animated.View entering={FadeInUp.duration(500).delay(560).springify()} style={[styles.insightCard, { backgroundColor: '#E3F2FD' }]}>
           <View style={styles.insightIcon}>
-            <StarIcon fill="#1A56FF" />
+            <GoonaIcon icon={Star} size={16} color="#1A56FF" />
           </View>
           <Text style={styles.insightText}>
             GOONA predicts strong reinvestment readiness <Text style={{ fontWeight: '700', color: '#2E7D32' }}>next cycle</Text>.
@@ -342,7 +299,7 @@ export default function FarmProfileScreen() {
 
         <Animated.View entering={FadeInUp.duration(500).delay(590).springify()} style={[styles.insightCard, { backgroundColor: '#FFFBEB' }]}>
           <View style={styles.insightIcon}>
-            <StarIcon fill="#F59E0B" />
+            <GoonaIcon icon={Star} size={16} color="#F59E0B" />
           </View>
           <Text style={styles.insightText}>
             Mortality trend reduced by <Text style={{ fontWeight: '700', color: '#2E7D32' }}>8%</Text> this month.
@@ -352,30 +309,19 @@ export default function FarmProfileScreen() {
         {/* ACTIONS */}
         <Animated.View entering={FadeInUp.duration(500).delay(620).springify()} style={styles.actionRow}>
           <TouchableOpacity style={[styles.actionPill, styles.actionPillPrimary]} activeOpacity={0.85} onPress={() => router.push('/create-batch')}>
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <Path d="M4 10H10" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-              <Path d="M7 4V10" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={Plus} size={14} color="white" />
             <Text style={styles.actionPillPrimaryText}>Edit Farm Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionPill} activeOpacity={0.85}>
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <Path d="M3 10V11C3 11.5 3.5 12 4 12H10C10.5 12 11 11.5 11 11V10" stroke="#1F2937" strokeWidth="1.3" fill="none" />
-              <Path d="M7 2V8M7 8L5 6M7 8L9 6" stroke="#1F2937" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
+            <GoonaIcon icon={Download} size={14} color="#1F2937" />
             <Text style={styles.actionPillText}>Export Report</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionPill} activeOpacity={0.85}>
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <Rect x="3" y="3" width="8" height="8" rx="2" stroke="#1F2937" strokeWidth="1.3" fill="none" />
-            </Svg>
+            <GoonaIcon icon={Share2} size={14} color="#1F2937" />
             <Text style={styles.actionPillText}>Share Farm QR</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionPill} activeOpacity={0.85}>
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <Circle cx="7" cy="7" r="4.5" stroke="#1F2937" strokeWidth="1.3" fill="none" />
-              <Path d="M5 7L6.5 8.5L9.5 5.5" stroke="#1F2937" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </Svg>
+            <GoonaIcon icon={CheckCircle} size={14} color="#1F2937" />
             <Text style={styles.actionPillText}>Manage Verification</Text>
           </TouchableOpacity>
         </Animated.View>

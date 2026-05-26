@@ -3,7 +3,8 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Platform,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
+import GoonaIcon from '../components/ui/GoonaIcon'
+import { ArrowLeft, Bell, Check, X, Plus, AlertCircle, ClipboardList, TrendingUp, Sparkles, Users, CheckCircle } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -72,9 +73,7 @@ const QUICK_TASKS = [
   { label: 'Submit Medication Log', color: '#16A34A' },
 ]
 
-function BellIcon() {
-  return <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Path d="M8 2C5.8 2 4 3.8 4 6V9.5L2.5 11H13.5L12 9.5V6C12 3.8 10.2 2 8 2Z" stroke="#1F2937" strokeWidth="1.3" fill="none" /><Path d="M6.5 11C6.5 12 7 12.5 8 12.5C9 12.5 9.5 12 9.5 11" stroke="#1F2937" strokeWidth="1.3" strokeLinecap="round" fill="none" /></Svg>
-}
+
 
 export default function NotificationsScreen() {
   const [activeFilter, setActiveFilter] = useState('All')
@@ -171,12 +170,12 @@ export default function NotificationsScreen() {
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
           <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.back()}>
-            <Svg width="22" height="22" viewBox="0 0 24 24" fill="none"><Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Notifications</Text>
-          <TouchableOpacity style={styles.navAction} activeOpacity={0.7}>
-            <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Circle cx="10" cy="10" r="6" stroke="#1F2937" strokeWidth="1.5" fill="none" /><Path d="M7 10L9 12L13 8" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>
-          </TouchableOpacity>
+<TouchableOpacity style={styles.navAction} activeOpacity={0.7}>
+             <GoonaIcon icon={CheckCircle} size={20} color="#1F2937" />
+            </TouchableOpacity>
         </Animated.View>
 
         {/* HERO INTELLIGENCE CARD */}
@@ -184,7 +183,7 @@ export default function NotificationsScreen() {
           <View style={styles.heroDots} pointerEvents="none" />
           <View style={styles.heroTop}>
             <View style={styles.heroIconWrap}>
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Path d="M12 3L10.5 7.5L6 9L10.5 10.5L12 15L13.5 10.5L18 9L13.5 7.5L12 3Z" fill="rgba(255,255,255,0.2)" stroke="white" strokeWidth="1.5" strokeLinejoin="round" /></Svg>
+              <GoonaIcon icon={Sparkles} size={24} color="#FFFFFF" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.heroTitle}>Operational{'\n'}Awareness Center</Text>
@@ -218,11 +217,11 @@ export default function NotificationsScreen() {
         {/* QUICK ACTIONS */}
         <Animated.View entering={FadeInUp.duration(500).delay(160).springify()} style={styles.quickActions}>
           <TouchableOpacity style={styles.qaBtn} activeOpacity={0.85}>
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none"><Path d="M3 7H11" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" /><Path d="M7 3V11" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" /></Svg>
-            <Text style={styles.qaBtnText}>Mark All Read</Text>
+            <GoonaIcon icon={Plus} size={14} color="#2E7D32" />
+             <Text style={styles.qaBtnText}>Mark All Read</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.qaBtn} activeOpacity={0.85}>
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none"><Path d="M3 3L11 11" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" /><Path d="M11 3L3 11" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" /></Svg>
+<GoonaIcon icon={X} size={14} color="#94A3B8" />
             <Text style={[styles.qaBtnText, { color: '#94A3B8' }]}>Clear Resolved</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -241,13 +240,11 @@ export default function NotificationsScreen() {
         {filteredAlerts.map((alert, i) => (
           <Animated.View key={i} entering={FadeInUp.duration(400).delay(230 + i * 50).springify()} style={styles.alertCard}>
             <View style={[styles.alertIcon, { backgroundColor: alert.iconBg }]}>
-              <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                {alert.type === 'Critical' && <><Circle cx="8" cy="8" r="5" stroke={alert.iconColor} strokeWidth="1.3" fill="none" /><Line x1="8" y1="6" x2="8" y2="9" stroke={alert.iconColor} strokeWidth="1.2" strokeLinecap="round" /><Circle cx="8" cy="11" r="0.5" fill={alert.iconColor} /></>}
-                {alert.type === 'Operations' && <><Path d="M4 10H12" stroke={alert.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Rect x="5" y="4" width="6" height="8" rx="1.5" stroke={alert.iconColor} strokeWidth="1.3" fill="none" /></>}
-                {alert.type === 'Financial' && <><Path d="M3 12H13" stroke={alert.iconColor} strokeWidth="1.3" strokeLinecap="round" /><Path d="M5 9L7 5L9 7L13 3" stroke={alert.iconColor} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></>}
-                {alert.type === 'AI' && <><Path d="M8 3L7 6.5L3.5 7.5L7 8.5L8 12L9 8.5L12.5 7.5L9 6.5L8 3Z" stroke={alert.iconColor} strokeWidth="1.3" strokeLinejoin="round" fill="none" /></>}
-                {alert.type === 'Team' && <><Circle cx="6" cy="6" r="2" stroke={alert.iconColor} strokeWidth="1.3" fill="none" /><Path d="M3 12C3 10 4.5 9 6 9C7.5 9 9 10 9 12" stroke={alert.iconColor} strokeWidth="1.3" strokeLinecap="round" fill="none" /></>}
-              </Svg>
+{alert.type === 'Critical' && <GoonaIcon icon={AlertCircle} size={16} color={alert.iconColor} />}
+                {alert.type === 'Operations' && <GoonaIcon icon={ClipboardList} size={16} color={alert.iconColor} />}
+                {alert.type === 'Financial' && <GoonaIcon icon={TrendingUp} size={16} color={alert.iconColor} />}
+                {alert.type === 'AI' && <GoonaIcon icon={Sparkles} size={16} color={alert.iconColor} />}
+                {alert.type === 'Team' && <GoonaIcon icon={Users} size={16} color={alert.iconColor} />}
             </View>
             <View style={styles.alertContent}>
               <View style={styles.alertTop}>
@@ -276,7 +273,7 @@ export default function NotificationsScreen() {
               onPress={() => toggleReminder(i)}
             >
               <View style={[styles.reminderCheck, r.done && styles.reminderCheckDone]}>
-                {r.done && <Svg width="10" height="10" viewBox="0 0 10 10" fill="none"><Path d="M2.5 5L4.5 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>}
+                {r.done && <GoonaIcon icon={Check} size={10} color="#FFFFFF" />}
               </View>
               <Text style={[styles.reminderLabel, r.done && styles.reminderLabelDone]}>{r.label}</Text>
             </TouchableOpacity>
@@ -298,8 +295,8 @@ export default function NotificationsScreen() {
             >
               <View style={[styles.taskDot, { backgroundColor: t.done ? '#CBD5E1' : t.color }]} />
               <Text style={[styles.taskLabel, t.done && styles.taskLabelDone]}>{t.label}</Text>
-              {t.done && (
-                <Svg width="12" height="12" viewBox="0 0 12 12" fill="none"><Path d="M3 6L5 8L9 4" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+{t.done && (
+                <GoonaIcon icon={Check} size={12} color="#16A34A" />
               )}
             </TouchableOpacity>
           ))}
@@ -320,17 +317,14 @@ export default function NotificationsScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.fabGradient}
         >
-          <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <Path d="M6 14H22" stroke="white" strokeWidth="3" strokeLinecap="round" />
-            <Path d="M14 6V22" stroke="white" strokeWidth="3" strokeLinecap="round" />
-          </Svg>
+<GoonaIcon icon={Plus} size={28} color="#FFFFFF" strokeWidth={3} />
         </LinearGradient>
       </TouchableOpacity>
 
       {/* TOAST */}
       {toast.visible && (
         <Animated.View entering={FadeInUp.duration(300).springify()} exiting={FadeOutDown.duration(250)} style={styles.toast}>
-          <Svg width="16" height="16" viewBox="0 0 16 16" fill="none"><Circle cx="8" cy="8" r="5" stroke="white" strokeWidth="1.3" fill="none" /><Path d="M5 8L7 10L11 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Svg>
+          <GoonaIcon icon={Check} size={16} color="#FFFFFF" />
           <Text style={styles.toastText}>{toast.message}</Text>
         </Animated.View>
       )}

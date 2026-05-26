@@ -3,67 +3,23 @@ import {
   View, Text, TouchableOpacity, Pressable, TextInput,
   StyleSheet, Platform, Keyboard,
 } from 'react-native'
-import Svg, { Path, Circle } from 'react-native-svg'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
 } from 'react-native-reanimated'
 import { useRecoveryStore, CheckInStatus } from '../store/useRecoveryStore'
+import GoonaIcon from './ui/GoonaIcon'
+import { Check, X, Minus, Star, CircleCheck } from 'lucide-react-native'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 type ActiveStatus = Exclude<CheckInStatus, 'none'>
 
-function CheckIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Circle cx="9" cy="9" r="7" stroke="#2E7D32" strokeWidth="1.5" fill="rgba(46,125,50,0.08)" />
-      <Path d="M6 9L8 11L12 7" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
-}
-
-function XIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Circle cx="9" cy="9" r="7" stroke="#EF4444" strokeWidth="1.5" fill="rgba(239,68,68,0.08)" />
-      <Path d="M6.5 6.5L11.5 11.5" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
-      <Path d="M11.5 6.5L6.5 11.5" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function HalfIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Circle cx="9" cy="9" r="7" stroke="#F59E0B" strokeWidth="1.5" fill="rgba(245,158,11,0.08)" />
-      <Circle cx="9" cy="9" r="7" stroke="#F59E0B" strokeWidth="1.5" strokeDasharray="22 22" />
-    </Svg>
-  )
-}
-
-function StarIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Circle cx="9" cy="9" r="7" stroke="#AEEA00" strokeWidth="1.5" fill="rgba(174,234,0,0.08)" />
-      <Path d="M9 4L10.5 7.5L14 8L11.5 10.5L12 14L9 12L6 14L6.5 10.5L4 8L7.5 7.5L9 4Z" stroke="#AEEA00" strokeWidth="1.2" strokeLinejoin="round" />
-    </Svg>
-  )
-}
-
-function CloseIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Path d="M7 7L13 13" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round" />
-      <Path d="M13 7L7 13" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-const STATUS_CONFIG: { key: ActiveStatus; label: string; description: string; icon: React.FC }[] = [
-  { key: 'completed', label: 'Completed', description: 'You met your recovery target', icon: CheckIcon },
-  { key: 'partial', label: 'Partial', description: 'You recovered some of the target', icon: HalfIcon },
-  { key: 'missed', label: 'Missed', description: 'You skipped this period', icon: XIcon },
-  { key: 'exceeded', label: 'Exceeded', description: 'You recovered more than planned', icon: StarIcon },
+import type { LucideProps } from 'lucide-react-native'
+const STATUS_CONFIG: { key: ActiveStatus; label: string; description: string; icon: React.ElementType<LucideProps> }[] = [
+  { key: 'completed', label: 'Completed', description: 'You met your recovery target', icon: Check },
+  { key: 'partial', label: 'Partial', description: 'You recovered some of the target', icon: Minus },
+  { key: 'missed', label: 'Missed', description: 'You skipped this period', icon: X },
+  { key: 'exceeded', label: 'Exceeded', description: 'You recovered more than planned', icon: Star },
 ]
 
 function fmtDate(d: Date): string {
@@ -151,6 +107,15 @@ export default function RecoveryCheckInModal({
     }
   }
 
+  const statusColor = (key: ActiveStatus) => {
+    switch (key) {
+      case 'completed': return '#2E7D32'
+      case 'partial': return '#F59E0B'
+      case 'missed': return '#EF4444'
+      case 'exceeded': return '#AEEA00'
+    }
+  }
+
   return (
     <View style={styles.overlay}>
       <Animated.View style={[styles.backdrop, backdropStyle]}>
@@ -163,13 +128,12 @@ export default function RecoveryCheckInModal({
         <View style={styles.sheetHeader}>
           <View style={styles.sheetTitleRow}>
             <View style={styles.sheetTitleIcon}>
-              <Circle cx="10" cy="10" r="10" fill="#F0FDF4" />
-              <Path d="M7 10L9 12L13 8" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" transform="translate(-3,-3)" />
+              <GoonaIcon icon={CircleCheck} size={20} color="#2E7D32" />
             </View>
             <Text style={styles.sheetTitle}>Recovery Check-in</Text>
           </View>
           <TouchableOpacity onPress={onClose} style={styles.sheetCloseBtn} activeOpacity={0.7}>
-            <CloseIcon />
+            <GoonaIcon icon={X} size={20} color="#94A3B8" />
           </TouchableOpacity>
         </View>
 
@@ -202,7 +166,7 @@ export default function RecoveryCheckInModal({
                 ]}
               >
                 <View style={[styles.optionIcon, active && { opacity: 1 }]}>
-                  <IconComp />
+                  <GoonaIcon icon={IconComp} size={18} color={statusColor(opt.key)} strokeWidth={1.5} />
                 </View>
                 <View style={styles.optionContent}>
                   <Text style={[styles.optionLabel, active && { color: selectedBorder(opt.key) }]}>
@@ -214,9 +178,7 @@ export default function RecoveryCheckInModal({
                   styles.optionRadio,
                   active && { borderColor: selectedBorder(opt.key), backgroundColor: selectedBorder(opt.key) },
                 ]}>
-                  {active && (
-                    <Path d="M4 7L6 9L10 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  )}
+                  {active && <GoonaIcon icon={Check} size={10} color="white" strokeWidth={3} />}
                 </View>
               </Pressable>
             )
@@ -287,7 +249,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginTop: 8,
   },
   sheetTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  sheetTitleIcon: { width: 10, height: 10 },
+  sheetTitleIcon: { width: 20, height: 20 },
   sheetTitle: { fontSize: 18, fontWeight: '800', color: '#1B1B1B' },
   sheetCloseBtn: {
     width: 36, height: 36, borderRadius: 12,

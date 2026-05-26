@@ -3,8 +3,9 @@ import {
   View, Text, TouchableOpacity, ScrollView, Pressable,
   StyleSheet, Dimensions, Linking, Share,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line, G } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
+import GoonaIcon from '../components/ui/GoonaIcon'
+import { ArrowLeft, Sprout } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -103,14 +104,7 @@ function useMetricPulse() {
   return useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }))
 }
 
-/* ─── Back Icon ─── */
-function BackIcon() {
-  return (
-    <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
-}
+
 
 /* ─── Animated AI Orb ─── */
 function AIOrb() {
@@ -860,13 +854,10 @@ export default function GoonaAcademyScreen() {
         {/* ─── TOP NAV ─── */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={s.topNav}>
           <TouchableOpacity style={s.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <BackIcon />
+            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <View style={s.navLogo}>
-            <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <Path d="M12 2C12 2 7 8 7 12C7 14.5 8.5 17 10 18.5C9.5 17 9 16 9 15C9 11.5 11 7 12 2Z" fill="#2E7D32" />
-              <Path d="M12 2C12 2 17 8 17 12C17 14.5 15.5 17 14 18.5C14.5 17 15 16 15 15C15 11.5 13 7 12 2Z" fill="#388E3C" />
-            </Svg>
+            <GoonaIcon icon={Sprout} size={22} color="#2E7D32" />
             <Text style={s.navLogoText}>GOONA</Text>
           </View>
           <Text style={s.navLabel}>Academy</Text>

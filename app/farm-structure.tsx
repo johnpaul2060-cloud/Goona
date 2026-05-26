@@ -4,15 +4,9 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
-
-function BackIcon() {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
+import Svg, { Rect, Line } from 'react-native-svg';
+import { ArrowLeft, CheckCircle, ArrowRight, Sparkles } from 'lucide-react-native';
+import GoonaIcon from '../components/ui/GoonaIcon';
 
 export default function FarmStructureScreen() {
   const [selected, setSelected] = useState<'solo' | 'team' | null>(null);
@@ -45,13 +39,10 @@ export default function FarmStructureScreen() {
       >
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <BackIcon />
+            <GoonaIcon icon={ArrowLeft} size={24} color="#1F2937" />
           </TouchableOpacity>
           <View style={styles.progressPill}>
-            <Svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: 4 }}>
-              <Circle cx="6" cy="6" r="4" stroke="#00695C" strokeWidth="0.8" fill="none" />
-              <Path d="M3.5 6L5 7.5L8.5 4" stroke="#00695C" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </Svg>
+            <GoonaIcon icon={CheckCircle} size={12} color="#00695C" style={{ marginRight: 4 }} />
             <Text style={styles.progressPillText}>Setup</Text>
           </View>
         </View>
@@ -96,9 +87,7 @@ export default function FarmStructureScreen() {
 
             <TouchableOpacity style={styles.soloBtn} onPress={handleSolo} activeOpacity={0.9}>
               <Text style={styles.optionBtnText}>Continue Solo</Text>
-              <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <Path d="M6 4L11 9L6 14" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={ArrowRight} size={18} color="white" />
             </TouchableOpacity>
           </TouchableOpacity>
 
@@ -136,18 +125,14 @@ export default function FarmStructureScreen() {
 
             <TouchableOpacity style={styles.teamBtn} onPress={handleTeam} activeOpacity={0.9}>
               <Text style={styles.optionBtnText}>Set Up Team</Text>
-              <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <Path d="M6 4L11 9L6 14" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={ArrowRight} size={18} color="white" />
             </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
         <View style={styles.iqCard}>
           <View style={styles.iqSparkle}>
-            <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <Path d="M10 3L9 9L3 10L9 11L10 17L11 11L17 10L11 9L10 3Z" fill="#16A34A" fillOpacity="0.2" stroke="#16A34A" strokeWidth="1.2" strokeLinejoin="round" />
-            </Svg>
+            <GoonaIcon icon={Sparkles} size={20} color="#16A34A" />
           </View>
           <Text style={styles.iqText}>
             Most growing farms start <Text style={{ fontWeight: '700', color: '#00695C' }}>solo</Text> and expand into{' '}
@@ -157,10 +142,7 @@ export default function FarmStructureScreen() {
 
         <View style={styles.bottomInfo}>
           <View style={styles.trustBadge}>
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <Circle cx="7" cy="7" r="5.5" stroke="#00695C" strokeWidth="0.8" fill="none" />
-              <Path d="M4.5 7L6 8.5L9.5 5" stroke="#00695C" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </Svg>
+            <GoonaIcon icon={CheckCircle} size={14} color="#00695C" />
             <Text style={styles.trustBadgeText}>You can always add workers later from Team Settings.</Text>
           </View>
           <TouchableOpacity onPress={handleSkip}>

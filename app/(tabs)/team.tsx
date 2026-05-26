@@ -3,7 +3,9 @@ import {
   View, Text, TouchableOpacity, Pressable, ScrollView,
   StyleSheet, Dimensions,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line, Defs, RadialGradient, Stop, Ellipse } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
+import GoonaIcon from '../../components/ui/GoonaIcon'
+import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -195,9 +197,7 @@ function InsightItem({ text, index }: { text: string; index: number }) {
       entering={FadeInUp.duration(500).delay(700 + index * 80).springify()}
       style={isStyles.item}
     >
-      <Svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginTop: 1, flexShrink: 0 }}>
-        <Path d="M8 2L9.5 6.5L14 8L9.5 9.5L8 14L6.5 9.5L2 8L6.5 6.5L8 2Z" stroke="#00695C" strokeWidth="1.2" strokeLinejoin="round" fill="rgba(0,105,92,0.08)" />
-      </Svg>
+      <GoonaIcon icon={Sparkles} size={16} color="#00695C" style={{ marginTop: 1, flexShrink: 0 }} />
       <Text style={isStyles.text}>{text}</Text>
     </Animated.View>
   )
@@ -342,34 +342,19 @@ const heroStyles = StyleSheet.create({
 
 /* ─── Floating trust chips ─── */
 function TrustChips() {
-  const items: { label: string; style: Record<string, number>; icon: string }[] = [
-    { label: 'Team Active', style: { top: 160, right: 10 }, icon: 'shield' },
-    { label: '3 Online', style: { bottom: 320, left: 8 }, icon: 'sync' },
-    { label: 'Coordinated', style: { bottom: 240, right: 12 }, icon: 'check' },
+  const items: { label: string; style: Record<string, number>; icon: React.ReactNode }[] = [
+    { label: 'Team Active', style: { top: 160, right: 10 }, icon: <GoonaIcon icon={Shield} size={14} color="#00695C" /> },
+    { label: '3 Online', style: { bottom: 320, left: 8 }, icon: <GoonaIcon icon={RefreshCw} size={14} color="#00695C" /> },
+    { label: 'Coordinated', style: { bottom: 240, right: 12 }, icon: <GoonaIcon icon={Check} size={14} color="#00695C" /> },
   ]
   return (
     <>
-      {items.map((item) => {
-        const iconPath = item.icon === 'shield'
-          ? 'M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z'
-          : item.icon === 'sync'
-            ? 'M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5'
-            : 'M10 3H4C2.9 3 2 3.9 2 5V9C2 10.1 2.9 11 4 11H10C11.1 11 12 10.1 12 9V5C12 3.9 11.1 3 10 3Z'
-        const hasCheck = item.icon === 'check'
-        return (
-          <View
-            key={item.label}
-            style={[tcStyles.chip, item.style]}
-            pointerEvents="none"
-          >
-            <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <Path d={iconPath} stroke="#00695C" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              {hasCheck && <Path d="M5 6L6.5 7.5L9.5 4.5" stroke="#00695C" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />}
-            </Svg>
-            <Text style={tcStyles.label}>{item.label}</Text>
-          </View>
-        )
-      })}
+      {items.map((item) => (
+        <View key={item.label} style={[tcStyles.chip, item.style]} pointerEvents="none">
+          {item.icon}
+          <Text style={tcStyles.label}>{item.label}</Text>
+        </View>
+      ))}
     </>
   )
 }
@@ -436,9 +421,7 @@ export default function TeamScreen() {
         {/* ─── TOP NAV ─── */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
           <TouchableOpacity style={styles.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
+            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <View style={styles.navLogo}>
             <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -492,11 +475,7 @@ export default function TeamScreen() {
               desc="Train with realistic farm simulations."
               tags={['Simulations', 'Challenges', 'XP']}
               icon={
-                <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <Rect x="3" y="6" width="14" height="10" rx="1.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.3" fill="none" />
-                  <Path d="M7 6V4C7 3.4 7.4 3 8 3H12C12.6 3 13 3.4 13 4V6" stroke="rgba(255,255,255,0.5)" strokeWidth="1.3" fill="none" />
-                  <Path d="M7 9H13M7 12H11" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2" strokeLinecap="round" />
-                </Svg>
+                <GoonaIcon icon={Book} size={20} color="rgba(255,255,255,0.5)" />
               }
               onPress={() => router.push('/goona-academy')}
             />
@@ -509,10 +488,7 @@ export default function TeamScreen() {
               desc="Achievements, certifications, and farm identity."
               tags={['Badges', 'Rankings', 'Reputation']}
               icon={
-                <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <Circle cx="10" cy="10" r="7" stroke="#00695C" strokeWidth="1.3" fill="none" />
-                  <Path d="M7 10L9 12L13 8" stroke="#00695C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </Svg>
+                <GoonaIcon icon={UserCheck} size={20} color="#00695C" />
               }
               onPress={() => router.push('/farm-profile')}
             />
@@ -523,10 +499,7 @@ export default function TeamScreen() {
               desc="Notifications, security, sync, and preferences."
               tags={['Security', 'Offline', 'AI Prefs']}
               icon={
-                <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <Circle cx="10" cy="10" r="2.5" stroke="#00695C" strokeWidth="1.3" fill="none" />
-                  <Path d="M10 1.5V4M10 16V18.5M1.5 10H4M16 10H18.5M3.5 3.5L5.5 5.5M14.5 14.5L16.5 16.5M3.5 16.5L5.5 14.5M14.5 5.5L16.5 3.5" stroke="#00695C" strokeWidth="1.2" strokeLinecap="round" />
-                </Svg>
+                <GoonaIcon icon={Settings} size={20} color="#00695C" />
               }
               onPress={() => router.push('/settings' as any)}
             />

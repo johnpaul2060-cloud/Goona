@@ -3,7 +3,8 @@ import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   StyleSheet, KeyboardAvoidingView, Platform, Keyboard,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
+import GoonaIcon from '../components/ui/GoonaIcon'
+import { ArrowLeft, CheckCircle, ClipboardList } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -16,11 +17,7 @@ import Animated, {
 import BottomDock from '../components/navigation/BottomDock'
 
 function BackIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Path d="M13 16L8 10L13 4" stroke="#1F2937" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
+  return <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
 }
 
 function PulseDot({ color }: { color: string }) {
@@ -353,18 +350,11 @@ export default function PlanRecaptScreen() {
           {/* ── ACTION AREA ── */}
           <View style={styles.actionArea}>
             <TouchableOpacity style={styles.btnPrimary} activeOpacity={0.85}>
-              <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <Circle cx="10" cy="10" r="6" stroke="white" strokeWidth="1.5" fill="none" />
-                <Path d="M7 10L9 12L13 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </Svg>
+<GoonaIcon icon={CheckCircle} size={20} color="#FFFFFF" />
               <Text style={styles.btnPrimaryText}>Generate Plan</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.btnSecondary} activeOpacity={0.85}>
-              <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <Path d="M5 13H14" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-                <Rect x="5" y="4" width="8" height="10" rx="1.5" stroke="#94A3B8" strokeWidth="1.5" fill="none" />
-                <Path d="M5 7L13 7" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-              </Svg>
+<GoonaIcon icon={ClipboardList} size={18} color="#94A3B8" />
               <Text style={styles.btnSecondaryText}>Save Draft</Text>
             </TouchableOpacity>
           </View>

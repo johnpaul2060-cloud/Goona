@@ -22,6 +22,8 @@ import Svg, {
   Ellipse,
   Text as SvgText,
 } from 'react-native-svg';
+import GoonaIcon from '../../components/ui/GoonaIcon';
+import { ShieldCheck, RefreshCw, ShieldAlert, Wheat, Skull, CircleCheck, TrendingUp, PiggyBank, Users, ArrowRight, Sprout } from 'lucide-react-native';
 
 const TOTAL_SLIDES = 3;
 
@@ -57,99 +59,6 @@ type SlideData = {
   illustration: React.ComponentType<{ size: { w: number; h: number } }>;
   floatingCards: FloatingCardData[];
 };
-
-/* ===================================================================
- * ICON COMPONENTS
- * =================================================================== */
-function ShieldCheckIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M5.5 7.5L6.5 8.5L9 6" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-function SyncIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Path d="M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-      <Path d="M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-function ShieldAlertIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#EF4444" strokeWidth={1.2} fill="none" />
-      <Path d="M7 6V8" stroke="#EF4444" strokeWidth={1.2} strokeLinecap="round" />
-      <Circle cx={7} cy={5} r={0.6} fill="#EF4444" />
-    </Svg>
-  );
-}
-function FeedIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Rect x={3} y={4} width={8} height={6} rx={1.5} stroke="#2E7D32" strokeWidth={1.2} fill="none" />
-      <Path d="M5 7H9" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-function MortalityIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Path d="M7 3L8.5 7L13 8.5L8.5 10L7 13L5.5 10L1 8.5L5.5 7Z" stroke="#EF4444" strokeWidth={1.2} strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-function CheckCircleIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Circle cx={7} cy={7} r={4} stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M5.5 7L6.5 8L9 5.5" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-function ReinvestIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Rect x={3} y={5} width={8} height={6} rx={1.5} stroke="#F9A825" strokeWidth={1.2} fill="none" />
-      <Circle cx={7} cy={3} r={2} stroke="#F9A825" strokeWidth={1.2} fill="none" />
-    </Svg>
-  );
-}
-function SavingsGoalIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#16A34A" strokeWidth={1.2} fill="none" />
-      <Path d="M6 8L7 9L9 6" stroke="#16A34A" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </Svg>
-  );
-}
-function ExpansionIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 14 14" fill="none">
-      <Path d="M3 8C3 4.5 5 3 7 3C9 3 11 4.5 11 8" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" />
-      <Path d="M4 12C4 10 5.5 9 7 9C8.5 9 10 10 10 12" stroke="#1A56FF" strokeWidth={1.2} strokeLinecap="round" fill="none" />
-    </Svg>
-  );
-}
-function ArrowRightIcon() {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18" fill="none">
-      <Path d="M4 9H14" stroke="white" strokeWidth={1.5} strokeLinecap="round" />
-      <Path d="M10 5L14 9L10 13" stroke="white" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
-function GoonaLogoSmall() {
-  return (
-    <Svg width={28} height={28} viewBox="0 0 28 28" fill="none">
-      <Path d="M14 2C14 2 8 9 8 14C8 17 10 20 12 22C11 20 10 18.5 10 17C10 13 13 8 14 2Z" fill="#2E7D32" />
-      <Path d="M14 2C14 2 20 9 20 14C20 17 18 20 16 22C17 20 18 18.5 18 17C18 13 15 8 14 2Z" fill="#388E3C" />
-      <Path d="M13.5 24C13.5 24 13.5 22 14 21.5C14.5 22 14.5 24 14.5 24H13.5Z" fill="#1B5E20" />
-    </Svg>
-  );
-}
 
 /* ===================================================================
  * SVG ILLUSTRATIONS
@@ -256,9 +165,9 @@ const SLIDES: SlideData[] = [
     subtitle: 'Track livestock, savings, and farm records safely in one trusted platform.',
     illustration: Slide1Illustration,
     floatingCards: [
-      { id: 's1-c1', style: { top: 28, right: 6 }, bgIcon: C.greenVeryPale, label: 'Records Secured', icon: <ShieldCheckIcon /> },
-      { id: 's1-c2', style: { bottom: 22, left: 4 }, bgIcon: C.shieldBlue, label: 'Offline Sync Active', icon: <SyncIcon /> },
-      { id: 's1-c3', style: { bottom: 46, right: 8 }, bgIcon: C.redLight, label: 'Farm Protected', icon: <ShieldAlertIcon /> },
+      { id: 's1-c1', style: { top: 28, right: 6 }, bgIcon: C.greenVeryPale, label: 'Records Secured', icon: <GoonaIcon icon={ShieldCheck} size={14} color="#16A34A" /> },
+      { id: 's1-c2', style: { bottom: 22, left: 4 }, bgIcon: C.shieldBlue, label: 'Offline Sync Active', icon: <GoonaIcon icon={RefreshCw} size={14} color="#1A56FF" /> },
+      { id: 's1-c3', style: { bottom: 46, right: 8 }, bgIcon: C.redLight, label: 'Farm Protected', icon: <GoonaIcon icon={ShieldAlert} size={14} color="#EF4444" /> },
     ],
   },
   {
@@ -266,9 +175,9 @@ const SLIDES: SlideData[] = [
     subtitle: 'Monitor batches, feeding, expenses, and growth with real-time insights.',
     illustration: Slide2Illustration,
     floatingCards: [
-      { id: 's2-c1', style: { top: 18, right: 2 }, bgIcon: C.greenPale, label: 'Feed', value: '218 kg', icon: <FeedIcon /> },
-      { id: 's2-c2', style: { bottom: 32, left: 2 }, bgIcon: C.redLight, label: 'Mortality', value: '2 birds', icon: <MortalityIcon /> },
-      { id: 's2-c3', style: { bottom: 30, right: 4 }, bgIcon: C.greenVeryPale, label: 'Growth +12%', icon: <CheckCircleIcon /> },
+      { id: 's2-c1', style: { top: 18, right: 2 }, bgIcon: C.greenPale, label: 'Feed', value: '218 kg', icon: <GoonaIcon icon={Wheat} size={14} color="#2E7D32" /> },
+      { id: 's2-c2', style: { bottom: 32, left: 2 }, bgIcon: C.redLight, label: 'Mortality', value: '2 birds', icon: <GoonaIcon icon={Skull} size={14} color="#EF4444" /> },
+      { id: 's2-c3', style: { bottom: 30, right: 4 }, bgIcon: C.greenVeryPale, label: 'Growth +12%', icon: <GoonaIcon icon={CircleCheck} size={14} color="#16A34A" /> },
     ],
   },
   {
@@ -276,9 +185,9 @@ const SLIDES: SlideData[] = [
     subtitle: 'Save consistently, reinvest profits, and build long-term farm success.',
     illustration: Slide3Illustration,
     floatingCards: [
-      { id: 's3-c1', style: { top: 24, right: 3 }, bgIcon: C.goldLight, label: 'Reinvestment', value: '42% Complete', icon: <ReinvestIcon /> },
-      { id: 's3-c2', style: { bottom: 34, left: 0 }, bgIcon: C.greenVeryPale, label: 'Savings Goal On Track', icon: <SavingsGoalIcon /> },
-      { id: 's3-c3', style: { bottom: 30, right: 2 }, bgIcon: C.shieldBlue, label: 'Farm Expansion', icon: <ExpansionIcon /> },
+      { id: 's3-c1', style: { top: 24, right: 3 }, bgIcon: C.goldLight, label: 'Reinvestment', value: '42% Complete', icon: <GoonaIcon icon={TrendingUp} size={14} color="#F9A825" /> },
+      { id: 's3-c2', style: { bottom: 34, left: 0 }, bgIcon: C.greenVeryPale, label: 'Savings Goal On Track', icon: <GoonaIcon icon={PiggyBank} size={14} color="#16A34A" /> },
+      { id: 's3-c3', style: { bottom: 30, right: 2 }, bgIcon: C.shieldBlue, label: 'Farm Expansion', icon: <GoonaIcon icon={Users} size={14} color="#1A56FF" /> },
     ],
   },
 ];
@@ -522,7 +431,7 @@ export default function OnboardingCarousel() {
       {/* ===== FIXED TOP BAR ===== */}
       <View style={styles.topBar}>
         <View style={styles.logoMini}>
-          <GoonaLogoSmall />
+          <GoonaIcon icon={Sprout} size={28} color="#2E7D32" />
           <Text style={styles.logoMiniText}>GOONA</Text>
         </View>
         <View style={styles.topRight}>
@@ -562,7 +471,7 @@ export default function OnboardingCarousel() {
             onPressOut={() => animateButton(1)}>
             <LinearGradient colors={['#2E7D32', '#43A047']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaGradient}>
               <Text style={styles.ctaText}>Next</Text>
-              <ArrowRightIcon />
+              <GoonaIcon icon={ArrowRight} size={18} color="white" />
             </LinearGradient>
           </Pressable>
         )}

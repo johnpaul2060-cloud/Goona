@@ -7,6 +7,8 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Path, Circle, Ellipse, Rect, Line } from 'react-native-svg';
+import { ArrowLeft, Sprout } from 'lucide-react-native';
+import GoonaIcon from '../components/ui/GoonaIcon';
 import CountryPicker from 'react-native-country-picker-modal';
 
 const STATES_DATA: Record<string, { label: string; value: string }[]> = {
@@ -193,13 +195,7 @@ const SIZE_OPTIONS = [
 ];
 const GOAL_OPTIONS = ['Egg Production', 'Meat Production', 'Breeding', 'Commercial Sales', 'Mixed Production'];
 
-function BackIcon() {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
+
 
 export default function FarmSetupScreen() {
   const [farmName, setFarmName] = useState('');
@@ -234,13 +230,10 @@ export default function FarmSetupScreen() {
         >
           <View style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} onPress={() => router.back()}>
-              <BackIcon />
+              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={styles.navLogo}>
-              <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <Path d="M12 2C12 2 7 8 7 12C7 14.5 8.5 17 10 18.5C9.5 17 9 16 9 15C9 11.5 11 7 12 2Z" fill="#2E7D32" />
-                <Path d="M12 2C12 2 17 8 17 12C17 14.5 15.5 17 14 18.5C14.5 17 15 16 15 15C15 11.5 13 7 12 2Z" fill="#388E3C" />
-              </Svg>
+              <GoonaIcon icon={Sprout} size={18} color="#2E7D32" />
               <Text style={styles.navLogoText}>GOONA</Text>
             </View>
             <View style={styles.progressPill}>

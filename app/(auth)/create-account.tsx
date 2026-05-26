@@ -13,15 +13,9 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
-
-function BackIcon() {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
+import Svg, { Path } from 'react-native-svg';
+import GoonaIcon from '../../components/ui/GoonaIcon';
+import { ArrowLeft, User, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
 
 export default function CreateAccountScreen() {
   const [fullName, setFullName] = useState('');
@@ -67,7 +61,7 @@ export default function CreateAccountScreen() {
         >
           <View style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} onPress={() => router.back()}>
-              <BackIcon />
+              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={styles.navLogo}>
               <Svg width={18} height={18} viewBox="0 0 18 18">
@@ -99,10 +93,7 @@ export default function CreateAccountScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIcon}>
-                  <Svg width="18" height="18" viewBox="0 0 18 18">
-                    <Circle cx={9} cy={6} r={3} stroke="#A0AEA1" strokeWidth="1.3" fill="none" />
-                    <Path d="M4 15C4 12.5 6 11 9 11C12 11 14 12.5 14 15" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                  </Svg>
+                  <GoonaIcon icon={User} size={18} color="#A0AEA1" />
                 </View>
                 <View style={styles.fieldInputWrap}>
                   <Text style={styles.fieldLabel}>FULL NAME</Text>
@@ -146,10 +137,7 @@ export default function CreateAccountScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIcon}>
-                  <Svg width="18" height="18" viewBox="0 0 18 18">
-                    <Rect x="3" y="4" width="12" height="10" rx="1.5" stroke="#A0AEA1" strokeWidth="1.3" fill="none" />
-                    <Path d="M3 6L9 10L15 6" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  </Svg>
+                  <GoonaIcon icon={Mail} size={18} color="#A0AEA1" />
                 </View>
                 <View style={styles.fieldInputWrap}>
                   <Text style={styles.fieldLabel}>EMAIL ADDRESS</Text>
@@ -170,11 +158,7 @@ export default function CreateAccountScreen() {
               <View style={[styles.passwordWrap, focusedField === 'password' && styles.fieldWrapFocused]}>
                 <View style={styles.passwordInputRow}>
                   <View style={styles.fieldIcon}>
-                    <Svg width="18" height="18" viewBox="0 0 18 18">
-                      <Rect x="3" y="7" width="12" height="8" rx="1.5" stroke="#A0AEA1" strokeWidth="1.3" fill="none" />
-                      <Path d="M6 7V5C6 3.5 7 3 9 3C11 3 12 3.5 12 5V7" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                      <Circle cx="9" cy="11" r="1" stroke="#A0AEA1" strokeWidth="0.8" />
-                    </Svg>
+                    <GoonaIcon icon={Lock} size={18} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>PASSWORD</Text>
@@ -197,13 +181,11 @@ export default function CreateAccountScreen() {
                   onPress={() => setShowPassword(!showPassword)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Svg width="20" height="20" viewBox="0 0 20 20">
-                    <Path d="M3 10C3 10 5.5 5 10 5C14.5 5 17 10 17 10C17 10 14.5 15 10 15C5.5 15 3 10 3 10Z" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-                    <Circle cx={10} cy={10} r={3} stroke="#A0AEA1" strokeWidth="1.2" fill="none" />
-                    {!showPassword && (
-                      <Line x1={16} y1={4} x2={4} y2={16} stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" />
-                    )}
-                  </Svg>
+                  {showPassword ? (
+                    <GoonaIcon icon={Eye} size={20} color="#A0AEA1" />
+                  ) : (
+                    <GoonaIcon icon={EyeOff} size={20} color="#A0AEA1" />
+                  )}
                 </TouchableOpacity>
               </View>
               {password.length > 0 && !isPasswordValid && (
@@ -215,11 +197,7 @@ export default function CreateAccountScreen() {
               <View style={[styles.passwordWrap, focusedField === 'confirmPassword' && styles.fieldWrapFocused, confirmPassword.length > 0 && !doPasswordsMatch && styles.fieldWrapError]}>
                 <View style={styles.passwordInputRow}>
                   <View style={styles.fieldIcon}>
-                    <Svg width="18" height="18" viewBox="0 0 18 18">
-                      <Rect x="3" y="7" width="12" height="8" rx="1.5" stroke="#A0AEA1" strokeWidth="1.3" fill="none" />
-                      <Path d="M6 7V5C6 3.5 7 3 9 3C11 3 12 3.5 12 5V7" stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                      <Circle cx="9" cy="11" r="1" stroke="#A0AEA1" strokeWidth="0.8" />
-                    </Svg>
+                    <GoonaIcon icon={Lock} size={18} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>CONFIRM PASSWORD</Text>
@@ -242,13 +220,11 @@ export default function CreateAccountScreen() {
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Svg width="20" height="20" viewBox="0 0 20 20">
-                    <Path d="M3 10C3 10 5.5 5 10 5C14.5 5 17 10 17 10C17 10 14.5 15 10 15C5.5 15 3 10 3 10Z" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-                    <Circle cx={10} cy={10} r={3} stroke="#A0AEA1" strokeWidth="1.2" fill="none" />
-                    {!showConfirmPassword && (
-                      <Line x1={16} y1={4} x2={4} y2={16} stroke="#A0AEA1" strokeWidth="1.3" strokeLinecap="round" />
-                    )}
-                  </Svg>
+                  {showConfirmPassword ? (
+                    <GoonaIcon icon={Eye} size={20} color="#A0AEA1" />
+                  ) : (
+                    <GoonaIcon icon={EyeOff} size={20} color="#A0AEA1" />
+                  )}
                 </TouchableOpacity>
               </View>
               {confirmPassword.length > 0 && !doPasswordsMatch && (
@@ -263,9 +239,7 @@ export default function CreateAccountScreen() {
               onPress={() => router.push('/farm-setup')}
             >
               <Text style={styles.continueBtnText}>Continue</Text>
-              <Svg width="18" height="18" viewBox="0 0 18 18">
-                <Path d="M7 13L12 9L7 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={ArrowRight} size={18} color="white" />
             </TouchableOpacity>
           </View>
 

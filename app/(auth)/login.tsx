@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,7 +13,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
+import GoonaIcon from '../../components/ui/GoonaIcon';
+import { ArrowLeft, User, Lock, Eye, EyeOff, Check, Shield, LogIn, ScanFace, FingerprintPattern, BookOpen, Sprout, Globe, Apple, RefreshCw } from 'lucide-react-native';
+import Svg, { Path } from 'react-native-svg';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -36,24 +39,15 @@ export default function LoginScreen() {
       <View style={styles.glowCenter} />
 
       <View style={styles.chip1} pointerEvents="none">
-        <Svg width={14} height={14} viewBox="0 0 14 14">
-          <Path d="M7 2L4 4V8C4 10.5 7 12 7 12C7 12 10 10.5 10 8V4L7 2Z" stroke="#2E7D32" strokeWidth={1.3} fill="none" />
-          <Path d="M5.5 7.5L6.5 8.5L9 6" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </Svg>
+        <GoonaIcon icon={Shield} size={14} color="#2E7D32" />
         <Text style={styles.chipText}>Secure Access</Text>
       </View>
       <View style={styles.chip2} pointerEvents="none">
-        <Svg width={14} height={14} viewBox="0 0 14 14">
-          <Path d="M3 7C3 4.5 5 3 7 3C8.5 3 9.5 3.5 10 4.5" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" />
-          <Path d="M11 7C11 9.5 9 11 7 11C5.5 11 4.5 10.5 4 9.5" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" />
-        </Svg>
+        <GoonaIcon icon={RefreshCw} size={14} color="#2E7D32" />
         <Text style={styles.chipText}>Synced Offline</Text>
       </View>
       <View style={styles.chip3} pointerEvents="none">
-        <Svg width={14} height={14} viewBox="0 0 14 14">
-          <Rect x={2} y={3} width={10} height={8} rx={2} stroke="#2E7D32" strokeWidth={1.2} fill="none" />
-          <Path d="M5 6L6.5 7.5L9.5 4.5" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </Svg>
+        <GoonaIcon icon={Shield} size={14} color="#2E7D32" />
         <Text style={styles.chipText}>Farm Data Protected</Text>
       </View>
 
@@ -69,9 +63,7 @@ export default function LoginScreen() {
         >
           <View style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} onPress={() => router.back()}>
-              <Svg width={24} height={24} viewBox="0 0 24 24">
-                <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={styles.navLogo}>
               <Svg width={24} height={24} viewBox="0 0 24 24">
@@ -80,7 +72,7 @@ export default function LoginScreen() {
               </Svg>
               <Text style={styles.navLogoText}>GOONA</Text>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => Alert.alert('GOONA Support', 'Contact support@goona.ag or visit goona.ag/help')}>
               <Text style={styles.navHelp}>Help</Text>
             </TouchableOpacity>
           </View>
@@ -97,10 +89,7 @@ export default function LoginScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIcon}>
-                  <Svg width={20} height={20} viewBox="0 0 20 20">
-                    <Circle cx={10} cy={7} r={3.5} stroke="#A0AEA1" strokeWidth={1.4} fill="none" />
-                    <Path d="M4 17C4 14 6.5 12 10 12C13.5 12 16 14 16 17" stroke="#A0AEA1" strokeWidth={1.4} strokeLinecap="round" fill="none" />
-                  </Svg>
+                  <GoonaIcon icon={User} size={20} color="#A0AEA1" />
                 </View>
                 <View style={styles.fieldInputWrap}>
                   <Text style={styles.fieldLabel}>Email / Phone</Text>
@@ -121,11 +110,7 @@ export default function LoginScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIcon}>
-                  <Svg width={20} height={20} viewBox="0 0 20 20">
-                    <Rect x={4} y={8} width={12} height={8} rx={2} stroke="#A0AEA1" strokeWidth={1.4} fill="none" />
-                    <Path d="M7 8V6C7 4 8 3 10 3C12 3 13 4 13 6V8" stroke="#A0AEA1" strokeWidth={1.4} strokeLinecap="round" fill="none" />
-                    <Circle cx={10} cy={12} r={1.2} stroke="#A0AEA1" strokeWidth={1} />
-                  </Svg>
+                  <GoonaIcon icon={Lock} size={20} color="#A0AEA1" />
                 </View>
                 <View style={styles.fieldInputWrap}>
                   <Text style={styles.fieldLabel}>Password</Text>
@@ -143,20 +128,11 @@ export default function LoginScreen() {
                   style={styles.fieldRight}
                   onPress={() => setPasswordVisible(!passwordVisible)}
                 >
-                  <Svg width={20} height={20} viewBox="0 0 20 20">
-                    <Path d="M3 10C3 10 5.5 5 10 5C14.5 5 17 10 17 10C17 10 14.5 15 10 15C5.5 15 3 10 3 10Z" stroke="#A0AEA1" strokeWidth={1.4} fill="none" />
-                    {passwordVisible && (
-                      <>
-                        <Circle cx={10} cy={10} r={3} stroke="#A0AEA1" strokeWidth={1.2} fill="none" />
-                      </>
-                    )}
-                    {!passwordVisible && (
-                      <>
-                        <Circle cx={10} cy={10} r={3} stroke="#A0AEA1" strokeWidth={1.2} fill="none" />
-                        <Line x1={16} y1={4} x2={4} y2={16} stroke="#A0AEA1" strokeWidth={1.3} strokeLinecap="round" />
-                      </>
-                    )}
-                  </Svg>
+                  {passwordVisible ? (
+                    <GoonaIcon icon={Eye} size={20} color="#A0AEA1" />
+                  ) : (
+                    <GoonaIcon icon={EyeOff} size={20} color="#A0AEA1" />
+                  )}
                 </TouchableOpacity>
               </View>
               <View style={styles.forgotRow}>
@@ -173,30 +149,18 @@ export default function LoginScreen() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                  {rememberMe && (
-                    <Svg width={12} height={12} viewBox="0 0 12 12">
-                      <Path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-                    </Svg>
-                  )}
+                  {rememberMe && <GoonaIcon icon={Check} size={12} color="white" />}
                 </View>
                 <Text style={styles.rememberText}>Keep me signed in</Text>
               </TouchableOpacity>
               <View style={styles.secureBadge}>
-                <Svg width={16} height={16} viewBox="0 0 16 16">
-                  <Path d="M8 3L5 5V8C5 10.5 8 12 8 12C8 12 11 10.5 11 8V5L8 3Z" stroke="#2E7D32" strokeWidth={1.2} fill="none" />
-                  <Path d="M6.5 8L7.5 9L10 6.5" stroke="#2E7D32" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </Svg>
+                <GoonaIcon icon={Shield} size={16} color="#2E7D32" />
                 <Text style={styles.secureText}>Secure Login</Text>
               </View>
             </View>
 
             <TouchableOpacity style={styles.loginBtn} activeOpacity={0.85} onPress={handleLogin}>
-              <Svg width={20} height={20} viewBox="0 0 20 20">
-                <Circle cx={10} cy={7} r={3} stroke="white" strokeWidth={1.4} fill="none" />
-                <Path d="M4 17C4 14 6.5 12 10 12C13.5 12 16 14 16 17" stroke="white" strokeWidth={1.4} strokeLinecap="round" fill="none" />
-                <Path d="M14 6L17 9L14 12" stroke="white" strokeWidth={1.3} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                <Line x1={8} y1={9} x2={17} y2={9} stroke="white" strokeWidth={1.2} strokeLinecap="round" />
-              </Svg>
+              <GoonaIcon icon={LogIn} size={20} color="white" />
               <Text style={styles.loginBtnText}>Login to GOONA</Text>
             </TouchableOpacity>
 
@@ -207,23 +171,43 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.bioRow}>
-              <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8}>
-                <Svg width={20} height={20} viewBox="0 0 20 20">
-                  <Circle cx={10} cy={7} r={2.5} stroke="#1B1B1B" strokeWidth={1.3} fill="none" />
-                  <Path d="M5 16C5 13.5 7 12 10 12C13 12 15 13.5 15 16" stroke="#1B1B1B" strokeWidth={1.3} strokeLinecap="round" fill="none" />
-                  <Line x1={2} y1={9} x2={3.5} y2={10} stroke="#1B1B1B" strokeWidth={1.2} strokeLinecap="round" />
-                  <Line x1={18} y1={9} x2={16.5} y2={10} stroke="#1B1B1B" strokeWidth={1.2} strokeLinecap="round" />
-                  <Line x1={10} y1={2} x2={10} y2={3.5} stroke="#1B1B1B" strokeWidth={1.2} strokeLinecap="round" />
-                </Svg>
+              <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Face ID authentication will be available in the next update.')}>
+                <GoonaIcon icon={ScanFace} size={20} color="#1B1B1B" />
                 <Text style={styles.bioBtnText}>Face ID</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8}>
-                <Svg width={20} height={20} viewBox="0 0 20 20">
-                  <Path d="M7 10V7C7 5 8.5 4 10 4C11.5 4 13 5 13 7V10" stroke="#1B1B1B" strokeWidth={1.3} strokeLinecap="round" fill="none" />
-                  <Rect x={6} y={10} width={8} height={6} rx={2} stroke="#1B1B1B" strokeWidth={1.3} fill="none" />
-                  <Circle cx={10} cy={13} r={0.8} fill="#1B1B1B" />
-                </Svg>
+              <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Fingerprint authentication will be available in the next update.')}>
+                <GoonaIcon icon={FingerprintPattern} size={20} color="#1B1B1B" />
                 <Text style={styles.bioBtnText}>Fingerprint</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.qaGrid}>
+              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => router.push('/goona-academy')}>
+                <View style={styles.qaIconWrap}>
+                  <GoonaIcon icon={BookOpen} size={22} color="#2E7D32" />
+                </View>
+                <Text style={styles.qaLabel}>Academy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => router.push('/goona-iq')}>
+                <View style={styles.qaIconWrap}>
+                  <Svg width={22} height={22} viewBox="0 0 22 22">
+                    <Path d="M11 2C11 2 6 7 6 11C6 13.5 7.5 15.5 9 17C8.5 15.5 8 14.5 8 13.5C8 10 10 6.5 11 2Z" fill="#2E7D32" />
+                    <Path d="M11 2C11 2 16 7 16 11C16 13.5 14.5 15.5 13 17C13.5 15.5 14 14.5 14 13.5C14 10 12 6.5 11 2Z" fill="#388E3C" />
+                  </Svg>
+                </View>
+                <Text style={styles.qaLabel}>GOONA IQ</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Demo Farm experience is under development.')}>
+                <View style={styles.qaIconWrap}>
+                  <GoonaIcon icon={Sprout} size={22} color="#2E7D32" />
+                </View>
+                <Text style={styles.qaLabel}>Demo Farm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => Alert.alert('Guest Mode', 'Continue without an account? This limits some features.')}>
+                <View style={styles.qaIconWrap}>
+                  <GoonaIcon icon={User} size={22} color="#2E7D32" />
+                </View>
+                <Text style={styles.qaLabel}>Guest</Text>
               </TouchableOpacity>
             </View>
 
@@ -234,19 +218,12 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.socialRow}>
-              <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
-                <Svg width={20} height={20} viewBox="0 0 20 20">
-                  <Path d="M17 10C17 6.5 14 3.5 10 3.5C6 3.5 3 6.5 3 10C3 13.5 5.5 16.5 9 17V12.5H7V10H9V8C9 6 10.5 5 12 5C12.5 5 13.5 5 14 5.5V7.5H12.5C11.5 7.5 11 8 11 9V10H13.5L13 12.5H11V17C14.5 16.5 17 13.5 17 10Z" stroke="#1B1B1B" strokeWidth={1.3} strokeLinejoin="round" fill="none" />
-                </Svg>
+              <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Google sign-in is under development.')}>
+                <GoonaIcon icon={Globe} size={20} color="#1B1B1B" />
                 <Text style={styles.socialBtnText}>Google</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
-                <Svg width={20} height={20} viewBox="0 0 20 20">
-                  <Path d="M14 3C15.5 3 17 4 17 6.5C17 9 14 11 14 11C14 11 11 9 11 6.5C11 4 12.5 3 14 3Z" stroke="#1B1B1B" strokeWidth={1.3} fill="none" />
-                  <Path d="M6 3C4.5 3 3 4 3 6.5C3 9 6 11 6 11C6 11 9 9 9 6.5C9 4 7.5 3 6 3Z" stroke="#1B1B1B" strokeWidth={1.3} fill="none" />
-                  <Path d="M10 13L10 17" stroke="#1B1B1B" strokeWidth={1.3} strokeLinecap="round" />
-                  <Path d="M8 15H12" stroke="#1B1B1B" strokeWidth={1.3} strokeLinecap="round" />
-                </Svg>
+              <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Apple sign-in is under development.')}>
+                <GoonaIcon icon={Apple} size={20} color="#1B1B1B" />
                 <Text style={styles.socialBtnText}>Apple</Text>
               </TouchableOpacity>
             </View>
@@ -619,6 +596,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#1B1B1B',
+  },
+  qaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 14,
+  },
+  qaBtn: {
+    width: '47%',
+    flexGrow: 1,
+    height: 72,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  qaIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#F0F7F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qaLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#2E7D32',
+    letterSpacing: 0.5,
   },
   socialDivider: {
     flexDirection: 'row',

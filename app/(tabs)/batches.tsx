@@ -3,7 +3,8 @@ import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, Dimensions, Modal,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg'
+import GoonaIcon from '../../components/ui/GoonaIcon'
+import { Search, Filter, FileText, Users, AlertCircle, ShieldCheck, Plus, ClipboardList, TrendingUp } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -75,41 +76,18 @@ function estimateExpectedRevenue(batch: Batch): number {
 }
 
 const OVERVIEW_ICONS = [
-  (c: string) => (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Rect x="3" y="3" width="12" height="12" rx="2" stroke={c} strokeWidth="1.4" fill="none" />
-      <Line x1="6" y1="7" x2="12" y2="7" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
-      <Line x1="6" y1="10" x2="10" y2="10" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
-    </Svg>
-  ),
-  (c: string) => (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Ellipse cx="9" cy="12" rx="5" ry="3" stroke={c} strokeWidth="1.4" fill="none" />
-      <Circle cx="9" cy="7" r="3" stroke={c} strokeWidth="1.4" fill="none" />
-    </Svg>
-  ),
-  (c: string) => (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Circle cx="9" cy="9" r="5.5" stroke={c} strokeWidth="1.4" fill="none" />
-      <Line x1="9" y1="6" x2="9" y2="10" stroke={c} strokeWidth="1.3" strokeLinecap="round" />
-      <Circle cx="9" cy="12.5" r="0.6" fill={c} />
-    </Svg>
-  ),
-  (c: string) => (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Path d="M4 14H14" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
-      <Rect x="6" y="8" width="6" height="6" rx="1.5" stroke={c} strokeWidth="1.4" fill="none" />
-      <Path d="M8 8V6C8 5 8.5 4.5 9 4.5C9.5 4.5 10 5 10 6V8" stroke={c} strokeWidth="1.4" fill="none" />
-    </Svg>
-  ),
+  (c: string) => <GoonaIcon icon={FileText} size={18} color={c} />,
+  (c: string) => <GoonaIcon icon={Users} size={18} color={c} />,
+  (c: string) => <GoonaIcon icon={AlertCircle} size={18} color={c} />,
+  (c: string) => <GoonaIcon icon={ShieldCheck} size={18} color={c} />,
 ]
 
 const FAB_ACTIONS = [
-  { label: 'Create Batch', icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Line x1="10" y1="5" x2="10" y2="15" stroke={c} strokeWidth="2" strokeLinecap="round" /><Line x1="5" y1="10" x2="15" y2="10" stroke={c} strokeWidth="2" strokeLinecap="round" /></Svg>, route: '/create-batch' as const },
-  { label: 'Add Record', icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="3" width="12" height="14" rx="2" stroke={c} strokeWidth="1.5" fill="none" /><Line x1="7" y1="7" x2="13" y2="7" stroke={c} strokeWidth="1.3" strokeLinecap="round" /><Line x1="7" y1="10" x2="11" y2="10" stroke={c} strokeWidth="1.3" strokeLinecap="round" /></Svg>, route: '/daily-records' as const },
-  { label: 'Feed Entry', icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Rect x="4" y="5" width="12" height="10" rx="2" stroke={c} strokeWidth="1.5" fill="none" /><Path d="M7 5V4C7 3 8 2.5 10 2.5C12 2.5 13 3 13 4V5" stroke={c} strokeWidth="1.5" fill="none" /></Svg>, route: '/daily-records' as const },
-  { label: 'Mortality Log', icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Circle cx="10" cy="10" r="6" stroke={c} strokeWidth="1.5" fill="none" /><Line x1="10" y1="7" x2="10" y2="11" stroke={c} strokeWidth="1.3" strokeLinecap="round" /><Circle cx="10" cy="13" r="0.5" fill={c} /></Svg>, route: '/daily-records' as const },
-  { label: 'Revenue Entry', icon: (c: string) => <Svg width="20" height="20" viewBox="0 0 20 20" fill="none"><Circle cx="10" cy="10" r="6" stroke={c} strokeWidth="1.5" fill="none" /><Path d="M10 7V10L12 12" stroke={c} strokeWidth="1.3" strokeLinecap="round" /></Svg>, route: '/(tabs)/sales-revenue' as const },
+  { label: 'Create Batch', icon: (c: string) => <GoonaIcon icon={Plus} size={20} color={c} />, route: '/create-batch' as const },
+  { label: 'Add Record', icon: (c: string) => <GoonaIcon icon={FileText} size={20} color={c} />, route: '/daily-records' as const },
+  { label: 'Feed Entry', icon: (c: string) => <GoonaIcon icon={ClipboardList} size={20} color={c} />, route: '/daily-records' as const },
+  { label: 'Mortality Log', icon: (c: string) => <GoonaIcon icon={AlertCircle} size={20} color={c} />, route: '/daily-records' as const },
+  { label: 'Revenue Entry', icon: (c: string) => <GoonaIcon icon={TrendingUp} size={20} color={c} />, route: '/(tabs)/sales-revenue' as const },
 ]
 
 export default function BatchesScreen() {
@@ -194,21 +172,14 @@ export default function BatchesScreen() {
             <Text style={styles.headerSub}>Monitor all production cycles, track performance, and manage operations.</Text>
           </View>
           <TouchableOpacity style={styles.filterBtn} activeOpacity={0.85}>
-            <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <Path d="M3 5H17" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-              <Path d="M6 10H14" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-              <Path d="M9 15H11" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={Filter} size={20} color="#1F2937" />
           </TouchableOpacity>
         </Animated.View>
 
         {/* SEARCH */}
         <Animated.View entering={FadeInUp.duration(500).delay(60).springify()} style={styles.searchWrap}>
           <View style={styles.searchIcon}>
-            <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <Circle cx="9" cy="9" r="5" stroke="#A0AEA1" strokeWidth="1.5" fill="none" />
-              <Path d="M13 13L17 17" stroke="#A0AEA1" strokeWidth="1.5" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={Search} size={20} color="#A0AEA1" />
           </View>
           <TextInput
             style={styles.searchInput}
@@ -218,11 +189,7 @@ export default function BatchesScreen() {
             placeholderTextColor="#A0AEA1"
           />
           <TouchableOpacity style={styles.filterIcon} activeOpacity={0.85}>
-            <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <Path d="M3 5H15" stroke="#A0AEA1" strokeWidth="1.4" strokeLinecap="round" />
-              <Path d="M6 9H12" stroke="#A0AEA1" strokeWidth="1.4" strokeLinecap="round" />
-              <Path d="M8.5 13H9.5" stroke="#A0AEA1" strokeWidth="1.4" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={Filter} size={18} color="#A0AEA1" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -296,10 +263,7 @@ export default function BatchesScreen() {
         {filteredBatches.length === 0 && batches.length === 0 && (
           <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.emptyState}>
             <View style={styles.emptyIconCircle}>
-              <Svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <Ellipse cx="16" cy="21" rx="10" ry="7" stroke="#A0AEA1" strokeWidth="1.8" fill="none" />
-                <Circle cx="16" cy="12" r="6" stroke="#A0AEA1" strokeWidth="1.8" fill="none" />
-              </Svg>
+              <GoonaIcon icon={Users} size={32} color="#A0AEA1" />
             </View>
             <Text style={styles.emptyTitle}>No production batches yet</Text>
             <Text style={styles.emptySub}>Create your first batch to start tracking livestock growth, feeding, and profitability.</Text>
@@ -308,10 +272,7 @@ export default function BatchesScreen() {
               activeOpacity={0.85}
               onPress={() => router.push('/create-batch')}
             >
-              <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <Line x1="10" y1="5" x2="10" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <Line x1="5" y1="10" x2="15" y2="10" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              </Svg>
+              <GoonaIcon icon={Plus} size={20} color="#FFFFFF" />
               <Text style={styles.emptyCtaText}>Create First Batch</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -446,10 +407,7 @@ export default function BatchesScreen() {
         onPress={() => setFabOpen(!fabOpen)}
       >
         <Animated.View style={fabIconStyle}>
-          <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <Line x1="14" y1="8" x2="14" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-            <Line x1="8" y1="14" x2="20" y2="14" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-          </Svg>
+          <GoonaIcon icon={Plus} size={28} color="#FFFFFF" />
         </Animated.View>
       </TouchableOpacity>
 

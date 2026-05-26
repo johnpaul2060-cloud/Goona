@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg';
+import GoonaIcon from '../../components/ui/GoonaIcon';
+import { Bell, BarChart3, Plus, ClipboardList, Users, Sparkles, FileText } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
@@ -56,10 +57,7 @@ export default function DashboardScreen() {
             <Text style={styles.greetingStatus}>Your farm is performing well today.</Text>
           </View>
           <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/notifications')}>
-            <Svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <Path d="M11 3C7.7 3 5 5.7 5 9V13.5L3 16H19L17 13.5V9C17 5.7 14.3 3 11 3Z" stroke="#1F2937" strokeWidth="1.6" fill="none" />
-              <Path d="M9 16C9 17.1 9.9 18 11 18C12.1 18 13 17.1 13 16" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-            </Svg>
+            <GoonaIcon icon={Bell} size={22} color="#1F2937" />
             <View style={styles.notifDot} />
           </TouchableOpacity>
         </View>
@@ -71,10 +69,7 @@ export default function DashboardScreen() {
               <Text style={styles.heroFarmName}>Green Valley Poultry</Text>
             </View>
             <TouchableOpacity style={styles.heroChartBtn}>
-              <Svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <Path d="M4 18H18" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                <Path d="M6 14L9 9L12 12L16 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={BarChart3} size={22} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
@@ -110,36 +105,10 @@ export default function DashboardScreen() {
 
         <View style={styles.actionsGrid}>
           {[
-            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/create-batch' as const, icon: (c: string) => (
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Circle cx="12" cy="12" r="8" stroke={c} strokeWidth="1.6" fill="none" />
-                <Line x1="12" y1="8" x2="12" y2="16" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
-                <Line x1="8" y1="12" x2="16" y2="12" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
-              </Svg>
-            )},
-            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/daily-records' as const, icon: (c: string) => (
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Rect x="5" y="3" width="14" height="18" rx="2" stroke={c} strokeWidth="1.5" fill="none" />
-                <Line x1="8" y1="9" x2="16" y2="9" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
-                <Line x1="8" y1="13" x2="14" y2="13" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
-                <Line x1="8" y1="17" x2="12" y2="17" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
-              </Svg>
-            )},
-            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/record-sale' as const, icon: (c: string) => (
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Path d="M3 17L9 11L13 15L21 7" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                <Circle cx="21" cy="7" r="2" stroke={c} strokeWidth="1.3" fill="none" />
-                <Line x1="3" y1="21" x2="21" y2="21" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
-              </Svg>
-            )},
-            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: '/team' as const, icon: (c: string) => (
-              <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <Circle cx="10" cy="8" r="3.5" stroke={c} strokeWidth="1.5" fill="none" />
-                <Circle cx="17" cy="8" r="3.5" stroke={c} strokeWidth="1.5" fill="none" />
-                <Path d="M3 20c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
-                <Path d="M17 14c3.9 0 7 2.7 7 6" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
-              </Svg>
-            )},
+            { label: 'Add Batch', color: '#F0FDF4', iconColor: '#16A34A', route: '/create-batch' as const, icon: (c: string) => <GoonaIcon icon={Plus} size={24} color={c} /> },
+            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/daily-records' as const, icon: (c: string) => <GoonaIcon icon={ClipboardList} size={24} color={c} /> },
+            { label: 'Sales Tracking', color: '#FFFBEB', iconColor: '#F59E0B', route: '/record-sale' as const, icon: (c: string) => <GoonaIcon icon={BarChart3} size={24} color={c} /> },
+            { label: 'Farm Staff', color: '#F0FDF4', iconColor: '#16A34A', route: '/team' as const, icon: (c: string) => <GoonaIcon icon={Users} size={24} color={c} /> },
           ].map((a, i) => {
             const p = pressScales[i]
             return (
@@ -236,9 +205,7 @@ export default function DashboardScreen() {
 
         <TouchableOpacity style={styles.insightCard} activeOpacity={0.8}>
           <View style={styles.insightIconBig}>
-            <Svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <Path d="M11 4L9 9L4 10.5L9 12L11 17L13 12L18 10.5L13 9L11 4Z" fill="#F9A825" fillOpacity="0.2" stroke="#F9A825" strokeWidth="1.3" strokeLinejoin="round" />
-            </Svg>
+            <GoonaIcon icon={Sparkles} size={22} color="#F9A825" />
           </View>
           <View style={styles.insightBody}>
             <Text style={styles.insightText}>
@@ -262,10 +229,7 @@ export default function DashboardScreen() {
           ].map((f, i) => (
             <TouchableOpacity key={i} style={styles.feedRow} activeOpacity={0.7}>
               <View style={[styles.feedIcon, { backgroundColor: f.icon }]}>
-                <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <Rect x="4" y="5" width="10" height="8" rx="2" stroke={f.iconColor} strokeWidth="1.4" fill="none" />
-                  <Line x1="7" y1="9" x2="11" y2="9" stroke={f.iconColor} strokeWidth="1.3" strokeLinecap="round" />
-                </Svg>
+                <GoonaIcon icon={FileText} size={18} color={f.iconColor} />
               </View>
               <View style={styles.feedInfo}>
                 <Text style={styles.feedTitle}>{f.title}</Text>

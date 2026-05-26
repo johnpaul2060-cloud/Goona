@@ -3,7 +3,8 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions,
 } from 'react-native'
-import Svg, { Path } from 'react-native-svg'
+import GoonaIcon from '../components/ui/GoonaIcon'
+import { ArrowLeft } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { BlurView } from 'expo-blur'
 import Animated, {
@@ -216,11 +217,7 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
 
 /* ─── Components ─── */
 function BackIcon() {
-  return (
-    <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
+  return <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
 }
 
 function NotifCard({

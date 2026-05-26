@@ -3,7 +3,8 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Keyboard,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line } from 'react-native-svg'
+import GoonaIcon from '../../../components/ui/GoonaIcon'
+import { Search, Filter, Lock, RefreshCw, X, AlertCircle, AlertTriangle, Paperclip, FileText, ChevronRight } from 'lucide-react-native'
 import { BlurView } from 'expo-blur'
 import Animated, {
   useSharedValue, useAnimatedStyle, withDelay, withTiming,
@@ -36,82 +37,6 @@ function usePressScale() {
     onPressIn: () => { scale.value = withSpring(0.97, { damping: 15, stiffness: 200 }) },
     onPressOut: () => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }) },
   }
-}
-
-/* ── ICONS ── */
-function SearchIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Circle cx="8" cy="8" r="5.5" stroke="#94A3B8" strokeWidth="1.5" fill="none" />
-      <Line x1="12" y1="12" x2="15.5" y2="15.5" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function FilterIcon() {
-  return (
-    <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <Line x1="3" y1="5.5" x2="15" y2="5.5" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="6.5" y1="9.5" x2="11.5" y2="9.5" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="8.5" y1="13.5" x2="9.5" y2="13.5" stroke="#1F2937" strokeWidth="1.5" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function LockIcon() {
-  return (
-    <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-      <Rect x="2.5" y="5" width="7" height="5" rx="1" stroke="#94A3B8" strokeWidth="1" fill="none" />
-      <Path d="M4 5V3.5C4 2.8 4.5 2.5 6 2.5C7.5 2.5 8 2.8 8 3.5V5" stroke="#94A3B8" strokeWidth="1" fill="none" />
-    </Svg>
-  )
-}
-
-function SyncIcon() {
-  return (
-    <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-      <Path d="M10.5 6C10.5 8.5 8.5 10.5 6 10.5C4.5 10.5 3.2 9.7 2.5 8.5" stroke="#0F766E" strokeWidth="1.2" strokeLinecap="round" />
-      <Path d="M1.5 6C1.5 3.5 3.5 1.5 6 1.5C7.5 1.5 8.8 2.3 9.5 3.5" stroke="#0F766E" strokeWidth="1.2" strokeLinecap="round" />
-      <Path d="M10.5 2V3.5H9" stroke="#0F766E" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M1.5 10V8.5H3" stroke="#0F766E" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  )
-}
-
-function CloseIcon() {
-  return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <Line x1="5" y1="5" x2="15" y2="15" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" />
-      <Line x1="15" y1="5" x2="5" y2="15" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function PriorityHighIcon() {
-  return (
-    <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <Circle cx="7" cy="7" r="5.5" stroke="#EF4444" strokeWidth="1.2" fill="none" />
-      <Line x1="7" y1="5" x2="7" y2="8" stroke="#EF4444" strokeWidth="1.3" strokeLinecap="round" />
-      <Circle cx="7" cy="10" r="0.6" fill="#EF4444" />
-    </Svg>
-  )
-}
-
-function PriorityMedIcon() {
-  return (
-    <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <Circle cx="7" cy="7" r="5.5" stroke="#F59E0B" strokeWidth="1.2" fill="none" />
-      <Line x1="7" y1="5" x2="7" y2="8" stroke="#F59E0B" strokeWidth="1.3" strokeLinecap="round" />
-    </Svg>
-  )
-}
-
-function AttachIcon() {
-  return (
-    <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <Path d="M8.5 5V10C8.5 10.8 7.8 11.5 7 11.5C6.2 11.5 5.5 10.8 5.5 10V5C5.5 4.2 6.2 3.5 7 3.5C7.8 3.5 8.5 4.2 8.5 5V9" stroke="#94A3B8" strokeWidth="1.3" strokeLinecap="round" />
-    </Svg>
-  )
 }
 
 /* ── DATA ── */
@@ -336,10 +261,7 @@ function SummaryCard({
       <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.summaryCard}>
         <View style={styles.summaryTop}>
           <View style={[styles.summaryIconWrap, { backgroundColor: item.bg }]}>
-            <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <Rect x="3" y="4" width="12" height="10" rx="2" stroke={item.iconColor} strokeWidth="1.4" fill="none" />
-              <Line x1="6" y1="8" x2="12" y2="8" stroke={item.iconColor} strokeWidth="1.3" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={FileText} size={18} color={item.iconColor} />
           </View>
           <Text style={[styles.summaryTrend, { color: item.trendUp ? '#16A34A' : '#EF4444' }]}>{item.trend}</Text>
         </View>
@@ -436,13 +358,13 @@ function TimelineItem({
               <View style={styles.timelineMetaRight}>
                 {item.immutable && (
                   <View style={styles.timelineLockRow}>
-                    <LockIcon />
+                    <GoonaIcon icon={Lock} size={12} color="#94A3B8" />
                     <Text style={styles.timelineLockText}>Immutable</Text>
                   </View>
                 )}
                 {item.verified && (
                   <View style={[styles.timelineSyncBadge, { backgroundColor: '#DDF5F0' }]}>
-                    <SyncIcon />
+                    <GoonaIcon icon={RefreshCw} size={12} color="#0F766E" />
                     <Text style={styles.timelineSyncText}>Synced</Text>
                   </View>
                 )}
@@ -451,13 +373,13 @@ function TimelineItem({
 
             {item.priority === 'high' && (
               <View style={styles.priorityChipHigh}>
-                <PriorityHighIcon />
+                <GoonaIcon icon={AlertCircle} size={14} color="#EF4444" />
                 <Text style={styles.priorityChipHighText}>High Priority</Text>
               </View>
             )}
             {item.priority === 'medium' && (
               <View style={styles.priorityChipMed}>
-                <PriorityMedIcon />
+                <GoonaIcon icon={AlertTriangle} size={14} color="#F59E0B" />
                 <Text style={styles.priorityChipMedText}>Medium Priority</Text>
               </View>
             )}
@@ -508,7 +430,7 @@ function RecordModal({
           <View style={styles.modalHandle} />
         </View>
         <TouchableOpacity style={styles.modalCloseBtn} onPress={onClose}>
-          <CloseIcon />
+          <GoonaIcon icon={X} size={20} color="#1F2937" />
         </TouchableOpacity>
 
         <ScrollView
@@ -538,7 +460,7 @@ function RecordModal({
             <Text style={styles.modalSectionTitle}>Attachments</Text>
             {MODAL_DETAIL.attachments.map((a, i) => (
               <View key={i} style={styles.modalAttachRow}>
-                <AttachIcon />
+                <GoonaIcon icon={Paperclip} size={16} color="#94A3B8" />
                 <Text style={styles.modalAttachText}>{a}</Text>
               </View>
             ))}
@@ -597,9 +519,7 @@ function EcosystemCard({ item, index }: { item: (typeof ECOSYSTEM_LINKS)[0]; ind
           <Text style={styles.ecosystemLabel}>{item.label}</Text>
           <Text style={styles.ecosystemDesc}>{item.desc}</Text>
         </View>
-        <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <Path d="M6 4L10 8L6 12" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
+        <GoonaIcon icon={ChevronRight} size={16} color="#94A3B8" />
       </TouchableOpacity>
     </Animated.View>
   )
@@ -670,10 +590,10 @@ export default function RecordsDashboardScreen() {
               activeOpacity={0.7}
               onPress={() => searchRef.current?.focus()}
             >
-              <SearchIcon />
+              <GoonaIcon icon={Search} size={18} color="#94A3B8" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-              <FilterIcon />
+              <GoonaIcon icon={Filter} size={18} color="#1F2937" />
             </TouchableOpacity>
           </View>
         </View>
@@ -681,7 +601,7 @@ export default function RecordsDashboardScreen() {
         {/* Search */}
         <Animated.View style={[styles.searchWrap, searchStyle]}>
           <View style={[styles.searchInputRow, searchFocused && styles.searchInputRowFocused]}>
-            <SearchIcon />
+            <GoonaIcon icon={Search} size={18} color="#94A3B8" />
             <TextInput
               ref={searchRef}
               style={styles.searchInput}
@@ -694,7 +614,7 @@ export default function RecordsDashboardScreen() {
             />
             {searchText.length > 0 && (
               <TouchableOpacity onPress={() => setSearchText('')} style={styles.searchClearBtn}>
-                <CloseIcon />
+                <GoonaIcon icon={X} size={20} color="#1F2937" />
               </TouchableOpacity>
             )}
           </View>

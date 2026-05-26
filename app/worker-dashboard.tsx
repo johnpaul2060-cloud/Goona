@@ -3,7 +3,9 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Alert,
 } from 'react-native'
-import Svg, { Path, Circle, Rect, Line, G } from 'react-native-svg'
+import GoonaIcon from '../components/ui/GoonaIcon'
+import { Bell, ChevronRight, Package, RefreshCw, FileText, XCircle, Camera, ClipboardCheck, Clock, Cloud } from 'lucide-react-native'
+import Svg, { Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -85,10 +87,7 @@ function WorkerAvatar({ initials, online }: { initials: string; online: boolean 
 function NotifIcon({ hasDot }: { hasDot?: boolean }) {
   return (
     <View>
-      <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <Path d="M12 3C8.7 3 6 5.7 6 9V14L4 16.5H20L18 14V9C18 5.7 15.3 3 12 3Z" stroke="#1F2937" strokeWidth="1.6" fill="none" strokeLinejoin="round" />
-        <Path d="M9.5 16.5C9.5 17.9 10.6 19 12 19C13.4 19 14.5 17.9 14.5 16.5" stroke="#1F2937" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-      </Svg>
+      <GoonaIcon icon={Bell} size={22} color="#1F2937" />
       {hasDot && <View style={{ position: 'absolute', top: 1, right: 1, width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A', borderWidth: 1.5, borderColor: 'white' }} />}
     </View>
   )
@@ -348,10 +347,7 @@ function BatchCard({ index }: { index: number }) {
         <View style={bcStyles.header}>
           <View style={bcStyles.headerLeft}>
             <View style={bcStyles.batchIcon}>
-              <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <Path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="#2E7D32" strokeWidth="1.5" strokeLinejoin="round" fill="rgba(46,125,50,0.08)" />
-                <Path d="M12 12L12 22M12 12L4 7M12 12L20 7M8 4.5L16 9.5" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={Package} size={18} color="#2E7D32" />
             </View>
             <View>
               <Text style={bcStyles.batchName}>Broiler Batch A</Text>
@@ -378,9 +374,7 @@ function BatchCard({ index }: { index: number }) {
           onPress={() => router.push({ pathname: '/batch-details/[id]', params: { id: 'batch-a' } })}
         >
           <Text style={bcStyles.viewBtnText}>View Batch Details</Text>
-          <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <Path d="M9 18L15 12L9 6" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
+          <GoonaIcon icon={ChevronRight} size={14} color="#2E7D32" />
         </TouchableOpacity>
       </LinearGradient>
     </Animated.View>
@@ -492,10 +486,7 @@ function SyncBar() {
         <View style={sbStyles.content}>
           <View style={sbStyles.left}>
             <View style={sbStyles.iconWrap}>
-              <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <Path d="M12 4V8M8 12H4M20 12H16M12 20V16M8 6L6 8M18 16L16 18M16 8L18 6M6 18L8 16" stroke="#2E7D32" strokeWidth="1.5" strokeLinecap="round" />
-                <Circle cx="12" cy="12" r="2" fill="#2E7D32" />
-              </Svg>
+              <GoonaIcon icon={RefreshCw} size={18} color="#2E7D32" />
             </View>
             <View>
               <Text style={sbStyles.title}>Offline Sync Ready</Text>
@@ -637,11 +628,7 @@ export default function WorkerDashboardScreen() {
               desc="Record feed consumption"
               gradient={['#2E7D32', '#1B5E20']}
               icon={
-                <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <Path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V8L14 2Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" fill="rgba(255,255,255,0.1)" />
-                  <Path d="M14 2V8H19" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
-                  <Path d="M9 13H15M9 17H13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                </Svg>
+                <GoonaIcon icon={FileText} size={20} color="#FFFFFF" />
               }
               onPress={() => Alert.alert('Feed Log', 'Feed consumption log opened')}
             />
@@ -651,10 +638,7 @@ export default function WorkerDashboardScreen() {
               desc="Log bird losses"
               gradient={['#DC2626', '#991B1B']}
               icon={
-                <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <Circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.5" fill="rgba(255,255,255,0.1)" />
-                  <Path d="M15 9L9 15M9 9L15 15" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                </Svg>
+                <GoonaIcon icon={XCircle} size={20} color="#FFFFFF" />
               }
               onPress={() => Alert.alert('Mortality', 'Mortality report form opened')}
             />
@@ -666,11 +650,7 @@ export default function WorkerDashboardScreen() {
               desc="Log batch weight data"
               gradient={['#1A56FF', '#1E3A8A']}
               icon={
-                <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <Rect x="4" y="8" width="16" height="12" rx="2" stroke="white" strokeWidth="1.5" fill="rgba(255,255,255,0.1)" />
-                  <Path d="M8 8V6C8 4.9 8.9 4 10 4H14C15.1 4 16 4.9 16 6V8" stroke="white" strokeWidth="1.5" strokeLinejoin="round" />
-                  <Path d="M8 12H16" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                </Svg>
+                <GoonaIcon icon={Package} size={20} color="#FFFFFF" />
               }
               onPress={() => Alert.alert('Weight', 'Weight recording opened')}
             />
@@ -680,11 +660,7 @@ export default function WorkerDashboardScreen() {
               desc="Capture batch photos"
               gradient={['#7C3AED', '#4C1D95']}
               icon={
-                <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <Rect x="3" y="5" width="18" height="14" rx="3" stroke="white" strokeWidth="1.5" fill="rgba(255,255,255,0.1)" />
-                  <Circle cx="8.5" cy="10.5" r="1.5" stroke="white" strokeWidth="1.5" />
-                  <Path d="M21 15L16 10L11 15M21 17L14 10L7 17" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
+                <GoonaIcon icon={Camera} size={20} color="#FFFFFF" />
               }
               onPress={() => Alert.alert('Camera', 'Camera will open for batch photos')}
             />
@@ -754,12 +730,7 @@ export default function WorkerDashboardScreen() {
           style={styles.feedCard}
         >
           <FeedItem
-            icon={
-              <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <Path d="M6 8L12 12L18 8" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <Rect x="4" y="4" width="16" height="16" rx="3" stroke="#16A34A" strokeWidth="1.5" fill="none" />
-              </Svg>
-            }
+            icon={<GoonaIcon icon={ClipboardCheck} size={16} color="#16A34A" />}
             iconBg="#F0FDF4" iconColor="#16A34A"
             text="Feed log submitted \u2014 8 bags of grower feed for Pen A"
             time="2 min ago"
@@ -767,13 +738,7 @@ export default function WorkerDashboardScreen() {
             index={0}
           />
           <FeedItem
-            icon={
-              <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <Path d="M22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2" stroke="#1A56FF" strokeWidth="1.5" strokeLinecap="round" />
-                <Path d="M12 6V12L15 15" stroke="#1A56FF" strokeWidth="1.5" strokeLinecap="round" />
-                <Path d="M16 2V6H20" stroke="#1A56FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            }
+            icon={<GoonaIcon icon={Clock} size={16} color="#1A56FF" />}
             iconBg="#EEF3FF" iconColor="#1A56FF"
             text="Mortality report synced \u2014 2 birds recorded in Pen B"
             time="15 min ago"
@@ -781,12 +746,7 @@ export default function WorkerDashboardScreen() {
             index={1}
           />
           <FeedItem
-            icon={
-              <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <Path d="M21 12C21 13.2 20.5 14.2 19.7 15C19 15.8 18 16.2 16.8 16.2H7.2C6 16.2 5 15.8 4.3 15C3.5 14.2 3 13.2 3 12C3 9.5 5 7.5 7.5 7.5C8.4 5.2 10.5 3.5 13 3.5C16 3.5 18.5 6 18.5 9C20.2 9.3 21.5 10.5 22 12H21Z" stroke="#F59E0B" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
-                <Path d="M8 12H16M12 8V16" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
-              </Svg>
-            }
+            icon={<GoonaIcon icon={Cloud} size={16} color="#F59E0B" />}
             iconBg="#FFFBEB" iconColor="#F59E0B"
             text="Supervisor commented on your feed efficiency report"
             time="1h ago"

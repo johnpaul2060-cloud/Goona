@@ -4,6 +4,8 @@ import {
   StyleSheet, Dimensions, TextInput, Keyboard,
   KeyboardAvoidingView, Platform,
 } from 'react-native'
+import GoonaIcon from '../components/ui/GoonaIcon'
+import { ArrowLeft, Sparkles, Sprout, Mic, Send, ChevronRight, Package, Heart, MapPin, TrendingUp, AlertCircle } from 'lucide-react-native'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -264,16 +266,11 @@ export default function GOONAIQScreen() {
               style={styles.navBack}
               activeOpacity={0.7}
             >
-              <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
             </TouchableOpacity>
           </Animated.View>
           <View style={styles.navLogo}>
-            <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <Path d="M12 2C12 2 7 8 7 12C7 14.5 8.5 17 10 18.5C9.5 17 9 16 9 15C9 11.5 11 7 12 2Z" fill="#2E7D32" />
-              <Path d="M12 2C12 2 17 8 17 12C17 14.5 15.5 17 14 18.5C14.5 17 15 16 15 15C15 11.5 13 7 12 2Z" fill="#43A047" />
-            </Svg>
+            <GoonaIcon icon={Sprout} size={22} color="#2E7D32" />
             <Text style={styles.navLogoText}>GOONA</Text>
           </View>
           <Text style={styles.navLabel}>IQ</Text>
@@ -334,14 +331,7 @@ export default function GOONAIQScreen() {
               entering={FadeInUp.duration(500).delay(i * 80).springify()}
               style={[styles.insightCard, i === visibleInsights.length - 1 && styles.insightCardLatest]}
             >
-              <Svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginTop: 1, flexShrink: 0 }}>
-                <Path
-                  d="M8 2L9.5 6.5L14 8L9.5 9.5L8 14L6.5 9.5L2 8L6.5 6.5L8 2Z"
-                  stroke={i === visibleInsights.length - 1 ? '#AEEA00' : '#2E7D32'}
-                  strokeWidth="1.2" strokeLinejoin="round"
-                  fill={i === visibleInsights.length - 1 ? 'rgba(174,234,0,0.12)' : 'rgba(46,125,50,0.06)'}
-                />
-              </Svg>
+              <GoonaIcon icon={Sparkles} size={16} color={i === visibleInsights.length - 1 ? '#AEEA00' : '#2E7D32'} />
               <Text
                 style={[styles.insightText, i === visibleInsights.length - 1 && styles.insightTextLatest]}
                 numberOfLines={2}
@@ -390,9 +380,7 @@ export default function GOONAIQScreen() {
             <View style={styles.assistantGlow} pointerEvents="none" />
             <View style={styles.assistantHead}>
               <View style={styles.assistantIcon}>
-                <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <Path d="M9 2L10.5 6.5L15 8L10.5 9.5L9 14L7.5 9.5L3 8L7.5 6.5L9 2Z" stroke="#AEEA00" strokeWidth="1.2" strokeLinejoin="round" fill="rgba(174,234,0,0.12)" />
-                </Svg>
+                <GoonaIcon icon={Sparkles} size={18} color="#AEEA00" />
               </View>
               <Text style={styles.assistantLabel}>PROACTIVE RECOMMENDATION</Text>
             </View>
@@ -629,9 +617,7 @@ function AIInteractionBar({
                     end={{ x: 1, y: 1 }}
                     style={[StyleSheet.absoluteFill, { borderRadius: 10 }]}
                   />
-                  <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <Path d="M6 1L7 5L11 6L7 7L6 11L5 7L1 6L5 5L6 1Z" fill="rgba(174,234,0,0.5)" />
-                  </Svg>
+                  <GoonaIcon icon={Sparkles} size={12} color="rgba(174,234,0,0.5)" />
                 </View>
                 <Text style={aiBarStyles.responseLabel}>GOONA IQ</Text>
               </View>
@@ -679,12 +665,7 @@ function AIInteractionBar({
           activeOpacity={0.7}
         >
           <Animated.View style={[aiBarStyles.micInner, micStyle]}>
-            <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <Path d="M12 2C10.9 2 10 2.9 10 4V12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12V4C14 2.9 13.1 2 12 2Z" stroke={micColor} strokeWidth="1.5" fill="none" />
-              <Path d="M16 11C16 14 14.2 16 12 16C9.8 16 8 14 8 11" stroke={micColor} strokeWidth="1.5" strokeLinecap="round" fill="none" />
-              <Path d="M6 18H18" stroke={micColor} strokeWidth="1.5" strokeLinecap="round" />
-              <Path d="M12 16V20" stroke={micColor} strokeWidth="1.5" strokeLinecap="round" />
-            </Svg>
+            <GoonaIcon icon={Mic} size={18} color={micColor} />
           </Animated.View>
         </TouchableOpacity>
 
@@ -714,9 +695,7 @@ function AIInteractionBar({
             end={{ x: 1, y: 1 }}
             style={aiBarStyles.sendGrad}
           >
-            <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <Path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
+            <GoonaIcon icon={Send} size={16} color="#FFFFFF" />
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -964,19 +943,17 @@ function RecommendationCard({
   icon: string; title: string; desc: string; impact: string; index: number
 }) {
   const { style, onPressIn, onPressOut } = usePressScale()
-  const iconPath = icon === 'feed'
-    ? 'M4 7L12 3L20 7V17L12 21L4 17V7Z'
+  const iconComp = icon === 'feed'
+    ? Package
     : icon === 'heart'
-      ? 'M12 21C12 21 4 15 4 9C4 6 6 4 8 4C10 4 12 6 12 6C12 6 14 4 16 4C18 4 20 6 20 9C20 15 12 21 12 21Z'
-      : 'M12 2C8 2 4 5 4 9C4 13 8 17 12 22C16 17 20 13 20 9C20 5 16 2 12 2Z'
+      ? Heart
+      : MapPin
 
   return (
     <Animated.View entering={FadeInUp.duration(500).delay(500 + index * 80).springify()} style={[style, { marginBottom: 10 }]}>
       <TouchableOpacity style={styles.recCard} onPressIn={onPressIn} onPressOut={onPressOut} activeOpacity={0.92}>
         <View style={styles.recIcon}>
-          <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <Path d={iconPath} stroke="#2E7D32" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
+          <GoonaIcon icon={iconComp} size={20} color="#2E7D32" />
         </View>
         <View style={styles.recBody}>
           <View style={styles.recHead}>
@@ -1055,9 +1032,7 @@ function FinancialMetric({
       <Text style={fmStyles.label} numberOfLines={1} ellipsizeMode="tail">{label}</Text>
       <View style={fmStyles.values}>
         <Text style={fmStyles.current}>{value}</Text>
-        <Svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <Path d="M7 2L11 7H9V12H5V7H3L7 2Z" fill="#22C55E" fillOpacity="0.8" />
-        </Svg>
+        <GoonaIcon icon={TrendingUp} size={14} color="#22C55E" />
         <Text style={fmStyles.forecast}>{forecast}</Text>
       </View>
       <View style={fmStyles.track}>
@@ -1090,11 +1065,7 @@ function ScenarioCard({
 }) {
   const { style, onPressIn, onPressOut } = usePressScale()
   const riskColor = risk === 'critical' ? '#EF4444' : risk === 'high' ? '#F59E0B' : '#22C55E'
-  const iconPath = icon === 'trend'
-    ? 'M4 18L9 13L12 16L19 9M16 9H19V12'
-    : icon === 'alert'
-      ? 'M12 3L12 15M12 19V19.01M2 12C2 6.5 6.5 2 12 2C17.5 2 22 6.5 22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12Z'
-      : 'M12 2C8 2 4 5 4 9C4 13 8 17 12 22C16 17 20 13 20 9C20 5 16 2 12 2Z'
+  const iconComp = icon === 'trend' ? TrendingUp : icon === 'alert' ? AlertCircle : MapPin
 
   return (
     <Animated.View entering={FadeInUp.duration(500).delay(800 + index * 80).springify()} style={[style, { marginBottom: 10 }]}>
@@ -1106,9 +1077,7 @@ function ScenarioCard({
         activeOpacity={0.85}
       >
         <View style={[styles.scenarioIcon, { backgroundColor: `${riskColor}12` as any }]}>
-          <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <Path d={iconPath} stroke={riskColor} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
+          <GoonaIcon icon={iconComp} size={18} color={riskColor} />
         </View>
         <View style={styles.scenarioBody}>
           <Text style={styles.scenarioTitle} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
@@ -1121,9 +1090,7 @@ function ScenarioCard({
             </Animated.View>
           )}
         </View>
-        <Svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ opacity: active ? 1 : 0.3 }}>
-          <Path d="M6 4L10 8L6 12" stroke={active ? riskColor : '#94A3B8'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
+        <GoonaIcon icon={ChevronRight} size={16} color={active ? riskColor : '#94A3B8'} />
       </TouchableOpacity>
     </Animated.View>
   )

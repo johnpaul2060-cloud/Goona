@@ -6,14 +6,8 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
-
-function BackIcon() {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18L9 12L15 6" stroke="#1B1B1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </Svg>
-  );
-}
+import { ArrowLeft, Sprout } from 'lucide-react-native';
+import GoonaIcon from '../../components/ui/GoonaIcon';
 
 export default function FarmSetupScreen() {
   const [farmName, setFarmName] = useState('');
@@ -39,13 +33,10 @@ export default function FarmSetupScreen() {
         >
           <View style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} onPress={() => router.back()}>
-              <BackIcon />
+              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={styles.navLogo}>
-              <Svg width={18} height={18} viewBox="0 0 18 18">
-                <Path d="M9 2L6 5V9C6 11.5 9 13 9 13C9 13 12 11.5 12 9V5L9 2Z" stroke="#2E7D32" strokeWidth="1.3" fill="none" />
-                <Path d="M7.5 8L8.5 9L11 6.5" stroke="#2E7D32" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </Svg>
+              <GoonaIcon icon={Sprout} size={18} color="#2E7D32" />
               <Text style={styles.navLogoText}>GOONA</Text>
             </View>
             <Text style={styles.navHelp}>Help</Text>
