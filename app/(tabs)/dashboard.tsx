@@ -105,18 +105,18 @@ export default function DashboardScreen() {
 
         <View style={styles.actionsGrid}>
           {[
-            { label: 'Record Sale', color: '#F0FDF4', iconColor: '#16A34A', route: '/(tabs)/records/sales' as any, icon: (c: string) => <GoonaIcon icon={ShoppingCart} size={24} color={c} /> },
+            { label: 'Record Sale', color: '#F0FDF4', iconColor: '#16A34A', route: '/(tabs)/records/sales' as any, params: { openAddSale: 'true' }, icon: (c: string) => <GoonaIcon icon={ShoppingCart} size={24} color={c} /> },
             { label: 'Farm Expenses', color: '#FFF1F2', iconColor: '#EF4444', route: '/(tabs)/records/expenses' as const, icon: (c: string) => <GoonaIcon icon={Receipt} size={24} color={c} /> },
             { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/(tabs)/records/daily-operations' as const, icon: (c: string) => <GoonaIcon icon={ClipboardList} size={24} color={c} /> },
             { label: 'Daily Challenge', color: '#F0FDF4', iconColor: '#16A34A', route: '/academy/daily-challenge' as const, icon: (c: string) => <GoonaIcon icon={Award} size={24} color={c} /> },
-          ].map((a, i) => {
+          ].map((a: any, i) => {
             const p = pressScales[i]
             return (
               <Animated.View key={i} style={[p.style, { position: 'relative' }]}>
                 <TouchableOpacity
                   style={[styles.actionCard]}
                   activeOpacity={0.9}
-                  onPress={() => router.push(a.route)}
+                  onPress={() => router.push({ pathname: a.route, params: a.params })}
                   onPressIn={p.onPressIn}
                   onPressOut={p.onPressOut}
                 >

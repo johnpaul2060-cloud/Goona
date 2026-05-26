@@ -7,7 +7,7 @@ import Svg, { Circle } from 'react-native-svg'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import { ArrowLeft, Plus, BarChart3, TrendingUp, Sparkles, Calendar, Receipt, ShieldCheck, Users, FileText, Wallet } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withRepeat,
@@ -50,6 +50,13 @@ export default function SalesRevenueScreen() {
   const cardW = (winW - 52) / 2
   const fabFloat = useFabFloat()
   const backPress = usePressScale()
+  const params = useLocalSearchParams<{ openAddSale?: string }>()
+
+  useEffect(() => {
+    if (params.openAddSale === 'true') {
+      router.replace('/record-sale' as any)
+    }
+  }, [params.openAddSale])
 
   const QA_ACTIONS = [
     { label: 'Record Sale', bg: '#F0FDF4', iconColor: '#16A34A', route: '/record-sale' as const },
