@@ -5,7 +5,7 @@ import {
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import GoonaIcon from '../../components/ui/GoonaIcon'
-import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users, UserPlus, ClipboardList, BarChart3, Clock, Bell, ChevronRight, ListChecks, Calendar, Activity, User } from 'lucide-react-native'
+import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users, UserPlus, ClipboardList, BarChart3, Clock, Bell, ChevronRight, ListChecks, Calendar, Activity, User, MapPin, Battery } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -193,9 +193,9 @@ const ttStyles = StyleSheet.create({
 
 /* ─── Worker Card ─── */
 const WORKER_DATA = [
-  { initials: 'CO', name: 'Chinedu Okoro', role: 'Senior Farmhand', online: true, lastSeen: 'Last log 12 mins ago', tags: ['Feed', 'Mortality', 'Records', 'Weight'], id: 'w1' },
-  { initials: 'AF', name: 'Aminat Fashola', role: 'Feed Specialist', online: true, lastSeen: 'Last log 3 mins ago', tags: ['Feed', 'Inventory', 'Records'], id: 'w2' },
-  { initials: 'KO', name: 'Kola Ogunleye', role: 'Veterinary Assistant', online: false, lastSeen: 'Last seen 4h ago', tags: ['Health', 'Mortality', 'Records'], id: 'w3' },
+  { initials: 'CO', name: 'Chinedu Okoro', role: 'Senior Farmhand', online: true, lastSeen: 'Last log 12 mins ago', tags: ['Feed', 'Mortality', 'Records', 'Weight'], id: 'w1', location: 'Poultry House A', battery: 87, checkIn: '06:12 AM', checkOut: '--' },
+  { initials: 'AF', name: 'Aminat Fashola', role: 'Feed Specialist', online: true, lastSeen: 'Last log 3 mins ago', tags: ['Feed', 'Inventory', 'Records'], id: 'w2', location: 'Feed Warehouse', battery: 72, checkIn: '06:30 AM', checkOut: '--' },
+  { initials: 'KO', name: 'Kola Ogunleye', role: 'Veterinary Assistant', online: false, lastSeen: 'Last seen 4h ago', tags: ['Health', 'Mortality', 'Records'], id: 'w3', location: 'Hatchery', battery: 34, checkIn: '06:45 AM', checkOut: '10:30 AM' },
 ]
 
 const SUPERVISOR_DATA = [
@@ -217,19 +217,16 @@ const REPORT_DATA = [
 ]
 
 function WorkerCard({
-  initials, name, role, online, lastSeen, tags, index, id,
+  initials, name, role, online, lastSeen, tags, index, id, location, battery, checkIn, checkOut,
 }: {
   initials: string; name: string; role: string; online: boolean
   lastSeen: string; tags: string[]; index: number; id: string
+  location?: string; battery?: number; checkIn?: string; checkOut?: string
 }) {
   const { style, onPressIn, onPressOut } = usePressScale()
 
   const handlePress = () => {
-    Alert.alert(
-      'Worker Profile',
-      `${name}\n${role}\n\nProfile management, task history, and performance metrics coming soon.`,
-      [{ text: 'OK' }],
-    )
+    router.push('/farm-profile' as any)
   }
 
   return (
@@ -250,6 +247,23 @@ function WorkerCard({
                 {online ? 'Online' : 'Offline'} &bull; {lastSeen}
               </Text>
             </View>
+            {location && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                <GoonaIcon icon={MapPin} size={10} color="#94A3B8" />
+                <Text style={{ fontSize: 10, color: '#94A3B8', flex: 1 }}>{location}</Text>
+                {battery !== undefined && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                    <GoonaIcon icon={Battery} size={10} color={battery > 20 ? '#22C55E' : '#EF4444'} />
+                    <Text style={{ fontSize: 10, color: '#94A3B8' }}>{battery}%</Text>
+                  </View>
+                )}
+              </View>
+            )}
+            {checkIn && (
+              <Text style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
+                In: {checkIn}{checkOut && checkOut !== '--' ? `  Out: ${checkOut}` : ''}
+              </Text>
+            )}
             <View style={wcStyles.tags}>
               {tags.map((t) => (
                 <View key={t} style={wcStyles.tag}>
@@ -490,14 +504,14 @@ const isStyles = StyleSheet.create({
 
 /* ─── Activity Feed ─── */
 const ACTIVITY_ITEMS = [
-  { icon: Clock, text: 'Worker attendance submitted for Batch A.', color: '#00695C' },
-  { icon: ClipboardList, text: 'Supervisor report completed by David O.', color: '#0F766E' },
-  { icon: User, text: 'Kola Ogunleye started morning health check.', color: '#22C55E' },
-  { icon: RefreshCw, text: 'Feed inventory synced across all batches.', color: '#0891B2' },
-  { icon: Bell, text: 'Task reminder: Clean drinker lines due in 2h.', color: '#F59E0B' },
-  { icon: Check, text: 'Aminat F. completed feed efficiency report.', color: '#16A34A' },
-  { icon: Users, text: 'New shift schedule published by supervisor.', color: '#6366F1' },
-  { icon: Shield, text: 'Biosecurity check passed for House 2 & 3.', color: '#2E7D32' },
+  { icon: Clock, text: 'Chinedu checked in at Poultry House A.', color: '#00695C' },
+  { icon: ClipboardList, text: 'Aminat entered Feed Warehouse zone.', color: '#0F766E' },
+  { icon: User, text: 'Kola completed morning health check route.', color: '#22C55E' },
+  { icon: RefreshCw, text: 'Attendance synced — 9 present, 2 absent.', color: '#0891B2' },
+  { icon: Bell, text: 'SOS drill completed — all workers responded.', color: '#F59E0B' },
+  { icon: Check, text: 'Checkpoint 4 verified by security patrol.', color: '#16A34A' },
+  { icon: Users, text: 'Worker exited farm geofence — auto check-out.', color: '#6366F1' },
+  { icon: Shield, text: 'Restricted zone alert — no unauthorized entry.', color: '#2E7D32' },
 ]
 
 function ActivityFeed() {
@@ -573,22 +587,11 @@ function HeroCard() {
 
         <View style={heroStyles.label}>
           <PulseDot />
-          <Text style={heroStyles.labelText}>TEAM OPERATIONS ACTIVE</Text>
+          <Text style={heroStyles.labelText}>WORKFORCE OPERATIONS ACTIVE</Text>
         </View>
 
         <Text style={heroStyles.farmName}>Adewale Farms</Text>
-        <Text style={heroStyles.subtext}>3 Workers &bull; 2 Active Batches &bull; 18 Tasks Today</Text>
-
-        <View style={heroStyles.pills}>
-          {[
-            { label: 'Online Workers', value: '3', route: 'workers' },
-            { label: 'Accountability', value: '94%', route: 'reports' },
-            { label: 'Reminders', value: '4', route: 'tasks' },
-            { label: 'Batch Health', value: '97%', route: 'dashboard' },
-          ].map((p) => (
-            <HeroPill key={p.label} label={p.label} value={p.value} route={p.route} />
-          ))}
-        </View>
+        <Text style={heroStyles.subtext}>Operational Command Center</Text>
 
         <View style={heroStyles.nodes}>
           {[
@@ -609,30 +612,6 @@ function HeroCard() {
       </Animated.View>
       </Pressable>
     </Animated.View>
-  )
-}
-
-function HeroPill({ label, value, route }: { label: string; value: string; route: string }) {
-  const { style, onPressIn, onPressOut } = usePressScale()
-  return (
-    <Pressable
-      onPress={() => {
-        if (route === 'dashboard') {
-          router.push('/(tabs)/dashboard' as any)
-        } else if (route === 'workers' || route === 'tasks') {
-          Alert.alert(`${label}`, `${value}\n\nDetailed view coming soon.`)
-        } else {
-          Alert.alert(`${label}`, `${value}\n\nDetailed report coming soon.`)
-        }
-      }}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-    >
-      <Animated.View style={[style, heroStyles.pill]}>
-        <Text style={heroStyles.pillLabel}>{label} </Text>
-        <Text style={heroStyles.pillValue}>{value}</Text>
-      </Animated.View>
-    </Pressable>
   )
 }
 
@@ -685,18 +664,6 @@ const heroStyles = StyleSheet.create({
   subtext: {
     fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2,
   },
-  pills: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 14,
-  },
-  pill: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 50,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    paddingVertical: 5, paddingHorizontal: 12,
-    overflow: 'hidden',
-  },
-  pillLabel: { fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.7)' },
-  pillValue: { fontSize: 10, fontWeight: '700', color: '#AEEA00' },
   nodes: {
     position: 'absolute', right: 14, top: 0, bottom: 0,
     justifyContent: 'center', alignItems: 'center',
@@ -723,9 +690,9 @@ const heroStyles = StyleSheet.create({
 /* ─── Floating trust chips ─── */
 function TrustChips() {
   const items: { label: string; style: Record<string, number>; icon: React.ReactNode }[] = [
-    { label: 'Team Active', style: { top: 160, right: 10 }, icon: <GoonaIcon icon={Shield} size={14} color="#00695C" /> },
-    { label: '3 Online', style: { bottom: 320, left: 8 }, icon: <GoonaIcon icon={RefreshCw} size={14} color="#00695C" /> },
-    { label: 'Coordinated', style: { bottom: 240, right: 12 }, icon: <GoonaIcon icon={Check} size={14} color="#00695C" /> },
+    { label: 'Workforce Live', style: { top: 160, right: 10 }, icon: <GoonaIcon icon={Shield} size={14} color="#00695C" /> },
+    { label: '9 Present', style: { bottom: 320, left: 8 }, icon: <GoonaIcon icon={RefreshCw} size={14} color="#00695C" /> },
+    { label: 'All Zones Safe', style: { bottom: 240, right: 12 }, icon: <GoonaIcon icon={Check} size={14} color="#00695C" /> },
   ]
   return (
     <>
@@ -756,9 +723,9 @@ export default function TeamScreen() {
   const [insightIndex, setInsightIndex] = useState(0)
 
   const INSIGHTS = [
-    { text: 'Worker accountability improved by 14% this cycle.', route: 'accountability' },
-    { text: 'Feed efficiency is above benchmark by 8%.', route: 'feed' },
-    { text: 'Your Academy score ranks top 12% in Oyo State.', route: 'academy' },
+    { text: 'Attendance improved by 12% this week — 9 of 12 workers on time.', route: 'accountability' },
+    { text: 'No safety incidents recorded in the last 7 days.', route: 'feed' },
+    { text: 'Worker productivity score is 87% — above farm average.', route: 'academy' },
   ]
 
   /* cycle insights */
@@ -826,13 +793,24 @@ export default function TeamScreen() {
             </Svg>
             <Text style={styles.navLogoText}>GOONA</Text>
           </View>
-          <Text style={styles.navLabel}>Team Hub</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Text style={styles.navLabel}>Team Hub</Text>
+            <Pressable
+              onPress={() => router.push('/notifications' as any)}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, position: 'relative' })}
+            >
+              <GoonaIcon icon={Bell} size={18} color="#1B1B1B" />
+              <View style={s.bellBadge}>
+                <Text style={s.bellBadgeText}>6</Text>
+              </View>
+            </Pressable>
+          </View>
         </Animated.View>
 
         {/* ─── HEADER ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.headerSection}>
           <View style={styles.headerLeft}>
-            <Text style={styles.headerTitle}>Team</Text>
+            <Text style={styles.headerTitle}>Team Hub</Text>
             <Text style={styles.headerSub}>Manage your operational ecosystem.</Text>
           </View>
           <Pressable
@@ -848,6 +826,17 @@ export default function TeamScreen() {
           >
             <Text style={styles.addBtnText}>+</Text>
           </Pressable>
+        </Animated.View>
+
+        {/* ─── WORKFORCE STATUS STRIP ─── */}
+        <Animated.View entering={FadeInUp.duration(500).delay(130).springify()} style={wssStyles.strip}>
+          <View style={wssStyles.left}>
+            <PulseDot />
+            <Text style={wssStyles.workers}>7 Present</Text>
+            <View style={wssStyles.divider} />
+            <GoonaIcon icon={MapPin} size={12} color="#64748B" />
+            <Text style={wssStyles.locations}>3 Active Locations</Text>
+          </View>
         </Animated.View>
 
         {/* ─── HERO CARD ─── */}
@@ -888,13 +877,13 @@ export default function TeamScreen() {
           <View style={styles.qaRow}>
             <QACard
               variant="light"
-              title="Farm Profile"
-              desc="Achievements, certifications, and farm identity."
-              tags={['Badges', 'Rankings', 'Reputation']}
+              title="Workforce Live"
+              desc="Live workers, geofencing, attendance, safety and alerts."
+              tags={['Geofencing', 'Live Map', 'Safety']}
               icon={
-                <GoonaIcon icon={UserCheck} size={20} color="#00695C" />
+                <GoonaIcon icon={MapPin} size={20} color="#00695C" />
               }
-              onPress={() => router.push('/farm-profile')}
+              onPress={() => router.push('/workforce-live')}
             />
             <View style={{ width: 14 }} />
             <QACard
@@ -912,7 +901,7 @@ export default function TeamScreen() {
 
         {/* ─── TEAM TABS ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(450).springify()} style={styles.sectionHdr}>
-          <Text style={styles.sectionTitle}>Farm Personnel</Text>
+          <Text style={styles.sectionTitle}>Personnel</Text>
         </Animated.View>
 
         <TeamTabs active={activeTab} onChange={setActiveTab} />
@@ -927,8 +916,8 @@ export default function TeamScreen() {
             end={{ x: 1, y: 1 }}
             style={invStyles.card}
           >
-            <Text style={invStyles.title}>Expand Your Workforce</Text>
-            <Text style={invStyles.sub}>Invite workers, supervisors, or consultants to your ecosystem.</Text>
+            <Text style={invStyles.title}>Grow Your Workforce</Text>
+            <Text style={invStyles.sub}>Invite workers, assign zones, and manage attendance from one place.</Text>
             <View style={invStyles.acts}>
               <Pressable
                 style={({ pressed }) => [invStyles.btnPrimary, pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] }]}
@@ -948,7 +937,7 @@ export default function TeamScreen() {
 
         {/* ─── ACTIVITY FEED ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(700).springify()} style={[styles.sectionHdr, { marginTop: 24 }]}>
-          <Text style={styles.sectionTitle}>Live Activity</Text>
+          <Text style={styles.sectionTitle}>Workforce Feed</Text>
         </Animated.View>
 
         <ActivityFeed />
@@ -1065,6 +1054,32 @@ const styles = StyleSheet.create({
 
   /* insights list */
   insightsList: { gap: 8 },
+})
+
+/* ─── Notification badge ─── */
+const s = StyleSheet.create({
+  bellBadge: {
+    position: 'absolute', top: -4, right: -6,
+    minWidth: 16, height: 16, borderRadius: 8,
+    backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  bellBadgeText: { fontSize: 9, fontWeight: '800', color: '#fff' },
+})
+
+/* ─── Workforce status strip styles ─── */
+const wssStyles = StyleSheet.create({
+  strip: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: 'white', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16,
+    marginTop: 14, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03, shadowRadius: 12, elevation: 2,
+  },
+  left: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  divider: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' },
+  workers: { fontSize: 12, fontWeight: '700', color: '#22C55E' },
+  locations: { fontSize: 12, fontWeight: '600', color: '#64748B' },
 })
 
 /* ─── Invite card styles ─── */

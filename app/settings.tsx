@@ -5,7 +5,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Bell, Clock, Users, Sparkles, BarChart3, RefreshCw, CloudOff, Server, Phone, Key, Smile, FileText, AlertTriangle, Globe, Moon, Wallet, HelpCircle, MessageSquare, Shield, Info, ChevronRight, Pencil, User, X, Check, Sprout } from 'lucide-react-native'
+import { ArrowLeft, Bell, Clock, Users, Sparkles, BarChart3, RefreshCw, CloudOff, Server, Phone, Key, Smile, FileText, AlertTriangle, Globe, Moon, Wallet, HelpCircle, MessageSquare, Shield, Info, ChevronRight, Pencil, User, X, Check, Sprout, MapPin } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -129,6 +129,7 @@ function FormField({ label, value, onChange, secure, multiline, keyboardType }: 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets()
   const store = useSettingsStore()
+  const authRole = useAuthStore((s) => s.role)
 
   /* modal visibility */
   const [modals, setModals] = useState({ profile: false, pin: false, iq: false, recapt: false, worker: false, sim: false, theme: false })
@@ -182,11 +183,11 @@ export default function SettingsScreen() {
 
   const secRows = [
     { key: 'changepin', icon: icBg('#F1F5F9', <GoonaIcon icon={Key} size={16} color="#64748B" />), title: 'Change PIN', desc: store.security.pinProtection ? 'PIN enabled' : 'Set up PIN protection', right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('pin')}>Change</Text>, onPress: () => open('pin') },
-    { key: 'biometric', icon: icBg('rgba(99,102,241,0.06)', <GoonaIcon icon={Smile} size={16} color="#6366F1" />), title: 'Biometric Login', desc: 'Use Face ID / fingerprint', right: <StyledSwitch value={store.security.biometric} onToggle={() => store.toggleSecurity('biometric')} /> },
+    { key: 'biometric', icon: icBg('rgba(99,102,241,0.06)', <GoonaIcon icon={Smile} size={16} color="#6366F1" />), title: 'Biometric Authentication', desc: store.security.biometric ? 'Face ID / Fingerprint enabled' : 'Set up biometric login', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/biometric-auth' as any) },
     { key: 'pinProtection', icon: icBg('#F1F5F9', <GoonaIcon icon={Shield} size={16} color="#64748B" />), title: 'PIN Protection', desc: 'Require PIN to open app', right: <StyledSwitch value={store.security.pinProtection} onToggle={() => store.toggleSecurity('pinProtection')} /> },
     { key: 'devices', icon: icBg('#F1F5F9', <GoonaIcon icon={Phone} size={16} color="#64748B" />), title: 'Device Management', desc: 'Manage connected devices', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Device Management', 'You have 2 connected devices.\n\n• iPhone 15 Pro\n• Samsung Galaxy Tab') },
     { key: 'sessions', icon: icBg('#F1F5F9', <GoonaIcon icon={FileText} size={16} color="#64748B" />), title: 'Login Sessions', desc: 'Manage active sessions', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Active Sessions', '1 active session\nLast login: Today 9:30 AM') },
-    { key: 'killswitch', icon: icBg('rgba(239,68,68,0.06)', <GoonaIcon icon={AlertTriangle} size={16} color="#DC2626" />), title: 'Remote Kill Switch', desc: 'Revoke all device access', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Remote Kill Switch', 'This will sign out all devices. Continue?', [{ text: 'Cancel', style: 'cancel' }, { text: 'Revoke All', style: 'destructive', onPress: () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); Alert.alert('Done', 'All sessions revoked.') } }]) },
+    ...(authRole === 'Owner' ? [{ key: 'killswitch', icon: icBg('rgba(239,68,68,0.06)', <GoonaIcon icon={AlertTriangle} size={16} color="#DC2626" />), title: 'Remote Kill Switch', desc: 'Revoke all device access', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/kill-switch' as any) }] : []),
   ]
 
   const dataRows = [
@@ -286,9 +287,12 @@ export default function SettingsScreen() {
         <SettingsSection title="Workforce & Permissions" rows={workerRows} index={2} />
         <SettingsSection title="Data & Sync" rows={dataRows} index={3} />
         <SettingsSection title="Security & Access" rows={secRows} index={4} />
-        <SettingsSection title="GOONA IQ" rows={iqRows} index={5} />
-        <SettingsSection title="Theme & Experience" rows={themeRows} index={6} />
-        <SettingsSection title="Help & Support" rows={helpRows} index={7} />
+        <SettingsSection title="Farm Boundaries" rows={[
+          { key: 'boundaries', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={MapPin} size={16} color="#00695C" />), title: 'Farm Boundaries', desc: 'Manage geofences, zones, and restricted areas', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/farm-boundaries' as any) },
+        ]} index={5} />
+        <SettingsSection title="GOONA IQ" rows={iqRows} index={6} />
+        <SettingsSection title="Theme & Experience" rows={themeRows} index={7} />
+        <SettingsSection title="Help & Support" rows={helpRows} index={8} />
 
         {/* DANGER ZONE */}
         <Animated.View entering={FadeInUp.duration(500).delay(900).springify()} style={{ borderRadius: 24, backgroundColor: 'rgba(254,202,202,0.15)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.06)', padding: 16, marginTop: 22 }}>

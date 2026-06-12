@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "GOONA uses Face ID to securely access your farm dashboard, livestock records, and team operations."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -39,7 +42,13 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "GOONA uses Face ID to securely access your farm dashboard, livestock records, and team operations."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

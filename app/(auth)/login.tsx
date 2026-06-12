@@ -1,9 +1,12 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
+  Linking,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,21 +16,124 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import GoonaIcon from '../../components/ui/GoonaIcon';
-import { ArrowLeft, User, Lock, Eye, EyeOff, Check, Shield, LogIn, ScanFace, FingerprintPattern, BookOpen, Sprout, Globe, Apple, RefreshCw } from 'lucide-react-native';
+import { ArrowLeft, User, Lock, Eye, EyeOff, Check, Shield, LogIn, ScanFace, FingerprintPattern, BookOpen, Sprout, Globe, Apple, RefreshCw, X } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useAuthStore, type RegisteredDevice } from '../../store/useAuthStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
+import { useBiometricAuth } from '../../hooks/useBiometricAuth';
+import * as Haptics from 'expo-haptics';
+import Animated, { SlideInUp } from 'react-native-reanimated';
+import * as Device from 'expo-device';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [showBioLoginModal, setShowBioLoginModal] = useState(false);
+  const [bioLoginFailed, setBioLoginFailed] = useState(false);
+  const [bioLoginAttempts, setBioLoginAttempts] = useState(0);
+  const [bioErrorCode, setBioErrorCode] = useState<string | null>(null);
 
-  const handleLogin = () => {
+  const authStore = useAuthStore()
+  const settingsStore = useSettingsStore()
+  const { isAvailable, isEnrolled, biometricType, authenticate, checkBiometrics, getBiometricLabel } = useBiometricAuth()
+
+  const handleLogin = useCallback(() => {
     try {
       router.replace('/(tabs)/dashboard');
+      if (isAvailable && !authStore.biometricEnrolled) {
+        setTimeout(() => setShowEnrollModal(true), 600)
+      }
     } catch {}
-  };
+  }, [isAvailable, authStore.biometricEnrolled])
+
+  const handleBioLogin = useCallback(async () => {
+    Keyboard.dismiss()
+    setBioLoginFailed(false)
+    setBioErrorCode(null)
+    const bioState = await checkBiometrics()
+    console.log('[FaceID] Pre-auth check:', { hardwareAvailable: bioState.hardwareAvailable, isEnrolled: bioState.isEnrolled, biometricType: bioState.biometricType })
+    if (!bioState.isEnrolled) {
+      setBioErrorCode('not_enrolled')
+      setBioLoginFailed(true)
+      setBioLoginAttempts((p) => p + 1)
+      return
+    }
+    const result = await authenticate({ promptMessage: 'Login with biometrics', fallbackLabel: 'Use Password' })
+    console.log('[FaceID] Auth result:', { success: result.success, error: result.error })
+    if (result.success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      authStore.setAuthenticatedSession(true)
+      setShowBioLoginModal(false)
+      router.replace('/(tabs)/dashboard')
+    } else if (result.error === 'user_fallback') {
+      setShowBioLoginModal(false)
+      setBioLoginFailed(false)
+      setBioLoginAttempts(0)
+      setBioErrorCode(null)
+    } else if (result.error === 'user_cancel') {
+      setBioLoginFailed(false)
+      setBioErrorCode(null)
+    } else {
+      setBioErrorCode(result.error ?? 'authentication_failed')
+      setBioLoginFailed(true)
+      setBioLoginAttempts((p) => p + 1)
+    }
+  }, [checkBiometrics, authenticate, router, authStore])
+
+  const getBioErrorMessage = () => {
+    switch (bioErrorCode) {
+      case 'not_enrolled':
+        return `Set up ${bioLabel} in your device settings to use this feature.`
+      case 'lockout':
+        return 'Face ID is temporarily locked. Unlock your device with your passcode first, then try again.'
+      case 'passcode_not_set':
+        return 'Set a device passcode in iOS Settings to enable Face ID authentication.'
+      case 'not_available':
+        return 'Face ID is not available on this device right now.'
+      case 'system_cancel':
+        return 'Authentication was interrupted. Please try again.'
+      case 'user_cancel':
+        return ''
+      default:
+        if (bioLoginAttempts >= 3) return 'Too many attempts. Use your password instead.'
+        return 'Authentication failed. Please try again or use your password.'
+    }
+  }
+
+  const handleEnableBiometrics = useCallback(async () => {
+    Keyboard.dismiss()
+    const bioState = await checkBiometrics()
+    if (!bioState.isEnrolled) {
+      Alert.alert('Biometrics Not Set Up', `Please enable Face ID in your device settings first.`)
+      return
+    }
+    const result = await authenticate({ promptMessage: 'Enroll biometric login', fallbackLabel: 'Not Now' })
+    if (result.success) {
+      const deviceName = Device.deviceName ?? (Platform.OS === 'ios' ? 'iPhone' : 'Android Device')
+      const device: RegisteredDevice = {
+        id: `dev-${Date.now()}`,
+        name: deviceName,
+        lastLogin: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+        biometricStatus: 'Active',
+      }
+      authStore.setBiometricEnrolled(true, `bio-token-${Date.now()}`)
+      authStore.addDevice(device)
+      settingsStore.toggleSecurity('biometric')
+      settingsStore.setSecurityPref('requireBiometricAtLaunch', true)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      setShowEnrollModal(false)
+    } else if (result.error === 'user_fallback') {
+      setShowEnrollModal(false)
+    }
+  }, [checkBiometrics, authenticate, authStore, settingsStore])
+
+  const bioLabel = getBiometricLabel()
+  const isFaceId = biometricType === 'FaceID'
 
   return (
     <SafeAreaView style={styles.container}>
@@ -172,14 +278,23 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.bioRow}>
-              <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Face ID authentication will be available in the next update.')}>
-                <GoonaIcon icon={ScanFace} size={20} color="#1B1B1B" />
-                <Text style={styles.bioBtnText}>Face ID</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Fingerprint authentication will be available in the next update.')}>
-                <GoonaIcon icon={FingerprintPattern} size={20} color="#1B1B1B" />
-                <Text style={styles.bioBtnText}>Fingerprint</Text>
-              </TouchableOpacity>
+              {isAvailable ? (
+                <TouchableOpacity style={[styles.bioBtn, { borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,0.03)' }]} activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setShowBioLoginModal(true) }}>
+                  <GoonaIcon icon={isFaceId ? ScanFace : FingerprintPattern} size={20} color="#6366F1" />
+                  <Text style={[styles.bioBtnText, { color: '#6366F1' }]}>{bioLabel}</Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8} onPress={() => Alert.alert('Not Available', 'Face ID is not available on this device.')}>
+                    <GoonaIcon icon={ScanFace} size={20} color="#1B1B1B" />
+                    <Text style={styles.bioBtnText}>Face ID</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8} onPress={() => Alert.alert('Not Available', 'Fingerprint authentication is not available on this device.')}>
+                    <GoonaIcon icon={FingerprintPattern} size={20} color="#1B1B1B" />
+                    <Text style={styles.bioBtnText}>Fingerprint</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
 
             <View style={styles.qaGrid}>
@@ -240,6 +355,68 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* BIOMETRIC LOGIN MODAL */}
+      <Modal visible={showBioLoginModal} transparent animationType="slide" onRequestClose={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} />
+          <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, alignItems: 'center' }}>
+            <View style={{ alignItems: 'center', marginBottom: 8 }}><View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} /></View>
+            <TouchableOpacity onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={X} size={18} color="#94A3B8" /></TouchableOpacity>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(99,102,241,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <GoonaIcon icon={isFaceId ? ScanFace : FingerprintPattern} size={32} color="#6366F1" />
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F2937' }}>Login with {bioLabel}</Text>
+            <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', marginTop: 6 }}>Use your {bioLabel} to quickly access your farm dashboard.</Text>
+            {bioLoginFailed && getBioErrorMessage() ? (
+              <View style={{ marginTop: 12, backgroundColor: 'rgba(239,68,68,0.08)', borderRadius: 10, padding: 12, width: '100%', alignItems: 'center' }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: '#DC2626', textAlign: 'center' }}>
+                  {getBioErrorMessage()}
+                </Text>
+                {(bioErrorCode === 'not_enrolled' || bioErrorCode === 'lockout' || bioErrorCode === 'passcode_not_set') && (
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => Linking.openSettings()} style={{ marginTop: 8, paddingVertical: 6, paddingHorizontal: 16, backgroundColor: '#DC2626', borderRadius: 8 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: 'white' }}>Open Settings</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : null}
+            <TouchableOpacity activeOpacity={0.85} onPress={handleBioLogin} style={{ width: '100%', paddingVertical: 16, borderRadius: 18, backgroundColor: '#2E7D32', alignItems: 'center', marginTop: 20, shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 4 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: 'white' }}>Authenticate</Text>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} style={{ paddingVertical: 14, marginTop: 8 }}>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: '#64748B' }}>Use Password Instead</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      {/* BIOMETRIC ENROLLMENT MODAL */}
+      <Modal visible={showEnrollModal} transparent animationType="slide" onRequestClose={() => setShowEnrollModal(false)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.3)' }}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setShowEnrollModal(false)} />
+          <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, alignItems: 'center' }}>
+            <View style={{ alignItems: 'center', marginBottom: 8 }}><View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} /></View>
+            <TouchableOpacity onPress={() => setShowEnrollModal(false)} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={X} size={18} color="#94A3B8" /></TouchableOpacity>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(99,102,241,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <GoonaIcon icon={Shield} size={32} color="#6366F1" />
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F2937' }}>Enable Biometric Login?</Text>
+            <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', marginTop: 6, lineHeight: 20, paddingHorizontal: 16 }}>
+              Use {bioLabel} for faster and more secure access to GOONA.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 24, width: '100%' }}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setShowEnrollModal(false)} style={{ flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: '#F1F5F9', alignItems: 'center' }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#64748B' }}>Not Now</Text>
+              </TouchableOpacity>
+              <TouchableOpacity activeOpacity={0.85} onPress={handleEnableBiometrics} style={{ flex: 1, borderRadius: 14, overflow: 'hidden' }}>
+                <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingVertical: 14, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Enable Biometrics</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

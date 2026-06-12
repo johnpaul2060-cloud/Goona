@@ -4,16 +4,15 @@ import {
   StyleSheet, Platform,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Bell, Check, X, Plus, AlertCircle, ClipboardList, TrendingUp, Sparkles, Users, CheckCircle } from 'lucide-react-native'
+import { ArrowLeft, Bell, Check, X, Plus, AlertCircle, ClipboardList, TrendingUp, Sparkles, Users, CheckCircle, MapPin, Radio, ShieldAlert, Navigation } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import Animated, { FadeInUp, FadeIn, FadeOutDown } from 'react-native-reanimated'
-import BottomDock from '../components/navigation/BottomDock'
 import ReminderTaskModal, { ReminderTask } from '../components/ReminderTaskModal'
 
-const FILTERS = ['All', 'Critical', 'Operations', 'Financial', 'AI', 'Team']
+const FILTERS = ['All', 'Critical', 'Operations', 'Financial', 'AI', 'Workforce', 'Safety', 'Geofence']
 
 const ALERTS = [
   {
@@ -57,6 +56,90 @@ const ALERTS = [
     title: 'Recovery consistency dropped this week',
     desc: 'Your capital recovery streak may be at risk. Stay on track.',
     time: '8 hours ago',
+  },
+
+  /* ─── WORKFORCE ─── */
+  {
+    type: 'Workforce' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
+    title: 'Worker Check-In',
+    desc: 'Aminat checked into Feed Warehouse.',
+    time: '8 mins ago',
+  },
+  {
+    type: 'Workforce' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
+    title: 'Worker Check-Out',
+    desc: 'Kola signed out from Hatchery. Hours logged: 7.5.',
+    time: '28 mins ago',
+  },
+  {
+    type: 'Workforce' as const, iconBg: '#FFF8F0', iconColor: '#F59E0B',
+    title: 'Worker Offline',
+    desc: 'Ngozi has been offline for 4 hours. Location: Break Room.',
+    time: '1 hour ago',
+  },
+  {
+    type: 'Workforce' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
+    title: 'Worker Location Update',
+    desc: 'Segun moved to Poultry House B from Feed Warehouse.',
+    time: '12 mins ago',
+  },
+  {
+    type: 'Workforce' as const, iconBg: '#F0FDF4', iconColor: '#16A34A',
+    title: 'Attendance Reminder',
+    desc: 'Funmi and 2 others have not checked in for morning shift.',
+    time: '2 hours ago',
+  },
+
+  /* ─── SAFETY ─── */
+  {
+    type: 'Safety' as const, iconBg: '#FFF1F2', iconColor: '#EF4444',
+    title: 'SOS Alert',
+    desc: 'Chinedu triggered emergency alert in Poultry House A.',
+    time: '2 mins ago',
+  },
+  {
+    type: 'Safety' as const, iconBg: '#FFF1F2', iconColor: '#EF4444',
+    title: 'Worker Distress Signal',
+    desc: 'Musa sent a distress signal from Chemical Storage area.',
+    time: '6 mins ago',
+  },
+  {
+    type: 'Safety' as const, iconBg: '#FFFBEB', iconColor: '#F59E0B',
+    title: 'Safety Incident Reported',
+    desc: 'Slip hazard reported near Fish Pond. Area cordoned off.',
+    time: '18 mins ago',
+  },
+  {
+    type: 'Safety' as const, iconBg: '#F0FDF4', iconColor: '#16A34A',
+    title: 'Emergency Drill Complete',
+    desc: 'All 9 workers responded within 90 seconds. Drill passed.',
+    time: '45 mins ago',
+  },
+
+  /* ─── GEOFENCE ─── */
+  {
+    type: 'Geofence' as const, iconBg: '#EEF3FF', iconColor: '#1A56FF',
+    title: 'Restricted Zone Entry',
+    desc: 'Musa entered Chemical Storage — a restricted area.',
+    time: '5 mins ago',
+  },
+  {
+    type: 'Geofence' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
+    title: 'Zone Entry',
+    desc: 'Chinedu entered Poultry House A — operational zone.',
+    time: '2 mins ago',
+  },
+  {
+    type: 'Geofence' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
+    title: 'Zone Exit',
+    desc: 'Aminat exited Feed Warehouse — geofence logged.',
+    time: '8 mins ago',
+  },
+  {
+    type: 'Geofence' as const, iconBg: '#FFF1F2', iconColor: '#EF4444',
+    title: 'Boundary Breach',
+    desc: 'Unknown device detected at north perimeter. Investigation needed.',
+    time: '22 mins ago',
   },
 ]
 
@@ -186,14 +269,14 @@ export default function NotificationsScreen() {
               <GoonaIcon icon={Sparkles} size={24} color="#FFFFFF" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.heroTitle}>Operational{'\n'}Awareness Center</Text>
-              <Text style={styles.heroSub}>You have <Text style={{ fontWeight: '700' }}>4 unread</Text> alerts requiring attention</Text>
+              <Text style={styles.heroTitle}>GOONA Unified{'\n'}Notification Center</Text>
+              <Text style={styles.heroSub}><Text style={{ fontWeight: '700' }}>6 unread</Text> alerts across operations, workforce, safety, and geofence</Text>
             </View>
           </View>
           <View style={styles.heroMetrics}>
-            <View style={styles.heroMetric}><Text style={styles.heroMetricVal}>2</Text><Text style={styles.heroMetricLbl}>Critical</Text></View>
-            <View style={styles.heroMetric}><Text style={styles.heroMetricVal}>5</Text><Text style={styles.heroMetricLbl}>Active</Text></View>
-            <View style={[styles.heroMetric, styles.heroMetricLast]}><Text style={styles.heroMetricVal}>3</Text><Text style={styles.heroMetricLbl}>Reminders</Text></View>
+            <View style={styles.heroMetric}><Text style={styles.heroMetricVal}>3</Text><Text style={styles.heroMetricLbl}>Critical</Text></View>
+            <View style={styles.heroMetric}><Text style={styles.heroMetricVal}>14</Text><Text style={styles.heroMetricLbl}>Active</Text></View>
+            <View style={[styles.heroMetric, styles.heroMetricLast]}><Text style={styles.heroMetricVal}>5</Text><Text style={styles.heroMetricLbl}>Categories</Text></View>
           </View>
         </Animated.View>
 
@@ -244,7 +327,9 @@ export default function NotificationsScreen() {
                 {alert.type === 'Operations' && <GoonaIcon icon={ClipboardList} size={16} color={alert.iconColor} />}
                 {alert.type === 'Financial' && <GoonaIcon icon={TrendingUp} size={16} color={alert.iconColor} />}
                 {alert.type === 'AI' && <GoonaIcon icon={Sparkles} size={16} color={alert.iconColor} />}
-                {alert.type === 'Team' && <GoonaIcon icon={Users} size={16} color={alert.iconColor} />}
+                {alert.type === 'Workforce' && <GoonaIcon icon={Users} size={16} color={alert.iconColor} />}
+                {alert.type === 'Safety' && <GoonaIcon icon={ShieldAlert} size={16} color={alert.iconColor} />}
+                {alert.type === 'Geofence' && <GoonaIcon icon={MapPin} size={16} color={alert.iconColor} />}
             </View>
             <View style={styles.alertContent}>
               <View style={styles.alertTop}>
@@ -302,7 +387,7 @@ export default function NotificationsScreen() {
           ))}
         </Animated.View>
 
-        <View style={{ height: 140 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* FAB */}
@@ -328,8 +413,6 @@ export default function NotificationsScreen() {
           <Text style={styles.toastText}>{toast.message}</Text>
         </Animated.View>
       )}
-
-      <BottomDock />
 
       <ReminderTaskModal visible={showCreate} onClose={() => setShowCreate(false)} onSave={handleCreateItem} />
     </View>
@@ -416,7 +499,7 @@ const styles = StyleSheet.create({
   /* fab */
   fabShell: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 112 : 92,
+    bottom: Platform.OS === 'ios' ? 36 : 24,
     right: 20,
     zIndex: 50,
   },
@@ -436,7 +519,7 @@ const styles = StyleSheet.create({
   /* toast */
   toast: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 180 : 156,
+    bottom: Platform.OS === 'ios' ? 100 : 80,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',

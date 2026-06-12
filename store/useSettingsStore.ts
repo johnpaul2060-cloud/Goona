@@ -38,6 +38,9 @@ export interface SecurityPrefs {
   pinProtection: boolean
   pinCode: string
   sessionTimeout: number
+  requireBiometricAtLaunch: boolean
+  requireBiometricAfterInactivity: boolean
+  inactivityTimeoutMinutes: number
 }
 
 export interface IqPrefs {
@@ -102,6 +105,7 @@ interface SettingsState {
   setRecaptEnabled: (v: boolean) => void
   toggleSecurity: (key: keyof SecurityPrefs) => void
   setPinCode: (code: string) => void
+  setSecurityPref: (key: 'requireBiometricAtLaunch' | 'requireBiometricAfterInactivity' | 'inactivityTimeoutMinutes', value: boolean | number) => void
   toggleIq: (key: keyof IqPrefs) => void
   setIqPref: (key: 'aiSensitivity' | 'recommendationFrequency' | 'predictionIntensity', value: number) => void
   toggleData: (key: keyof DataPrefs) => void
@@ -127,7 +131,7 @@ const defaultNotif: NotificationPrefs = {
   simulationNotifications: false, recoveryNotifications: true,
 }
 const defaultRecapt: RecaptReminders = { enabled: true, frequency: 'weekly' }
-const defaultSecurity: SecurityPrefs = { biometric: true, pinProtection: false, pinCode: '', sessionTimeout: 30 }
+const defaultSecurity: SecurityPrefs = { biometric: false, pinProtection: false, pinCode: '', sessionTimeout: 30, requireBiometricAtLaunch: false, requireBiometricAfterInactivity: false, inactivityTimeoutMinutes: 5 }
 const defaultIq: IqPrefs = {
   dailychallenge: true, leaderboard: true,
   aiSensitivity: 3, recommendationFrequency: 3, predictionIntensity: 3,
@@ -157,8 +161,9 @@ export const useSettingsStore = create<SettingsState>()(
       toggleNotif: (key) => set((s) => ({ notifications: { ...s.notifications, [key]: !s.notifications[key] } })),
       setRecaptFrequency: (freq) => set((s) => ({ recaptReminders: { ...s.recaptReminders, frequency: freq } })),
       setRecaptEnabled: (v) => set((s) => ({ recaptReminders: { ...s.recaptReminders, enabled: v } })),
-      toggleSecurity: (key) => set((s) => ({ security: { ...s.security, [key]: !s.security[key] } })),
+      toggleSecurity: (key) => set((s) => ({ security: { ...s.security, [key]: !s.security[key] as never } })),
       setPinCode: (code) => set((s) => ({ security: { ...s.security, pinCode: code } })),
+      setSecurityPref: (key, value) => set((s) => ({ security: { ...s.security, [key]: value as never } })),
       toggleIq: (key) => set((s) => ({ iq: { ...s.iq, [key]: !s.iq[key] } })),
       setIqPref: (key, value) => set((s) => ({ iq: { ...s.iq, [key]: value } })),
       toggleData: (key) => set((s) => ({ data: { ...s.data, [key]: !s.data[key] } })),
