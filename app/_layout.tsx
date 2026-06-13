@@ -121,7 +121,7 @@ export default function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BiometricGateManager>
-          <Stack screenOptions={{ headerShown: false }} />
+          <Stack screenOptions={{ headerShown: false, gestureEnabled: false }} />
         </BiometricGateManager>
       </GestureHandlerRootView>
     </ErrorBoundary>

@@ -46,7 +46,7 @@ export default function AnalyticsScreen() {
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
           <Pressable
             style={styles.navBack}
-            onPress={() => router.replace('/(tabs)/records' as any)}
+            onPress={() => router.replace('/(tabs)/dashboard' as any)}
           >
             <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
           </Pressable>

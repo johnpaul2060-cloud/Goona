@@ -283,7 +283,7 @@ export default function BatchDetailsScreen() {
       >
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
-          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.replace('/records/batches' as any)}>
+          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/dashboard' as any)}>
             <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>{batch.name}</Text>

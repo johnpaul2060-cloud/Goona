@@ -2,8 +2,9 @@ import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dim
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import GoonaIcon from '../../components/ui/GoonaIcon';
-import { Bell, BarChart3, ClipboardList, Sparkles, FileText, Receipt, Award, ShoppingCart } from 'lucide-react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { Bell, BarChart3, ClipboardList, Sparkles, FileText, Award, ShoppingCart, Banknote, BrainCircuit, CloudSun, TrendingUp, Shield } from 'lucide-react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeIn } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
 
@@ -53,7 +54,7 @@ export default function DashboardScreen() {
         <View style={styles.greeting}>
           <View>
             <Text style={styles.greetingSub}>Good Morning 👋</Text>
-            <Text style={styles.greetingName}>James</Text>
+            <Text style={styles.greetingName}>Paul</Text>
             <Text style={styles.greetingStatus}>Your farm is performing well today.</Text>
           </View>
           <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/notifications')}>
@@ -62,10 +63,25 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.heroCard}>
+        <Animated.View entering={FadeIn.duration(500)} style={styles.heroCard}>
+          <LinearGradient
+            colors={['#2E7D32', '#1B5E20', '#0D3B0F']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 30, opacity: 0.3 }]}
+            pointerEvents="none"
+          />
+          <View style={styles.heroSparkle} pointerEvents="none" />
+
           <View style={styles.heroHead}>
-            <View>
-              <Text style={styles.heroLabel}>ACTIVE FARM</Text>
+            <View style={styles.heroHeadLeft}>
+              <View style={styles.heroStatusRow}>
+                <Text style={styles.heroLabel}>ACTIVE FARM</Text>
+                <View style={styles.heroBadge}>
+                  <View style={styles.heroBadgeDot} />
+                  <Text style={styles.heroBadgeText}>High Performing Farm</Text>
+                </View>
+              </View>
               <Text style={styles.heroFarmName}>Green Valley Poultry</Text>
             </View>
             <TouchableOpacity style={styles.heroChartBtn}>
@@ -97,18 +113,18 @@ export default function DashboardScreen() {
               <View style={styles.heroProgFill} />
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.secHead}>
-          <Text style={styles.secTitle}>Quick Actions</Text>
+          <Text style={styles.secTitle}>Operations</Text>
         </View>
 
         <View style={styles.actionsGrid}>
           {[
-            { label: 'Record Sale', color: '#F0FDF4', iconColor: '#16A34A', route: '/(tabs)/records/sales' as any, params: { openAddSale: 'true' }, icon: (c: string) => <GoonaIcon icon={ShoppingCart} size={24} color={c} /> },
-            { label: 'Farm Expenses', color: '#FFF1F2', iconColor: '#EF4444', route: '/(tabs)/records/expenses' as const, icon: (c: string) => <GoonaIcon icon={Receipt} size={24} color={c} /> },
-            { label: 'Daily Records', color: '#EEF3FF', iconColor: '#1A56FF', route: '/(tabs)/records/daily-operations' as const, icon: (c: string) => <GoonaIcon icon={ClipboardList} size={24} color={c} /> },
-            { label: 'Daily Challenge', color: '#F0FDF4', iconColor: '#16A34A', route: '/academy/daily-challenge' as const, icon: (c: string) => <GoonaIcon icon={Award} size={24} color={c} /> },
+            { label: 'Record Sale', desc: 'Track revenue and transactions', color: '#F0FDF4', iconColor: '#16A34A', route: '/record-sale' as any, icon: (c: string) => <GoonaIcon icon={ShoppingCart} size={24} color={c} /> },
+            { label: 'Farm Expenses', desc: 'Monitor operational spending', color: '#FFF1F2', iconColor: '#EF4444', route: '/(tabs)/records/expenses' as const, icon: (c: string) => <GoonaIcon icon={Banknote} size={24} color={c} /> },
+            { label: 'Daily Records', desc: 'Capture farm activities', color: '#EEF3FF', iconColor: '#1A56FF', route: '/(tabs)/records/daily-operations' as const, icon: (c: string) => <GoonaIcon icon={ClipboardList} size={24} color={c} /> },
+            { label: 'Daily Challenge', desc: 'Complete productivity goals', color: '#FFF7ED', iconColor: '#F97316', route: '/academy/daily-challenge' as const, icon: (c: string) => <GoonaIcon icon={Award} size={24} color={c} /> },
           ].map((a: any, i) => {
             const p = pressScales[i]
             return (
@@ -124,15 +140,48 @@ export default function DashboardScreen() {
                     {a.icon(a.iconColor)}
                   </View>
                   <Text style={styles.actionLabel}>{a.label}</Text>
+                  <Text style={styles.actionDesc}>{a.desc}</Text>
                 </TouchableOpacity>
               </Animated.View>
             )
           })}
         </View>
 
+        <Animated.View entering={FadeIn.duration(400)} style={styles.iqCard}>
+          <View style={styles.iqHead}>
+            <View style={styles.iqHeadLeft}>
+              <View style={styles.iqBadge}>
+                <GoonaIcon icon={BrainCircuit} size={14} color="#2E7D32" />
+                <Text style={styles.iqBadgeText}>GOONA IQ</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/goona-iq')}>
+              <Text style={styles.iqCta}>Details</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.iqGrid}>
+            <View style={styles.iqItem}>
+              <GoonaIcon icon={TrendingUp} size={14} color="#16A34A" />
+              <Text style={styles.iqItemText}>Feed efficiency improved by <Text style={{ fontWeight: '700', color: '#16A34A' }}>8%</Text></Text>
+            </View>
+            <View style={styles.iqItem}>
+              <GoonaIcon icon={Shield} size={14} color="#1A56FF" />
+              <Text style={styles.iqItemText}>Mortality risk remains <Text style={{ fontWeight: '700', color: '#1A56FF' }}>low</Text></Text>
+            </View>
+            <View style={styles.iqItem}>
+              <GoonaIcon icon={BarChart3} size={14} color="#F59E0B" />
+              <Text style={styles.iqItemText}>Savings target is <Text style={{ fontWeight: '700', color: '#F59E0B' }}>on track</Text></Text>
+            </View>
+            <View style={styles.iqItem}>
+              <GoonaIcon icon={CloudSun} size={14} color="#6366F1" />
+              <Text style={styles.iqItemText}>Feed purchase due in <Text style={{ fontWeight: '700', color: '#6366F1' }}>3 days</Text></Text>
+            </View>
+          </View>
+        </Animated.View>
+
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Farm Analytics</Text>
-          <TouchableOpacity><Text style={styles.secLink}>View All</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/records/analytics' as any)}><Text style={styles.secLink}>View All</Text></TouchableOpacity>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.analyticsScroll}>
@@ -157,7 +206,7 @@ export default function DashboardScreen() {
 
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Active Batches</Text>
-          <TouchableOpacity onPress={() => router.push('/batches')}><Text style={styles.secLink}>See All</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/batches' as any)}><Text style={styles.secLink}>See All</Text></TouchableOpacity>
         </View>
 
         {batches.slice(0, 2).map((b) => {
@@ -203,7 +252,7 @@ export default function DashboardScreen() {
           <Text style={styles.secTitle}>Smart Insights</Text>
         </View>
 
-        <TouchableOpacity style={styles.insightCard} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.insightCard} activeOpacity={0.8} onPress={() => router.push('/goona-iq')}>
           <View style={styles.insightIconBig}>
             <GoonaIcon icon={Sparkles} size={22} color="#F9A825" />
           </View>
@@ -215,9 +264,37 @@ export default function DashboardScreen() {
           </View>
         </TouchableOpacity>
 
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/weather-details')}>
+          <Animated.View entering={FadeIn.duration(400)} style={styles.weatherCard}>
+            <View style={styles.weatherHead}>
+              <View style={styles.weatherHeadLeft}>
+                <GoonaIcon icon={CloudSun} size={18} color="#2E7D32" />
+                <Text style={styles.weatherTitle}>Farm Weather</Text>
+              </View>
+              <Text style={styles.weatherLocation}>📍 Lagos, Nigeria</Text>
+            </View>
+            <View style={styles.weatherGrid}>
+              <View style={styles.weatherItem}>
+                <Text style={styles.weatherItemVal}>32°C</Text>
+                <Text style={styles.weatherItemLbl}>Temperature</Text>
+              </View>
+              <View style={styles.weatherDivider} />
+              <View style={styles.weatherItem}>
+                <Text style={styles.weatherItemVal}>68%</Text>
+                <Text style={styles.weatherItemLbl}>Humidity</Text>
+              </View>
+              <View style={styles.weatherDivider} />
+              <View style={styles.weatherItem}>
+                <Text style={styles.weatherItemVal}>15mm</Text>
+                <Text style={styles.weatherItemLbl}>Rainfall</Text>
+              </View>
+            </View>
+          </Animated.View>
+        </TouchableOpacity>
+
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Recent Activity</Text>
-          <TouchableOpacity><Text style={styles.secLink}>View all</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/records' as any)}><Text style={styles.secLink}>View all</Text></TouchableOpacity>
         </View>
 
         <View style={styles.feedCard}>
@@ -227,7 +304,7 @@ export default function DashboardScreen() {
             { icon: '#FFFBEB', iconColor: '#F59E0B', title: 'Eggs Collected', desc: '12 crates — 360 eggs collected', time: 'Yesterday' },
             { icon: '#F0FDF4', iconColor: '#16A34A', title: 'Staff Attendance', desc: '8 of 10 workers checked in', time: 'Yesterday' },
           ].map((f, i) => (
-            <TouchableOpacity key={i} style={styles.feedRow} activeOpacity={0.7}>
+            <TouchableOpacity key={i} style={styles.feedRow} activeOpacity={0.7} onPress={() => router.push('/(tabs)/records' as any)}>
               <View style={[styles.feedIcon, { backgroundColor: f.icon }]}>
                 <GoonaIcon icon={FileText} size={18} color={f.iconColor} />
               </View>
@@ -281,6 +358,19 @@ const styles = StyleSheet.create({
   heroMetric: { flex: 1, alignItems: 'center' },
   heroMetricVal: { fontSize: 24, fontWeight: '800', color: 'white' },
   heroMetricLbl: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+  heroSparkle: {
+    position: 'absolute', top: -30, right: -30, width: 160, height: 160,
+    borderRadius: 80, backgroundColor: 'rgba(174,234,0,0.06)', zIndex: 0,
+  },
+  heroHeadLeft: { flex: 1 },
+  heroStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  heroBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  heroBadgeDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#AEEA00' },
+  heroBadgeText: { fontSize: 9, fontWeight: '600', color: 'white', letterSpacing: 0.3 },
   heroProgress: { marginTop: 20, zIndex: 1 },
   heroProgHead: { flexDirection: 'row', justifyContent: 'space-between' },
   heroProgTrack: { height: 8, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 100, marginTop: 6, overflow: 'hidden' },
@@ -298,6 +388,7 @@ const styles = StyleSheet.create({
   },
   actionIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   actionLabel: { fontSize: 15, fontWeight: '600', color: '#1F2937' },
+  actionDesc: { fontSize: 11, color: '#94A3B8', marginTop: 4, textAlign: 'center' },
   analyticsScroll: { paddingBottom: 4, zIndex: 5 },
   analyticsCard: {
     minWidth: 150, backgroundColor: 'white', borderRadius: 22, padding: 16,
@@ -325,6 +416,39 @@ const styles = StyleSheet.create({
   batchProgHead: { flexDirection: 'row', justifyContent: 'space-between' },
   batchProgTrack: { height: 6, backgroundColor: '#F1F5F9', borderRadius: 100, marginTop: 4, overflow: 'hidden' },
   batchProgFill: { height: '100%', borderRadius: 100 },
+  iqCard: {
+    backgroundColor: 'white', borderRadius: 24, padding: 18, marginTop: 18,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
+    borderWidth: 1, borderColor: 'rgba(46,125,50,0.08)',
+  },
+  iqHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  iqHeadLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iqBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100,
+    backgroundColor: 'rgba(46,125,50,0.08)',
+  },
+  iqBadgeText: { fontSize: 11, fontWeight: '700', color: '#2E7D32', letterSpacing: 0.5 },
+  iqCta: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
+  iqGrid: { gap: 10 },
+  iqItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iqItemText: { fontSize: 13, color: '#374151', flex: 1, lineHeight: 18 },
+  weatherCard: {
+    backgroundColor: 'white', borderRadius: 24, padding: 18, marginTop: 18,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
+    borderWidth: 1, borderColor: 'rgba(46,125,50,0.08)',
+  },
+  weatherHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  weatherHeadLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  weatherTitle: { fontSize: 15, fontWeight: '700', color: '#1F2937' },
+  weatherLocation: { fontSize: 11, color: '#94A3B8' },
+  weatherGrid: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
+  weatherItem: { alignItems: 'center', flex: 1 },
+  weatherItemVal: { fontSize: 20, fontWeight: '800', color: '#1F2937' },
+  weatherItemLbl: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
+  weatherDivider: { width: 1, height: 32, backgroundColor: '#E2E8F0' },
   insightCard: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 14,
     backgroundColor: '#E8F5E9', borderRadius: 24, padding: 18,

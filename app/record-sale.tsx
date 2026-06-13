@@ -262,7 +262,7 @@ export default function RecordSaleScreen() {
               <TouchableOpacity
                 style={s.navBack}
                 activeOpacity={0.7}
-                onPress={() => router.back()}
+                onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/dashboard' as any)}
                 onPressIn={backPress.onPressIn}
                 onPressOut={backPress.onPressOut}
               >

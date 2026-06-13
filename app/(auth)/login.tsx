@@ -18,7 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import GoonaIcon from '../../components/ui/GoonaIcon';
-import { ArrowLeft, User, Lock, Eye, EyeOff, Check, Shield, LogIn, ScanFace, FingerprintPattern, BookOpen, Sprout, Globe, Apple, RefreshCw, X } from 'lucide-react-native';
+import { ArrowLeft, User, Lock, Eye, EyeOff, Check, Shield, LogIn, ScanFace, FingerprintPattern, Globe, Apple, X } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAuthStore, type RegisteredDevice } from '../../store/useAuthStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -145,19 +145,6 @@ export default function LoginScreen() {
       <View style={styles.dotGrid} />
       <View style={styles.glowCenter} />
 
-      <View style={styles.chip1} pointerEvents="none">
-        <GoonaIcon icon={Shield} size={14} color="#2E7D32" />
-        <Text style={styles.chipText}>Secure Access</Text>
-      </View>
-      <View style={styles.chip2} pointerEvents="none">
-        <GoonaIcon icon={RefreshCw} size={14} color="#2E7D32" />
-        <Text style={styles.chipText}>Synced Offline</Text>
-      </View>
-      <View style={styles.chip3} pointerEvents="none">
-        <GoonaIcon icon={Shield} size={14} color="#2E7D32" />
-        <Text style={styles.chipText}>Farm Data Protected</Text>
-      </View>
-
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -271,12 +258,6 @@ export default function LoginScreen() {
               <Text style={styles.loginBtnText}>Login to GOONA</Text>
             </TouchableOpacity>
 
-            <View style={styles.orDivider}>
-              <View style={styles.orLine} />
-              <Text style={styles.orText}>OR QUICK ACCESS</Text>
-              <View style={styles.orLine} />
-            </View>
-
             <View style={styles.bioRow}>
               {isAvailable ? (
                 <TouchableOpacity style={[styles.bioBtn, { borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,0.03)' }]} activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setShowBioLoginModal(true) }}>
@@ -295,36 +276,6 @@ export default function LoginScreen() {
                   </TouchableOpacity>
                 </>
               )}
-            </View>
-
-            <View style={styles.qaGrid}>
-              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => { try { router.push('/goona-academy') } catch {} }}>
-                <View style={styles.qaIconWrap}>
-                  <GoonaIcon icon={BookOpen} size={22} color="#2E7D32" />
-                </View>
-                <Text style={styles.qaLabel}>Academy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => { try { router.push('/goona-iq') } catch {} }}>
-                <View style={styles.qaIconWrap}>
-                  <Svg width={22} height={22} viewBox="0 0 22 22">
-                    <Path d="M11 2C11 2 6 7 6 11C6 13.5 7.5 15.5 9 17C8.5 15.5 8 14.5 8 13.5C8 10 10 6.5 11 2Z" fill="#2E7D32" />
-                    <Path d="M11 2C11 2 16 7 16 11C16 13.5 14.5 15.5 13 17C13.5 15.5 14 14.5 14 13.5C14 10 12 6.5 11 2Z" fill="#388E3C" />
-                  </Svg>
-                </View>
-                <Text style={styles.qaLabel}>GOONA IQ</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Demo Farm experience is under development.')}>
-                <View style={styles.qaIconWrap}>
-                  <GoonaIcon icon={Sprout} size={22} color="#2E7D32" />
-                </View>
-                <Text style={styles.qaLabel}>Demo Farm</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.qaBtn} activeOpacity={0.8} onPress={() => Alert.alert('Guest Mode', 'Continue without an account? This limits some features.')}>
-                <View style={styles.qaIconWrap}>
-                  <GoonaIcon icon={User} size={22} color="#2E7D32" />
-                </View>
-                <Text style={styles.qaLabel}>Guest</Text>
-              </TouchableOpacity>
             </View>
 
             <View style={styles.socialDivider}>
@@ -496,65 +447,6 @@ const styles = StyleSheet.create({
     borderRadius: 120,
     backgroundColor: 'rgba(232,245,233,0.30)',
     zIndex: 0,
-  },
-  chip1: {
-    position: 'absolute',
-    top: '22%',
-    right: 12,
-    backgroundColor: 'white',
-    borderRadius: 100,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-    zIndex: 3,
-  },
-  chip2: {
-    position: 'absolute',
-    bottom: '38%',
-    left: 8,
-    backgroundColor: 'white',
-    borderRadius: 100,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-    zIndex: 3,
-  },
-  chip3: {
-    position: 'absolute',
-    bottom: '28%',
-    right: 14,
-    backgroundColor: 'white',
-    borderRadius: 100,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-    zIndex: 3,
-  },
-  chipText: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#475569',
   },
   topNav: {
     flexDirection: 'row',
@@ -736,23 +628,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'white',
   },
-  orDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    marginTop: 20,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E8ECEE',
-  },
-  orText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#94A3B8',
-    letterSpacing: 1.5,
-  },
   bioRow: {
     flexDirection: 'row',
     gap: 12,
@@ -774,43 +649,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#1B1B1B',
-  },
-  qaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 14,
-  },
-  qaBtn: {
-    width: '47%',
-    flexGrow: 1,
-    height: 72,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    shadowColor: '#2E7D32',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  qaIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: '#F0F7F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qaLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#2E7D32',
-    letterSpacing: 0.5,
   },
   socialDivider: {
     flexDirection: 'row',

@@ -4,9 +4,10 @@ import {
   StyleSheet, Dimensions, Modal,
 } from 'react-native'
 import GoonaIcon from '../../components/ui/GoonaIcon'
-import { Search, Filter, FileText, Users, AlertCircle, ShieldCheck, Plus, ClipboardList, TrendingUp } from 'lucide-react-native'
+import { ArrowLeft, Search, Filter, FileText, Users, AlertCircle, ShieldCheck, Plus, ClipboardList, TrendingUp } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
@@ -91,6 +92,7 @@ const FAB_ACTIONS = [
 ]
 
 export default function BatchesScreen() {
+  const insets = useSafeAreaInsets()
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [fabOpen, setFabOpen] = useState(false)
@@ -161,19 +163,21 @@ export default function BatchesScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollInner}
+        contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 12 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* HEADER */}
-        <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.headerLabel}>GOONA</Text>
-            <Text style={styles.headerTitle}>Livestock{'\n'}Batches</Text>
-            <Text style={styles.headerSub}>Monitor all production cycles, track performance, and manage operations.</Text>
+        <Animated.View entering={FadeInUp.duration(500).springify()}>
+          <View style={styles.topNav}>
+            <TouchableOpacity style={styles.navBack} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/dashboard' as any)}>
+              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            </TouchableOpacity>
+            <Text style={styles.topTitle}>Active Batches</Text>
+            <TouchableOpacity style={styles.filterBtn} activeOpacity={0.85}>
+              <GoonaIcon icon={Filter} size={20} color="#1F2937" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.filterBtn} activeOpacity={0.85}>
-            <GoonaIcon icon={Filter} size={20} color="#1F2937" />
-          </TouchableOpacity>
+          <Text style={styles.headerSub}>Monitor all production cycles, track performance, and manage operations.</Text>
         </Animated.View>
 
         {/* SEARCH */}
@@ -437,14 +441,13 @@ const styles = StyleSheet.create({
   },
 
   scroll: { flex: 1, zIndex: 1 },
-  scrollInner: { paddingHorizontal: 20, paddingTop: 6 },
+  scrollInner: { paddingHorizontal: 20 },
 
   /* header */
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 6 },
-  headerLeft: { flex: 1 },
-  headerLabel: { fontSize: 11, fontWeight: '600', color: '#2E7D32', letterSpacing: 2, textTransform: 'uppercase' },
-  headerTitle: { fontFamily: 'Poppins', fontWeight: '800', fontSize: 30, color: '#1B1B1B', letterSpacing: -0.5, marginTop: 2 },
-  headerSub: { fontSize: 14, fontWeight: '400', color: '#616161', marginTop: 4, lineHeight: 20 },
+  topNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6 },
+  navBack: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
+  topTitle: { fontSize: 18, fontWeight: '700', color: '#1B1B1B' },
+  headerSub: { fontSize: 14, fontWeight: '400', color: '#616161', marginTop: 8, lineHeight: 20 },
   filterBtn: {
     width: 48, height: 48, borderRadius: 18, backgroundColor: 'white',
     alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 4,
