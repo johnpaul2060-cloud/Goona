@@ -6,7 +6,7 @@ import {
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import GoonaIcon from '../components/ui/GoonaIcon'
 import {
-  ArrowLeft, CheckCircle, Target, Calendar, Plus,
+  ArrowLeft, CheckCircle, Target, Calendar, Plus, Wallet,
 } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -196,39 +196,40 @@ export default function PlanRecaptScreen() {
         </Animated.View>
 
         {showSummary ? (
-          /* ── SUMMARY VIEW ── */
+          /* ── PROJECT CREATED ── */
           <>
             <Animated.View
               entering={FadeInUp.duration(400).springify()}
+              style={styles.successCard}
+            >
+              <View style={styles.successIcon}>
+                <GoonaIcon icon={CheckCircle} size={32} color="#2E7D32" />
+              </View>
+              <Text style={styles.successTitle}>Project Created Successfully</Text>
+              <Text style={styles.successSub}>Your project is ready for its first contribution.</Text>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInUp.duration(400).delay(60).springify()}
               style={styles.summaryCard}
             >
-              <LinearGradient
-                colors={['#2E7D32', '#1B5E20']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.summaryGradient}
-              >
-                <View style={styles.summaryGlow1} pointerEvents="none" />
-                <View style={styles.summaryGlow2} pointerEvents="none" />
-
-                <View style={styles.summaryHead}>
-                  <View style={styles.summaryIcon}>
-                    <GoonaIcon icon={Target} size={18} color="#2E7D32" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.summaryPre}>Project</Text>
-                    <Text style={styles.summaryName}>{goalName}</Text>
-                  </View>
+              <View style={styles.summaryHead}>
+                <View style={styles.summaryIcon}>
+                  <GoonaIcon icon={Target} size={16} color="#2E7D32" />
                 </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.summaryPre}>Project</Text>
+                  <Text style={styles.summaryName}>{goalName}</Text>
+                </View>
+              </View>
 
-                <View style={styles.summaryDivider} />
-
+              <View style={styles.summaryBody}>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Target Amount</Text>
+                  <Text style={styles.summaryLabel}>Target</Text>
                   <Text style={styles.summaryValue}>{formatCurrency(targetAmount)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Contribution Plan</Text>
+                  <Text style={styles.summaryLabel}>Plan</Text>
                   <Text style={styles.summaryValue}>{selectedPlan}</Text>
                 </View>
                 <View style={styles.summaryRow}>
@@ -237,66 +238,33 @@ export default function PlanRecaptScreen() {
                     {targetDate ? formatDateDisplay(targetDate) : ''}
                   </Text>
                 </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Projected Completion</Text>
-                  <Text style={styles.summaryValue}>
-                    {targetDate ? formatDateDisplay(targetDate) : ''}
+                <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
+                  <Text style={styles.summaryLabel}>Contribution</Text>
+                  <Text style={[styles.summaryValue, { color: '#2E7D32' }]}>
+                    {formatCurrency(nextAmount)}
                   </Text>
                 </View>
-
-                <View style={styles.summaryDivider} />
-
-                <View style={styles.summaryProgressSection}>
-                  <View style={styles.summaryProgressHead}>
-                    <Text style={styles.summaryProgressLabel}>Progress</Text>
-                    <Text style={styles.summaryProgressPct}>
-                      {Math.round(progress * 100)}%
-                    </Text>
-                  </View>
-                  <View style={styles.summaryProgressTrack}>
-                    <View
-                      style={[
-                        styles.summaryProgressFill,
-                        { width: `${progress * 100}%` },
-                      ]}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.summaryDetailGrid}>
-                  <View style={styles.summaryDetailItem}>
-                    <Text style={styles.summaryDetailLabel}>Saved</Text>
-                    <Text style={styles.summaryDetailValue}>{formatCurrency(savedAmount)}</Text>
-                  </View>
-                  <View style={styles.summaryDetailDivider} />
-                  <View style={styles.summaryDetailItem}>
-                    <Text style={styles.summaryDetailLabel}>Next</Text>
-                    <Text style={styles.summaryDetailValue}>{formatCurrency(nextAmount)}</Text>
-                  </View>
-                  <View style={styles.summaryDetailDivider} />
-                  <View style={styles.summaryDetailItem}>
-                    <Text style={styles.summaryDetailLabel}>Due</Text>
-                    <Text style={styles.summaryDetailValue}>{dueLabels[selectedPlan]}</Text>
-                  </View>
-                </View>
-              </LinearGradient>
+              </View>
             </Animated.View>
 
+            {/* ── FUND FIRST CONTRIBUTION ── */}
             <Animated.View
-              entering={FadeInUp.duration(400).delay(100).springify()}
+              entering={FadeInUp.duration(400).delay(120).springify()}
               style={styles.summaryAction}
             >
-              <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.85}>
-                <GoonaIcon icon={CheckCircle} size={20} color="#FFFFFF" />
-                <Text style={styles.confirmBtnText}>Confirm Project Plan</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity
-                style={styles.editBtn}
-                activeOpacity={0.7}
-                onPress={() => setShowSummary(false)}
+                style={styles.confirmBtn}
+                activeOpacity={0.85}
+                onPress={() => {
+                  router.push(
+                    `/fund-project?name=${encodeURIComponent(goalName)}&target=${targetAmount}&saved=0&plan=${selectedPlan}&amount=${nextAmount}`,
+                  )
+                }}
               >
-                <Text style={styles.editBtnText}>Edit Plan</Text>
+                <GoonaIcon icon={Wallet} size={18} color="#FFFFFF" />
+                <Text style={styles.confirmBtnText}>
+                  Fund First Contribution — {formatCurrency(nextAmount)}
+                </Text>
               </TouchableOpacity>
             </Animated.View>
           </>
@@ -977,113 +945,82 @@ const styles = StyleSheet.create({
   },
 
   /* ── Summary Card ── */
+  /* ── Success Header ── */
+  successCard: {
+    alignItems: 'center',
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+  },
+  successIcon: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: '#F0FDF4',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 20, fontWeight: '800',
+    color: '#1B1B1B', textAlign: 'center',
+  },
+  successSub: {
+    fontSize: 14, color: '#94A3B8',
+    textAlign: 'center', marginTop: 6,
+  },
+
+  /* ── Project Summary ── */
   summaryCard: {
-    borderRadius: 28,
-    overflow: 'hidden',
-    marginTop: 8,
-    shadowColor: '#2E7D32',
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.25,
-    shadowRadius: 40,
-    elevation: 8,
-  },
-  summaryGradient: {
-    padding: 24,
-    position: 'relative',
-  },
-  summaryGlow1: {
-    position: 'absolute', top: -30, right: -30,
-    width: 180, height: 180, borderRadius: 90,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
-  summaryGlow2: {
-    position: 'absolute', bottom: -40, left: -20,
-    width: 140, height: 140, borderRadius: 70,
-    backgroundColor: 'rgba(174,234,0,0.06)',
+    backgroundColor: 'white',
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 3,
   },
   summaryHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   summaryIcon: {
-    width: 42, height: 42, borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    width: 38, height: 38, borderRadius: 12,
+    backgroundColor: '#F0FDF4',
     alignItems: 'center', justifyContent: 'center',
   },
   summaryPre: {
-    fontSize: 11, color: 'rgba(255,255,255,0.6)',
+    fontSize: 11, color: '#94A3B8',
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
   summaryName: {
-    fontSize: 22, fontWeight: '800',
-    color: 'white', marginTop: 2,
+    fontSize: 20, fontWeight: '800',
+    color: '#1F2937', marginTop: 2,
   },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginVertical: 16,
+  summaryBody: {
+    gap: 0,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAF7',
   },
   summaryLabel: {
-    fontSize: 13, color: 'rgba(255,255,255,0.6)',
+    fontSize: 13, color: '#94A3B8',
   },
   summaryValue: {
-    fontSize: 15, fontWeight: '700', color: 'white',
-  },
-  summaryProgressSection: { marginBottom: 16 },
-  summaryProgressHead: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  summaryProgressLabel: {
-    fontSize: 12, color: 'rgba(255,255,255,0.6)',
-  },
-  summaryProgressPct: {
-    fontSize: 12, fontWeight: '700', color: '#AEEA00',
-  },
-  summaryProgressTrack: {
-    height: 6,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  summaryProgressFill: {
-    height: '100%',
-    backgroundColor: '#AEEA00',
-    borderRadius: 3,
-  },
-  summaryDetailGrid: {
-    flexDirection: 'row',
-  },
-  summaryDetailItem: {
-    flex: 1, alignItems: 'center',
-  },
-  summaryDetailLabel: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  summaryDetailValue: {
-    fontSize: 16, fontWeight: '800', color: 'white',
-  },
-  summaryDetailDivider: {
-    width: 1, height: 28,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignSelf: 'center',
+    fontSize: 15, fontWeight: '700', color: '#1F2937',
   },
 
-  /* ── Summary Actions ── */
-  summaryAction: { marginTop: 20, gap: 12, marginBottom: 24 },
+  /* ── Fund Action ── */
+  summaryAction: { marginTop: 20, marginBottom: 24 },
   confirmBtn: {
-    height: 54, borderRadius: 18,
+    height: 56, borderRadius: 18,
     backgroundColor: '#2E7D32',
     flexDirection: 'row',
     alignItems: 'center',
@@ -1097,13 +1034,5 @@ const styles = StyleSheet.create({
   },
   confirmBtnText: {
     fontSize: 16, fontWeight: '700', color: 'white',
-  },
-  editBtn: {
-    height: 48, borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  editBtnText: {
-    fontSize: 14, fontWeight: '600', color: '#94A3B8',
   },
 })

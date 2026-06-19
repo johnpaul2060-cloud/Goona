@@ -19,7 +19,7 @@ const QUICK_ACTIONS = [
   { icon: Plus, label: 'Add Money', color: '#2E7D32' },
   { icon: Send, label: 'Transfer', color: '#00695C' },
   { icon: ArrowUpRight, label: 'Withdraw', color: '#1B5E20' },
-  { icon: Landmark, label: 'Account Det.', color: '#0F766E' },
+  { icon: Landmark, label: 'Account', color: '#0F766E' },
 ]
 
 const DEMO_TRANSACTIONS = [
@@ -95,7 +95,7 @@ export default function WalletScreen() {
       case 'Withdraw':
         Alert.alert('Withdraw', 'Withdraw to your bank account.\n\nFeature coming soon.')
         break
-      case 'Account Det.':
+      case 'Account':
         setShowAccount(!showAccount)
         break
     }
@@ -369,14 +369,15 @@ const styles = StyleSheet.create({
   /* ── Quick Actions ── */
   actionsGrid: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     marginBottom: 24,
   },
   actionCard: {
     flex: 1,
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 14,
+    paddingVertical: 18,
+    paddingHorizontal: 6,
     alignItems: 'center',
     gap: 10,
     shadowColor: '#000',
@@ -386,11 +387,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   actionIcon: {
-    width: 42, height: 42, borderRadius: 14,
+    width: 44, height: 44, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
   actionLabel: {
-    fontSize: 11, fontWeight: '700',
+    fontSize: 13, fontWeight: '600',
     color: '#1F2937', textAlign: 'center',
   },
 
