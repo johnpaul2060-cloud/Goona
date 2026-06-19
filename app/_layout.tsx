@@ -1,21 +1,27 @@
 import { useEffect, useState, useRef, Component, type ReactNode } from 'react'
-import { View, Text, StyleSheet, AppState, type AppStateStatus } from 'react-native'
+import { View, Text, StyleSheet, AppState, type AppStateStatus, Platform } from 'react-native'
 import { Stack, router } from 'expo-router'
-import * as Notifications from 'expo-notifications'
+import * as SplashScreen from 'expo-splash-screen'
+import Constants from 'expo-constants'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import BiometricGate from '../components/Biometric/BiometricGate'
 import { useAuthStore } from '../store/useAuthStore'
 import { useSettingsStore } from '../store/useSettingsStore'
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-})
+const isExpoGo = Constants.executionEnvironment === 'storeClient'
+
+SplashScreen.preventAutoHideAsync()
+
+console.log('[Startup] App Started')
+console.log('[Startup] Platform:', Platform.OS, Platform.Version)
+console.log('[Startup] Expo Go:', isExpoGo)
+console.log('[Startup] ExecutionEnvironment:', Constants.executionEnvironment)
+
+if (isExpoGo) {
+  console.log('[Notifications] Running in Expo Go — Push Registration Skipped')
+} else {
+  console.log('[Notifications] Running in Development Build — Push Registration Enabled')
+}
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -112,16 +118,92 @@ function BiometricGateManager({ children }: { children: ReactNode }) {
   )
 }
 
-export default function RootLayout() {
+function useStartupManager() {
+  const [ready, setReady] = useState(false)
+  const [_error, setError] = useState<string | null>(null)
+
   useEffect(() => {
-    Notifications.requestPermissionsAsync()
+    let cancelled = false
+    let hideTimer: ReturnType<typeof setTimeout> | null = null
+
+    async function init() {
+      try {
+        console.log('[Startup] Checking Updates')
+        console.log('[Startup] Update check skipped (expo-updates not available)')
+
+        console.log('[Startup] Authentication Check')
+        const isLoggedIn = useAuthStore.getState().isLoggedIn
+        console.log('[Startup] isLoggedIn:', isLoggedIn)
+
+        if (!isExpoGo) {
+          console.log('[Notifications] Initializing push notifications')
+          const Notifications = await import('expo-notifications')
+          Notifications.setNotificationHandler({
+            handleNotification: async () => ({
+              shouldShowAlert: true,
+              shouldShowBanner: true,
+              shouldShowList: true,
+              shouldPlaySound: true,
+              shouldSetBadge: false,
+            }),
+          })
+          Notifications.requestPermissionsAsync()
+        }
+
+        console.log('[Startup] Loading Dashboard')
+        await new Promise((r) => setTimeout(r, 100))
+
+        if (!cancelled) {
+          console.log('[Startup] Splash Hidden')
+          setReady(true)
+        }
+      } catch (e) {
+        console.log('[Startup] Error during init:', e)
+        if (!cancelled) {
+          setError(String(e))
+          setReady(true)
+        }
+      }
+    }
+
+    init()
+
+    hideTimer = setTimeout(() => {
+      if (!cancelled) {
+        console.log('[Startup] Force hide splash (timeout)')
+        setReady(true)
+      }
+    }, 10000)
+
+    return () => {
+      cancelled = true
+      if (hideTimer) clearTimeout(hideTimer)
+    }
   }, [])
+
+  useEffect(() => {
+    if (ready) {
+      SplashScreen.hideAsync().catch((e) => {
+        console.log('[Startup] SplashScreen.hideAsync error:', e)
+      })
+    }
+  }, [ready])
+
+  return { error: _error, ready }
+}
+
+export default function RootLayout() {
+  const { ready } = useStartupManager()
 
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BiometricGateManager>
-          <Stack screenOptions={{ headerShown: false, gestureEnabled: false }} />
+          {ready ? (
+            <Stack screenOptions={{ headerShown: false, gestureEnabled: false }} />
+          ) : (
+            <View style={{ flex: 1, backgroundColor: '#F8FAF7' }} />
+          )}
         </BiometricGateManager>
       </GestureHandlerRootView>
     </ErrorBoundary>

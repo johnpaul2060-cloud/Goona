@@ -8,9 +8,11 @@ import { ArrowLeft, Bell, Check, X, Plus, AlertCircle, ClipboardList, TrendingUp
 import { LinearGradient } from 'expo-linear-gradient'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
-import * as Notifications from 'expo-notifications'
+import Constants from 'expo-constants'
 import Animated, { FadeInUp, FadeIn, FadeOutDown } from 'react-native-reanimated'
 import ReminderTaskModal, { ReminderTask } from '../components/ReminderTaskModal'
+
+const isExpoGo = Constants.executionEnvironment === 'storeClient'
 
 const FILTERS = ['All', 'Critical', 'Operations', 'Financial', 'AI', 'Workforce', 'Safety', 'Geofence']
 
@@ -181,7 +183,10 @@ export default function NotificationsScreen() {
     }
     setCreatedItems((prev) => [...prev, item])
 
+    if (isExpoGo) return
+
     try {
+      const Notifications = await import('expo-notifications')
       const { status } = await Notifications.requestPermissionsAsync()
       if (status !== 'granted') return
 
@@ -190,12 +195,11 @@ export default function NotificationsScreen() {
 
       if (triggerDate <= new Date()) return
 
-      let repeats: boolean | undefined
       let interval: number | undefined
       switch (item.repeat) {
-        case 'Daily': repeats = true; interval = 86400; break
-        case 'Weekly': repeats = true; interval = 604800; break
-        case 'Monthly': repeats = true; interval = 2592000; break
+        case 'Daily': interval = 86400; break
+        case 'Weekly': interval = 604800; break
+        case 'Monthly': interval = 2592000; break
       }
 
       if (interval) {
