@@ -168,8 +168,8 @@ export default function SettingsScreen() {
   const notifRows = [
     { key: 'push', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Bell} size={16} color="#00695C" />), title: 'Push Notifications', desc: 'Receive alerts on your device', right: <StyledSwitch value={store.notifications.push} onToggle={() => store.toggleNotif('push')} /> },
     { key: 'reminder', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Clock} size={16} color="#00695C" />), title: 'Reminder Alerts', desc: 'Feeding, health, and task reminders', right: <StyledSwitch value={store.notifications.reminder} onToggle={() => store.toggleNotif('reminder')} /> },
-    { key: 'recapReminders', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Wallet} size={16} color="#00695C" />), title: 'Recap Savings Reminders', desc: 'Weekly recapitalization savings alerts', right: <StyledSwitch value={store.notifications.recapReminders} onToggle={() => store.toggleNotif('recapReminders')} /> },
-    { key: 'recovery', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Bell} size={16} color="#00695C" />), title: 'Recovery Notifications', desc: 'Contribution tracking and recovery alerts', right: <StyledSwitch value={store.notifications.recoveryNotifications} onToggle={() => store.toggleNotif('recoveryNotifications')} /> },
+    { key: 'recapReminders', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Wallet} size={16} color="#00695C" />), title: 'Recapt Reminders', desc: 'Weekly recapt contribution alerts', right: <StyledSwitch value={store.notifications.recapReminders} onToggle={() => store.toggleNotif('recapReminders')} /> },
+    { key: 'recovery', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Bell} size={16} color="#00695C" />), title: 'Recapt Notifications', desc: 'Contribution tracking and readiness alerts', right: <StyledSwitch value={store.notifications.recoveryNotifications} onToggle={() => store.toggleNotif('recoveryNotifications')} /> },
     { key: 'financial', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Wallet} size={16} color="#00695C" />), title: 'Financial Notifications', desc: 'Sales, expenses, and profit alerts', right: <StyledSwitch value={store.notifications.financialNotifications} onToggle={() => store.toggleNotif('financialNotifications')} /> },
     { key: 'iqAlerts', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Sparkles} size={16} color="#00695C" />), title: 'GOONA IQ Alerts', desc: 'AI-powered operational insights', right: <StyledSwitch value={store.notifications.iqAlerts} onToggle={() => store.toggleNotif('iqAlerts')} /> },
     { key: 'worker', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Users} size={16} color="#00695C" />), title: 'Worker Activity Updates', desc: 'Get notified when workers log changes', right: <StyledSwitch value={store.notifications.worker} onToggle={() => store.toggleNotif('worker')} /> },
@@ -177,7 +177,7 @@ export default function SettingsScreen() {
   ]
 
   const recaptRows = [
-    { key: 'recaptEnabled', icon: icBg('#F1F5F9', <GoonaIcon icon={Clock} size={16} color="#00695C" />), title: 'Recap Reminders', desc: store.recaptReminders.enabled ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.recaptReminders.enabled} onToggle={() => store.setRecaptEnabled(!store.recaptReminders.enabled)} /> },
+    { key: 'recaptEnabled', icon: icBg('#F1F5F9', <GoonaIcon icon={Clock} size={16} color="#00695C" />), title: 'Recapt Reminders', desc: store.recaptReminders.enabled ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.recaptReminders.enabled} onToggle={() => store.setRecaptEnabled(!store.recaptReminders.enabled)} /> },
     { key: 'recaptFreq', icon: icBg('#F1F5F9', <GoonaIcon icon={Bell} size={16} color="#00695C" />), title: 'Reminder Frequency', desc: `Current: ${store.recaptReminders.frequency}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('recapt')}>{store.recaptReminders.frequency}</Text>, onPress: () => open('recapt') },
   ]
 
@@ -283,7 +283,7 @@ export default function SettingsScreen() {
         </BlurView>
 
         <SettingsSection title="Notifications" rows={notifRows} index={0} />
-        <SettingsSection title="Recapitalization & Recovery" rows={recaptRows} index={1} />
+        <SettingsSection title="Recapt & Readiness" rows={recaptRows} index={1} />
         <SettingsSection title="Workforce & Permissions" rows={workerRows} index={2} />
         <SettingsSection title="Data & Sync" rows={dataRows} index={3} />
         <SettingsSection title="Security & Access" rows={secRows} index={4} />
@@ -390,7 +390,7 @@ export default function SettingsScreen() {
 
       {/* ─── RECAPT REMINDER MODAL ─── */}
       <ModalShell visible={modals.recapt} onClose={() => close('recapt')} title="Reminder Frequency">
-        <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>Choose how often you want recapitalization savings reminders.</Text>
+        <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>Choose how often you want recapt reminders.</Text>
         {(['daily', 'weekly', 'monthly'] as const).map((f) => (
           <TouchableOpacity key={f} activeOpacity={0.7} onPress={() => { store.setRecaptFrequency(f); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
             <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: store.recaptReminders.frequency === f ? '#2E7D32' : '#D1D5DB', alignItems: 'center', justifyContent: 'center' }}>

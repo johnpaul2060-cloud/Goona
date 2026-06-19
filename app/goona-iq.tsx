@@ -25,7 +25,7 @@ const INSIGHTS = [
   'Feed consumption increased 8% this week — flock growth is ahead of schedule.',
   'Mortality risk rising due to heat conditions. Consider ventilation adjustments.',
   'Worker efficiency dropped 12% during evening operations last cycle.',
-  'Recapitalization readiness improving steadily — now at 72% target.',
+  'Production readiness improving steadily — now at 72% target.',
   'Water intake per bird is 6% below optimal threshold this week.',
   'Batch B mortality rate trending 2.3% lower than batch average.',
   'Feed-to-weight conversion ratio improved 4% from previous cycle.',
@@ -94,7 +94,7 @@ const AI_CONTEXT_RESPONSES: Record<string, { insight: string; recommendation: st
     recommendation: 'Reschedule 1 worker from Batch A to Batch C. Add lighting in processing area.',
   },
   recapt: {
-    insight: 'Recapitalization readiness at 72%. Revenue tracking 8% above target this cycle.',
+    insight: 'Production readiness at 72%. Revenue tracking 8% above target this cycle.',
     recommendation: 'Current pace projects full readiness in 6 weeks. Consider accelerating feed purchases.',
   },
   default: {

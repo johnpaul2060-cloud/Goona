@@ -135,26 +135,26 @@ export function generateInsights(records: Record<string, DayRecord>): string[] {
   const messages: string[] = []
 
   if (streak >= 7) {
-    messages.push(`You've maintained recovery consistency for ${streak} days. Keep it up!`)
+    messages.push(`You've maintained recapt consistency for ${streak} days. Keep it up!`)
   } else if (streak >= 3) {
-    messages.push(`${streak}-day recovery streak — building strong capital discipline.`)
+    messages.push(`${streak}-day recapt streak — building strong preparation discipline.`)
   }
 
   if (stats.missed >= 2) {
-    messages.push('Missing recovery periods may delay your next production cycle.')
+    messages.push('Missed recapt periods may delay your next production cycle.')
   }
 
   if (stats.exceeded >= 3) {
     const pct = Math.round((stats.exceeded / Math.max(stats.total, 1)) * 100)
-    messages.push(`You exceeded your recovery target ${stats.exceeded}x this month (${pct}% of check-ins).`)
+    messages.push(`You exceeded your recapt target ${stats.exceeded}x this month (${pct}% of check-ins).`)
   }
 
   if (messages.length === 0 && stats.total > 0) {
-    messages.push('Every recovery brings you closer to your next production cycle.')
+    messages.push('Every recapt brings you closer to your next production cycle.')
   }
 
   if (messages.length === 0) {
-    messages.push('Start tracking your recovery today to unlock personalized insights.')
+    messages.push('Start tracking your recapt today to unlock personalized insights.')
   }
 
   return messages.slice(0, 3)

@@ -107,8 +107,8 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
     const streak = computeStreak(records)
     list.push({
       id: 'save-today', type: 'savings_reminder', priority: 'urgent',
-      icon: '\u{1F4B0}', title: 'Weekly savings contribution due today',
-      desc: `Your \u20A685,000 weekly recapitalization target is due. Save now to maintain your ${streak}-day streak.`,
+      icon: '\u{1F4B0}', title: 'Weekly recapt contribution due today',
+      desc: `Your \u20A685,000 weekly production readiness target is due. Save now to maintain your ${streak}-day streak.`,
       time: 'Today',
       actions: [
         { label: 'Save Now', action: 'save', primary: true },
@@ -127,7 +127,7 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
       list.push({
         id: `missed-${ds}`, type: 'missed_contribution', priority: 'urgent',
         icon: '\u23F0', title: `Missed contribution \u2014 ${dayNames[d.getDay()]}`,
-        desc: `You missed your scheduled \u20A685,000 recapitalization contribution. Catch up to avoid delaying your production cycle.`,
+        desc: `You missed your scheduled \u20A685,000 recapt contribution. Catch up to avoid delaying your production cycle.`,
         time: i === 1 ? 'Yesterday' : `${i} days ago`,
         actions: [
           { label: 'Save Now', action: 'save', primary: true },
@@ -142,8 +142,8 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
   const progress = computeReadiness(records)
   list.push({
     id: 'recovery-track', type: 'recovery_tracking', priority: 'insight',
-    icon: '\u{1F4CA}', title: `${Math.round(progress * 100)}% of next production cycle target achieved`,
-    desc: `Estimated farm restart readiness based on your current recovery pace. Consistent weekly savings accelerate your timeline.`,
+    icon: '\u{1F4CA}', title: `${Math.round(progress * 100)}% of production readiness target achieved`,
+    desc: `Estimated farm restart readiness based on your current recapt pace. Consistent weekly recapt accelerates your timeline.`,
     time: 'Updated today',
     actions: [{ label: 'View Plan', action: 'view_plan' }],
   })
@@ -153,7 +153,7 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
   insights.slice(0, 2).forEach((msg, i) => {
     list.push({
       id: `iq-${i}`, type: 'goona_iq_insight', priority: 'insight',
-      icon: '\u{1F9E0}', title: i === 0 ? 'GOONA IQ Financial Insight' : 'GOONA IQ Recommendation',
+      icon: '\u{1F9E0}', title: i === 0 ? 'GOONA IQ Recapt Insight' : 'GOONA IQ Recommendation',
       desc: msg,
       time: 'AI-generated',
       actions: [
@@ -168,8 +168,8 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
   if (streak >= 7) {
     list.push({
       id: 'streak-milestone', type: 'achievement_streak', priority: 'achievement',
-      icon: '\u{1F3C6}', title: `${streak}-Day Recovery Streak!`,
-      desc: `You've maintained consistent capital recovery for ${streak} consecutive days. Exceptional financial discipline keeps you on track.`,
+      icon: '\u{1F3C6}', title: `${streak}-Day Recapt Streak!`,
+      desc: `You've maintained consistent recapt preparation for ${streak} consecutive days. Exceptional discipline keeps you on track.`,
       time: 'Active',
       actions: [{ label: 'Dismiss', action: 'dismiss' }],
     })
@@ -179,8 +179,8 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
   if (progress >= 0.5) {
     list.push({
       id: 'recovery-milestone', type: 'achievement_milestone', priority: 'achievement',
-      icon: '\u{1F389}', title: `${Math.round(progress * 100)}% Recovery Milestone Reached`,
-      desc: `Over half of your recapitalization target is achieved. Your next production cycle is within sight.`,
+      icon: '\u{1F389}', title: `${Math.round(progress * 100)}% Recapt Milestone Reached`,
+      desc: `Over half of your production readiness target is achieved. Your next production cycle is within sight.`,
       time: 'This month',
       actions: [{ label: 'Dismiss', action: 'dismiss' }],
     })
@@ -191,8 +191,8 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
   if (stats.exceeded >= 3) {
     list.push({
       id: 'exceeded-goal', type: 'achievement_exceeded', priority: 'achievement',
-      icon: '\u{1F3AF}', title: `Exceeded Recovery Target ${stats.exceeded}x This Month`,
-      desc: `You've surpassed your weekly recovery goal multiple times this month. Strong financial momentum toward your production cycle.`,
+      icon: '\u{1F3AF}', title: `Exceeded Recapt Target ${stats.exceeded}x This Month`,
+      desc: `You've surpassed your weekly recapt goal multiple times this month. Strong momentum toward your production cycle.`,
       time: 'This month',
       actions: [{ label: 'Dismiss', action: 'dismiss' }],
     })
@@ -202,8 +202,8 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
   if (todayChecked) {
     list.push({
       id: 'due-tomorrow', type: 'savings_upcoming', priority: 'upcoming',
-      icon: '\u{1F4C5}', title: 'Next savings contribution due tomorrow',
-      desc: 'Your \u20A685,000 weekly recapitalization target resets tomorrow. Early contributions build consistency.',
+      icon: '\u{1F4C5}', title: 'Next recapt contribution due tomorrow',
+      desc: 'Your \u20A685,000 weekly production readiness target resets tomorrow. Early contributions build consistency.',
       time: 'Tomorrow',
       actions: [
         { label: 'Save Now', action: 'save', primary: true },
@@ -324,7 +324,7 @@ export default function RecaptNotificationsScreen() {
       case 'save':
       case 'complete':
         checkIn(todayStr, 'completed', 85000)
-        setSavedMsg('Savings recorded! +85,000')
+        setSavedMsg('Recapt recorded! +85,000')
         setTimeout(() => setSavedMsg(''), 2500)
         setDismissed((prev) => new Set(prev).add(id))
         break
@@ -361,7 +361,7 @@ export default function RecaptNotificationsScreen() {
           </TouchableOpacity>
           <View style={s.headerText}>
             <Text style={s.headerTitle}>Notifications</Text>
-            <Text style={s.headerSub}>Recovery & Savings Center</Text>
+            <Text style={s.headerSub}>Production Readiness Center</Text>
           </View>
           <View style={s.headerCount}>
             <Text style={s.headerCountText}>{activeNotifs.length}</Text>
@@ -418,7 +418,7 @@ export default function RecaptNotificationsScreen() {
             <Text style={s.emptyIcon}>{'\u2705'}</Text>
             <Text style={s.emptyTitle}>All Clear</Text>
             <Text style={s.emptyDesc}>
-              {filter === 'all' ? 'No pending notifications. Your recovery tracking is up to date.' : `No ${PRIORITY_LABELS[filter as NotifPriority].toLowerCase()} notifications.`}
+              {filter === 'all' ? 'No pending notifications. Your recapt tracking is up to date.' : `No ${PRIORITY_LABELS[filter as NotifPriority].toLowerCase()} notifications.`}
             </Text>
           </Animated.View>
         ) : (
@@ -434,8 +434,8 @@ export default function RecaptNotificationsScreen() {
               <Text style={s.summaryTitle}>GOONA IQ Summary</Text>
               <Text style={s.summaryText}>
                 You have <Text style={{ fontWeight: '700' }}>{activeNotifs.length} notification{activeNotifs.length !== 1 ? 's' : ''}</Text> pending.
-                Your recovery readiness is at <Text style={{ fontWeight: '700' }}>{Math.round(computeReadiness(records) * 100)}%</Text>.
-                {computeStreak(records) >= 7 ? ' Strong streak momentum. Keep it up!' : ' Consistent savings accelerate your timeline.'}
+                Your production readiness is at <Text style={{ fontWeight: '700' }}>{Math.round(computeReadiness(records) * 100)}%</Text>.
+                {computeStreak(records) >= 7 ? ' Strong streak momentum. Keep it up!' : ' Consistent recapt accelerates your timeline.'}
               </Text>
             </LinearGradient>
           </Animated.View>

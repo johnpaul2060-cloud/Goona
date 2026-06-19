@@ -5,7 +5,7 @@ import {
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import GoonaIcon from '../../components/ui/GoonaIcon'
-import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users, UserPlus, ClipboardList, BarChart3, Clock, Bell, ChevronRight, ListChecks, Calendar, Activity, User, MapPin, Battery } from 'lucide-react-native'
+import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users, UserPlus, ClipboardList, BarChart3, Clock, Bell, ChevronRight, ListChecks, Calendar, Activity, User, MapPin, Battery, Wallet } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -593,6 +593,12 @@ function HeroCard() {
         <Text style={heroStyles.farmName}>Adewale Farms</Text>
         <Text style={heroStyles.subtext}>Operational Command Center</Text>
 
+        <View style={heroStyles.walletStrip}>
+          <GoonaIcon icon={Wallet} size={13} color="rgba(255,255,255,0.6)" />
+          <Text style={heroStyles.walletLabel}>Wallet Balance</Text>
+          <Text style={heroStyles.walletAmount}>₦1.25M</Text>
+        </View>
+
         <View style={heroStyles.nodes}>
           {[
             { label: 'CO', glow: true },
@@ -663,6 +669,21 @@ const heroStyles = StyleSheet.create({
   },
   subtext: {
     fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2,
+  },
+  walletStrip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginTop: 14,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 50,
+    paddingVertical: 8, paddingHorizontal: 14,
+    alignSelf: 'flex-start',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+  },
+  walletLabel: {
+    fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.6)',
+  },
+  walletAmount: {
+    fontSize: 13, fontWeight: '800', color: '#AEEA00', marginLeft: 4,
   },
   nodes: {
     position: 'absolute', right: 14, top: 0, bottom: 0,
@@ -877,6 +898,17 @@ export default function TeamScreen() {
           <View style={styles.qaRow}>
             <QACard
               variant="light"
+              title="GOONA Wallet"
+              desc="Receive, save and pay for farm operations."
+              tags={['Transfers', 'Pay Workers', 'Recapt']}
+              icon={
+                <GoonaIcon icon={Wallet} size={20} color="#2E7D32" />
+              }
+              onPress={() => router.push('/wallet')}
+            />
+            <View style={{ width: 14 }} />
+            <QACard
+              variant="light"
               title="Workforce Live"
               desc="Live workers, geofencing, attendance, safety and alerts."
               tags={['Geofencing', 'Live Map', 'Safety']}
@@ -885,7 +917,9 @@ export default function TeamScreen() {
               }
               onPress={() => router.push('/workforce-live')}
             />
-            <View style={{ width: 14 }} />
+          </View>
+          <View style={{ height: 14 }} />
+          <View style={styles.qaRow}>
             <QACard
               variant="light"
               title="Settings"

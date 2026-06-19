@@ -121,10 +121,10 @@ const bellStyles = StyleSheet.create({
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-const GROWTH_TARGETS = [
-  { title: 'New Poultry House', target: '₦2.5M', saved: '₦1.2M', progress: 0.48, timeline: 'Q3 2026', color: '#2E7D32' },
-  { title: 'Feed Mill Setup', target: '₦1.8M', saved: '₦450k', progress: 0.25, timeline: 'Q1 2027', color: '#1A56FF' },
-  { title: 'Cold Storage Unit', target: '₦800k', saved: '₦520k', progress: 0.65, timeline: 'Q4 2026', color: '#F59E0B' },
+const PRODUCTION_GOALS = [
+  { title: 'Broiler Restocking', target: '₦2.5M', saved: '₦1.2M', progress: 0.48, timeline: 'Q3 2026', color: '#2E7D32' },
+  { title: 'Feed Reserve', target: '₦1.8M', saved: '₦450k', progress: 0.25, timeline: 'Q1 2027', color: '#1A56FF' },
+  { title: 'Emergency Reserve', target: '₦800k', saved: '₦520k', progress: 0.65, timeline: 'Q4 2026', color: '#F59E0B' },
 ]
 
 function RecapitalizationHeroCard({ index }: { index: number }) {
@@ -163,7 +163,7 @@ function RecapitalizationHeroCard({ index }: { index: number }) {
 
         <View style={styles.heroHead}>
           <View>
-            <Text style={styles.heroLabel}>CAPITAL READINESS</Text>
+            <Text style={styles.heroLabel}>PRODUCTION READINESS</Text>
             <Text style={styles.heroAmount}>₦{totalSaved.toLocaleString()}</Text>
           </View>
           <View style={styles.heroRingWrap}>
@@ -184,11 +184,11 @@ function RecapitalizationHeroCard({ index }: { index: number }) {
           </View>
         </View>
 
-        <Text style={styles.heroStatus}>{'\u25CF'} {statusLabel} — {Math.round(progress * 100)}% of recapitalization goal</Text>
+        <Text style={styles.heroStatus}>{'\u25CF'} {statusLabel} — {Math.round(progress * 100)}% of production readiness goal</Text>
 
         <View style={styles.heroPills}>
           <View style={styles.heroPill}>
-            <Text style={styles.heroPillText}>Weekly: ₦85k recovery</Text>
+            <Text style={styles.heroPillText}>Weekly: ₦85k recapt</Text>
           </View>
           <View style={[styles.heroPill, { backgroundColor: 'rgba(174,234,0,0.18)' }]}>
             <Text style={[styles.heroPillText, { color: '#AEEA00' }]}>Streak: {streak}w</Text>
@@ -329,7 +329,7 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
           <Text style={styles.calTitle}>{monthName} {viewYear}</Text>
-          <Text style={styles.calSub}>Capital Recovery</Text>
+          <Text style={styles.calSub}>Recapt Progress</Text>
         </View>
         <View style={styles.calStreak}>
           <GoonaIcon icon={Flame} size={16} color="#F59E0B" />
@@ -426,7 +426,7 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
       {/* Legend */}
       <View style={styles.calLegend}>
         {[
-          { k: 'completed', l: 'Saved' },
+          { k: 'completed', l: 'Completed' },
           { k: 'exceeded', l: 'Exceeded' },
           { k: 'partial', l: 'Partial' },
           { k: 'missed', l: 'Missed' },
@@ -479,9 +479,9 @@ function DayDetailModal({
     upcoming: '#D97706', forecast: '#D1D5DB', none: '#94A3B8',
   }
   const sl: Record<string, string> = {
-    completed: 'Saved Successfully', exceeded: 'Exceeded Target',
+    completed: 'Recapt Completed', exceeded: 'Exceeded Target',
     partial: 'Partial Contribution', missed: 'Missed Contribution',
-    upcoming: 'Upcoming Savings', forecast: 'Forecast Day', none: 'No Record',
+    upcoming: 'Upcoming Recapt', forecast: 'Forecast Day', none: 'No Record',
   }
 
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -489,11 +489,11 @@ function DayDetailModal({
 
   let insight = ''
   if (status === 'missed') insight = 'This missed contribution may delay your production cycle restart by approximately 3 days.'
-  else if (status === 'completed' && streak > 7) insight = 'Your consistency is building strong financial runway for the next batch.'
-  else if (status === 'exceeded') insight = 'Over-contributing accelerates your recapitalization timeline. Excellent discipline.'
-  else if (status === 'partial') insight = 'Partial contributions help, but try to meet the full target for optimal recovery pacing.'
-  else if (isFuture) insight = 'Scheduled savings day. Early contributions reduce financial pressure later in the week.'
-  else insight = 'Every recovery day brings you closer to your next production cycle. Stay consistent.'
+  else if (status === 'completed' && streak > 7) insight = 'Your consistency is building strong preparation for the next batch.'
+  else if (status === 'exceeded') insight = 'Over-contributing accelerates your production readiness timeline. Excellent discipline.'
+  else if (status === 'partial') insight = 'Partial contributions help, but try to meet the full target for optimal readiness pacing.'
+  else if (isFuture) insight = 'Scheduled recapt day. Early contributions reduce pressure later in the cycle.'
+  else insight = 'Every recapt day brings you closer to your next production cycle. Stay consistent.'
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -580,16 +580,16 @@ function RecapitalizationProgressCard({ index }: { index: number }) {
   const overallProgress = Math.min(totalSaved / totalTarget, 1)
 
   const dynamicSteps = [
-    { label: 'Next Cycle Capital', value: `\u20A6${Math.min(totalSaved, 1800000).toLocaleString()}`, progress: Math.min(totalSaved / 1800000, 1), color: '#2E7D32' },
-    { label: 'Feed & Medication Fund', value: `\u20A6${Math.min(Math.round(totalSaved * 0.4), 950000).toLocaleString()}`, progress: Math.min((totalSaved * 0.4) / 950000, 1), color: '#16A34A' },
-    { label: 'Infrastructure Budget', value: `\u20A6${Math.min(Math.round(totalSaved * 0.2), 420000).toLocaleString()}`, progress: Math.min((totalSaved * 0.2) / 420000, 1), color: '#1A56FF' },
+    { label: 'Restocking Fund', value: `\u20A6${Math.min(totalSaved, 1800000).toLocaleString()}`, progress: Math.min(totalSaved / 1800000, 1), color: '#2E7D32' },
+    { label: 'Feed Reserve', value: `\u20A6${Math.min(Math.round(totalSaved * 0.4), 950000).toLocaleString()}`, progress: Math.min((totalSaved * 0.4) / 950000, 1), color: '#16A34A' },
+    { label: 'Equipment Replacement', value: `\u20A6${Math.min(Math.round(totalSaved * 0.2), 420000).toLocaleString()}`, progress: Math.min((totalSaved * 0.2) / 420000, 1), color: '#1A56FF' },
     { label: 'Emergency Reserve', value: `\u20A6${Math.min(Math.round(totalSaved * 0.15), 500000).toLocaleString()}`, progress: Math.min((totalSaved * 0.15) / 500000, 1), color: '#7C3AED' },
   ]
 
   return (
     <Animated.View style={[animStyle, styles.reinvestCard]}>
       <View style={styles.secHead}>
-        <Text style={styles.secTitle}>Recapitalization Progress</Text>
+        <Text style={styles.secTitle}>Production Readiness Progress</Text>
         <Text style={styles.secLink}>{Math.round(overallProgress * 100)}%</Text>
       </View>
 
@@ -598,7 +598,7 @@ function RecapitalizationProgressCard({ index }: { index: number }) {
           <AnimatedProgressFill progress={overallProgress} color="#2E7D32" />
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-          <Text style={styles.overallText}>{'\u20A6'}{totalSaved.toLocaleString()} saved</Text>
+          <Text style={styles.overallText}>{'\u20A6'}{totalSaved.toLocaleString()} recapt</Text>
           <Text style={styles.overallTargetText}>Target: {'\u20A6'}2,500,000</Text>
         </View>
       </View>
@@ -619,7 +619,7 @@ function RecapitalizationProgressCard({ index }: { index: number }) {
               <View style={styles.reinvestTrack}>
                 <AnimatedProgressFill progress={step.progress} color={step.color} />
               </View>
-              <Text style={styles.reinvestPercent}>{Math.round(step.progress * 100)}% funded</Text>
+              <Text style={styles.reinvestPercent}>{Math.round(step.progress * 100)}% of target</Text>
             </View>
           </View>
         )
@@ -664,10 +664,10 @@ function TransactionCard({ index }: { index: number }) {
       const dayDiff = Math.floor((now.getTime() - date.getTime()) / 86400000)
       const timeStr = dayDiff === 0 ? 'Today' : dayDiff === 1 ? 'Yesterday' : `${dayDiff} days ago`
       if (rec.status === 'completed') {
-        return { title: `Weekly savings contribution`, amount: `+${rec.amount ? '\u20A6' + rec.amount.toLocaleString() : ''}`, positive: true, status: 'Verified', time: timeStr }
+        return { title: `Weekly recapt contribution`, amount: `+${rec.amount ? '\u20A6' + rec.amount.toLocaleString() : ''}`, positive: true, status: 'Verified', time: timeStr }
       }
       if (rec.status === 'exceeded') {
-        return { title: `Extra savings added to recovery`, amount: `+${rec.amount ? '\u20A6' + rec.amount.toLocaleString() : ''}`, positive: true, status: 'Verified', time: timeStr }
+        return { title: `Extra added to recapt`, amount: `+${rec.amount ? '\u20A6' + rec.amount.toLocaleString() : ''}`, positive: true, status: 'Verified', time: timeStr }
       }
       if (rec.status === 'partial') {
         return { title: `Partial contribution`, amount: `+${rec.amount ? '\u20A6' + rec.amount.toLocaleString() : ''}`, positive: true, status: 'Pending', time: timeStr }
@@ -690,7 +690,7 @@ function TransactionCard({ index }: { index: number }) {
   return (
     <Animated.View style={[animStyle, pressStyle, styles.txCard]} onTouchStart={onPressIn} onTouchEnd={onPressOut}>
       <View style={styles.secHead}>
-        <Text style={styles.secTitle}>Capital Activity</Text>
+        <Text style={styles.secTitle}>Recapt Activity</Text>
         <Text style={styles.secLink}>{activity.length} entries</Text>
       </View>
 
@@ -717,7 +717,7 @@ function TransactionCard({ index }: { index: number }) {
 
 
 
-function GrowthTargetCard({ index }: { index: number }) {
+function ProductionGoalCard({ index }: { index: number }) {
   const animStyle = useStaggerEntry(index, 100)
   const { style: pressStyle, onPressIn, onPressOut } = usePressScale()
   const records = useRecoveryStore((s) => s.records)
@@ -728,7 +728,7 @@ function GrowthTargetCard({ index }: { index: number }) {
     if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
   }
 
-  const targets = GROWTH_TARGETS.map((g) => {
+  const targets = PRODUCTION_GOALS.map((g) => {
     const saved = Math.round(totalSaved * (g.progress * 0.3 + 0.1))
     const progress = Math.min(saved / parseInt(g.target.replace(/[^0-9]/g, '')), 1)
     return { ...g, saved: '\u20A6' + saved.toLocaleString(), progress }
@@ -737,7 +737,7 @@ function GrowthTargetCard({ index }: { index: number }) {
   return (
     <Animated.View style={[animStyle, pressStyle, styles.goalCard]} onTouchStart={onPressIn} onTouchEnd={onPressOut}>
       <View style={styles.secHead}>
-        <Text style={styles.secTitle}>Growth Targets</Text>
+        <Text style={styles.secTitle}>Production Goals</Text>
         <Text style={styles.secLink}>See All</Text>
       </View>
 
@@ -759,7 +759,7 @@ function GrowthTargetCard({ index }: { index: number }) {
             <AnimatedProgressFill progress={goal.progress} color={goal.color} />
           </View>
           <View style={styles.goalMeta}>
-            <Text style={styles.goalSaved}>{goal.saved} recovered</Text>
+            <Text style={styles.goalSaved}>{goal.saved} recapt</Text>
             <Text style={styles.goalTarget}>Target: {goal.target}</Text>
           </View>
         </View>
@@ -827,10 +827,10 @@ export default function RecapitalizationDashboardScreen() {
   }
   const weekRecovery = Math.round(totalSaved / Math.max(1, missedCount + 1))
   const finItems = [
-    { label: 'Weekly Capital Recovery', value: `₦${weekRecovery.toLocaleString()}`, trend: '+12%', trendUp: true, color: '#16A34A', bars: [30, 45, 55, 40, 65], bg: '#F0FDF4' },
-    { label: 'Allocated Capital', value: `₦${totalSaved.toLocaleString()}`, trend: '+8%', trendUp: true, color: '#1A56FF', bars: [50, 60, 45, 55, 70], bg: '#EEF3FF' },
+    { label: 'Weekly Recapt Progress', value: `₦${weekRecovery.toLocaleString()}`, trend: '+12%', trendUp: true, color: '#16A34A', bars: [30, 45, 55, 40, 65], bg: '#F0FDF4' },
+    { label: 'Production Fund', value: `₦${totalSaved.toLocaleString()}`, trend: '+8%', trendUp: true, color: '#1A56FF', bars: [50, 60, 45, 55, 70], bg: '#EEF3FF' },
     { label: 'Partial Contributions', value: `₦${totalPartial.toLocaleString()}`, trend: '+2%', trendUp: true, color: '#F59E0B', bars: [40, 35, 50, 45, 30], bg: '#FFFBEB' },
-    { label: 'Operational Reserve', value: `₦${Math.round(totalSaved * 0.25).toLocaleString()}`, trend: '+5%', trendUp: true, color: '#7C3AED', bars: [20, 35, 40, 50, 65], bg: '#F3E8FF' },
+    { label: 'Emergency Reserve', value: `₦${Math.round(totalSaved * 0.25).toLocaleString()}`, trend: '+5%', trendUp: true, color: '#7C3AED', bars: [20, 35, 40, 50, 65], bg: '#F3E8FF' },
   ]
 
   return (
@@ -843,7 +843,7 @@ export default function RecapitalizationDashboardScreen() {
         <View style={styles.headerRow}>
           <View style={{ flex: 1, marginRight: S.pad(12) }}>
             <Text style={styles.headerTitle}>Recapitalization</Text>
-            <Text style={styles.headerSub}>Plan your production capital recovery</Text>
+            <Text style={styles.headerSub}>Prepare for your next production cycle</Text>
           </View>
           <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7} onPress={() => router.push('/recapt-notifications')}>
             <AnimatedBell />
@@ -863,7 +863,7 @@ export default function RecapitalizationDashboardScreen() {
         <RecapitalizationHeroCard index={0} />
 
         <View style={styles.sectionHead}>
-          <Text style={styles.secTitle}>Financial Overview</Text>
+          <Text style={styles.secTitle}>Production Readiness</Text>
         </View>
         <ScrollView
           horizontal
@@ -884,9 +884,9 @@ export default function RecapitalizationDashboardScreen() {
           contentContainerStyle={styles.horizScrollInner}
         >
           <QuickActionButton label="Plan Recapt" icon={<GoonaIcon icon={Plus} size={18} color="#16A34A" />} index={0} onPress={() => router.push('/plan-recapt')} />
-          <QuickActionButton label="Allocate Profit" icon={<GoonaIcon icon={ShieldCheck} size={18} color="#2E7D32" />} index={1} />
-          <QuickActionButton label="View Forecast" icon={<GoonaIcon icon={TrendingUp} size={18} color="#2E7D32" />} index={2} />
-          <QuickActionButton label="Generate Report" icon={<GoonaIcon icon={FileText} size={18} color="#2E7D32" />} index={3} />
+          <QuickActionButton label="Fund Recapt" icon={<GoonaIcon icon={ShieldCheck} size={18} color="#2E7D32" />} index={1} onPress={() => router.push('/fund-recapt')} />
+          <QuickActionButton label="Project Timeline" icon={<GoonaIcon icon={TrendingUp} size={18} color="#2E7D32" />} index={2} />
+          <QuickActionButton label="Readiness Report" icon={<GoonaIcon icon={FileText} size={18} color="#2E7D32" />} index={3} />
         </ScrollView>
 
         <RecoveryTrackerCalendar index={1} onDayPress={handleDayPress} />
@@ -895,7 +895,7 @@ export default function RecapitalizationDashboardScreen() {
 
         <GoonaIqRecoveryInsight index={4} />
 
-        <GrowthTargetCard index={5} />
+        <ProductionGoalCard index={5} />
       </ScrollView>
 
       <RecoveryCheckInModal
@@ -924,7 +924,7 @@ function GoonaIqRecoveryInsight({ index }: { index: number }) {
   return (
     <Animated.View style={[animStyle, styles.behaviorCard]}>
       <View style={styles.secHead}>
-        <Text style={styles.secTitle}>{'\u{1F9E0}'} GOONA IQ Recovery Insight</Text>
+        <Text style={styles.secTitle}>{'\u{1F9E0}'} GOONA IQ Recapt Insight</Text>
       </View>
       <View style={styles.insightMetaRow}>
         <View style={[styles.behaviorChip, { backgroundColor: '#F0FDF4' }]}>
@@ -950,12 +950,12 @@ function GoonaIqRecoveryInsight({ index }: { index: number }) {
       ))}
       {consistency >= 80 && (
         <View style={[styles.achievementBanner, { backgroundColor: '#F0FDF4', borderLeftColor: '#16A34A' }]}>
-          <Text style={[styles.achievementText, { color: '#166534' }]}>{'\u{1F3C6}'} Strong recovery discipline. You are on track for timely production cycle restart.</Text>
+          <Text style={[styles.achievementText, { color: '#166534' }]}>{'\u{1F3C6}'} Strong preparation discipline. You are on track for timely production cycle restart.</Text>
         </View>
       )}
       {stats.missed > 0 && (
         <View style={[styles.warningBanner, { backgroundColor: '#FFF1F2', borderLeftColor: '#EF4444' }]}>
-          <Text style={[styles.warningText, { color: '#991B1B' }]}>{'\u26A0\uFE0F'} Missing contributions delays your restart timeline. Try to stay consistent.</Text>
+          <Text style={[styles.warningText, { color: '#991B1B' }]}>{'\u26A0\uFE0F'} Missed recapt delays your restart timeline. Try to stay consistent.</Text>
         </View>
       )}
     </Animated.View>

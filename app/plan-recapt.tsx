@@ -1,590 +1,1109 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
-  StyleSheet, KeyboardAvoidingView, Platform, Keyboard,
+  StyleSheet, Platform, Keyboard,
 } from 'react-native'
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, CheckCircle, ClipboardList } from 'lucide-react-native'
+import {
+  ArrowLeft, CheckCircle, Target, Calendar, Plus,
+} from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
-import { BlurView } from 'expo-blur'
-import Animated, {
-  useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
-  FadeInDown, FadeInUp,
-} from 'react-native-reanimated'
+import { LinearGradient } from 'expo-linear-gradient'
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../components/navigation/BottomDock'
 
-function BackIcon() {
-  return <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+const PROJECTS = [
+  { icon: '\u{1F425}', label: 'Restocking', purposes: ['Broilers', 'Layers', 'Fingerlings', 'Livestock replacement'] },
+  { icon: '\u{1F33E}', label: 'Feed Purchase', purposes: ['Feed reserve', 'Bulk feed purchase'] },
+  { icon: '\u{1F477}', label: 'Staff Salaries', purposes: ['Monthly salaries', 'Casual workers', 'Farm attendants', 'Security personnel'] },
+  { icon: '\u{1F3D7}\uFE0F', label: 'Infrastructure', purposes: ['New poultry pen', 'New fish pond', 'Farm fencing', 'Water systems', 'Farm expansion'] },
+  { icon: '\u{1F69C}', label: 'Equipment Upgrade', purposes: ['Generators', 'Feeders', 'Drinkers', 'Solar systems', 'Machinery'] },
+  { icon: '\u2795', label: 'Custom Project', purposes: [] },
+] as const
+
+function calcDaily(amount: number, days: number) {
+  if (days <= 0) return 0
+  return Math.round(amount / days)
 }
 
-function PulseDot({ color }: { color: string }) {
-  const opacity = useSharedValue(1)
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(withTiming(0.3, { duration: 2200 }), withTiming(1, { duration: 2200 })),
-      -1, true
-    )
-  }, [])
-  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
-  return <Animated.View style={[{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: color }, animStyle]} />
+function daysBetween(target: Date) {
+  const now = new Date()
+  const diff = target.getTime() - now.getTime()
+  return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
-const RECOVERY_OPTIONS = ['Daily', 'Weekly', 'Monthly']
-const TIMELINE_OPTIONS = ['8 weeks', '12 weeks', '16 weeks', 'Custom']
+function formatCurrency(n: number) {
+  return '\u20A6' + n.toLocaleString()
+}
 
-const ALLOCATION_ITEMS = [
-  { key: 'feed', label: 'Feed Budget', color: '#2E7D32' },
-  { key: 'medication', label: 'Medication', color: '#16A34A' },
-  { key: 'doc', label: 'DOC Purchase', color: '#2563EB' },
-  { key: 'workers', label: 'Workers', color: '#F59E0B' },
-  { key: 'utilities', label: 'Utilities', color: '#8B5CF6' },
-  { key: 'infrastructure', label: 'Infrastructure', color: '#EC4899' },
-  { key: 'emergency', label: 'Emergency Reserve', color: '#EF4444' },
-]
+function formatDateDisplay(date: Date) {
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
 
-function SegmentedControl({
-  options, selected, onSelect,
-}: {
-  options: string[]
-  selected: string
-  onSelect: (v: string) => void
-}) {
-  return (
-    <View style={styles.segWrap}>
-      {options.map((opt) => {
-        const active = opt === selected
-        return (
-          <TouchableOpacity
-            key={opt}
-            style={[styles.segBtn, active && styles.segBtnActive]}
-            activeOpacity={0.85}
-            onPress={() => onSelect(opt)}
-          >
-            <Text style={[styles.segBtnText, active && styles.segBtnTextActive]}>{opt}</Text>
-          </TouchableOpacity>
-        )
-      })}
-    </View>
-  )
+function getNextContributionDate(plan: 'Daily' | 'Weekly' | 'Monthly'): Date {
+  const now = new Date()
+  switch (plan) {
+    case 'Daily': {
+      const d = new Date(now)
+      d.setDate(d.getDate() + 1)
+      return d
+    }
+    case 'Weekly': {
+      const d = new Date(now)
+      const daysUntilFriday = (5 - d.getDay() + 7) % 7
+      d.setDate(d.getDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday))
+      return d
+    }
+    case 'Monthly': {
+      return new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    }
+  }
 }
 
 export default function PlanRecaptScreen() {
   const insets = useSafeAreaInsets()
-  const [keyboardH, setKeyboardH] = useState(0)
 
-  useEffect(() => {
-    const show = Keyboard.addListener('keyboardWillShow', e => setKeyboardH(e.endCoordinates.height))
-    const hide = Keyboard.addListener('keyboardWillHide', () => setKeyboardH(0))
-    return () => { show.remove(); hide.remove() }
+  const [goalName, setGoalName] = useState('')
+  const [amountRaw, setAmountRaw] = useState('')
+  const [targetDate, setTargetDate] = useState<Date | null>(null)
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [tempDate, setTempDate] = useState<Date | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly')
+  const [showSummary, setShowSummary] = useState(false)
+
+  const targetAmount = Math.max(0, parseInt(amountRaw || '0', 10))
+  const displayAmount = amountRaw ? targetAmount.toLocaleString() : ''
+  const daysLeft = targetDate ? daysBetween(targetDate) : 0
+
+  const dailyReq = targetAmount > 0 && daysLeft > 0 ? calcDaily(targetAmount, daysLeft) : 0
+  const weeklyReq = Math.round(dailyReq * 7)
+  const monthlyReq = Math.round(dailyReq * 30.44)
+
+  const selectedProject = useMemo(
+    () => PROJECTS.find(p => p.label === goalName) || null,
+    [goalName],
+  )
+
+  const recommendedPlan = useMemo(() => {
+    if (targetAmount <= 0 || daysLeft <= 0) return 'Monthly'
+    const weeklyAmount = Math.round(targetAmount / daysLeft * 7)
+    if (weeklyAmount < 10000) return 'Daily'
+    if (weeklyAmount > 100000) return 'Monthly'
+    return 'Weekly'
+  }, [targetAmount, daysLeft])
+
+  const recommendationReason = useMemo(() => {
+    switch (recommendedPlan) {
+      case 'Daily': return 'This provides the highest chance of reaching the target consistently.'
+      case 'Weekly': return 'Balanced weekly contributions align with market schedules.'
+      case 'Monthly': return 'Best for predictable farm income cycles.'
+    }
+  }, [recommendedPlan])
+
+  const recommendedAmount = recommendedPlan === 'Daily'
+    ? dailyReq
+    : recommendedPlan === 'Weekly'
+      ? weeklyReq
+      : monthlyReq
+
+  const canSubmit =
+    goalName.trim().length > 0 &&
+    targetAmount > 0 &&
+    targetDate !== null &&
+    targetDate > new Date()
+
+  const handleChipPress = useCallback((label: string) => {
+    if (label === 'Custom Project') setGoalName('')
+    else setGoalName(label)
   }, [])
 
-  const [prevBatchCost, setPrevBatchCost] = useState('')
-  const [targetCapital, setTargetCapital] = useState('')
-  const [birdQty, setBirdQty] = useState('')
-  const [prodDuration, setProdDuration] = useState('')
+  const onDateChange = useCallback(
+    (_event: DateTimePickerEvent, date?: Date) => {
+      if (Platform.OS === 'android') {
+        setShowDatePicker(false)
+        if (_event.type === 'set' && date) setTargetDate(date)
+      } else {
+        if (date) setTempDate(date)
+      }
+    },
+    [],
+  )
 
-  const [alloc, setAlloc] = useState<Record<string, string>>({
-    feed: '', medication: '', doc: '', workers: '',
-    utilities: '', infrastructure: '', emergency: '',
-  })
+  const handleCreate = () => {
+    if (!canSubmit) return
+    Keyboard.dismiss()
+    setShowSummary(true)
+  }
 
-  const [recoveryPref, setRecoveryPref] = useState('Weekly')
-  const [timelinePref, setTimelinePref] = useState('12 weeks')
+  const nextAmount =
+    selectedPlan === 'Daily'
+      ? dailyReq
+      : selectedPlan === 'Weekly'
+        ? weeklyReq
+        : monthlyReq
 
-  const [feedPriceInc, setFeedPriceInc] = useState('5')
-  const [mortalityAllow, setMortalityAllow] = useState('3')
-  const [emergencyBuffer, setEmergencyBuffer] = useState('10')
+  const progress = 0.28
+  const savedAmount = 850000
 
-  const [focusedField, setFocusedField] = useState<string | null>(null)
+  const dueLabels: Record<string, string> = {
+    Daily: 'Tomorrow',
+    Weekly: 'Friday',
+    Monthly: '1st of next month',
+  }
+
+  const nextContributionDate = useMemo(
+    () => getNextContributionDate(selectedPlan),
+    [selectedPlan],
+  )
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollInner,
+          { paddingBottom: insets.bottom + 140 },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[
-            styles.scrollInner,
-            { paddingBottom: keyboardH > 0 ? keyboardH + 100 : 100 },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        {/* ── HERO HEADER ── */}
+        <Animated.View
+          entering={FadeInDown.duration(600).springify()}
+          style={[styles.heroSection, { paddingTop: insets.top + 16 }]}
         >
-          {/* ── HERO SECTION ── */}
-          <View style={[styles.heroSection, { paddingTop: insets.top + 20 }]}>
-            <View style={styles.heroGlow} pointerEvents="none">
-              <ExpoLinearGradient
-                colors={['rgba(46,125,50,0.10)', 'transparent']}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-              />
-            </View>
-            <View style={styles.heroOrb1} pointerEvents="none" />
-            <View style={styles.heroOrb2} pointerEvents="none" />
+          <TouchableOpacity
+            style={styles.backBtn}
+            activeOpacity={0.7}
+            onPress={() => router.back()}
+          >
+            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.heroBack} activeOpacity={0.7} onPress={() => router.back()}>
-              <BackIcon />
-            </TouchableOpacity>
+          <Text style={styles.heroTitle}>Plan Next Project</Text>
+          <Text style={styles.heroSub}>
+            Save towards your next farm expenditure.
+          </Text>
+        </Animated.View>
 
-            <Animated.View entering={FadeInDown.duration(700).springify()}>
-              <Text style={styles.heroPreTitle}>Capital Planning</Text>
-              <Text style={styles.heroTitle}>Plan your{'\n'}Recapitalization</Text>
-              <Text style={styles.heroSub}>
-                AI-powered capital intelligence for your next production cycle.
-              </Text>
-            </Animated.View>
-          </View>
-
-          {/* ── FORECAST PREVIEW ── */}
-          <Animated.View entering={FadeInUp.duration(700).delay(200).springify()} style={styles.forecastOuter}>
-            <BlurView intensity={45} tint="light" style={styles.forecastBlur}>
-              <ExpoLinearGradient
-                colors={['rgba(255,255,255,0.85)', 'rgba(240,253,244,0.5)']}
-                style={styles.forecastBg}
+        {showSummary ? (
+          /* ── SUMMARY VIEW ── */
+          <>
+            <Animated.View
+              entering={FadeInUp.duration(400).springify()}
+              style={styles.summaryCard}
+            >
+              <LinearGradient
+                colors={['#2E7D32', '#1B5E20']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.summaryGradient}
               >
-                <View style={styles.forecastContent}>
-                  <View style={styles.forecastCol}>
-                    <View style={styles.forecastLabelRow}>
-                      <PulseDot color="#2E7D32" />
-                      <Text style={styles.forecastLabel}>Capital Readiness</Text>
-                    </View>
-                    <Text style={styles.forecastValue}>~11 weeks</Text>
-                    <Text style={styles.forecastSub}>Based on current inputs</Text>
+                <View style={styles.summaryGlow1} pointerEvents="none" />
+                <View style={styles.summaryGlow2} pointerEvents="none" />
+
+                <View style={styles.summaryHead}>
+                  <View style={styles.summaryIcon}>
+                    <GoonaIcon icon={Target} size={18} color="#2E7D32" />
                   </View>
-                  <View style={styles.forecastDivider} />
-                  <View style={styles.forecastCol}>
-                    <View style={styles.forecastLabelRow}>
-                      <PulseDot color="#16A34A" />
-                      <Text style={styles.forecastLabel}>Weekly Recovery</Text>
-                    </View>
-                    <Text style={styles.forecastValue}>₦108,000</Text>
-                    <Text style={styles.forecastSub}>Estimated per cycle</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.summaryPre}>Project</Text>
+                    <Text style={styles.summaryName}>{goalName}</Text>
                   </View>
                 </View>
-                <View style={styles.forecastGlow} pointerEvents="none" />
-              </ExpoLinearGradient>
-            </BlurView>
-          </Animated.View>
 
-          {/* ── PRODUCTION SETUP ── */}
-          <Animated.View entering={FadeInUp.duration(700).delay(350).springify()}>
-            <View style={styles.secHeadModern}>
-              <View style={styles.secAccent} />
-              <Text style={styles.secTitleModern}>Production Setup</Text>
-            </View>
-            <View style={styles.groupCard}>
-              <View style={[styles.groupField, focusedField === 'birdQty' && styles.groupFieldFocused]}>
-                <Text style={styles.groupFieldLabel}>Bird Quantity</Text>
-                <View style={styles.groupFieldRow}>
-                  <TextInput
-                    style={styles.groupFieldInput}
-                    value={birdQty}
-                    onChangeText={setBirdQty}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    placeholderTextColor="#CBD5E1"
-                    onFocus={() => setFocusedField('birdQty')}
-                    onBlur={() => setFocusedField(null)}
-                  />
-                </View>
-              </View>
-              <View style={[styles.groupField, styles.groupFieldLast, focusedField === 'prodDuration' && styles.groupFieldFocused]}>
-                <Text style={styles.groupFieldLabel}>Production Duration</Text>
-                <View style={styles.groupFieldRow}>
-                  <TextInput
-                    style={styles.groupFieldInput}
-                    value={prodDuration}
-                    onChangeText={setProdDuration}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    placeholderTextColor="#CBD5E1"
-                    onFocus={() => setFocusedField('prodDuration')}
-                    onBlur={() => setFocusedField(null)}
-                  />
-                  <Text style={styles.groupFieldSuffix}>weeks</Text>
-                </View>
-              </View>
-            </View>
-          </Animated.View>
+                <View style={styles.summaryDivider} />
 
-          {/* ── CAPITAL PLANNING ── */}
-          <Animated.View entering={FadeInUp.duration(700).delay(500).springify()}>
-            <View style={styles.secHeadModern}>
-              <View style={[styles.secAccent, { backgroundColor: '#2563EB' }]} />
-              <Text style={styles.secTitleModern}>Capital Planning</Text>
-            </View>
-            <View style={styles.groupCard}>
-              <View style={[styles.groupField, focusedField === 'prevBatchCost' && styles.groupFieldFocused]}>
-                <Text style={styles.groupFieldLabel}>Previous Batch Cost</Text>
-                <View style={styles.groupFieldRow}>
-                  <Text style={styles.groupFieldPrefix}>₦</Text>
-                  <TextInput
-                    style={styles.groupFieldInput}
-                    value={prevBatchCost}
-                    onChangeText={setPrevBatchCost}
-                    keyboardType="numeric"
-                    placeholder="0.00"
-                    placeholderTextColor="#CBD5E1"
-                    onFocus={() => setFocusedField('prevBatchCost')}
-                    onBlur={() => setFocusedField(null)}
-                  />
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Target Amount</Text>
+                  <Text style={styles.summaryValue}>{formatCurrency(targetAmount)}</Text>
                 </View>
-              </View>
-              <View style={[styles.groupField, styles.groupFieldLast, focusedField === 'targetCapital' && styles.groupFieldFocused]}>
-                <Text style={styles.groupFieldLabel}>Target Capital</Text>
-                <View style={styles.groupFieldRow}>
-                  <Text style={styles.groupFieldPrefix}>₦</Text>
-                  <TextInput
-                    style={styles.groupFieldInput}
-                    value={targetCapital}
-                    onChangeText={setTargetCapital}
-                    keyboardType="numeric"
-                    placeholder="0.00"
-                    placeholderTextColor="#CBD5E1"
-                    onFocus={() => setFocusedField('targetCapital')}
-                    onBlur={() => setFocusedField(null)}
-                  />
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Contribution Plan</Text>
+                  <Text style={styles.summaryValue}>{selectedPlan}</Text>
                 </View>
-              </View>
-            </View>
-          </Animated.View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Target Date</Text>
+                  <Text style={styles.summaryValue}>
+                    {targetDate ? formatDateDisplay(targetDate) : ''}
+                  </Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Projected Completion</Text>
+                  <Text style={styles.summaryValue}>
+                    {targetDate ? formatDateDisplay(targetDate) : ''}
+                  </Text>
+                </View>
 
-          {/* ── OPERATIONAL ALLOCATION ── */}
-          <Animated.View entering={FadeInUp.duration(700).delay(650).springify()}>
-            <View style={styles.secHeadModern}>
-              <View style={[styles.secAccent, { backgroundColor: '#16A34A' }]} />
-              <Text style={styles.secTitleModern}>Operational Allocation</Text>
-            </View>
-            <View style={styles.allocCard}>
-              {ALLOCATION_ITEMS.map((item) => (
-                <View key={item.key} style={styles.allocRow}>
-                  <View style={styles.allocLeft}>
-                    <View style={[styles.allocDot, { backgroundColor: item.color }]} />
-                    <Text style={styles.allocLabel}>{item.label}</Text>
+                <View style={styles.summaryDivider} />
+
+                <View style={styles.summaryProgressSection}>
+                  <View style={styles.summaryProgressHead}>
+                    <Text style={styles.summaryProgressLabel}>Progress</Text>
+                    <Text style={styles.summaryProgressPct}>
+                      {Math.round(progress * 100)}%
+                    </Text>
                   </View>
-                  <View style={styles.allocInputGroup}>
-                    <Text style={styles.allocPrefix}>₦</Text>
-                    <TextInput
-                      style={styles.allocInput}
-                      value={alloc[item.key]}
-                      onChangeText={(v) => setAlloc(prev => ({ ...prev, [item.key]: v }))}
-                      keyboardType="numeric"
-                      placeholder="0"
-                      placeholderTextColor="#CBD5E1"
+                  <View style={styles.summaryProgressTrack}>
+                    <View
+                      style={[
+                        styles.summaryProgressFill,
+                        { width: `${progress * 100}%` },
+                      ]}
                     />
                   </View>
                 </View>
-              ))}
-            </View>
-          </Animated.View>
 
-          {/* ── RECOVERY PREFERENCE ── */}
-          <View style={styles.secHead}>
-            <Text style={styles.secTitle}>Recovery Preference</Text>
-          </View>
-          <SegmentedControl options={RECOVERY_OPTIONS} selected={recoveryPref} onSelect={setRecoveryPref} />
+                <View style={styles.summaryDetailGrid}>
+                  <View style={styles.summaryDetailItem}>
+                    <Text style={styles.summaryDetailLabel}>Saved</Text>
+                    <Text style={styles.summaryDetailValue}>{formatCurrency(savedAmount)}</Text>
+                  </View>
+                  <View style={styles.summaryDetailDivider} />
+                  <View style={styles.summaryDetailItem}>
+                    <Text style={styles.summaryDetailLabel}>Next</Text>
+                    <Text style={styles.summaryDetailValue}>{formatCurrency(nextAmount)}</Text>
+                  </View>
+                  <View style={styles.summaryDetailDivider} />
+                  <View style={styles.summaryDetailItem}>
+                    <Text style={styles.summaryDetailLabel}>Due</Text>
+                    <Text style={styles.summaryDetailValue}>{dueLabels[selectedPlan]}</Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </Animated.View>
 
-          {/* ── TIMELINE PREFERENCE ── */}
-          <View style={styles.secHead}>
-            <Text style={styles.secTitle}>Timeline Preference</Text>
-          </View>
-          <SegmentedControl options={TIMELINE_OPTIONS} selected={timelinePref} onSelect={setTimelinePref} />
+            <Animated.View
+              entering={FadeInUp.duration(400).delay(100).springify()}
+              style={styles.summaryAction}
+            >
+              <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.85}>
+                <GoonaIcon icon={CheckCircle} size={20} color="#FFFFFF" />
+                <Text style={styles.confirmBtnText}>Confirm Project Plan</Text>
+              </TouchableOpacity>
 
-          {/* ── PLANNING ASSUMPTIONS ── */}
-          <View style={styles.secHead}>
-            <Text style={styles.secTitle}>Planning Assumptions</Text>
-          </View>
-          <View style={styles.assumptionsCard}>
-            <View style={styles.assumptionRow}>
-              <Text style={styles.assumptionLabel}>Feed Price Increase</Text>
-              <View style={styles.assumptionInputGroup}>
+              <TouchableOpacity
+                style={styles.editBtn}
+                activeOpacity={0.7}
+                onPress={() => setShowSummary(false)}
+              >
+                <Text style={styles.editBtnText}>Edit Plan</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </>
+        ) : (
+          /* ── FORM VIEW ── */
+          <>
+            {/* Project Selection Cards */}
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(80).springify()}
+            >
+              <Text style={styles.sectionLabel}>Select Project</Text>
+              <View style={styles.projectRow}>
+                {PROJECTS.map((project) => {
+                  const active = goalName === project.label
+                  return (
+                    <TouchableOpacity
+                      key={project.label}
+                      activeOpacity={0.85}
+                      style={[styles.projectCard, active && styles.projectCardActive]}
+                      onPress={() => handleChipPress(project.label)}
+                    >
+                      <Text style={styles.projectEmoji}>{project.icon}</Text>
+                      <Text
+                        style={[
+                          styles.projectLabel,
+                          active && styles.projectLabelActive,
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {project.label}
+                      </Text>
+                      {active && (
+                        <View style={styles.projectCheck}>
+                          <GoonaIcon icon={CheckCircle} size={16} color="#2E7D32" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            </Animated.View>
+
+            {/* Category Purposes */}
+            {selectedProject && selectedProject.purposes.length > 0 && (
+              <Animated.View
+                entering={FadeInDown.duration(300).springify()}
+                style={styles.purposesCard}
+              >
+                <Text style={styles.purposesTitle}>What this covers</Text>
+                <View style={styles.purposesList}>
+                  {selectedProject.purposes.map((purpose) => (
+                    <Text key={purpose} style={styles.purposeItem}>
+                      • {purpose}
+                    </Text>
+                  ))}
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Custom Project Name */}
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(120).springify()}
+              style={styles.fieldCard}
+            >
+              <Text style={styles.fieldLabel}>Project Name</Text>
+              <TextInput
+                style={styles.fieldInput}
+                value={goalName}
+                onChangeText={setGoalName}
+                placeholder="e.g. Broiler Batch 6"
+                placeholderTextColor="#CBD5E1"
+              />
+            </Animated.View>
+
+            {/* Target Amount — Premium Input */}
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(160).springify()}
+              style={styles.amountCard}
+            >
+              <Text style={styles.fieldLabel}>Target Amount</Text>
+              <View style={styles.amountRow}>
+                <Text style={styles.amountPrefix}>₦</Text>
                 <TextInput
-                  style={styles.assumptionInput}
-                  value={feedPriceInc}
-                  onChangeText={setFeedPriceInc}
+                  style={styles.amountInput}
+                  value={displayAmount}
+                  onChangeText={(v) => setAmountRaw(v.replace(/[^0-9]/g, ''))}
                   keyboardType="numeric"
-                  placeholder="5"
+                  placeholder="3,000,000"
                   placeholderTextColor="#CBD5E1"
                 />
-                <Text style={styles.assumptionSuffix}>%</Text>
               </View>
-            </View>
-            <View style={styles.assumptionRow}>
-              <Text style={styles.assumptionLabel}>Mortality Allowance</Text>
-              <View style={styles.assumptionInputGroup}>
-                <TextInput
-                  style={styles.assumptionInput}
-                  value={mortalityAllow}
-                  onChangeText={setMortalityAllow}
-                  keyboardType="numeric"
-                  placeholder="3"
-                  placeholderTextColor="#CBD5E1"
-                />
-                <Text style={styles.assumptionSuffix}>%</Text>
-              </View>
-            </View>
-            <View style={styles.assumptionRow}>
-              <Text style={styles.assumptionLabel}>Emergency Buffer</Text>
-              <View style={styles.assumptionInputGroup}>
-                <TextInput
-                  style={styles.assumptionInput}
-                  value={emergencyBuffer}
-                  onChangeText={setEmergencyBuffer}
-                  keyboardType="numeric"
-                  placeholder="10"
-                  placeholderTextColor="#CBD5E1"
-                />
-                <Text style={styles.assumptionSuffix}>%</Text>
-              </View>
-            </View>
-          </View>
+            </Animated.View>
 
-          {/* ── ACTION AREA ── */}
-          <View style={styles.actionArea}>
-            <TouchableOpacity style={styles.btnPrimary} activeOpacity={0.85}>
-<GoonaIcon icon={CheckCircle} size={20} color="#FFFFFF" />
-              <Text style={styles.btnPrimaryText}>Generate Plan</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.btnSecondary} activeOpacity={0.85}>
-<GoonaIcon icon={ClipboardList} size={18} color="#94A3B8" />
-              <Text style={styles.btnSecondaryText}>Save Draft</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            {/* Target Date — Premium Picker */}
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(200).springify()}
+              style={styles.fieldCard}
+            >
+              <Text style={styles.fieldLabel}>Target Date</Text>
+              <TouchableOpacity
+                style={styles.dateSelector}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setShowDatePicker(true)
+                  if (targetDate) setTempDate(new Date(targetDate))
+                  else setTempDate(null)
+                }}
+              >
+                <GoonaIcon icon={Calendar} size={20} color="#2E7D32" />
+                <Text
+                  style={[
+                    styles.dateText,
+                    !targetDate && styles.datePlaceholder,
+                  ]}
+                >
+                  {targetDate
+                    ? formatDateDisplay(targetDate)
+                    : 'Select target date'}
+                </Text>
+              </TouchableOpacity>
 
-      <BottomDock hidden={keyboardH > 0} />
+              {showDatePicker && (
+                <View style={styles.pickerWrap}>
+                  <DateTimePicker
+                    value={tempDate || targetDate || new Date()}
+                    mode="date"
+                    minimumDate={new Date()}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={onDateChange}
+                    themeVariant="light"
+                  />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      style={styles.confirmDateBtn}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        if (tempDate) setTargetDate(tempDate)
+                        setShowDatePicker(false)
+                        setTempDate(null)
+                      }}
+                    >
+                      <GoonaIcon icon={CheckCircle} size={16} color="#FFFFFF" />
+                      <Text style={styles.confirmDateText}>Confirm Date</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </Animated.View>
+
+            {/* GOONA Recommendation Card */}
+            {targetAmount > 0 && daysLeft > 0 && (
+              <Animated.View
+                entering={FadeInUp.duration(500).springify()}
+                style={styles.recCard}
+              >
+                <LinearGradient
+                  colors={[
+                    'rgba(46,125,50,0.06)',
+                    'rgba(46,125,50,0.02)',
+                    '#FFFFFF',
+                  ]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.recGradient}
+                >
+                  <View style={styles.recBadge}>
+                    <LinearGradient
+                      colors={['#2E7D32', '#1B5E20']}
+                      style={styles.recBadgeGrad}
+                    >
+                      <GoonaIcon icon={Target} size={12} color="#FFFFFF" />
+                    </LinearGradient>
+                    <Text style={styles.recBadgeText}>GOONA Recommendation</Text>
+                  </View>
+
+                  <View style={styles.recRows}>
+                    <View style={styles.recTargetRow}>
+                      <Text style={styles.recTargetLabel}>Target</Text>
+                      <Text style={styles.recTargetValue}>
+                        {formatCurrency(targetAmount)}
+                      </Text>
+                    </View>
+                    <View style={styles.recDivider} />
+                    <View style={styles.recRow}>
+                      <Text style={styles.recLabel}>Daily</Text>
+                      <Text style={styles.recValue}>{formatCurrency(dailyReq)}</Text>
+                    </View>
+                    <View style={styles.recRow}>
+                      <Text style={styles.recLabel}>Weekly</Text>
+                      <Text style={styles.recValue}>{formatCurrency(weeklyReq)}</Text>
+                    </View>
+                    <View style={styles.recRow}>
+                      <Text style={styles.recLabel}>Monthly</Text>
+                      <Text style={styles.recValue}>{formatCurrency(monthlyReq)}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.recDivider} />
+
+                  <View style={styles.recRecommended}>
+                    <View style={styles.recRecommendedBadge}>
+                      <GoonaIcon icon={CheckCircle} size={12} color="#FFFFFF" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.recRecommendedLabel}>Recommended: {recommendedPlan}</Text>
+                      <Text style={styles.recRecommendedAmount}>
+                        {formatCurrency(recommendedAmount)} /{recommendedPlan.toLowerCase()}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.recRecommendedReason}>{recommendationReason}</Text>
+
+                  <Text style={styles.recFootnote}>
+                    Based on {daysLeft} days until target date
+                  </Text>
+                </LinearGradient>
+              </Animated.View>
+            )}
+
+            {/* Schedule Selector */}
+            <Animated.View
+              entering={FadeInUp.duration(400).delay(250).springify()}
+            >
+              <Text style={styles.sectionLabel}>Contribution Schedule</Text>
+              <View style={styles.scheduleRow}>
+                {(['Daily', 'Weekly', 'Monthly'] as const).map((plan) => {
+                  const active = plan === selectedPlan
+                  return (
+                    <TouchableOpacity
+                      key={plan}
+                      activeOpacity={0.8}
+                      style={[styles.schedulePill, active && styles.schedulePillActive]}
+                      onPress={() => setSelectedPlan(plan)}
+                    >
+                      <Text
+                        style={[
+                          styles.schedulePillText,
+                          active && styles.schedulePillTextActive,
+                        ]}
+                      >
+                        {plan}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            </Animated.View>
+
+            {/* Selected Schedule Card */}
+            <Animated.View
+              entering={FadeInUp.duration(400).delay(300).springify()}
+              style={styles.selectedScheduleCard}
+            >
+              <View style={styles.selectedScheduleRow}>
+                <Text style={styles.selectedScheduleLabel}>Selected Schedule</Text>
+                <Text style={styles.selectedScheduleValue}>{selectedPlan}</Text>
+              </View>
+              <View style={styles.selectedScheduleDivider} />
+              <View style={styles.selectedScheduleRow}>
+                <Text style={styles.selectedScheduleLabel}>Next Contribution Date</Text>
+                <Text style={styles.selectedScheduleValue}>
+                  {formatDateDisplay(nextContributionDate)}
+                </Text>
+              </View>
+            </Animated.View>
+
+            {/* Create Button */}
+            <Animated.View
+              entering={FadeInUp.duration(400).delay(350).springify()}
+              style={styles.actionWrap}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.createBtn,
+                  !canSubmit && styles.createBtnDisabled,
+                ]}
+                activeOpacity={0.85}
+                disabled={!canSubmit}
+                onPress={handleCreate}
+              >
+                <LinearGradient
+                  colors={['#2E7D32', '#1B5E20']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.createBtnGrad}
+                >
+                  <GoonaIcon icon={Target} size={20} color="#FFFFFF" />
+                  <Text style={styles.createBtnText}>Create Project Plan</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+          </>
+        )}
+      </ScrollView>
+
+      <BottomDock />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAF7' },
-
-  /* SCROLL */
   scroll: { flex: 1 },
-  scrollInner: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 20 },
+  scrollInner: { paddingHorizontal: 20 },
 
   /* ── HERO ── */
-  heroSection: {
-    paddingHorizontal: 20, paddingBottom: 4,
-    position: 'relative', overflow: 'hidden',
-  },
-  heroGlow: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    height: 280,
-  },
-  heroOrb1: {
-    position: 'absolute', top: -30, right: -50,
-    width: 200, height: 200, borderRadius: 100,
-    backgroundColor: 'rgba(46,125,50,0.04)',
-  },
-  heroOrb2: {
-    position: 'absolute', top: 70, left: -40,
-    width: 130, height: 130, borderRadius: 65,
-    backgroundColor: 'rgba(37,99,235,0.03)',
-  },
-  heroBack: {
+  heroSection: { marginBottom: 24 },
+  backBtn: {
     width: 38, height: 38, borderRadius: 12,
-    backgroundColor: 'white', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'white',
+    alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06, shadowRadius: 14, elevation: 3,
-  },
-  heroPreTitle: {
-    fontSize: 12, fontWeight: '600', color: '#2E7D32',
-    letterSpacing: 1.4, marginBottom: 8,
-    textTransform: 'uppercase',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06, shadowRadius: 14,
+    elevation: 3,
   },
   heroTitle: {
-    fontSize: 30, fontWeight: '800', color: '#1B1B1B',
-    lineHeight: 37,
+    fontSize: 30, fontWeight: '800',
+    color: '#1B1B1B', lineHeight: 37,
   },
   heroSub: {
-    fontSize: 14, color: '#94A3B8', lineHeight: 22,
-    marginTop: 12, maxWidth: '90%',
+    fontSize: 15, color: '#94A3B8', marginTop: 6,
   },
 
-  /* ── FORECAST ── */
-  forecastOuter: {
-    marginHorizontal: 20, marginTop: 16,
-    borderRadius: 24,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.06, shadowRadius: 28, elevation: 4,
-  },
-  forecastBlur: {
-    borderRadius: 24, overflow: 'hidden',
-  },
-  forecastBg: {
-    padding: 18, position: 'relative',
-  },
-  forecastContent: {
-    flexDirection: 'row', alignItems: 'center',
-  },
-  forecastCol: { flex: 1 },
-  forecastLabelRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    marginBottom: 4,
-  },
-  forecastLabel: { fontSize: 11, fontWeight: '500', color: '#64748B' },
-  forecastValue: {
-    fontSize: 20, fontWeight: '800', color: '#1B1B1B',
-    marginBottom: 2,
-  },
-  forecastSub: { fontSize: 11, color: '#94A3B8' },
-  forecastDivider: {
-    width: 1, height: 44,
-    backgroundColor: '#E2E8F0', marginHorizontal: 16,
-  },
-  forecastGlow: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    height: 60,
-    backgroundColor: 'rgba(46,125,50,0.02)',
+  /* ── Section Label ── */
+  sectionLabel: {
+    fontSize: 13, fontWeight: '700',
+    color: '#1F2937', marginBottom: 12, marginTop: 4,
   },
 
-  /* ── SECTION HEADERS (MODERN) ── */
-  secHeadModern: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    marginTop: 28, marginBottom: 12, paddingHorizontal: 20,
+  /* ── Project Selection Cards ── */
+  projectRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
-  secAccent: {
-    width: 3, height: 16, borderRadius: 2,
+  projectCard: {
+    width: '48%',
+    backgroundColor: 'white',
+    borderRadius: 18,
+    padding: 18,
+    paddingTop: 20,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
+    position: 'relative',
+  },
+  projectCardActive: {
+    borderColor: '#2E7D32',
+    backgroundColor: '#F0FDF4',
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  projectEmoji: {
+    fontSize: 28,
+    marginBottom: 10,
+  },
+  projectLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1F2937',
+    lineHeight: 18,
+  },
+  projectLabelActive: {
+    color: '#2E7D32',
+  },
+  projectCheck: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  purposesCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  purposesTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 10,
+  },
+  purposesList: {
+    gap: 6,
+  },
+  purposeItem: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+
+  /* ── Fields ── */
+  fieldCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 2,
+  },
+  fieldLabel: {
+    fontSize: 12, fontWeight: '600',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  fieldInput: {
+    fontSize: 17, fontWeight: '600',
+    color: '#1F2937', paddingVertical: 4,
+  },
+
+  /* ── Amount Card ── */
+  amountCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: '#2E7D32',
+  },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  amountPrefix: {
+    fontSize: 28, fontWeight: '700',
+    color: '#2E7D32', marginRight: 8,
+  },
+  amountInput: {
+    flex: 1,
+    fontSize: 28, fontWeight: '800',
+    color: '#1B1B1B', paddingVertical: 4,
+  },
+
+  /* ── Date Selector ── */
+  dateSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 6,
+  },
+  dateText: {
+    fontSize: 17, fontWeight: '600', color: '#1F2937',
+  },
+  datePlaceholder: { color: '#CBD5E1' },
+  pickerWrap: {
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  confirmDateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
     backgroundColor: '#2E7D32',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    width: '100%',
   },
-  secTitleModern: {
-    fontSize: 15, fontWeight: '700', color: '#1B1B1B',
+  confirmDateText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 
-  /* ── GROUP CARD ── */
-  groupCard: {
-    backgroundColor: 'white', marginHorizontal: 20,
-    borderRadius: 24, padding: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05, shadowRadius: 24, elevation: 3,
+  /* ── GOONA Recommendation Card ── */
+  recCard: {
+    borderRadius: 24,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    elevation: 3,
+    overflow: 'hidden',
   },
-  groupField: {
-    paddingVertical: 14, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+  recGradient: { padding: 20 },
+  recBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 18,
   },
-  groupFieldLast: { borderBottomWidth: 0 },
-  groupFieldFocused: {
-    borderBottomColor: 'rgba(46,125,50,0.15)',
-    backgroundColor: 'rgba(240,253,244,0.3)',
+  recBadgeGrad: {
+    width: 24, height: 24, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
   },
-  groupFieldLabel: {
-    fontSize: 12, fontWeight: '500', color: '#94A3B8',
-    marginBottom: 6,
+  recBadgeText: {
+    fontSize: 13, fontWeight: '700', color: '#2E7D32',
   },
-  groupFieldRow: {
-    flexDirection: 'row', alignItems: 'center',
-  },
-  groupFieldPrefix: {
-    fontSize: 17, fontWeight: '700', color: '#94A3B8',
-    marginRight: 8,
-  },
-  groupFieldInput: {
-    flex: 1, fontSize: 17, fontWeight: '700', color: '#1F2937',
+  recRows: { gap: 10 },
+  recTargetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 2,
   },
-  groupFieldSuffix: {
-    fontSize: 13, fontWeight: '500', color: '#94A3B8',
-    marginLeft: 6,
+  recTargetLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  recTargetValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1B1B1B',
+  },
+  recDivider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 4,
+  },
+  recRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  recLabel: {
+    fontSize: 14, color: '#64748B',
+  },
+  recValue: {
+    fontSize: 17, fontWeight: '800', color: '#1B1B1B',
+  },
+  recRecommended: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 2,
+  },
+  recRecommendedBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#2E7D32',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recRecommendedLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  recRecommendedAmount: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#2E7D32',
+  },
+  recRecommendedReason: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 12,
+    marginBottom: -4,
+  },
+  recFootnote: {
+    fontSize: 11, color: '#94A3B8',
+    textAlign: 'center', marginTop: 16,
   },
 
-  /* ── SECTION HEADERS (LEGACY) ── */
-  secHead: { marginTop: 20, marginBottom: 10, paddingHorizontal: 20 },
-  secTitle: { fontSize: 17, fontWeight: '700', color: '#1B1B1B' },
-
-  /* ── OPERATIONAL ALLOCATION ── */
-  allocCard: {
-    backgroundColor: 'white', marginHorizontal: 20,
-    borderRadius: 24, padding: 6,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05, shadowRadius: 24, elevation: 3,
+  /* ── Schedule Selector ── */
+  scheduleRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
   },
-  allocRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 12, paddingHorizontal: 14,
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
-  },
-  allocLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  allocDot: { width: 8, height: 8, borderRadius: 4 },
-  allocLabel: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
-  allocInputGroup: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F8FAF7', borderRadius: 12, paddingHorizontal: 12, height: 40,
-    minWidth: 120,
-  },
-  allocPrefix: { fontSize: 14, fontWeight: '600', color: '#94A3B8', marginRight: 4 },
-  allocInput: {
-    flex: 1, fontSize: 15, fontWeight: '600', color: '#1F2937',
-    paddingVertical: 0, textAlign: 'right',
-  },
-
-  /* ── SEGMENTED CONTROL ── */
-  segWrap: {
-    flexDirection: 'row', backgroundColor: '#F1F5F9',
-    borderRadius: 14, padding: 3, marginHorizontal: 20,
-  },
-  segBtn: {
-    flex: 1, paddingVertical: 10, alignItems: 'center', justifyContent: 'center',
-    borderRadius: 12,
-  },
-  segBtnActive: {
+  schedulePill: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 14,
     backgroundColor: 'white',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  segBtnText: { fontSize: 13, fontWeight: '500', color: '#94A3B8' },
-  segBtnTextActive: { fontWeight: '700', color: '#2E7D32' },
-
-  /* ── PLANNING ASSUMPTIONS ── */
-  assumptionsCard: {
-    backgroundColor: 'white', marginHorizontal: 20,
-    borderRadius: 24, padding: 6,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05, shadowRadius: 24, elevation: 3,
+  schedulePillActive: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#2E7D32',
   },
-  assumptionRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 14, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+  schedulePillText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#94A3B8',
   },
-  assumptionLabel: { fontSize: 14, fontWeight: '500', color: '#1F2937', flex: 1 },
-  assumptionInputGroup: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F8FAF7', borderRadius: 12, paddingHorizontal: 12, height: 42,
-    minWidth: 80, justifyContent: 'flex-end',
+  schedulePillTextActive: {
+    color: '#2E7D32',
   },
-  assumptionInput: {
-    fontSize: 15, fontWeight: '600', color: '#1F2937',
-    paddingVertical: 0, textAlign: 'right', minWidth: 40,
-  },
-  assumptionSuffix: { fontSize: 13, fontWeight: '600', color: '#94A3B8', marginLeft: 4 },
-
-  /* ── ACTION AREA ── */
-  actionArea: { marginTop: 24, gap: 10, paddingBottom: 8, paddingHorizontal: 20 },
-  btnPrimary: {
-    height: 54, borderRadius: 18, backgroundColor: '#2E7D32',
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3, shadowRadius: 30, elevation: 6,
-  },
-  btnPrimaryText: { fontSize: 16, fontWeight: '700', color: 'white' },
-  btnSecondary: {
-    height: 50, borderRadius: 16, borderWidth: 1.5, borderColor: '#E2E8F0',
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+  selectedScheduleCard: {
     backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: '#2E7D32',
   },
-  btnSecondaryText: { fontSize: 14, fontWeight: '600', color: '#64748B' },
+  selectedScheduleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  selectedScheduleDivider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 4,
+  },
+  selectedScheduleLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#94A3B8',
+  },
+  selectedScheduleValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+
+  /* ── Create Button ── */
+  actionWrap: { marginBottom: 24 },
+  createBtn: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 30,
+    elevation: 6,
+  },
+  createBtnGrad: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  createBtnDisabled: { opacity: 0.4 },
+  createBtnText: {
+    fontSize: 16, fontWeight: '700', color: 'white',
+  },
+
+  /* ── Summary Card ── */
+  summaryCard: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    marginTop: 8,
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.25,
+    shadowRadius: 40,
+    elevation: 8,
+  },
+  summaryGradient: {
+    padding: 24,
+    position: 'relative',
+  },
+  summaryGlow1: {
+    position: 'absolute', top: -30, right: -30,
+    width: 180, height: 180, borderRadius: 90,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  summaryGlow2: {
+    position: 'absolute', bottom: -40, left: -20,
+    width: 140, height: 140, borderRadius: 70,
+    backgroundColor: 'rgba(174,234,0,0.06)',
+  },
+  summaryHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  summaryIcon: {
+    width: 42, height: 42, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  summaryPre: {
+    fontSize: 11, color: 'rgba(255,255,255,0.6)',
+    textTransform: 'uppercase', letterSpacing: 0.8,
+  },
+  summaryName: {
+    fontSize: 22, fontWeight: '800',
+    color: 'white', marginTop: 2,
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginVertical: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  summaryLabel: {
+    fontSize: 13, color: 'rgba(255,255,255,0.6)',
+  },
+  summaryValue: {
+    fontSize: 15, fontWeight: '700', color: 'white',
+  },
+  summaryProgressSection: { marginBottom: 16 },
+  summaryProgressHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryProgressLabel: {
+    fontSize: 12, color: 'rgba(255,255,255,0.6)',
+  },
+  summaryProgressPct: {
+    fontSize: 12, fontWeight: '700', color: '#AEEA00',
+  },
+  summaryProgressTrack: {
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  summaryProgressFill: {
+    height: '100%',
+    backgroundColor: '#AEEA00',
+    borderRadius: 3,
+  },
+  summaryDetailGrid: {
+    flexDirection: 'row',
+  },
+  summaryDetailItem: {
+    flex: 1, alignItems: 'center',
+  },
+  summaryDetailLabel: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.5)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  summaryDetailValue: {
+    fontSize: 16, fontWeight: '800', color: 'white',
+  },
+  summaryDetailDivider: {
+    width: 1, height: 28,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignSelf: 'center',
+  },
+
+  /* ── Summary Actions ── */
+  summaryAction: { marginTop: 20, gap: 12, marginBottom: 24 },
+  confirmBtn: {
+    height: 54, borderRadius: 18,
+    backgroundColor: '#2E7D32',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 30,
+    elevation: 6,
+  },
+  confirmBtnText: {
+    fontSize: 16, fontWeight: '700', color: 'white',
+  },
+  editBtn: {
+    height: 48, borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editBtnText: {
+    fontSize: 14, fontWeight: '600', color: '#94A3B8',
+  },
 })
-
-

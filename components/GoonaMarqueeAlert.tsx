@@ -15,12 +15,12 @@ export interface GoonaMarqueeAlertProps {
 
 const DEFAULT_MESSAGES = [
   'Consistency builds stronger farms.',
-  'Your weekly ₦25,000 recap target is due tomorrow.',
+  'Your weekly recapt target is due tomorrow.',
   'GOONA IQ: Feed efficiency may drop this week.',
   '3 worker tasks completed today.',
-  'Recovery milestone unlocked. Keep going.',
+  'Recapt milestone unlocked. Keep going.',
   'Small daily wins lead to big farm growth.',
-  'Recap target: 60% achieved this cycle.',
+  'Recapt target: 60% achieved this cycle.',
   'Remember to check your batch health scores.',
 ]
 
