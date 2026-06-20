@@ -88,7 +88,7 @@ const FAB_ACTIONS = [
   { label: 'Add Record', icon: (c: string) => <GoonaIcon icon={FileText} size={20} color={c} />, route: '/daily-records' as const },
   { label: 'Feed Entry', icon: (c: string) => <GoonaIcon icon={ClipboardList} size={20} color={c} />, route: '/daily-records' as const },
   { label: 'Mortality Log', icon: (c: string) => <GoonaIcon icon={AlertCircle} size={20} color={c} />, route: '/daily-records' as const },
-  { label: 'Revenue Entry', icon: (c: string) => <GoonaIcon icon={TrendingUp} size={20} color={c} />, route: '/(tabs)/sales-revenue' as const },
+  { label: 'Revenue Entry', icon: (c: string) => <GoonaIcon icon={TrendingUp} size={20} color={c} />, route: '/records/sales-revenue' as const },
 ]
 
 export default function BatchesScreen() {

@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, useWindowDimensions,
 } from 'react-native'
-import GoonaIcon from '../../components/ui/GoonaIcon'
+import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { ArrowLeft, Plus, BarChart3, TrendingUp, Sparkles, Calendar, Receipt, ShieldCheck, Users, FileText } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
@@ -12,7 +12,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withRepeat,
   withSequence, withTiming, FadeInUp, FadeIn, Easing,
 } from 'react-native-reanimated'
-import BottomDock from '../../components/navigation/BottomDock'
+import BottomDock from '../../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const CARD_W = (SCREEN_W - 52) / 2
@@ -411,5 +411,4 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 })
-
 

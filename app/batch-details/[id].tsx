@@ -199,7 +199,7 @@ const QA_ACTIONS = [
   { label: 'Daily Record', bg: '#F0FDF4', iconColor: '#16A34A', route: '/daily-records' as const },
   { label: 'Feed Entry', bg: '#FFFBEB', iconColor: '#F59E0B', route: '/daily-records' as const },
   { label: 'Mortality', bg: '#FFF1F2', iconColor: '#EF4444', route: '/daily-records' as const },
-  { label: 'Sales Entry', bg: '#EEF3FF', iconColor: '#1A56FF', route: '/(tabs)/sales-revenue' as const },
+  { label: 'Sales Entry', bg: '#EEF3FF', iconColor: '#1A56FF', route: '/records/sales-revenue' as const },
   { label: 'Reports', bg: '#F0FDF4', iconColor: '#16A34A', route: undefined },
 ] as const
 

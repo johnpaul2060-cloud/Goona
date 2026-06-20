@@ -5,11 +5,11 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import GoonaIcon from '../../../../components/ui/GoonaIcon'
+import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Users, Wheat, Egg, Sparkles, Skull, Wallet, DollarSign, Clock, ShieldCheck } from 'lucide-react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { Pressable } from 'react-native'
-import BottomDock from '../../../../components/navigation/BottomDock'
+import BottomDock from '../../../components/navigation/BottomDock'
 
 const METRICS = [
   { label: 'Avg Mortality Rate', value: '2.1%', trend: '-0.3%', up: true, icon: Skull, color: '#EF4444', bg: '#FFF1F2' },
@@ -356,3 +356,4 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 })
+

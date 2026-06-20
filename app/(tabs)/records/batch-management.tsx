@@ -5,12 +5,12 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import GoonaIcon from '../../../../components/ui/GoonaIcon'
+import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { ArrowLeft, Search, Plus, TrendingUp, Users, AlertCircle, ShieldCheck, Egg, Wheat, Sparkles, Clock, Calendar, BarChart3, FileText, ClipboardList } from 'lucide-react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { Pressable } from 'react-native'
-import BottomDock from '../../../../components/navigation/BottomDock'
-import { useBatchStore } from '../../../../store/useBatchStore'
+import BottomDock from '../../../components/navigation/BottomDock'
+import { useBatchStore } from '../../../store/useBatchStore'
 
 function weeksSince(dateStr: string): number {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -451,3 +451,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 })
+

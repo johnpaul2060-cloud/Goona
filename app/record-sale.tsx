@@ -550,7 +550,7 @@ export default function RecordSaleScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={s.modalBtnOutline} activeOpacity={0.85} onPress={() => {
                 setShowSuccess(false)
-                router.push('/sales-revenue' as any)
+                router.push('/records/sales-revenue' as any)
               }}>
                 <Text style={s.modalBtnOutlineText}>View Reports</Text>
               </TouchableOpacity>
