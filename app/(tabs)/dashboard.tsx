@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dim
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import GoonaIcon from '../../components/ui/GoonaIcon';
+import NotificationBadge from '../../components/NotificationBadge';
 import { Bell, BarChart3, ClipboardList, Sparkles, FileText, Award, ShoppingCart, Banknote, BrainCircuit, CloudSun, TrendingUp, Shield } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -59,7 +60,7 @@ export default function DashboardScreen() {
           </View>
           <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/notifications')}>
             <GoonaIcon icon={Bell} size={22} color="#1F2937" />
-            <View style={styles.notifDot} />
+            <NotificationBadge />
           </TouchableOpacity>
         </View>
 

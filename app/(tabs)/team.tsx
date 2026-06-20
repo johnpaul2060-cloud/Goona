@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import GoonaIcon from '../../components/ui/GoonaIcon'
+import NotificationBadge from '../../components/NotificationBadge'
 import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users, UserPlus, ClipboardList, BarChart3, Clock, Bell, ChevronRight, ListChecks, Calendar, Activity, User, MapPin, Battery, Wallet } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -824,9 +825,7 @@ export default function TeamScreen() {
               style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, position: 'relative' })}
             >
               <GoonaIcon icon={Bell} size={18} color="#1B1B1B" />
-              <View style={s.bellBadge}>
-                <Text style={s.bellBadgeText}>6</Text>
-              </View>
+              <NotificationBadge size={16} />
             </Pressable>
           </View>
         </Animated.View>

@@ -1,545 +1,500 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Platform,
 } from 'react-native'
-import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Bell, Check, X, Plus, AlertCircle, ClipboardList, TrendingUp, Sparkles, Users, CheckCircle, MapPin, Radio, ShieldAlert, Navigation } from 'lucide-react-native'
-import { LinearGradient } from 'expo-linear-gradient'
-import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
-import Constants from 'expo-constants'
-import Animated, { FadeInUp, FadeIn, FadeOutDown } from 'react-native-reanimated'
-import ReminderTaskModal, { ReminderTask } from '../components/ReminderTaskModal'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import GoonaIcon from '../components/ui/GoonaIcon'
+import {
+  ArrowLeft, Bell, Check, X, Clock,
+  ClipboardList, Users, MapPin, TrendingUp, Sparkles, ShieldAlert,
+} from 'lucide-react-native'
+import Animated, { FadeInUp, Layout } from 'react-native-reanimated'
+import { useNotificationStore, AppNotification, CATEGORY_CONFIG, PRIORITY_CONFIG } from '../store/useNotificationStore'
+import WeatherNotificationSync from '../components/WeatherNotificationSync'
 
-const isExpoGo = Constants.executionEnvironment === 'storeClient'
+const CAT_ICONS: Record<string, React.ElementType> = {
+  all: Bell,
+  operations: ClipboardList,
+  team: Users,
+  weather: MapPin,
+  wallet: TrendingUp,
+  iq: Sparkles,
+  security: ShieldAlert,
+}
 
-const FILTERS = ['All', 'Critical', 'Operations', 'Financial', 'AI', 'Workforce', 'Safety', 'Geofence']
+const CAT_ORDER = ['all', 'operations', 'team', 'weather', 'wallet', 'iq', 'security'] as const
 
-const ALERTS = [
-  {
-    type: 'Critical' as const, iconBg: '#FFF1F2', iconColor: '#EF4444',
-    title: 'Mortality risk increased in Batch B',
-    desc: '3 birds lost in last 12 hours. Investigate immediately.',
-    time: '15 min ago',
-  },
-  {
-    type: 'Operations' as const, iconBg: '#EEF3FF', iconColor: '#1A56FF',
-    title: 'Feed refill due in 2 hours',
-    desc: 'Broiler Batch A will run out of grower feed by 2:00 PM.',
-    time: '1 hour ago',
-  },
-  {
-    type: 'Financial' as const, iconBg: '#F0FDF4', iconColor: '#16A34A',
-    title: 'Revenue target exceeded',
-    desc: 'This month\'s sales are 18% above forecast.',
-    time: '2 hours ago',
-  },
-  {
-    type: 'AI' as const, iconBg: '#FFFBEB', iconColor: '#F59E0B',
-    title: 'Feed efficiency improved by 8%',
-    desc: 'Your feeding consistency is trending positively.',
-    time: '3 hours ago',
-  },
-  {
-    type: 'Operations' as const, iconBg: '#EEF3FF', iconColor: '#1A56FF',
-    title: 'Vaccination scheduled tomorrow',
-    desc: 'Layer Batch B due for Newcastle vaccine at 7:00 AM.',
-    time: '5 hours ago',
-  },
-  {
-    type: 'Team' as const, iconBg: '#F0FDF4', iconColor: '#16A34A',
-    title: 'Worker attendance logged',
-    desc: '8 of 10 staff checked in for morning shift.',
-    time: '6 hours ago',
-  },
-  {
-    type: 'AI' as const, iconBg: '#FFFBEB', iconColor: '#F59E0B',
-    title: 'Recovery consistency dropped this week',
-    desc: 'Your capital recovery streak may be at risk. Stay on track.',
-    time: '8 hours ago',
-  },
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
 
-  /* ─── WORKFORCE ─── */
-  {
-    type: 'Workforce' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
-    title: 'Worker Check-In',
-    desc: 'Aminat checked into Feed Warehouse.',
-    time: '8 mins ago',
-  },
-  {
-    type: 'Workforce' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
-    title: 'Worker Check-Out',
-    desc: 'Kola signed out from Hatchery. Hours logged: 7.5.',
-    time: '28 mins ago',
-  },
-  {
-    type: 'Workforce' as const, iconBg: '#FFF8F0', iconColor: '#F59E0B',
-    title: 'Worker Offline',
-    desc: 'Ngozi has been offline for 4 hours. Location: Break Room.',
-    time: '1 hour ago',
-  },
-  {
-    type: 'Workforce' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
-    title: 'Worker Location Update',
-    desc: 'Segun moved to Poultry House B from Feed Warehouse.',
-    time: '12 mins ago',
-  },
-  {
-    type: 'Workforce' as const, iconBg: '#F0FDF4', iconColor: '#16A34A',
-    title: 'Attendance Reminder',
-    desc: 'Funmi and 2 others have not checked in for morning shift.',
-    time: '2 hours ago',
-  },
+function getPriorityBadge(priority: string) {
+  const cfg = PRIORITY_CONFIG[priority as keyof typeof PRIORITY_CONFIG]
+  return cfg || { label: 'Info', color: '#64748B' }
+}
 
-  /* ─── SAFETY ─── */
-  {
-    type: 'Safety' as const, iconBg: '#FFF1F2', iconColor: '#EF4444',
-    title: 'SOS Alert',
-    desc: 'Chinedu triggered emergency alert in Poultry House A.',
-    time: '2 mins ago',
-  },
-  {
-    type: 'Safety' as const, iconBg: '#FFF1F2', iconColor: '#EF4444',
-    title: 'Worker Distress Signal',
-    desc: 'Musa sent a distress signal from Chemical Storage area.',
-    time: '6 mins ago',
-  },
-  {
-    type: 'Safety' as const, iconBg: '#FFFBEB', iconColor: '#F59E0B',
-    title: 'Safety Incident Reported',
-    desc: 'Slip hazard reported near Fish Pond. Area cordoned off.',
-    time: '18 mins ago',
-  },
-  {
-    type: 'Safety' as const, iconBg: '#F0FDF4', iconColor: '#16A34A',
-    title: 'Emergency Drill Complete',
-    desc: 'All 9 workers responded within 90 seconds. Drill passed.',
-    time: '45 mins ago',
-  },
+function NotificationCard({ n, onRead, onArchive }: { n: AppNotification; onRead: () => void; onArchive: () => void }) {
+  const catCfg = CATEGORY_CONFIG[n.category]
+  const priCfg = getPriorityBadge(n.priority)
+  const IconComp = CAT_ICONS[n.category] || Bell
 
-  /* ─── GEOFENCE ─── */
-  {
-    type: 'Geofence' as const, iconBg: '#EEF3FF', iconColor: '#1A56FF',
-    title: 'Restricted Zone Entry',
-    desc: 'Musa entered Chemical Storage — a restricted area.',
-    time: '5 mins ago',
-  },
-  {
-    type: 'Geofence' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
-    title: 'Zone Entry',
-    desc: 'Chinedu entered Poultry House A — operational zone.',
-    time: '2 mins ago',
-  },
-  {
-    type: 'Geofence' as const, iconBg: '#F0F4FF', iconColor: '#00695C',
-    title: 'Zone Exit',
-    desc: 'Aminat exited Feed Warehouse — geofence logged.',
-    time: '8 mins ago',
-  },
-  {
-    type: 'Geofence' as const, iconBg: '#FFF1F2', iconColor: '#EF4444',
-    title: 'Boundary Breach',
-    desc: 'Unknown device detected at north perimeter. Investigation needed.',
-    time: '22 mins ago',
-  },
-]
-
-const REMINDERS = [
-  { label: 'Recovery contribution due Friday', done: false },
-  { label: 'Submit weekly medication log', done: false },
-  { label: 'Review batch performance report', done: true },
-]
-
-const QUICK_TASKS = [
-  { label: 'Feed Batch A', color: '#F59E0B' },
-  { label: 'Record Mortality', color: '#EF4444' },
-  { label: 'Check Water Supply', color: '#1A56FF' },
-  { label: 'Submit Medication Log', color: '#16A34A' },
-]
-
-
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onRead}
+      onLongPress={onArchive}
+      style={[styles.card, n.status === 'unread' && styles.cardUnread, n.pinned && styles.cardPinned]}
+    >
+      {n.pinned && <View style={styles.pinBar} />}
+      <View style={[styles.cardIcon, { backgroundColor: catCfg.color + '15' }]}>
+        <GoonaIcon icon={IconComp} size={18} color={catCfg.color} />
+      </View>
+      <View style={styles.cardBody}>
+        <View style={styles.cardTop}>
+          <View style={styles.cardCatRow}>
+            <Text style={[styles.cardCategory, { color: catCfg.color }]}>{catCfg.label}</Text>
+            <View style={[styles.priorityBadge, { backgroundColor: priCfg.color + '18' }]}>
+              <Text style={[styles.priorityText, { color: priCfg.color }]}>{priCfg.label}</Text>
+            </View>
+          </View>
+          <View style={styles.cardActions}>
+            {n.status === 'unread' && <View style={styles.unreadDot} />}
+            <TouchableOpacity hitSlop={8} onPress={onArchive}>
+              <GoonaIcon icon={X} size={14} color="#94A3B8" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={[styles.cardTitle, n.status === 'unread' && styles.cardTitleUnread]}>{n.title}</Text>
+        <Text style={styles.cardDesc} numberOfLines={2}>{n.description}</Text>
+        <View style={styles.cardFooter}>
+          <GoonaIcon icon={Clock} size={11} color="#94A3B8" />
+          <Text style={styles.cardTime}>{timeAgo(n.timestamp)}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  )
+}
 
 export default function NotificationsScreen() {
-  const [activeFilter, setActiveFilter] = useState('All')
-  const [reminders, setReminders] = useState(REMINDERS)
-  const [tasks, setTasks] = useState(QUICK_TASKS.map((t) => ({ ...t, done: false })))
-  const [showCreate, setShowCreate] = useState(false)
-  const [createdItems, setCreatedItems] = useState<ReminderTask[]>([])
-  const [toast, setToast] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' })
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const insets = useSafeAreaInsets()
+  const [activeFilter, setActiveFilter] = useState<string>('all')
+  const notifications = useNotificationStore((s) => s.notifications)
+  const addNotification = useNotificationStore((s) => s.addNotification)
+  const markAsRead = useNotificationStore((s) => s.markAsRead)
+  const markAllAsRead = useNotificationStore((s) => s.markAllAsRead)
+  const archiveNotification = useNotificationStore((s) => s.archiveNotification)
+  const clearArchived = useNotificationStore((s) => s.clearArchived)
+  const seedDemoNotifications = useNotificationStore((s) => s.seedDemoNotifications)
+  const [showActions, setShowActions] = useState(false)
 
-  const showToast = (message: string) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current)
-    setToast({ visible: true, message })
-    toastTimer.current = setTimeout(() => setToast({ visible: false, message: '' }), 3000)
-  }
-
-  const handleCreateItem = useCallback(async (item: ReminderTask) => {
-    if (item.type === 'Reminder') {
-      setReminders((prev) => [...prev, { label: item.title, done: false }])
-    } else {
-      setTasks((prev) => [...prev, { label: item.title, color: '#2E7D32', done: false }])
-    }
-    setCreatedItems((prev) => [...prev, item])
-
-    if (isExpoGo) return
-
-    try {
-      const Notifications = await import('expo-notifications')
-      const { status } = await Notifications.requestPermissionsAsync()
-      if (status !== 'granted') return
-
-      const triggerDate = new Date(item.date)
-      triggerDate.setHours(item.time.getHours(), item.time.getMinutes(), 0, 0)
-
-      if (triggerDate <= new Date()) return
-
-      let interval: number | undefined
-      switch (item.repeat) {
-        case 'Daily': interval = 86400; break
-        case 'Weekly': interval = 604800; break
-        case 'Monthly': interval = 2592000; break
-      }
-
-      if (interval) {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: item.type === 'Reminder' ? '🔔 Reminder' : '📋 Task',
-            body: item.title,
-            data: { id: item.id, type: item.type, category: item.category, priority: item.priority },
-          },
-          trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: interval, repeats: true },
-        })
-      } else {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: item.type === 'Reminder' ? '🔔 Reminder' : '📋 Task',
-            body: item.title,
-            data: { id: item.id, type: item.type, category: item.category, priority: item.priority },
-          },
-          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate },
-        })
-      }
-    } catch {
-      // silently fail - notification not critical
-    }
-
-    const msg = item.type === 'Reminder'
-      ? 'Reminder scheduled successfully'
-      : 'Task published to farm team'
-    showToast(msg)
+  useEffect(() => {
+    seedDemoNotifications()
   }, [])
 
-  const toggleReminder = (i: number) => {
-    setReminders((prev) => prev.map((r, j) => j === i ? { ...r, done: !r.done } : r))
+  const filtered = useMemo(() => {
+    let items = notifications.filter((n) => n.status !== 'archived')
+    if (activeFilter !== 'all') {
+      items = items.filter((n) => n.category === activeFilter)
+    }
+    return items
+  }, [notifications, activeFilter])
+
+  const unreadTotal = useMemo(() => notifications.filter((n) => n.status === 'unread').length, [notifications])
+
+  const getUnreadCount = (cat: string) => {
+    if (cat === 'all') return unreadTotal
+    return notifications.filter((n) => n.category === cat && n.status === 'unread').length
   }
 
-  const toggleTask = (i: number) => {
-    setTasks((prev) => prev.map((t, j) => j === i ? { ...t, done: !t.done } : t))
-  }
-
-  const filteredAlerts = activeFilter === 'All' ? ALERTS : ALERTS.filter((a) => a.type === activeFilter)
+  const unreadForCurrent = useMemo(() =>
+    activeFilter === 'all'
+      ? unreadTotal
+      : notifications.filter((n) => n.category === activeFilter && n.status === 'unread').length,
+    [notifications, activeFilter, unreadTotal]
+  )
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
-
-      <View style={styles.glowBg} pointerEvents="none" />
-      <View style={styles.contour1} pointerEvents="none" />
-      <View style={styles.contour2} pointerEvents="none" />
-
+      <WeatherNotificationSync />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollInner}
+        contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* TOP NAV */}
+        {/* ─── HEADER ─── */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
-          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.back()}>
-            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+          <TouchableOpacity
+            style={styles.navBack}
+            activeOpacity={0.7}
+            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/(tabs)/dashboard' as any) } }}
+          >
+            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Notifications</Text>
-<TouchableOpacity style={styles.navAction} activeOpacity={0.7}>
-             <GoonaIcon icon={CheckCircle} size={20} color="#1F2937" />
+          <TouchableOpacity
+            style={styles.navAction}
+            activeOpacity={0.7}
+            onPress={() => setShowActions(!showActions)}
+          >
+            <GoonaIcon icon={Check} size={20} color="#1F2937" />
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* ─── HEADER SECTION ─── */}
+        <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.headerSection}>
+          <Text style={styles.headerLabel}>Notification Hub</Text>
+          <Text style={styles.headerTitle}>Stay informed{'\n'}about your farm</Text>
+        </Animated.View>
+
+        {/* ─── FILTER TABS ─── */}
+        <Animated.View entering={FadeInUp.duration(400).delay(140).springify()}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterScroll}
+            contentContainerStyle={styles.filterContent}
+          >
+            {CAT_ORDER.map((cat) => {
+              const active = activeFilter === cat
+              const cfg = CATEGORY_CONFIG[cat]
+              const count = getUnreadCount(cat)
+              const IconComp = CAT_ICONS[cat]
+              return (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.filterChip, active && { backgroundColor: cfg.color + '15', borderColor: cfg.color }]}
+                  activeOpacity={0.7}
+                  onPress={() => setActiveFilter(cat)}
+                >
+                  <GoonaIcon icon={IconComp} size={14} color={active ? cfg.color : '#64748B'} />
+                  <Text style={[styles.filterLabel, active && { color: cfg.color, fontWeight: '700' }]}>{cfg.label}</Text>
+                  {count > 0 && (
+                    <View style={[styles.filterBadge, { backgroundColor: cfg.color }]}>
+                      <Text style={styles.filterBadgeText}>{count > 99 ? '99+' : count}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )
+            })}
+          </ScrollView>
+        </Animated.View>
+
+        {/* ─── ACTIONS BAR ─── */}
+        {showActions && (
+          <Animated.View entering={FadeInUp.duration(250).springify()} style={styles.actionsBar}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              activeOpacity={0.7}
+              onPress={() => { markAllAsRead(activeFilter === 'all' ? undefined : activeFilter as any); setShowActions(false) }}
+            >
+              <GoonaIcon icon={Check} size={14} color="#2E7D32" />
+              <Text style={styles.actionBtnText}>Mark all as read</Text>
             </TouchableOpacity>
-        </Animated.View>
-
-        {/* HERO INTELLIGENCE CARD */}
-        <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.heroCard}>
-          <View style={styles.heroDots} pointerEvents="none" />
-          <View style={styles.heroTop}>
-            <View style={styles.heroIconWrap}>
-              <GoonaIcon icon={Sparkles} size={24} color="#FFFFFF" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.heroTitle}>GOONA Unified{'\n'}Notification Center</Text>
-              <Text style={styles.heroSub}><Text style={{ fontWeight: '700' }}>6 unread</Text> alerts across operations, workforce, safety, and geofence</Text>
-            </View>
-          </View>
-          <View style={styles.heroMetrics}>
-            <View style={styles.heroMetric}><Text style={styles.heroMetricVal}>3</Text><Text style={styles.heroMetricLbl}>Critical</Text></View>
-            <View style={styles.heroMetric}><Text style={styles.heroMetricVal}>14</Text><Text style={styles.heroMetricLbl}>Active</Text></View>
-            <View style={[styles.heroMetric, styles.heroMetricLast]}><Text style={styles.heroMetricVal}>5</Text><Text style={styles.heroMetricLbl}>Categories</Text></View>
-          </View>
-        </Animated.View>
-
-        {/* FILTER PILLS */}
-        <Animated.View entering={FadeInUp.duration(500).delay(130).springify()} style={styles.filterRow}>
-          {FILTERS.map((f) => {
-            const active = activeFilter === f
-            return (
-              <TouchableOpacity
-                key={f}
-                style={[styles.filterPill, active && styles.filterPillActive]}
-                activeOpacity={0.8}
-                onPress={() => setActiveFilter(f)}
-              >
-                <Text style={[styles.filterText, active && styles.filterTextActive]}>{f}</Text>
-              </TouchableOpacity>
-            )
-          })}
-        </Animated.View>
-
-        {/* QUICK ACTIONS */}
-        <Animated.View entering={FadeInUp.duration(500).delay(160).springify()} style={styles.quickActions}>
-          <TouchableOpacity style={styles.qaBtn} activeOpacity={0.85}>
-            <GoonaIcon icon={Plus} size={14} color="#2E7D32" />
-             <Text style={styles.qaBtnText}>Mark All Read</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.qaBtn} activeOpacity={0.85}>
-<GoonaIcon icon={X} size={14} color="#94A3B8" />
-            <Text style={[styles.qaBtnText, { color: '#94A3B8' }]}>Clear Resolved</Text>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* SMART ALERTS FEED */}
-        <Animated.View entering={FadeInUp.duration(500).delay(200).springify()}>
-          <Text style={styles.sectionTitle}>Smart Alerts</Text>
-        </Animated.View>
-
-        {filteredAlerts.length === 0 && (
-          <Animated.View entering={FadeIn.duration(300)} style={styles.emptyState}>
-            <Text style={styles.emptyText}>No {activeFilter} alerts right now</Text>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              activeOpacity={0.7}
+              onPress={() => { clearArchived(); setShowActions(false) }}
+            >
+              <GoonaIcon icon={X} size={14} color="#EF4444" />
+              <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>Clear archived</Text>
+            </TouchableOpacity>
           </Animated.View>
         )}
 
-        {filteredAlerts.map((alert, i) => (
-          <Animated.View key={i} entering={FadeInUp.duration(400).delay(230 + i * 50).springify()} style={styles.alertCard}>
-            <View style={[styles.alertIcon, { backgroundColor: alert.iconBg }]}>
-{alert.type === 'Critical' && <GoonaIcon icon={AlertCircle} size={16} color={alert.iconColor} />}
-                {alert.type === 'Operations' && <GoonaIcon icon={ClipboardList} size={16} color={alert.iconColor} />}
-                {alert.type === 'Financial' && <GoonaIcon icon={TrendingUp} size={16} color={alert.iconColor} />}
-                {alert.type === 'AI' && <GoonaIcon icon={Sparkles} size={16} color={alert.iconColor} />}
-                {alert.type === 'Workforce' && <GoonaIcon icon={Users} size={16} color={alert.iconColor} />}
-                {alert.type === 'Safety' && <GoonaIcon icon={ShieldAlert} size={16} color={alert.iconColor} />}
-                {alert.type === 'Geofence' && <GoonaIcon icon={MapPin} size={16} color={alert.iconColor} />}
+        {/* ─── NOTIFICATION LIST ─── */}
+        {filtered.length === 0 ? (
+          <Animated.View entering={FadeInUp.duration(400).springify()} style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <GoonaIcon icon={Bell} size={32} color="#CBD5E1" />
             </View>
-            <View style={styles.alertContent}>
-              <View style={styles.alertTop}>
-                <View style={[styles.alertTypeBadge, { backgroundColor: alert.iconBg }]}>
-                  <Text style={[styles.alertTypeText, { color: alert.iconColor }]}>{alert.type}</Text>
-                </View>
-                <Text style={styles.alertTime}>{alert.time}</Text>
-              </View>
-              <Text style={styles.alertTitle}>{alert.title}</Text>
-              <Text style={styles.alertDesc}>{alert.desc}</Text>
-            </View>
+            <Text style={styles.emptyTitle}>All caught up</Text>
+            <Text style={styles.emptyDesc}>No {activeFilter !== 'all' ? CATEGORY_CONFIG[activeFilter]?.label.toLowerCase() + ' ' : ''}notifications</Text>
           </Animated.View>
-        ))}
+        ) : (
+          <>
+            {filtered.map((n, i) => (
+              <Animated.View
+                key={n.id}
+                entering={FadeInUp.duration(350).delay(200 + i * 50).springify()}
+                layout={Layout.springify()}
+              >
+                <NotificationCard
+                  n={n}
+                  onRead={() => markAsRead(n.id)}
+                  onArchive={() => archiveNotification(n.id)}
+                />
+              </Animated.View>
+            ))}
+          </>
+        )}
 
-        {/* LIGHTWEIGHT REMINDERS */}
-        <Animated.View entering={FadeInUp.duration(500).delay(450).springify()}>
-          <Text style={styles.sectionTitle}>Reminders</Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(500).delay(480).springify()} style={styles.reminderCard}>
-          {reminders.map((r, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[styles.reminderRow, i < reminders.length - 1 && styles.reminderBorder]}
-              activeOpacity={0.7}
-              onPress={() => toggleReminder(i)}
-            >
-              <View style={[styles.reminderCheck, r.done && styles.reminderCheckDone]}>
-                {r.done && <GoonaIcon icon={Check} size={10} color="#FFFFFF" />}
-              </View>
-              <Text style={[styles.reminderLabel, r.done && styles.reminderLabelDone]}>{r.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </Animated.View>
-
-        {/* QUICK TASKS */}
-        <Animated.View entering={FadeInUp.duration(500).delay(520).springify()}>
-          <Text style={styles.sectionTitle}>Quick Tasks</Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(500).delay(550).springify()} style={styles.tasksRow}>
-          {tasks.map((t, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[styles.taskChip, t.done && styles.taskChipDone]}
-              activeOpacity={0.8}
-              onPress={() => toggleTask(i)}
-            >
-              <View style={[styles.taskDot, { backgroundColor: t.done ? '#CBD5E1' : t.color }]} />
-              <Text style={[styles.taskLabel, t.done && styles.taskLabelDone]}>{t.label}</Text>
-{t.done && (
-                <GoonaIcon icon={Check} size={12} color="#16A34A" />
-              )}
-            </TouchableOpacity>
-          ))}
-        </Animated.View>
-
-        <View style={{ height: 100 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity
-        style={styles.fabShell}
-        activeOpacity={0.85}
-        onPress={() => setShowCreate(true)}
-      >
-        <LinearGradient
-          colors={['#1B5E20', '#2E7D32', '#388E3C']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.fabGradient}
-        >
-<GoonaIcon icon={Plus} size={28} color="#FFFFFF" strokeWidth={3} />
-        </LinearGradient>
-      </TouchableOpacity>
-
-      {/* TOAST */}
-      {toast.visible && (
-        <Animated.View entering={FadeInUp.duration(300).springify()} exiting={FadeOutDown.duration(250)} style={styles.toast}>
-          <GoonaIcon icon={Check} size={16} color="#FFFFFF" />
-          <Text style={styles.toastText}>{toast.message}</Text>
-        </Animated.View>
-      )}
-
-      <ReminderTaskModal visible={showCreate} onClose={() => setShowCreate(false)} onSave={handleCreateItem} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAF7' },
-  glowBg: { position: 'absolute', top: -50, right: -50, width: 240, height: 240, borderRadius: 120, backgroundColor: 'rgba(232,245,233,0.3)', zIndex: 0 },
-  contour1: { position: 'absolute', top: '5%', left: '-10%', width: 320, height: 100, zIndex: 0, borderWidth: 1, borderColor: 'rgba(46,125,50,0.04)', borderTopLeftRadius: 160, borderTopRightRadius: 160, borderBottomWidth: 0, transform: [{ rotate: '6deg' }] },
-  contour2: { position: 'absolute', bottom: '10%', right: '-10%', width: 250, height: 80, zIndex: 0, borderWidth: 1, borderColor: 'rgba(46,125,50,0.04)', borderBottomLeftRadius: 125, borderBottomRightRadius: 125, borderTopWidth: 0, transform: [{ rotate: '-8deg' }] },
-  scroll: { flex: 1, zIndex: 1 },
-  scrollInner: { paddingHorizontal: 20, paddingTop: 0 },
-
-  /* top nav */
-  topNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 54 },
-  navBack: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-  topTitle: { fontWeight: '700', fontSize: 20, color: '#1B1B1B' },
-  navAction: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-
-  /* hero */
-  heroCard: {
-    backgroundColor: '#2E7D32', borderRadius: 28, padding: 22, marginTop: 14, overflow: 'hidden',
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.2, shadowRadius: 30, elevation: 6,
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAF7',
   },
-  heroDots: { position: 'absolute', inset: 0 },
-  heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, zIndex: 1 },
-  heroIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  heroTitle: { fontWeight: '800', fontSize: 22, lineHeight: 28, color: 'white' },
-  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 6 },
-  heroMetrics: { flexDirection: 'row', marginTop: 18, zIndex: 1 },
-  heroMetric: { flex: 1, alignItems: 'center', borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.1)' },
-  heroMetricLast: { borderRightWidth: 0 },
-  heroMetricVal: { fontSize: 22, fontWeight: '800', color: 'white' },
-  heroMetricLbl: { fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 0 },
-
-  /* filter */
-  filterRow: { flexDirection: 'row', gap: 8, marginTop: 18 },
-  filterPill: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 100, backgroundColor: 'white', borderWidth: 1, borderColor: '#E2E8F0' },
-  filterPillActive: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
-  filterText: { fontSize: 12, fontWeight: '500', color: '#64748B' },
-  filterTextActive: { color: 'white' },
-
-  /* quick actions */
-  quickActions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  qaBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: '#F8FAF7', borderRadius: 100, borderWidth: 1, borderColor: '#E2E8F0' },
-  qaBtnText: { fontSize: 12, fontWeight: '500', color: '#2E7D32' },
-
-  /* section */
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937', marginTop: 22, marginBottom: 12 },
-
-  /* empty */
-  emptyState: { paddingVertical: 24, alignItems: 'center' },
-  emptyText: { fontSize: 13, color: '#94A3B8' },
-
-  /* alerts */
-  alertCard: { flexDirection: 'row', gap: 14, backgroundColor: 'white', borderRadius: 22, padding: 16, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 14, elevation: 2 },
-  alertIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 },
-  alertContent: { flex: 1 },
-  alertTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  alertTypeBadge: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 100 },
-  alertTypeText: { fontSize: 10, fontWeight: '600' },
-  alertTime: { fontSize: 11, color: '#94A3B8' },
-  alertTitle: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
-  alertDesc: { fontSize: 12, color: '#64748B', marginTop: 2, lineHeight: 17 },
-
-  /* reminders */
-  reminderCard: { backgroundColor: 'white', borderRadius: 22, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 14, elevation: 2 },
-  reminderRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
-  reminderBorder: { borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  reminderCheck: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#D1D5DB', alignItems: 'center', justifyContent: 'center' },
-  reminderCheckDone: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
-  reminderLabel: { fontSize: 14, fontWeight: '500', color: '#1F2937', flex: 1 },
-  reminderLabelDone: { textDecorationLine: 'line-through', color: '#94A3B8' },
-
-  /* tasks */
-  tasksRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  taskChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, backgroundColor: 'white', borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 },
-  taskChipDone: { backgroundColor: '#F8FAF7' },
-  taskDot: { width: 8, height: 8, borderRadius: 4 },
-  taskLabel: { fontSize: 13, fontWeight: '500', color: '#1F2937' },
-  taskLabelDone: { color: '#94A3B8', textDecorationLine: 'line-through' },
-
-  /* fab */
-  fabShell: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 36 : 24,
-    right: 20,
-    zIndex: 50,
+  scroll: {
+    flex: 1,
   },
-  fabGradient: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#2E7D32',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45,
-    shadowRadius: 24,
-    elevation: 10,
+  scrollInner: {
+    paddingBottom: 40,
   },
-
-  /* toast */
-  toast: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 100 : 80,
-    alignSelf: 'center',
+  topNav: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    backgroundColor: '#1F2937',
-    borderRadius: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-    zIndex: 100,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    height: 52,
   },
-  toastText: { fontSize: 14, fontWeight: '600', color: 'white' },
+  navBack: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1B1B1B',
+    letterSpacing: -0.3,
+  },
+  navAction: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerSection: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  headerLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2E7D32',
+    letterSpacing: 0.4,
+    marginBottom: 6,
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#1B1B1B',
+    letterSpacing: -0.8,
+    lineHeight: 32,
+  },
+
+  // ─── FILTERS ───
+  filterScroll: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  filterContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+    flexDirection: 'row',
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  filterLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  filterBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+
+  // ─── ACTIONS ───
+  actionsBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 10,
+    marginBottom: 8,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  actionBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
+
+  // ─── CARD ───
+  card: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    overflow: 'hidden',
+  },
+  cardUnread: {
+    backgroundColor: '#FAFFFA',
+    borderColor: 'rgba(46,125,50,0.15)',
+  },
+  cardPinned: {
+    borderLeftWidth: 0,
+  },
+  pinBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: '#EF4444',
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+  },
+  cardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  cardBody: {
+    flex: 1,
+  },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  cardCatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  cardCategory: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  priorityBadge: {
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+  },
+  priorityText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#2E7D32',
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1B1B1B',
+    marginBottom: 2,
+  },
+  cardTitleUnread: {
+    fontWeight: '800',
+  },
+  cardDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  cardTime: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+
+  // ─── EMPTY STATE ───
+  emptyState: {
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1B1B1B',
+    marginBottom: 4,
+  },
+  emptyDesc: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
 })
-
-

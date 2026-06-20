@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import BiometricGate from '../components/Biometric/BiometricGate'
 import { useAuthStore } from '../store/useAuthStore'
 import { useSettingsStore } from '../store/useSettingsStore'
+import NotificationInitializer from '../components/NotificationInitializer'
 
 const isExpoGo = Constants.executionEnvironment === 'storeClient'
 
@@ -199,6 +200,7 @@ export default function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BiometricGateManager>
+          <NotificationInitializer />
           {ready ? (
             <Stack screenOptions={{ headerShown: false, gestureEnabled: false }} />
           ) : (
