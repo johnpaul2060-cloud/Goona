@@ -99,6 +99,14 @@ export default function DashboardScreen() {
     }
   }
 
+  const navigateToWeather = () => {
+    try {
+      router.push('/weather-details' as any)
+    } catch {
+      if (__DEV__) console.log('Weather Intelligence route not found')
+    }
+  }
+
   useEffect(() => {
     seedWeatherForecast()
     const interval = setInterval(() => {
@@ -271,41 +279,43 @@ export default function DashboardScreen() {
         </Animated.View>
 
         {/* ─── WEATHER INTELLIGENCE ─── */}
-        <Animated.View entering={FadeIn.duration(400)} style={styles.weatherCard}>
-          <View style={styles.weatherHead}>
-            <GoonaIcon icon={CloudSun} size={18} color="#2E7D32" />
-            <Text style={styles.weatherTitle}>Weather Intelligence</Text>
-          </View>
-          <View style={styles.weatherBody}>
-            <View style={styles.weatherMain}>
-              <View style={styles.weatherRow}>
-                <View style={styles.weatherStat}>
-                  <GoonaIcon icon={Thermometer} size={14} color="#F59E0B" />
-                  <Text style={styles.weatherVal}>{temp}°C</Text>
-                  <Text style={styles.weatherLbl}>Temperature</Text>
-                </View>
-                <View style={styles.weatherDiv} />
-                <View style={styles.weatherStat}>
-                  <GoonaIcon icon={Droplets} size={14} color="#1A56FF" />
-                  <Text style={styles.weatherVal}>{humidity}%</Text>
-                  <Text style={styles.weatherLbl}>Humidity</Text>
-                </View>
-                <View style={styles.weatherDiv} />
-                <View style={styles.weatherStat}>
-                  <GoonaIcon icon={CloudRain} size={14} color="#6366F1" />
-                  <Text style={styles.weatherVal}>{rainProb}%</Text>
-                  <Text style={styles.weatherLbl}>Rain</Text>
+        <TouchableOpacity activeOpacity={0.8} onPress={navigateToWeather}>
+          <Animated.View entering={FadeIn.duration(400)} style={styles.weatherCard}>
+            <View style={styles.weatherHead}>
+              <GoonaIcon icon={CloudSun} size={18} color="#2E7D32" />
+              <Text style={styles.weatherTitle}>Weather Intelligence</Text>
+            </View>
+            <View style={styles.weatherBody}>
+              <View style={styles.weatherMain}>
+                <View style={styles.weatherRow}>
+                  <View style={styles.weatherStat}>
+                    <GoonaIcon icon={Thermometer} size={14} color="#F59E0B" />
+                    <Text style={styles.weatherVal}>{temp}°C</Text>
+                    <Text style={styles.weatherLbl}>Temperature</Text>
+                  </View>
+                  <View style={styles.weatherDiv} />
+                  <View style={styles.weatherStat}>
+                    <GoonaIcon icon={Droplets} size={14} color="#1A56FF" />
+                    <Text style={styles.weatherVal}>{humidity}%</Text>
+                    <Text style={styles.weatherLbl}>Humidity</Text>
+                  </View>
+                  <View style={styles.weatherDiv} />
+                  <View style={styles.weatherStat}>
+                    <GoonaIcon icon={CloudRain} size={14} color="#6366F1" />
+                    <Text style={styles.weatherVal}>{rainProb}%</Text>
+                    <Text style={styles.weatherLbl}>Rain</Text>
+                  </View>
                 </View>
               </View>
+              <View style={styles.weatherRec}>
+                <GoonaIcon icon={BrainCircuit} size={12} color="#2E7D32" />
+                <Text style={styles.weatherRecText}>
+                  {rainProb > 50 ? 'Prepare drainage before expected rainfall today.' : 'Reduce litter moisture monitoring today.'}
+                </Text>
+              </View>
             </View>
-            <View style={styles.weatherRec}>
-              <GoonaIcon icon={BrainCircuit} size={12} color="#2E7D32" />
-              <Text style={styles.weatherRecText}>
-                {rainProb > 50 ? 'Prepare drainage before expected rainfall today.' : 'Reduce litter moisture monitoring today.'}
-              </Text>
-            </View>
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </TouchableOpacity>
 
         {/* ─── PRODUCTION PULSE ─── */}
         <Animated.View key={pulseIdx} entering={FadeIn.duration(500)} style={[styles.pulseCard, { backgroundColor: pulse.bg }]}>

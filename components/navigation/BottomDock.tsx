@@ -3,12 +3,11 @@ import { router, usePathname } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, withSequence, withDelay, interpolate, Extrapolation } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { House, MessagesSquare, ClipboardList, Users } from 'lucide-react-native'
 import { GoonaNairaIcon } from '../icons/GoonaNairaIcon'
 import GoonaIcon from '../ui/GoonaIcon'
 import GoonaMarqueeAlert from '../GoonaMarqueeAlert'
-import GoonaWeatherPanel from '../GoonaWeatherPanel'
 import { generateWeatherAlerts } from '../../utils/weatherIntelligence'
 
 const TAB_ROUTES = [
@@ -63,8 +62,6 @@ function ActiveOrb() {
 export default function BottomDock({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname()
   const insets = useSafeAreaInsets()
-  const [weatherPanelVisible, setWeatherPanelVisible] = useState(false)
-
   const activeIndex = (() => {
     if (pathname === '/(tabs)' || pathname === '/(tabs)/dashboard' || pathname === '/dashboard') return 0
     if (pathname.includes('farm-feed') || pathname.includes('farmchat')) return 1
@@ -143,22 +140,18 @@ export default function BottomDock({ hidden }: { hidden?: boolean }) {
             } else if (t.includes('batch') || t.includes('health')) {
               router.navigate({ pathname: '/(tabs)/dashboard' as any } as any)
              } else if (t.includes('heat') || t.includes('temperature') || t.includes('humidity') ||
-                       t.includes('rain') || t.includes('wind') || t.includes('storm') ||
-                       t.includes('weather') || t.includes('climate') || t.includes('litter') ||
-                       t.includes('disease') || t.includes('biosecurity') || t.includes('flood') ||
-                       t.includes('stress') || t.includes('oxygen') || t.includes('dehydration') ||
-                       t.includes('feed') || t.includes('appetite') || t.includes('conversion') ||
-                       t.includes('harvest') || t.includes('risk') || t.includes('alert') ||
-                       t.includes('watch')) {
-              setWeatherPanelVisible(true)
+                        t.includes('rain') || t.includes('wind') || t.includes('storm') ||
+                        t.includes('weather') || t.includes('climate') || t.includes('litter') ||
+                        t.includes('disease') || t.includes('biosecurity') || t.includes('flood') ||
+                        t.includes('stress') || t.includes('oxygen') || t.includes('dehydration') ||
+                        t.includes('feed') || t.includes('appetite') || t.includes('conversion') ||
+                        t.includes('harvest') || t.includes('risk') || t.includes('alert') ||
+                        t.includes('watch')) {
+              router.navigate({ pathname: '/weather-details' as any } as any)
             }
           }}
         />
       </View>
-      <GoonaWeatherPanel
-        visible={weatherPanelVisible}
-        onClose={() => setWeatherPanelVisible(false)}
-      />
     </View>
   )
 }

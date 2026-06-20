@@ -6,7 +6,6 @@ import {
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
 import { ArrowLeft, Sparkles, Sprout, Mic, Send, Package, Heart, MapPin, TrendingUp } from 'lucide-react-native'
-import GoonaIQWeatherSection from '../components/GoonaIQWeatherSection'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -310,23 +309,36 @@ export default function GOONAIQScreen() {
         </Animated.View>
 
         <View style={styles.insightStream}>
-          {visibleInsights.map((text, i) => (
-            <Animated.View
+          {visibleInsights.map((text, i) => {
+            const isWeather = /heat|temperature|humidity|ventilation|weather|climate|rain|wind|storm|flood/i.test(text)
+            return (
+            <TouchableOpacity
               key={`${text.slice(0, 10)}-${i}`}
-              entering={FadeInUp.duration(500).delay(i * 80).springify()}
-              style={[styles.insightCard, i === visibleInsights.length - 1 && styles.insightCardLatest]}
+              activeOpacity={isWeather ? 0.8 : 1}
+              onPress={isWeather ? () => router.navigate({ pathname: '/weather-details' as any } as any) : undefined}
             >
-              <GoonaIcon icon={Sparkles} size={16} color={i === visibleInsights.length - 1 ? '#AEEA00' : '#2E7D32'} />
-              <Text
-                style={[styles.insightText, i === visibleInsights.length - 1 && styles.insightTextLatest]}
-                numberOfLines={2}
-                ellipsizeMode="tail"
+              <Animated.View
+                entering={FadeInUp.duration(500).delay(i * 80).springify()}
+                style={[styles.insightCard, i === visibleInsights.length - 1 && styles.insightCardLatest]}
               >
-                {text}
-              </Text>
-              {i === visibleInsights.length - 1 && <View style={styles.insightLatestDot} />}
-            </Animated.View>
-          ))}
+                <GoonaIcon icon={Sparkles} size={16} color={i === visibleInsights.length - 1 ? '#AEEA00' : '#2E7D32'} />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[styles.insightText, i === visibleInsights.length - 1 && styles.insightTextLatest]}
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                  >
+                    {text}
+                  </Text>
+                  {isWeather && (
+                    <Text style={styles.insightWeatherLink}>View Weather →</Text>
+                  )}
+                </View>
+                {i === visibleInsights.length - 1 && <View style={styles.insightLatestDot} />}
+              </Animated.View>
+            </TouchableOpacity>
+            )
+          })}
         </View>
 
         {/* ─── 3. PREDICTIVE INTELLIGENCE ENGINE ─── */}
@@ -415,10 +427,7 @@ export default function GOONAIQScreen() {
           ))}
         </Animated.View>
 
-        {/* ─── 9. WEATHER INTELLIGENCE ─── */}
-        <GoonaIQWeatherSection />
-
-        {/* ─── 10. ASK GOONA AI — VOICE-ENABLED ASSISTANT ─── */}
+        {/* ─── 9. ASK GOONA AI — VOICE-ENABLED ASSISTANT ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(850).springify()} style={styles.sectionHdr}>
           <Text style={styles.sectionTitle}>Ask GOONA AI</Text>
           <View style={styles.aiStatusBadge}>
@@ -1094,6 +1103,10 @@ const styles = StyleSheet.create({
   insightLatestDot: {
     width: 6, height: 6, borderRadius: 3, backgroundColor: '#AEEA00',
     marginTop: 4, flexShrink: 0,
+  },
+  insightWeatherLink: {
+    fontSize: 11, fontWeight: '600', color: '#2E7D32', marginTop: 4,
+    textDecorationLine: 'underline',
   },
 
   /* predictive scroll */
