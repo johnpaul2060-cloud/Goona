@@ -66,7 +66,7 @@ const HEALTH_ITEMS: { icon: any; label: string; status: string; type: HealthStat
 
 const QUICK_ACTIONS = [
   { label: 'Record Sale', icon: ShoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/record-sale' as const },
-  { label: 'Farm Expenses', icon: Banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/expenses' as const },
+  { label: 'Expenses', icon: Banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/expenses' as const },
   { label: 'Daily Records', icon: ClipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' as const },
   { label: 'Budget', icon: BarChart3, color: '#F59E0B', bg: '#FFFBEB', route: '/(tabs)/records/expenses/budget' as const },
   { label: 'Reports', icon: FileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/expenses/reports' as const },
