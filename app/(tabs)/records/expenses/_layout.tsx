@@ -6,6 +6,7 @@ export default function ExpensesLayout() {
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
+        gestureEnabled: true,
       }}
     >
       <Stack.Screen name="index" />
@@ -13,6 +14,8 @@ export default function ExpensesLayout() {
       <Stack.Screen name="categories" />
       <Stack.Screen name="reports" />
       <Stack.Screen name="budget" />
+      <Stack.Screen name="budget-setup" />
+      <Stack.Screen name="budget-export" />
     </Stack>
   )
 }

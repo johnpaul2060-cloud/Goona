@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../components/navigation/BottomDock'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
+import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
 const PROJECTS = [
   { icon: '\u{1F425}', label: 'Restocking', purposes: ['Broilers', 'Layers', 'Fingerlings', 'Livestock replacement'] },
@@ -37,7 +38,7 @@ function daysBetween(target: Date) {
 }
 
 function formatCurrency(n: number) {
-  return '\u20A6' + n.toLocaleString()
+  return formatNaira(n)
 }
 
 function formatDateDisplay(date: Date) {
@@ -80,8 +81,8 @@ export default function PlanRecaptScreen() {
   const [selectedPlan, setSelectedPlan] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly')
   const [showSummary, setShowSummary] = useState(false)
 
-  const targetAmount = Math.max(0, parseInt(amountRaw || '0', 10))
-  const displayAmount = amountRaw ? targetAmount.toLocaleString() : ''
+  const targetAmount = parseAmount(amountRaw)
+  const displayAmount = formatInput(amountRaw)
   const daysLeft = targetDate ? daysBetween(targetDate) : 0
 
   const dailyReq = targetAmount > 0 && daysLeft > 0 ? calcDaily(targetAmount, daysLeft) : 0

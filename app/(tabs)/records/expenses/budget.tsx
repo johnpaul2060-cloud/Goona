@@ -1,25 +1,124 @@
-import { useState } from 'react'
+import React from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions,
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Svg, { Circle as SvgCircle } from 'react-native-svg'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { ArrowLeft, PiggyBank, TrendingUp, TrendingDown, Settings, Sparkles, Target, AlertTriangle, Package, Truck, Users, Wrench, Zap, Receipt } from 'lucide-react-native'
+import {
+  ArrowLeft, TrendingUp, Sparkles, Target,
+  Package, Truck, Users, Wrench, Zap, Receipt,
+  FileText, Settings, ArrowUpRight, PiggyBank,
+} from 'lucide-react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../../../../components/navigation/BottomDock'
+import { formatNaira } from '../../../../utils/format'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
-const BUDGET_ITEMS = [
-  { label: 'Feed', limit: '₦200,000', spent: '₦185,000', pct: 92.5, color: '#16A34A', icon: Package, bg: '#F0FDF4' },
-  { label: 'Salaries', limit: '₦600,000', spent: '₦540,000', pct: 90, color: '#1A56FF', bg: '#EEF3FF', icon: Users },
-  { label: 'Medication', limit: '₦80,000', spent: '₦67,000', pct: 83.75, color: '#EF4444', bg: '#FFF1F2', icon: Receipt },
-  { label: 'Transport', limit: '₦50,000', spent: '₦42,500', pct: 85, color: '#F59E0B', bg: '#FFFBEB', icon: Truck },
-  { label: 'Utilities', limit: '₦35,000', spent: '₦28,000', pct: 80, color: '#8B5CF6', bg: '#F5F3FF', icon: Zap },
-  { label: 'Repairs', limit: '₦25,000', spent: '₦15,500', pct: 62, color: '#06B6D4', bg: '#ECFEFF', icon: Wrench },
+const MONTHLY_BUDGET = 990000
+const SPENT = 878000
+const REMAINING = MONTHLY_BUDGET - SPENT
+const PROJECTED = 945000
+const HEALTH_SCORE = 72
+
+const WATCHLIST = [
+  { label: 'Feed', status: 'over', spent: 185000, limit: 200000, color: '#EF4444', icon: Package },
+  { label: 'Salaries', status: 'at_risk', spent: 540000, limit: 600000, color: '#F59E0B', icon: Users },
+  { label: 'Medication', status: 'healthy', spent: 67000, limit: 80000, color: '#16A34A', icon: Receipt },
 ]
+
+const WEEKLY_FORECAST = [
+  { label: 'Wk 1', value: 210000 },
+  { label: 'Wk 2', value: 195000 },
+  { label: 'Wk 3', value: 225000 },
+  { label: 'Wk 4', value: 240000 },
+]
+
+const MAX_FORECAST = Math.max(...WEEKLY_FORECAST.map(w => w.value))
+
+const BREAKDOWN = [
+  { label: 'Feed', amount: 185000, pct: 21.1, color: '#16A34A' },
+  { label: 'Salaries', amount: 540000, pct: 61.5, color: '#1A56FF' },
+  { label: 'Medication', amount: 67000, pct: 7.6, color: '#EF4444' },
+  { label: 'Utilities', amount: 28000, pct: 3.2, color: '#8B5CF6' },
+  { label: 'Transport', amount: 42500, pct: 4.8, color: '#F59E0B' },
+  { label: 'Other', amount: 15500, pct: 1.8, color: '#06B6D4' },
+]
+
+const CYCLE_BUDGET = 2500000
+const CYCLE_SPENT = 1800000
+const CYCLE_PCT = (CYCLE_SPENT / CYCLE_BUDGET) * 100
+
+const INSIGHTS = [
+  { icon: TrendingUp, color: '#EF4444', bg: '#FEF2F2', title: 'Feed costs up 12%', desc: 'Prices increased this month. Consider bulk purchasing with other farmers.', impact: '-₦22,000' },
+  { icon: Sparkles, color: '#16A34A', bg: '#F0FDF4', title: 'Save ₦18,500', desc: 'Switch to Sunshine Feeds — same quality, 10% cheaper per bag.', impact: '+₦18,500' },
+  { icon: Target, color: '#1A56FF', bg: '#EEF3FF', title: '+₦42,000 profit impact', desc: 'Reallocating 15% of repairs budget could cover feed shortfall.', impact: '+₦42,000' },
+]
+
+const QUICK_ACTIONS = [
+  { icon: Receipt, label: 'Record Expense', route: '/records/expenses/create' as const, color: '#2E7D32', bg: '#F0FDF4' },
+  { icon: FileText, label: 'Spending Report', route: '/records/expenses/reports' as const, color: '#1A56FF', bg: '#EEF3FF' },
+  { icon: Settings, label: 'Set Budget', route: '/records/expenses/budget-setup' as const, color: '#F59E0B', bg: '#FFFBEB' },
+  { icon: ArrowUpRight, label: 'Export', route: '/records/expenses/budget-export' as const, color: '#8B5CF6', bg: '#F5F3FF' },
+]
+
+function BudgetGauge({ score }: { score: number }) {
+  const size = 80
+  const cx = size / 2
+  const cy = size / 2
+  const r = 34
+  const circumference = 2 * Math.PI * r
+  const filled = (score / 100) * circumference
+  const gap = 8
+  const dashArray = `${Math.max(0, filled - gap)} ${circumference - filled}`
+  const color = score >= 80 ? '#16A34A' : score >= 50 ? '#F59E0B' : '#EF4444'
+
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size}>
+        <SvgCircle cx={cx} cy={cy} r={r} stroke="#F1F5F9" strokeWidth={6} fill="none" />
+        <SvgCircle
+          cx={cx} cy={cy} r={r}
+          stroke={color}
+          strokeWidth={6}
+          fill="none"
+          strokeDasharray={dashArray}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${cx} ${cy})`}
+        />
+      </Svg>
+      <View style={{ position: 'absolute', alignItems: 'center' }}>
+        <Text style={{ fontSize: 20, fontWeight: '800', color }}>{score}</Text>
+        <Text style={{ fontSize: 8, fontWeight: '600', color: '#94A3B8', marginTop: -1 }}>/100</Text>
+      </View>
+    </View>
+  )
+}
+
+function WatchlistBadge({ status }: { status: string }) {
+  const config = status === 'over'
+    ? { label: 'Over budget', bg: '#FEF2F2', text: '#DC2626', dot: '#EF4444' }
+    : status === 'at_risk'
+      ? { label: 'At risk', bg: '#FFFBEB', text: '#D97706', dot: '#F59E0B' }
+      : { label: 'Healthy', bg: '#F0FDF4', text: '#16A34A', dot: '#16A34A' }
+  return (
+    <View style={[gs.wlBadge, { backgroundColor: config.bg }]}>
+      <View style={[gs.wlDot, { backgroundColor: config.dot }]} />
+      <Text style={[gs.wlBadgeText, { color: config.text }]}>{config.label}</Text>
+    </View>
+  )
+}
+
+function AnimatedCard({ children, delay }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <Animated.View entering={FadeInUp.duration(400).delay(delay ?? 0).springify()}>
+      {children}
+    </Animated.View>
+  )
+}
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets()
@@ -31,6 +130,7 @@ export default function BudgetScreen() {
         contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* ─── HEADER ─── */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
           <TouchableOpacity
             style={styles.navBack}
@@ -40,95 +140,250 @@ export default function BudgetScreen() {
             <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Budget</Text>
-          <TouchableOpacity style={styles.navAction} activeOpacity={0.7}>
-            <GoonaIcon icon={Settings} size={20} color="#1F2937" />
-          </TouchableOpacity>
+          <View style={{ width: 40 }} />
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.headerSection}>
-          <Text style={styles.headerLabel}>Budget Planner</Text>
-          <Text style={styles.headerTitle}>Manage{"\n"}Spending Limits</Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(500).delay(120).springify()} style={styles.overviewCard}>
-          <View style={styles.overviewRow}>
-            <View style={styles.overviewLeft}>
-              <GoonaIcon icon={PiggyBank} size={24} color="#2E7D32" />
-              <View>
-                <Text style={styles.overviewLabel}>Monthly Budget</Text>
-                <Text style={styles.overviewValue}>₦990,000</Text>
+        {/* ─── HEALTH SCORE + FINANCIAL HERO ─── */}
+        <AnimatedCard delay={80}>
+          <View style={styles.heroCard}>
+            <View style={styles.heroTop}>
+              <View style={styles.heroHealth}>
+                <BudgetGauge score={HEALTH_SCORE} />
+                <View style={styles.heroHealthText}>
+                  <Text style={styles.heroHealthLabel}>Budget Health</Text>
+                  <Text style={[styles.heroHealthStatus, HEALTH_SCORE >= 80 ? { color: '#16A34A' } : HEALTH_SCORE >= 50 ? { color: '#F59E0B' } : { color: '#EF4444' }]}>
+                    {HEALTH_SCORE >= 80 ? 'On track' : HEALTH_SCORE >= 50 ? 'Needs attention' : 'Critical'}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.heroAction} activeOpacity={0.7}>
+                <Text style={styles.heroActionText}>Adjust</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.heroMetrics}>
+              <View style={styles.heroMetric}>
+                <Text style={styles.heroMetricLabel}>Budget</Text>
+                <Text style={styles.heroMetricValue}>{formatNaira(MONTHLY_BUDGET)}</Text>
+              </View>
+              <View style={styles.heroMetricDivider} />
+              <View style={styles.heroMetric}>
+                <Text style={styles.heroMetricLabel}>Spent</Text>
+                <Text style={styles.heroMetricValue}>{formatNaira(SPENT)}</Text>
+              </View>
+              <View style={styles.heroMetricDivider} />
+              <View style={styles.heroMetric}>
+                <Text style={styles.heroMetricLabel}>Remaining</Text>
+                <Text style={[styles.heroMetricValue, REMAINING > 0 ? { color: '#16A34A' } : { color: '#EF4444' }]}>{formatNaira(REMAINING)}</Text>
               </View>
             </View>
-            <View style={styles.overviewRight}>
-              <Text style={styles.overviewSpentLabel}>Spent</Text>
-              <Text style={styles.overviewSpent}>₦878,000</Text>
+            <View style={styles.heroProjected}>
+              <View style={styles.heroProjectedRow}>
+                <Text style={styles.heroProjectedLabel}>Projected month-end</Text>
+                <Text style={styles.heroProjectedValue}>{formatNaira(PROJECTED)}</Text>
+              </View>
+              <View style={styles.heroBarBg}>
+                <View style={[styles.heroBarFill, { width: `${(PROJECTED / MONTHLY_BUDGET) * 100}%`, backgroundColor: '#F59E0B' }]} />
+              </View>
+              <Text style={styles.heroBarNote}>{Math.round((PROJECTED / MONTHLY_BUDGET) * 100)}% of budget</Text>
             </View>
           </View>
-          <View style={styles.overviewBarBg}>
-            <View style={[styles.overviewBarFill, { width: '88.7%' }]} />
-          </View>
-          <View style={styles.overviewMeta}>
-            <Text style={styles.overviewMetaText}>
-              <GoonaIcon icon={AlertTriangle} size={12} color="#F59E0B" /> 88.7% used · ₦112k remaining
-            </Text>
-          </View>
-        </Animated.View>
+        </AnimatedCard>
 
-        <Animated.View entering={FadeInUp.duration(500).delay(180).springify()} style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Category Allocation</Text>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={styles.sectionAction}>Adjust</Text>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {BUDGET_ITEMS.map((b, i) => (
-          <Animated.View
-            key={b.label}
-            entering={FadeInUp.duration(400).delay(220 + i * 60).springify()}
-          >
-            <View style={styles.budgetRow}>
-              <View style={styles.budgetTop}>
-                <View style={styles.budgetLeft}>
-                  <View style={[styles.bgIcon, { backgroundColor: b.bg }]}>
-                    <GoonaIcon icon={b.icon} size={16} color={b.color} />
+        {/* ─── EXPENSE WATCHLIST ─── */}
+        <AnimatedCard delay={160}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Expense Watchlist</Text>
+          </View>
+          {WATCHLIST.map((w, i) => (
+            <Animated.View key={w.label} entering={FadeInUp.duration(350).delay(200 + i * 80).springify()}>
+              <View style={styles.wlCard}>
+                <View style={styles.wlLeft}>
+                  <View style={[styles.wlIcon, { backgroundColor: w.color + '15' }]}>
+                    <GoonaIcon icon={w.icon} size={16} color={w.color} />
                   </View>
                   <View>
-                    <Text style={styles.bgLabel}>{b.label}</Text>
-                    <Text style={styles.bgMeta}>{b.spent} / {b.limit}</Text>
+                    <Text style={styles.wlLabel}>{w.label}</Text>
+                    <Text style={styles.wlMeta}>{formatNaira(w.spent)} / {formatNaira(w.limit)}</Text>
                   </View>
                 </View>
-                <Text style={[styles.bgPct, b.pct > 90 && { color: '#EF4444' }]}>{b.pct}%</Text>
+                <WatchlistBadge status={w.status} />
               </View>
-              <View style={styles.bgBarBg}>
-                <View
-                  style={[
-                    styles.bgBarFill,
-                    {
-                      width: `${b.pct}%`,
-                      backgroundColor: b.pct > 90 ? '#EF4444' : b.color,
-                    },
-                  ]}
-                />
+            </Animated.View>
+          ))}
+        </AnimatedCard>
+
+        {/* ─── WEEKLY SPENDING FORECAST ─── */}
+        <AnimatedCard delay={320}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Weekly Spending Forecast</Text>
+          </View>
+          <View style={styles.forecastCard}>
+            <View style={styles.forecastBars}>
+              {WEEKLY_FORECAST.map((w, i) => {
+                const barH = (w.value / MAX_FORECAST) * 120
+                const isHighest = w.value === MAX_FORECAST
+                return (
+                  <View key={w.label} style={styles.forecastBarCol}>
+                    <Text style={styles.forecastBarValue}>{formatNaira(w.value)}</Text>
+                    <View style={[styles.forecastBar, { height: barH, backgroundColor: isHighest ? '#2E7D32' : '#E2E8F0' }]} />
+                    <Text style={[styles.forecastBarLabel, isHighest && { color: '#2E7D32', fontWeight: '700' }]}>{w.label}</Text>
+                  </View>
+                )
+              })}
+            </View>
+            <Text style={styles.forecastNote}>Week 4 trending higher — review feed orders</Text>
+          </View>
+        </AnimatedCard>
+
+        {/* ─── EXPENSE BREAKDOWN ─── */}
+        <AnimatedCard delay={400}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Expense Breakdown</Text>
+          </View>
+          <View style={styles.breakdownCard}>
+            <View style={styles.breakdownStacked}>
+              {BREAKDOWN.map((b) => (
+                <View key={b.label} style={[styles.breakdownSegment, { flex: b.pct, backgroundColor: b.color }]} />
+              ))}
+            </View>
+            <View style={styles.breakdownList}>
+              {BREAKDOWN.map((b) => (
+                <View key={b.label} style={styles.breakdownRow}>
+                  <View style={styles.breakdownLeft}>
+                    <View style={[styles.breakdownDot, { backgroundColor: b.color }]} />
+                    <Text style={styles.breakdownLabel}>{b.label}</Text>
+                  </View>
+                  <Text style={styles.breakdownValue}>{formatNaira(b.amount)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </AnimatedCard>
+
+        {/* ─── GOONA BUDGET INSIGHTS ─── */}
+        <AnimatedCard delay={480}>
+          <View style={styles.sectionHeader}>
+            <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+            <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>GOONA Budget Insights</Text>
+          </View>
+          {INSIGHTS.map((ins, i) => {
+            const IconComp = ins.icon
+            return (
+              <Animated.View key={ins.title} entering={FadeInUp.duration(350).delay(520 + i * 100).springify()}>
+                <TouchableOpacity style={[styles.insightCard, { backgroundColor: ins.bg }]} activeOpacity={0.7}>
+                  <View style={styles.insightRow}>
+                    <View style={[styles.insightIconWrap, { backgroundColor: ins.color + '20' }]}>
+                      <GoonaIcon icon={IconComp} size={18} color={ins.color} />
+                    </View>
+                    <View style={styles.insightContent}>
+                      <View style={styles.insightTop}>
+                        <Text style={styles.insightTitle}>{ins.title}</Text>
+                        <Text style={[styles.insightImpact, ins.color === '#EF4444' ? { color: '#EF4444' } : { color: '#16A34A' }]}>{ins.impact}</Text>
+                      </View>
+                      <Text style={styles.insightDesc}>{ins.desc}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            )
+          })}
+        </AnimatedCard>
+
+        {/* ─── PRODUCTION CYCLE BUDGET ─── */}
+        <AnimatedCard delay={620}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Production Cycle Budget</Text>
+          </View>
+          <View style={styles.cycleCard}>
+            <View style={styles.cycleRow}>
+              <View style={styles.cycleCol}>
+                <Text style={styles.cycleLabel}>Cycle Budget</Text>
+                <Text style={styles.cycleValue}>{formatNaira(CYCLE_BUDGET)}</Text>
+              </View>
+              <View style={styles.cycleCol}>
+                <Text style={styles.cycleLabel}>Cycle Spent</Text>
+                <Text style={styles.cycleValue}>{formatNaira(CYCLE_SPENT)}</Text>
               </View>
             </View>
-          </Animated.View>
-        ))}
-
-        <Animated.View entering={FadeInUp.duration(500).delay(480).springify()} style={styles.insightCard}>
-          <View style={styles.insightHeader}>
-            <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
-            <Text style={styles.insightTitle}>GOONA IQ Recommendation</Text>
+            <View style={styles.cycleBarBg}>
+              <View style={[styles.cycleBarFill, { width: `${CYCLE_PCT}%`, backgroundColor: CYCLE_PCT > 80 ? '#EF4444' : CYCLE_PCT > 60 ? '#F59E0B' : '#16A34A' }]} />
+            </View>
+            <View style={styles.cycleMeta}>
+              <Text style={styles.cycleMetaText}>{CYCLE_PCT.toFixed(0)}% used</Text>
+              <Text style={styles.cycleMetaText}>{formatNaira(CYCLE_BUDGET - CYCLE_SPENT)} remaining</Text>
+            </View>
           </View>
-          <Text style={styles.insightText}>
-            Feed budget is at 92.5% with 2 weeks remaining. Consider reallocating 10% from the repairs budget to cover potential overage.
-          </Text>
-        </Animated.View>
+        </AnimatedCard>
+
+        {/* ─── SAVINGS OPPORTUNITY + PROFIT IMPACT ─── */}
+        <AnimatedCard delay={700}>
+          <View style={styles.dualGrid}>
+            <TouchableOpacity style={styles.oppCard} activeOpacity={0.7}>
+              <View style={styles.oppIconWrap}>
+                <GoonaIcon icon={PiggyBank} size={22} color="#2E7D32" />
+              </View>
+              <Text style={styles.oppLabel}>Savings Opportunity</Text>
+              <Text style={styles.oppAmount}>₦18,500</Text>
+              <Text style={styles.oppDesc}>Switch feed supplier</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.oppCard} activeOpacity={0.7}>
+              <View style={[styles.oppIconWrap, { backgroundColor: '#EEF3FF' }]}>
+                <GoonaIcon icon={TrendingUp} size={22} color="#1A56FF" />
+              </View>
+              <Text style={styles.oppLabel}>Profit Impact</Text>
+              <Text style={[styles.oppAmount, { color: '#1A56FF' }]}>+₦42,000</Text>
+              <Text style={styles.oppDesc}>Budget optimization</Text>
+            </TouchableOpacity>
+          </View>
+        </AnimatedCard>
+
+        {/* ─── QUICK ACTIONS ─── */}
+        <AnimatedCard delay={780}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+          </View>
+          <View style={styles.actionsGrid}>
+            {QUICK_ACTIONS.map((a) => (
+              <TouchableOpacity
+                key={a.label}
+                style={[styles.actionCard, { backgroundColor: a.bg }]}
+                activeOpacity={0.7}
+                onPress={() => router.push(a.route as any)}
+              >
+                <GoonaIcon icon={a.icon} size={20} color={a.color} />
+                <Text style={[styles.actionLabel, { color: a.color }]}>{a.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </AnimatedCard>
+
+        <View style={{ height: 32 }} />
       </ScrollView>
 
       <BottomDock />
     </View>
   )
 }
+
+const gs = StyleSheet.create({
+  wlBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+  },
+  wlDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  wlBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+})
 
 const styles = StyleSheet.create({
   container: {
@@ -162,99 +417,119 @@ const styles = StyleSheet.create({
     color: '#1B1B1B',
     letterSpacing: -0.3,
   },
-  navAction: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerSection: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-  },
-  headerLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#2E7D32',
-    letterSpacing: 0.4,
-    marginBottom: 6,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1B1B1B',
-    letterSpacing: -0.8,
-    lineHeight: 34,
-  },
-  overviewCard: {
+
+  // ─── HERO CARD ───
+  heroCard: {
     marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 24,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  overviewRow: {
+  heroTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
-  overviewLeft: {
+  heroHealth: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  overviewLabel: {
-    fontSize: 12,
-    color: '#94A3B8',
-    fontWeight: '500',
+  heroHealthText: {},
+  heroHealthLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
   },
-  overviewValue: {
-    fontSize: 20,
+  heroHealthStatus: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  heroAction: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#F0FDF4',
+  },
+  heroActionText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2E7D32',
+  },
+  heroMetrics: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  heroMetric: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  heroMetricLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  heroMetricValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1B1B1B',
+    letterSpacing: -0.3,
+  },
+  heroMetricDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: '#F1F5F9',
+  },
+  heroProjected: {
+    backgroundColor: '#FFFBEB',
+    borderRadius: 16,
+    padding: 14,
+  },
+  heroProjectedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  heroProjectedLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#D97706',
+  },
+  heroProjectedValue: {
+    fontSize: 16,
     fontWeight: '800',
     color: '#1B1B1B',
   },
-  overviewRight: {
-    alignItems: 'flex-end',
-  },
-  overviewSpentLabel: {
-    fontSize: 12,
-    color: '#94A3B8',
-  },
-  overviewSpent: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1B1B1B',
-  },
-  overviewBarBg: {
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#F1F5F9',
+  heroBarBg: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FDE68A',
     overflow: 'hidden',
+    marginBottom: 6,
   },
-  overviewBarFill: {
+  heroBarFill: {
     height: '100%',
-    borderRadius: 5,
-    backgroundColor: '#F59E0B',
+    borderRadius: 3,
   },
-  overviewMeta: {
-    marginTop: 8,
-  },
-  overviewMetaText: {
-    fontSize: 12,
-    color: '#F59E0B',
+  heroBarNote: {
+    fontSize: 11,
     fontWeight: '600',
+    color: '#D97706',
   },
+
+  // ─── SECTION ───
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 24,
@@ -265,14 +540,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1B1B1B',
   },
-  sectionAction: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#2E7D32',
-  },
-  budgetRow: {
+
+  // ─── WATCHLIST ───
+  wlCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 14,
@@ -282,72 +557,279 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  budgetTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  budgetLeft: {
+  wlLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  bgIcon: {
+  wlIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bgLabel: {
+  wlLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1B1B1B',
+  },
+  wlMeta: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+
+  // ─── FORECAST ───
+  forecastCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  forecastBars: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    height: 160,
+    marginBottom: 12,
+  },
+  forecastBarCol: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  forecastBarValue: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748B',
+    marginBottom: 6,
+  },
+  forecastBar: {
+    width: 32,
+    borderRadius: 6,
+    minHeight: 8,
+  },
+  forecastBarLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginTop: 6,
+  },
+  forecastNote: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#F59E0B',
+    textAlign: 'center',
+  },
+
+  // ─── BREAKDOWN ───
+  breakdownCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  breakdownStacked: {
+    flexDirection: 'row',
+    height: 12,
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  breakdownSegment: {
+    height: '100%',
+  },
+  breakdownList: {
+    gap: 10,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  breakdownLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  breakdownDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  breakdownLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1B1B1B',
   },
-  bgMeta: {
-    fontSize: 12,
-    color: '#94A3B8',
-  },
-  bgPct: {
-    fontSize: 15,
+  breakdownValue: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#1B1B1B',
   },
-  bgBarBg: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#F1F5F9',
-    overflow: 'hidden',
-  },
-  bgBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
+
+  // ─── INSIGHTS ───
   insightCard: {
     marginHorizontal: 16,
-    marginTop: 20,
     marginBottom: 8,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 20,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(46,125,50,0.12)',
+    borderRadius: 16,
+    padding: 14,
   },
-  insightHeader: {
+  insightRow: {
     flexDirection: 'row',
+    gap: 12,
+  },
+  insightIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    justifyContent: 'center',
+  },
+  insightContent: {
+    flex: 1,
+  },
+  insightTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   insightTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1B5E20',
-  },
-  insightText: {
     fontSize: 14,
-    color: '#1F2937',
-    lineHeight: 20,
+    fontWeight: '700',
+    color: '#1B1B1B',
+    flex: 1,
+  },
+  insightImpact: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginLeft: 8,
+  },
+  insightDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 16,
+  },
+
+  // ─── CYCLE ───
+  cycleCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  cycleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  cycleCol: {},
+  cycleLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  cycleValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1B1B1B',
+  },
+  cycleBarBg: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#F1F5F9',
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  cycleBarFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  cycleMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cycleMetaText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+
+  // ─── OPPORTUNITY DUAL ───
+  dualGrid: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    gap: 10,
+  },
+  oppCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  oppIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#F0FDF4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  oppLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  oppAmount: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#16A34A',
+    marginBottom: 4,
+  },
+  oppDesc: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+
+  // ─── QUICK ACTIONS ───
+  actionsGrid: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    gap: 10,
+  },
+  actionCard: {
+    flex: 1,
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
   },
 })

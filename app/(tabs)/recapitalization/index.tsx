@@ -158,7 +158,7 @@ function RecapitalizationHeroCard({ index }: { index: number }) {
         <View style={styles.heroHead}>
           <View>
             <Text style={styles.heroLabel}>PRODUCTION READINESS</Text>
-            <Text style={styles.heroAmount}>₦{totalSaved.toLocaleString()}</Text>
+            <Text style={styles.heroAmount}>₦{totalSaved.toLocaleString('en-NG')}</Text>
           </View>
           <View style={styles.heroRingWrap}>
             <Svg width="88" height="88" viewBox="0 0 88 88">
@@ -512,13 +512,13 @@ function DayDetailModal({
           <View style={styles.modalAmountSection}>
             <View style={styles.modalAmountRow}>
               <Text style={styles.modalAmountLabel}>Expected Contribution</Text>
-              <Text style={styles.modalAmountValue}>{'\u20A6'}{expected.toLocaleString()}</Text>
+              <Text style={styles.modalAmountValue}>{'\u20A6'}{expected.toLocaleString('en-NG')}</Text>
             </View>
             {amount !== undefined && (
               <View style={styles.modalAmountRow}>
                 <Text style={styles.modalAmountLabel}>Actual Saved</Text>
                 <Text style={[styles.modalAmountValue, { color: sc[status] }]}>
-                  {'\u20A6'}{amount.toLocaleString()}
+                  {'\u20A6'}{amount.toLocaleString('en-NG')}
                 </Text>
               </View>
             )}
@@ -614,10 +614,10 @@ export default function RecapitalizationDashboardScreen() {
   }
   const weekRecovery = Math.round(totalSaved / Math.max(1, missedCount + 1))
   const finItems = [
-    { label: 'Weekly Recapt Progress', value: `₦${weekRecovery.toLocaleString()}`, trend: '+12%', trendUp: true, color: '#16A34A', bars: [30, 45, 55, 40, 65], bg: '#F0FDF4' },
-    { label: 'Production Fund', value: `₦${totalSaved.toLocaleString()}`, trend: '+8%', trendUp: true, color: '#1A56FF', bars: [50, 60, 45, 55, 70], bg: '#EEF3FF' },
-    { label: 'Partial Contributions', value: `₦${totalPartial.toLocaleString()}`, trend: '+2%', trendUp: true, color: '#F59E0B', bars: [40, 35, 50, 45, 30], bg: '#FFFBEB' },
-    { label: 'Emergency Reserve', value: `₦${Math.round(totalSaved * 0.25).toLocaleString()}`, trend: '+5%', trendUp: true, color: '#7C3AED', bars: [20, 35, 40, 50, 65], bg: '#F3E8FF' },
+    { label: 'Weekly Recapt Progress', value: `₦${weekRecovery.toLocaleString('en-NG')}`, trend: '+12%', trendUp: true, color: '#16A34A', bars: [30, 45, 55, 40, 65], bg: '#F0FDF4' },
+    { label: 'Production Fund', value: `₦${totalSaved.toLocaleString('en-NG')}`, trend: '+8%', trendUp: true, color: '#1A56FF', bars: [50, 60, 45, 55, 70], bg: '#EEF3FF' },
+    { label: 'Partial Contributions', value: `₦${totalPartial.toLocaleString('en-NG')}`, trend: '+2%', trendUp: true, color: '#F59E0B', bars: [40, 35, 50, 45, 30], bg: '#FFFBEB' },
+    { label: 'Emergency Reserve', value: `₦${Math.round(totalSaved * 0.25).toLocaleString('en-NG')}`, trend: '+5%', trendUp: true, color: '#7C3AED', bars: [20, 35, 40, 50, 65], bg: '#F3E8FF' },
   ]
 
   return (

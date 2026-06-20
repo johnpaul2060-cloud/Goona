@@ -9,6 +9,7 @@ import Animated, {
 import { useRecoveryStore, CheckInStatus } from '../store/useRecoveryStore'
 import GoonaIcon from './ui/GoonaIcon'
 import { Check, X, Minus, Star, CircleCheck } from 'lucide-react-native'
+import { formatInput, parseAmount } from '../utils/format'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -43,8 +44,9 @@ export default function RecoveryCheckInModal({
   const currentRecord = dateStr ? records[dateStr] : undefined
 
   const [selectedStatus, setSelectedStatus] = useState<ActiveStatus | null>(null)
-  const [amount, setAmount] = useState('')
+  const [amountRaw, setAmountRaw] = useState('')
   const [isVisible, setIsVisible] = useState(false)
+  const amountDisplay = formatInput(amountRaw)
 
   const translateY = useSharedValue(600)
   const backdropOpacity = useSharedValue(0)
@@ -64,10 +66,10 @@ export default function RecoveryCheckInModal({
   useEffect(() => {
     if (visible && currentRecord) {
       setSelectedStatus(currentRecord.status as ActiveStatus)
-      setAmount(currentRecord.amount ? String(currentRecord.amount) : '')
+      setAmountRaw(currentRecord.amount ? String(currentRecord.amount) : '')
     } else if (visible) {
       setSelectedStatus(null)
-      setAmount('')
+      setAmountRaw('')
     }
   }, [visible, dateStr])
 
@@ -81,11 +83,11 @@ export default function RecoveryCheckInModal({
 
   const handleConfirm = useCallback(() => {
     if (!selectedStatus || !dateStr) return
-    const parsedAmount = amount ? parseFloat(amount.replace(/,/g, '')) : undefined
+    const parsedAmount = amountRaw ? parseAmount(amountRaw) : undefined
     checkIn(dateStr, selectedStatus, parsedAmount)
     Keyboard.dismiss()
     onClose()
-  }, [selectedStatus, dateStr, amount, checkIn, onClose])
+  }, [selectedStatus, dateStr, amountRaw, checkIn, onClose])
 
   if (!isVisible) return null
 
@@ -191,8 +193,8 @@ export default function RecoveryCheckInModal({
             <Text style={styles.amountPrefix}>₦</Text>
             <TextInput
               style={styles.amountInput}
-              value={amount}
-              onChangeText={setAmount}
+              value={amountDisplay}
+              onChangeText={(v) => setAmountRaw(v.replace(/[^0-9]/g, ''))}
               keyboardType="numeric"
               placeholder="0"
               placeholderTextColor="#CBD5E1"

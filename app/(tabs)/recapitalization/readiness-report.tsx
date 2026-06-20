@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
+import { formatNaira } from '../../../utils/format'
 import {
   ArrowLeft, TrendingUp, TrendingDown, Target, Award,
   Lightbulb, AlertTriangle, CheckCircle, Clock, BarChart,
@@ -26,7 +27,7 @@ const PRODUCTION_GOALS = [
 ]
 
 function formatCurrency(n: number) {
-  return '\u20A6' + n.toLocaleString()
+  return formatNaira(n)
 }
 
 export default function ReadinessReportScreen() {

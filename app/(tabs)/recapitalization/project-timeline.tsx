@@ -8,6 +8,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
+import { formatNaira } from '../../../utils/format'
 import {
   ArrowLeft, Clock, Target, CheckCircle, TrendingUp,
   Calendar, Circle, Flag,
@@ -19,7 +20,7 @@ import { useRecoveryStore, fmtDateFromParts, computeStreak } from '../../../stor
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 function formatCurrency(n: number) {
-  return '\u20A6' + n.toLocaleString()
+  return formatNaira(n)
 }
 
 const MILESTONES = [

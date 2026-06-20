@@ -12,6 +12,7 @@ import { router, useLocalSearchParams, usePathname } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
+import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
 const PROJECTS = [
   { id: 1, icon: '\u{1F33E}', name: 'Feed Purchase', target: 500000, saved: 250000 },
@@ -37,13 +38,13 @@ const PAYMENT_METHODS = [
 */
 
 function formatCurrency(n: number) {
-  return '\u20A6' + n.toLocaleString()
+  return formatNaira(n)
 }
 
 function formatCompactCurrency(n: number) {
   if (n >= 1000000) return '\u20A6' + (n / 1000000).toFixed(1) + 'M'
   if (n >= 1000) return '\u20A6' + (n / 1000).toFixed(0) + 'k'
-  return '\u20A6' + n.toLocaleString()
+  return '\u20A6' + n.toLocaleString('en-NG')
 }
 
 export default function FundProjectScreen() {
@@ -94,8 +95,8 @@ export default function FundProjectScreen() {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  const amount = Math.max(0, parseInt(amountStr.replace(/[^0-9]/g, ''), 10) || 0)
-  const displayAmount = amount ? amount.toLocaleString() : ''
+  const amount = parseAmount(amountStr)
+  const displayAmount = formatInput(amountStr)
   const isQuickFund = !!params.amount
   const contributionTypeLabel = params.plan
     ? `${params.plan} Contribution`

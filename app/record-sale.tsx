@@ -1,61 +1,55 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
-  StyleSheet, Dimensions, useWindowDimensions, Modal,
-  KeyboardAvoidingView, Platform, Alert, Pressable,
+  StyleSheet, Dimensions, Modal, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import * as ImagePicker from 'expo-image-picker'
-import { ArrowLeft, Plus, CheckCircle, Mic, Image, FileText } from 'lucide-react-native'
+import { ArrowLeft, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react-native'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
   withSequence, withRepeat, FadeInUp, FadeIn, Easing,
 } from 'react-native-reanimated'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { LinearGradient } from 'expo-linear-gradient'
 import BottomDock from '../components/navigation/BottomDock'
+import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const H_PAD = 20
-const CARD_W = (SCREEN_W - H_PAD * 2 - 12) / 2
 
-/* ─── Types ─── */
-type ProductType = 'broilers' | 'layers' | 'eggs' | 'catfish' | 'feed'
+type ProductType = 'broilers' | 'layers' | 'eggs' | 'catfish' | 'feed' | 'other'
 type PaymentType = 'cash' | 'transfer' | 'pos' | 'credit'
-type CustomerType = 'retail' | 'distributor' | 'market' | 'restaurant' | 'processor'
 
-/* ─── Data ─── */
-const PRODUCT_DATA: Record<ProductType, { label: string; price: number; unit: string; icon: string }> = {
-  broilers: { label: 'Broilers', price: 4500, unit: 'bird', icon: '\u{1F425}' },
-  layers: { label: 'Layers', price: 3200, unit: 'bird', icon: '\u{1F413}' },
-  eggs: { label: 'Eggs', price: 350, unit: 'crate', icon: '\u{1F95A}' },
-  catfish: { label: 'Catfish', price: 1200, unit: 'kg', icon: '\u{1F41F}' },
-  feed: { label: 'Feed', price: 18000, unit: 'bag', icon: '\u{1F33E}' },
+type ProductConfig = {
+  label: string; emoji: string; price: number; unit: string; qtyLabel: string; priceLabel: string
 }
 
-const CUSTOMER_TYPES: { key: CustomerType; label: string }[] = [
-  { key: 'retail', label: 'Retail' },
-  { key: 'distributor', label: 'Distributor' },
-  { key: 'market', label: 'Market Buyer' },
-  { key: 'restaurant', label: 'Restaurant' },
-  { key: 'processor', label: 'Processor' },
+const PRODUCTS: Record<ProductType, ProductConfig> = {
+  broilers: { label: 'Broilers', emoji: '\u{1F425}', price: 4500, unit: 'bird', qtyLabel: 'Birds Sold', priceLabel: 'Price Per Bird' },
+  layers:  { label: 'Layers', emoji: '\u{1F413}', price: 3200, unit: 'bird', qtyLabel: 'Birds Sold', priceLabel: 'Price Per Bird' },
+  eggs:    { label: 'Eggs', emoji: '\u{1F95A}', price: 3500, unit: 'crate', qtyLabel: 'Crates Sold', priceLabel: 'Price Per Crate' },
+  catfish: { label: 'Catfish', emoji: '\u{1F41F}', price: 1200, unit: 'kg', qtyLabel: 'Weight Sold (kg)', priceLabel: 'Price Per Kg' },
+  feed:    { label: 'Feed', emoji: '\u{1F33E}', price: 18000, unit: 'bag', qtyLabel: 'Bags Sold', priceLabel: 'Price Per Bag' },
+  other:   { label: 'Custom Product', emoji: '\u{2795}', price: 0, unit: 'unit', qtyLabel: 'Quantity', priceLabel: 'Price Per Unit' },
+}
+
+const PAYMENTS: { key: PaymentType; emoji: string; label: string }[] = [
+  { key: 'cash', emoji: '\u{1F4B5}', label: 'Cash' },
+  { key: 'transfer', emoji: '\u{1F4B1}', label: 'Transfer' },
+  { key: 'pos', emoji: '\u{1F4B3}', label: 'POS' },
+  { key: 'credit', emoji: '\u{1F4B0}', label: 'Credit' },
 ]
 
-const PAYMENT_METHODS: { key: PaymentType; label: string; icon: string }[] = [
-  { key: 'cash', label: 'Cash', icon: '\u{1F4B5}' },
-  { key: 'transfer', label: 'Transfer', icon: '\u{1F4B1}' },
-  { key: 'pos', label: 'POS', icon: '\u{1F4B3}' },
-  { key: 'credit', label: 'Credit', icon: '\u{1F4B0}' },
-]
+const STEPS = ['Product', 'Quantity', 'Payment', 'Save']
+const PRODUCT_LIST = Object.keys(PRODUCTS) as ProductType[]
 
-/* ─── Hooks ─── */
+const UNIT_OPTIONS = ['Bags', 'Kg', 'Tonnes', 'Crates', 'Pieces', 'Litres', 'Sacks', 'Units', 'Custom']
+
 function usePressScale(scaleTo = 0.96) {
   const scale = useSharedValue(1)
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
   return {
-    style,
+    style: useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] })),
     onPressIn: () => { scale.value = withSpring(scaleTo, { damping: 15, stiffness: 200 }) },
     onPressOut: () => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }) },
   }
@@ -72,601 +66,645 @@ function usePulse() {
   return useAnimatedStyle(() => ({ opacity: opacity.value }))
 }
 
-
-
-/* ─── Live Dot ─── */
 function LiveDot() {
   const pulse = usePulse()
   return <Animated.View style={[{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#16A34A' }, pulse]} />
 }
 
-/* ─── Form Input ─── */
-function FormInput({ label, value, onChange, placeholder, keyboardType, multiline }: {
-  label: string; value: string; onChange: (v: string) => void
-  placeholder?: string; keyboardType?: 'default' | 'numeric' | 'phone-pad'; multiline?: boolean
-}) {
-  const [focused, setFocused] = useState(false)
-  return (
-    <View style={[fiStyles.wrap, focused && fiStyles.wrapFocused]}>
-      <Text style={fiStyles.label}>{label}</Text>
-      <TextInput
-        style={[fiStyles.input, multiline && fiStyles.inputMultiline]}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor="#94A3B8"
-        keyboardType={keyboardType || 'default'}
-        multiline={multiline}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-      />
-    </View>
-  )
-}
-const fiStyles = StyleSheet.create({
-  wrap: { backgroundColor: 'white', borderRadius: 20, padding: 14, borderWidth: 1.5, borderColor: '#E8ECEE', marginBottom: 10 },
-  wrapFocused: { borderColor: '#2E7D32', backgroundColor: '#FAFDF8' },
-  label: { fontSize: 11, fontWeight: '600', color: '#64748B', marginBottom: 4, letterSpacing: 0.3 },
-  input: { fontSize: 16, fontWeight: '600', color: '#1B1B1B', paddingVertical: 2 },
-  inputMultiline: { minHeight: 60, textAlignVertical: 'top' },
-})
-
-/* ─── Section Header ─── */
-function SecHead({ title }: { title: string }) {
-  return (
-    <View style={shStyles.row}>
-      <Text style={shStyles.title}>{title}</Text>
-    </View>
-  )
-}
-const shStyles = StyleSheet.create({
-  row: { marginTop: 22, marginBottom: 12 },
-  title: { fontSize: 18, fontWeight: '700', color: '#1B1B1B' },
-})
-
-/* ─── MAIN SCREEN ─── */
 export default function RecordSaleScreen() {
   const insets = useSafeAreaInsets()
-  const { width: winW } = useWindowDimensions()
-  const backPress = usePressScale()
-  const submitPress = usePressScale(0.97)
+  const ps = usePressScale()
+  const btnPs = usePressScale(0.97)
 
-  /* ── State ── */
-  const [buyerName, setBuyerName] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [customerType, setCustomerType] = useState<CustomerType | null>(null)
+  const [step, setStep] = useState(1)
   const [product, setProduct] = useState<ProductType | null>(null)
   const [quantity, setQuantity] = useState('')
-  const [avgWeight, setAvgWeight] = useState('')
-  const [pricePerUnit, setPricePerUnit] = useState('')
-  const [discount, setDiscount] = useState('')
+  const [pricePerUnitRaw, setPricePerUnitRaw] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentType | null>(null)
-  const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [attachmentCount, setAttachmentCount] = useState(0)
+  const [showBuyer, setShowBuyer] = useState(false)
+  const [buyerName, setBuyerName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [customerType, setCustomerType] = useState<string | null>(null)
+  const [customProductName, setCustomProductName] = useState('')
+  const [unitType, setUnitType] = useState('Units')
+  const [customUnit, setCustomUnit] = useState('')
+  const productScales = PRODUCT_LIST.map(() => usePressScale())
+  const paymentScales = PAYMENTS.map(() => usePressScale())
 
-  /* ── Computed Values ── */
   const qty = parseFloat(quantity) || 0
-  const avgW = parseFloat(avgWeight) || 0
-  const ppu = parseFloat(pricePerUnit) || (product ? PRODUCT_DATA[product].price : 0)
-  const disc = parseFloat(discount) || 0
+  const ppu = parseAmount(pricePerUnitRaw) || (product ? PRODUCTS[product].price : 0)
+  const pricePerUnitDisplay = formatInput(pricePerUnitRaw)
+  const total = qty * ppu
 
-  const totalWeight = qty * avgW
-  const grossRevenue = qty * ppu
-  const netRevenue = Math.max(0, grossRevenue - disc)
-  const estimatedExpenses = grossRevenue * 0.10
-  const estimatedProfit = netRevenue - estimatedExpenses
-  const reinvestSuggestion = estimatedProfit * 0.20
-  const outstandingBalance = paymentMethod === 'credit' ? netRevenue : 0
-
-  /* auto-fill price when product changes */
   useEffect(() => {
-    if (product && !pricePerUnit) {
-      setPricePerUnit(String(PRODUCT_DATA[product].price))
+    if (product && product !== 'other' && !pricePerUnitRaw) {
+      setPricePerUnitRaw(String(PRODUCTS[product].price))
+    }
+    if (product && product === 'other' && !pricePerUnitRaw) {
+      setPricePerUnitRaw('')
     }
   }, [product])
 
-  /* ── Image Picker ── */
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    })
-    if (!result.canceled) {
-      setAttachmentCount((c) => c + 1)
-    }
+  const selectProduct = (p: ProductType) => {
+    setProduct(p)
+    setQuantity('')
+    setPricePerUnitRaw(p !== 'other' ? String(PRODUCTS[p].price) : '')
+    setStep(2)
   }
 
-  /* ── Submit ── */
-  const handleSubmit = () => {
-    if (!buyerName) { Alert.alert('Missing Info', 'Please enter buyer name.'); return }
-    if (!product) { Alert.alert('Missing Info', 'Please select a product.'); return }
-    if (!quantity || qty <= 0) { Alert.alert('Missing Info', 'Please enter a valid quantity.'); return }
-    if (!paymentMethod) { Alert.alert('Missing Info', 'Please select a payment method.'); return }
+  const customValid = product === 'other' ? customProductName.trim().length > 0 && qty > 0 && ppu > 0 : true
+  const canProceedToPayment = qty > 0 && ppu > 0 && (product !== 'other' || customValid)
+  const displayUnit = product === 'other'
+    ? (unitType === 'Custom' ? customUnit.trim() || 'unit' : unitType.toLowerCase())
+    : product
+      ? PRODUCTS[product].unit + '(s)'
+      : 'units'
+  const canSave = paymentMethod !== null
 
+  const handleSave = () => {
+    if (!canSave) return
     setSubmitting(true)
     setTimeout(() => {
       setSubmitting(false)
       setShowSuccess(true)
-    }, 1500)
+    }, 1200)
   }
 
   const resetForm = () => {
+    setStep(1)
+    setProduct(null)
+    setQuantity('')
+    setPricePerUnitRaw('')
+    setPaymentMethod(null)
     setBuyerName('')
     setPhoneNumber('')
     setCustomerType(null)
-    setProduct(null)
-    setQuantity('')
-    setAvgWeight('')
-    setPricePerUnit('')
-    setDiscount('')
-    setPaymentMethod(null)
-    setNotes('')
-    setAttachmentCount(0)
+    setCustomProductName('')
+    setUnitType('Units')
+    setCustomUnit('')
+    setShowBuyer(false)
   }
 
-  /* ── Transaction ID ── */
-  const txId = useMemo(() => `GOONA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`, [showSuccess])
+  const txId = `GOONA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`
 
-  /* ── Product Card ── */
-  type ProductCardProps = { p: ProductType; selected: boolean; onSelect: () => void }
-  function ProductCard({ p, selected, onSelect }: ProductCardProps) {
-    const pr = PRODUCT_DATA[p]
-    const ps = usePressScale()
-    return (
-      <Animated.View style={ps.style}>
+  const renderStepIndicator = () => (
+    <View style={styles.stepRow}>
+      {STEPS.map((s, i) => {
+        const active = step === i + 1
+        const done = step > i + 1
+        return (
+          <React.Fragment key={s}>
+            <View style={styles.stepGroup}>
+              <View style={[styles.stepDot, active && styles.stepDotActive, done && styles.stepDotDone]}>
+                {done ? <Text style={styles.stepDotDoneText}>{'\u2713'}</Text> : <Text style={[styles.stepDotNum, active && styles.stepDotNumActive]}>{i + 1}</Text>}
+              </View>
+              <Text numberOfLines={1} style={[styles.stepLabel, active && styles.stepLabelActive, done && styles.stepLabelDone]}>{s}</Text>
+            </View>
+            {i < STEPS.length - 1 && <View style={[styles.stepLine, done && styles.stepLineDone]} />}
+          </React.Fragment>
+        )
+      })}
+    </View>
+  )
+
+  const renderProductStep = () => (
+    <Animated.View entering={FadeInUp.duration(400).springify()} style={styles.stepContent}>
+      <Text style={styles.stepTitle}>What are you selling?</Text>
+      <Text style={styles.stepSub}>Select a product to continue</Text>
+      <View style={styles.productGrid}>
+        {PRODUCT_LIST.map((p, idx) => {
+          const pr = PRODUCTS[p]
+          const cps = productScales[idx]
+          return (
+            <Animated.View key={p} style={cps.style}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => selectProduct(p)}
+                onPressIn={cps.onPressIn}
+                onPressOut={cps.onPressOut}
+                style={[styles.productCard, product === p && styles.productCardSelected]}
+              >
+                <View style={[styles.productIconWrap, product === p && styles.productIconWrapSelected]}>
+                  <Text style={styles.productEmoji}>{pr.emoji}</Text>
+                </View>
+                <Text style={[styles.productLabel, product === p && styles.productLabelSelected]}>{pr.label}</Text>
+                {p !== 'other' && <Text style={styles.productPrice}>&#x20A6;{pr.price.toLocaleString('en-NG')}/{pr.unit}</Text>}
+              </TouchableOpacity>
+            </Animated.View>
+          )
+        })}
+      </View>
+    </Animated.View>
+  )
+
+  const renderQuantityStep = () => (
+    <Animated.View entering={FadeInUp.duration(400).springify()} style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Enter quantity</Text>
+      <Text style={styles.stepSub}>{product === 'other' ? (customProductName || 'Custom Product') : product ? PRODUCTS[product].label : ''}</Text>
+
+      {product === 'other' && (
+        <Animated.View entering={FadeInUp.duration(300).springify()} style={styles.customNameCard}>
+          <Text style={styles.quantityLabel}>Product Name</Text>
+          <TextInput
+            style={styles.customNameInput}
+            value={customProductName}
+            onChangeText={setCustomProductName}
+            placeholder="e.g. Poultry Manure"
+            placeholderTextColor="#CBD5E1"
+          />
+        </Animated.View>
+      )}
+
+      <View style={styles.quantityCard}>
+        <Text style={styles.quantityLabel}>{product ? PRODUCTS[product].qtyLabel : 'Quantity'}</Text>
+        <View style={styles.quantityRow}>
+          <TouchableOpacity
+            style={styles.qtyBtn}
+            onPress={() => setQuantity(String(Math.max(0, qty - 1)))}
+          >
+            <Text style={styles.qtyBtnText}>-</Text>
+          </TouchableOpacity>
+          <TextInput
+            style={styles.quantityInput}
+            value={quantity}
+            onChangeText={setQuantity}
+            keyboardType="numeric"
+            placeholder="0"
+            placeholderTextColor="#CBD5E1"
+          />
+          <TouchableOpacity
+            style={styles.qtyBtn}
+            onPress={() => setQuantity(String(qty + 1))}
+          >
+            <Text style={styles.qtyBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
+        {product && product !== 'other' && <Text style={styles.quantityUnit}>{PRODUCTS[product].unit + '(s)'}</Text>}
+      </View>
+
+      {product === 'other' && (
+        <Animated.View entering={FadeInUp.duration(300).springify()} style={styles.quantityCard}>
+          <Text style={styles.quantityLabel}>Unit</Text>
+          <View style={styles.unitGrid}>
+            {UNIT_OPTIONS.map((u) => {
+              const sel = unitType === u
+              return (
+                <TouchableOpacity
+                  key={u}
+                  style={[styles.unitChip, sel && styles.unitChipSelected]}
+                  onPress={() => setUnitType(u)}
+                >
+                  <Text style={[styles.unitChipText, sel && styles.unitChipTextSelected]}>{u}</Text>
+                </TouchableOpacity>
+              )
+            })}
+          </View>
+          {unitType === 'Custom' && (
+            <TextInput
+              style={styles.customUnitInput}
+              value={customUnit}
+              onChangeText={setCustomUnit}
+              placeholder="e.g. Truckloads, Bundles"
+              placeholderTextColor="#CBD5E1"
+            />
+          )}
+        </Animated.View>
+      )}
+
+      <View style={styles.priceCard}>
+        <Text style={styles.priceLabel}>{product ? PRODUCTS[product].priceLabel : 'Price Per Unit'}</Text>
+        <View style={styles.priceInputRow}>
+          <Text style={styles.priceCurrency}>&#x20A6;</Text>
+          <TextInput
+            style={styles.priceInput}
+            value={pricePerUnitDisplay}
+            onChangeText={(v) => setPricePerUnitRaw(v.replace(/[^0-9]/g, ''))}
+            keyboardType="numeric"
+            placeholder="0"
+            placeholderTextColor="#CBD5E1"
+          />
+        </View>
+        {qty > 0 && ppu > 0 && (
+          <Animated.View entering={FadeIn.duration(300)} style={styles.totalPreview}>
+            <Text style={styles.totalPreviewLabel}>Total</Text>
+            <Text style={styles.totalPreviewValue}>&#x20A6;{total.toLocaleString('en-NG')}</Text>
+          </Animated.View>
+        )}
+      </View>
+
+      <TouchableOpacity
+        style={[styles.continueBtn, !canProceedToPayment && styles.continueBtnDisabled]}
+        disabled={!canProceedToPayment}
+        onPress={() => setStep(3)}
+      >
+        <Text style={[styles.continueBtnText, !canProceedToPayment && styles.continueBtnTextDisabled]}>Continue</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+
+  const renderPaymentStep = () => (
+    <Animated.View entering={FadeInUp.duration(400).springify()} style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Payment method</Text>
+      <Text style={styles.stepSub}>Select how the customer paid</Text>
+
+      <View style={styles.paymentGrid}>
+        {PAYMENTS.map((pm, idx) => {
+          const sel = paymentMethod === pm.key
+          const pps = paymentScales[idx]
+          return (
+            <Animated.View key={pm.key} style={pps.style}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => setPaymentMethod(pm.key)}
+                onPressIn={pps.onPressIn}
+                onPressOut={pps.onPressOut}
+                style={[styles.paymentCard, sel && styles.paymentCardSelected]}
+              >
+                <View style={[styles.paymentIconWrap, sel && styles.paymentIconWrapSelected]}>
+                  <Text style={styles.paymentEmoji}>{pm.emoji}</Text>
+                </View>
+                <Text style={[styles.paymentLabel, sel && styles.paymentLabelSelected]}>{pm.label}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )
+        })}
+      </View>
+
+      <TouchableOpacity
+        style={[styles.continueBtn, !canSave && styles.continueBtnDisabled]}
+        disabled={!canSave}
+        onPress={() => setStep(4)}
+      >
+        <Text style={[styles.continueBtnText, !canSave && styles.continueBtnTextDisabled]}>Review Sale</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+
+  const renderSummaryStep = () => (
+    <Animated.View entering={FadeInUp.duration(400).springify()} style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Sale summary</Text>
+      <Text style={styles.stepSub}>Confirm details before saving</Text>
+
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Product</Text>
+          <Text style={styles.summaryValue}>
+            {product === 'other'
+              ? '\u{2795} ' + (customProductName || 'Custom Product')
+              : product
+                ? PRODUCTS[product].emoji + ' ' + PRODUCTS[product].label
+                : '-'}
+          </Text>
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Quantity</Text>
+          <Text style={styles.summaryValue}>{qty} {displayUnit}</Text>
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Unit Price</Text>
+          <Text style={styles.summaryValue}>&#x20A6;{ppu.toLocaleString('en-NG')}</Text>
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Payment</Text>
+          <Text style={styles.summaryValue}>{PAYMENTS.find(p => p.key === paymentMethod)?.emoji} {PAYMENTS.find(p => p.key === paymentMethod)?.label}</Text>
+        </View>
+        <View style={styles.summaryTotalRow}>
+          <Text style={styles.summaryTotalLabel}>Total Revenue</Text>
+          <Text style={styles.summaryTotalValue}>&#x20A6;{total.toLocaleString('en-NG')}</Text>
+        </View>
+      </View>
+
+      {/* Optional Buyer Details */}
+      <TouchableOpacity style={styles.buyerToggle} onPress={() => setShowBuyer(!showBuyer)}>
+        <Text style={styles.buyerToggleText}>{showBuyer ? 'Hide' : '+ Add'} Buyer Details (Optional)</Text>
+        <GoonaIcon icon={showBuyer ? ChevronUp : ChevronDown} size={16} color="#2E7D32" />
+      </TouchableOpacity>
+
+      {showBuyer && (
+        <Animated.View entering={FadeInUp.duration(300).springify()} style={styles.buyerSection}>
+          <View style={styles.buyerInputWrap}>
+            <Text style={styles.buyerInputLabel}>Buyer Name</Text>
+            <TextInput
+              style={styles.buyerInput}
+              value={buyerName}
+              onChangeText={setBuyerName}
+              placeholder="Enter buyer name"
+              placeholderTextColor="#94A3B8"
+            />
+          </View>
+          <View style={styles.buyerInputWrap}>
+            <Text style={styles.buyerInputLabel}>Phone Number</Text>
+            <TextInput
+              style={styles.buyerInput}
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              placeholder="+234 XXX XXX XXXX"
+              placeholderTextColor="#94A3B8"
+              keyboardType="phone-pad"
+            />
+          </View>
+          <View style={styles.buyerInputWrap}>
+            <Text style={styles.buyerInputLabel}>Customer Type</Text>
+            <View style={styles.buyerTypeRow}>
+              {['Retail', 'Distributor', 'Market', 'Restaurant'].map((t) => {
+                const sel = customerType === t
+                return (
+                  <TouchableOpacity
+                    key={t}
+                    style={[styles.buyerTypeChip, sel && styles.buyerTypeChipSelected]}
+                    onPress={() => setCustomerType(t)}
+                  >
+                    <Text style={[styles.buyerTypeChipText, sel && styles.buyerTypeChipTextSelected]}>{t}</Text>
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+          </View>
+        </Animated.View>
+      )}
+
+      <Animated.View style={btnPs.style}>
         <TouchableOpacity
           activeOpacity={0.9}
-          onPress={onSelect}
-          onPressIn={ps.onPressIn}
-          onPressOut={ps.onPressOut}
-          style={[prodStyles.card, selected && prodStyles.cardSelected]}
+          onPress={handleSave}
+          onPressIn={btnPs.onPressIn}
+          onPressOut={btnPs.onPressOut}
+          disabled={submitting}
+          style={[styles.saveBtn, submitting && styles.saveBtnDisabled]}
         >
-          <LinearGradient
-            colors={selected ? ['#2E7D32', '#43A047'] : ['#F8FAF7', '#F1F5F1']}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={prodStyles.icon}
-          >
-            <Text style={prodStyles.iconText}>{pr.icon}</Text>
-          </LinearGradient>
-          <Text style={[prodStyles.label, selected && prodStyles.labelSelected]}>{pr.label}</Text>
-          <Text style={prodStyles.price}>&#x20A6;{pr.price.toLocaleString()}/{pr.unit}</Text>
+          {submitting ? (
+            <Text style={styles.saveBtnText}>Recording...</Text>
+          ) : (
+            <>
+              <GoonaIcon icon={CheckCircle} size={22} color="#FFF" />
+              <Text style={styles.saveBtnText}>Record Sale</Text>
+            </>
+          )}
         </TouchableOpacity>
       </Animated.View>
-    )
-  }
+    </Animated.View>
+  )
 
   return (
-    <View style={s.container}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
 
-      <View style={s.bgGlow} pointerEvents="none" />
-      <View style={s.bgContour1} pointerEvents="none" />
-      <View style={s.bgContour2} pointerEvents="none" />
-
       <KeyboardAvoidingView
-        style={s.kav}
+        style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
-          style={s.scroll}
-          contentContainerStyle={[s.scrollInner, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 160 }]}
+          style={styles.scroll}
+          contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 160 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* ═══ 1. REVENUE HEADER ═══ */}
-          <Animated.View entering={FadeInUp.duration(500).springify()} style={s.topNav}>
-            <Animated.View style={backPress.style}>
+          {/* Header */}
+          <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
+            <Animated.View style={ps.style}>
               <TouchableOpacity
-                style={s.navBack}
+                style={styles.navBack}
                 activeOpacity={0.7}
-                onPress={() => router.canGoBack() ? router.back() : router.replace('/records' as any)}
-                onPressIn={backPress.onPressIn}
-                onPressOut={backPress.onPressOut}
+                onPress={() => {
+                  if (step > 1) { setStep(step - 1); return }
+                  router.canGoBack() ? router.back() : router.replace('/records' as any)
+                }}
+                onPressIn={ps.onPressIn}
+                onPressOut={ps.onPressOut}
               >
                 <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
               </TouchableOpacity>
             </Animated.View>
-            <View style={s.navCenter}>
-              <Text style={s.topTitle}>Record Sale</Text>
-              <View style={s.liveRow}>
+            <View style={styles.navCenter}>
+              <Text style={styles.topTitle}>Record Sale</Text>
+              <View style={styles.liveRow}>
                 <LiveDot />
-                <Text style={s.liveText}>Live Revenue Capture</Text>
-              </View>
-            </View>
-            <View style={s.navSpacer} />
-          </Animated.View>
-
-          {/* ═══ 2. QUICK REVENUE SUMMARY ═══ */}
-          <Animated.View entering={FadeInUp.duration(500).delay(60).springify()}>
-            <LinearGradient colors={['#2E7D32', '#388E3C']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.summaryCard}>
-              <View style={s.summaryGlow} pointerEvents="none" />
-              <View style={s.summaryGrid}>
-                {[
-                  { label: "Today's Sales", val: '\u20A6820k' },
-                  { label: 'Pending', val: '\u20A6120k' },
-                  { label: 'Weekly Revenue', val: '\u20A64.8M' },
-                ].map((sm, i) => (
-                  <View key={i} style={[s.summaryCell, i < 2 && { borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.08)' }]}>
-                    <Text style={s.summaryVal}>{sm.val}</Text>
-                    <Text style={s.summaryLabel}>{sm.label}</Text>
-                  </View>
-                ))}
-              </View>
-            </LinearGradient>
-          </Animated.View>
-
-          {/* ═══ 3. BUYER INFORMATION ═══ */}
-          <SecHead title="Buyer Information" />
-          <Animated.View entering={FadeInUp.duration(500).delay(100).springify()}>
-            <View style={s.buyerCard}>
-              <FormInput label="Buyer Name" value={buyerName} onChange={setBuyerName} placeholder="Enter buyer name" />
-              <FormInput label="Phone Number" value={phoneNumber} onChange={setPhoneNumber} placeholder="+234 XXX XXX XXXX" keyboardType="phone-pad" />
-              <Text style={fiStyles.label}>Customer Type</Text>
-              <View style={s.typeRow}>
-                {CUSTOMER_TYPES.map((ct) => {
-                  const sel = customerType === ct.key
-                  const ctPress = usePressScale()
-                  return (
-                    <Animated.View key={ct.key} style={ctPress.style}>
-                      <TouchableOpacity
-                        activeOpacity={0.9}
-                        onPress={() => setCustomerType(ct.key)}
-                        onPressIn={ctPress.onPressIn}
-                        onPressOut={ctPress.onPressOut}
-                        style={[s.typeChip, sel && s.typeChipSelected]}
-                      >
-                        <Text style={[s.typeChipText, sel && s.typeChipTextSelected]}>{ct.label}</Text>
-                      </TouchableOpacity>
-                    </Animated.View>
-                  )
-                })}
+                <Text style={styles.liveText}>Record First. Analyze Later.</Text>
               </View>
             </View>
           </Animated.View>
 
-          {/* ═══ 4. PRODUCT SELECTION ═══ */}
-          <SecHead title="Product Selection" />
-          <Animated.View entering={FadeInUp.duration(500).delay(140).springify()} style={s.prodGrid}>
-            {(Object.keys(PRODUCT_DATA) as ProductType[]).map((p) => (
-              <ProductCard key={p} p={p} selected={product === p} onSelect={() => setProduct(p)} />
-            ))}
-          </Animated.View>
-
-          {/* ═══ 5. QUANTITY & WEIGHT ═══ */}
-          <SecHead title="Quantity & Weight" />
-          <Animated.View entering={FadeInUp.duration(500).delay(180).springify()}>
-            <View style={s.qwCard}>
-              <View style={s.qwRow}>
-                <View style={s.qwHalf}>
-                  <FormInput label="Quantity Sold" value={quantity} onChange={setQuantity} placeholder="0" keyboardType="numeric" />
-                </View>
-                <View style={s.qwHalf}>
-                  {product && PRODUCT_DATA[product].unit !== 'crate' && PRODUCT_DATA[product].unit !== 'bag' ? (
-                    <FormInput label="Avg Weight (kg)" value={avgWeight} onChange={setAvgWeight} placeholder="0.0" keyboardType="numeric" />
-                  ) : (
-                    <View style={[fiStyles.wrap, { opacity: 0.5 }]}>
-                      <Text style={fiStyles.label}>Avg Weight (kg)</Text>
-                      <Text style={[fiStyles.input, { color: '#94A3B8' }]}>N/A for {product ? PRODUCT_DATA[product].unit : 'item'}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-              {qty > 0 && (
-                  <Animated.View entering={FadeIn.duration(300)} style={s.qwCalc}>
-                    <GoonaIcon icon={Plus} size={16} color="#2E7D32" />
-                  <Text style={s.qwCalcText}>
-                    {qty} {product ? PRODUCT_DATA[product].unit + '(s)' : 'units'}
-                    {totalWeight > 0 ? ` \u00D7 ${avgW}kg = ${totalWeight.toFixed(1)}kg` : ''}
-                  </Text>
-                </Animated.View>
-              )}
+          {/* Metrics Strip */}
+          <Animated.View entering={FadeInUp.duration(500).delay(40).springify()} style={styles.metricsStrip}>
+            <View style={styles.metricCell}>
+              <Text style={styles.metricValue}>&#x20A6;820k</Text>
+              <Text style={styles.metricLabel}>Today's Sales</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricCell}>
+              <Text style={styles.metricValue}>14</Text>
+              <Text style={styles.metricLabel}>Transactions</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricCell}>
+              <Text style={styles.metricValue}>Broilers</Text>
+              <Text style={styles.metricLabel}>Top Product</Text>
             </View>
           </Animated.View>
 
-          {/* ═══ 6. PRICING ENGINE ═══ */}
-          <SecHead title="Pricing Engine" />
-          <Animated.View entering={FadeInUp.duration(500).delay(220).springify()}>
-            <View style={s.pricingCard}>
-              <View style={s.pricingRow}>
-                <Text style={s.pricingLabel}>Price Per Unit</Text>
-                <View style={s.pricingInputRow}>
-                  <Text style={s.pricingCurrency}>&#x20A6;</Text>
-                  <TextInput
-                    style={s.pricingInput}
-                    value={pricePerUnit}
-                    onChangeText={setPricePerUnit}
-                    keyboardType="numeric"
-                    placeholder={product ? String(PRODUCT_DATA[product].price) : '0'}
-                    placeholderTextColor="#94A3B8"
-                  />
-                  <Text style={s.pricingUnit}>/{product ? PRODUCT_DATA[product].unit : 'unit'}</Text>
-                </View>
-              </View>
-              <View style={s.pricingDivider} />
-              <View style={s.pricingRow}>
-                <Text style={s.pricingLabel}>Total Revenue</Text>
-                <Text style={s.pricingTotal}>&#x20A6;{grossRevenue.toLocaleString()}</Text>
-              </View>
-              <View style={s.pricingRow}>
-                <Text style={s.pricingLabel}>Discount</Text>
-                <View style={s.pricingInputRow}>
-                  <Text style={s.pricingCurrency}>&#x20A6;</Text>
-                  <TextInput
-                    style={[s.pricingInput, { width: 80 }]}
-                    value={discount}
-                    onChangeText={setDiscount}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    placeholderTextColor="#94A3B8"
-                  />
-                </View>
-              </View>
-              <View style={s.pricingRow}>
-                <Text style={s.pricingLabel}>Outstanding Balance</Text>
-                <Text style={[s.pricingTotal, { color: outstandingBalance > 0 ? '#F59E0B' : '#16A34A' }]}>
-                  &#x20A6;{outstandingBalance.toLocaleString()}
-                </Text>
-              </View>
-            </View>
-          </Animated.View>
+          {/* Step Indicator */}
+          {step > 1 && renderStepIndicator()}
 
-          {/* ═══ 7. PAYMENT METHOD ═══ */}
-          <SecHead title="Payment Method" />
-          <Animated.View entering={FadeInUp.duration(500).delay(260).springify()} style={s.payRow}>
-            {PAYMENT_METHODS.map((pm) => {
-              const sel = paymentMethod === pm.key
-              const pPress = usePressScale()
-              return (
-                <Animated.View key={pm.key} style={pPress.style}>
-                  <TouchableOpacity
-                    activeOpacity={0.9}
-                    onPress={() => setPaymentMethod(pm.key)}
-                    onPressIn={pPress.onPressIn}
-                    onPressOut={pPress.onPressOut}
-                    style={[s.payCard, sel && s.payCardSelected]}
-                  >
-                    <View style={[s.payIcon, sel && s.payIconSelected]}>
-                      <Text style={s.payIconText}>{pm.icon}</Text>
-                    </View>
-                    <Text style={[s.payLabel, sel && s.payLabelSelected]}>{pm.label}</Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              )
-            })}
-          </Animated.View>
-
-          {/* ═══ 8. REVENUE BREAKDOWN ═══ */}
-          <SecHead title="Revenue Breakdown" />
-          <Animated.View entering={FadeInUp.duration(500).delay(300).springify()}>
-            <LinearGradient colors={['#0a1628', '#0f1f3a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.breakdownCard}>
-              <View style={s.breakdownGlow} pointerEvents="none" />
-              {[
-                { label: 'Gross Revenue', val: grossRevenue, color: '#fff' },
-                { label: 'Expenses (est.)', val: estimatedExpenses, color: '#EF4444' },
-                { label: 'Estimated Profit', val: estimatedProfit, color: '#AEEA00' },
-              ].map((b, i) => (
-                <View key={i} style={[s.bdRow, i < 2 && s.bdRowBorder]}>
-                  <Text style={s.bdLabel}>{b.label}</Text>
-                  <Text style={[s.bdValue, { color: b.color }]}>&#x20A6;{b.val.toLocaleString()}</Text>
-                </View>
-              ))}
-              <View style={s.iqSuggestion}>
-                <View style={s.iqBadge}>
-                  <Text style={s.iqBadgeText}>GOONA IQ</Text>
-                </View>
-                <Text style={s.iqText}>
-                  Reinvest &#x20A6;{reinvestSuggestion.toLocaleString()} into feed inventory to optimize next production cycle.
-                </Text>
-              </View>
-            </LinearGradient>
-          </Animated.View>
-
-          {/* ═══ 9. NOTES & ATTACHMENTS ═══ */}
-          <SecHead title="Notes & Attachments" />
-          <Animated.View entering={FadeInUp.duration(500).delay(340).springify()}>
-            <View style={s.notesCard}>
-              <FormInput label="Operational Notes" value={notes} onChange={setNotes} placeholder="Add notes about this sale..." multiline />
-              <View style={s.attachRow}>
-                <TouchableOpacity style={s.attachBtn} activeOpacity={0.85} onPress={pickImage}>
-                  <GoonaIcon icon={Image} size={18} color="#2E7D32" />
-                  <Text style={s.attachText}>Image</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.attachBtn} activeOpacity={0.85} onPress={() => Alert.alert('Coming Soon', 'Voice recording will be available soon.')}>
-                  <GoonaIcon icon={Mic} size={18} color="#2E7D32" />
-                  <Text style={s.attachText}>Voice</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={s.attachBtn} activeOpacity={0.85} onPress={pickImage}>
-                  <GoonaIcon icon={FileText} size={18} color="#2E7D32" />
-                  <Text style={s.attachText}>Invoice</Text>
-                </TouchableOpacity>
-              </View>
-              {attachmentCount > 0 && (
-                <Animated.View entering={FadeIn.duration(300)} style={s.attachBadge}>
-                  <Text style={s.attachBadgeText}>{attachmentCount} file(s) attached</Text>
-                </Animated.View>
-              )}
-            </View>
-          </Animated.View>
-
-          {/* ═══ 10. SUBMIT SALE BUTTON ═══ */}
-          <Animated.View entering={FadeInUp.duration(500).delay(380).springify()} style={s.submitWrap}>
-            <Animated.View style={submitPress.style}>
-              <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={handleSubmit}
-                onPressIn={submitPress.onPressIn}
-                onPressOut={submitPress.onPressOut}
-                disabled={submitting}
-                style={s.submitBtn}
-              >
-                <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.submitGrad}>
-                  {submitting ? (
-                    <Text style={s.submitText}>Recording...</Text>
-                  ) : (
-                    <>
-                      <GoonaIcon icon={CheckCircle} size={20} color="white" />
-                      <Text style={s.submitText}>Record Revenue</Text>
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-            </Animated.View>
-          </Animated.View>
+          {/* Step Content */}
+          {step === 1 && renderProductStep()}
+          {step === 2 && renderQuantityStep()}
+          {step === 3 && renderPaymentStep()}
+          {step === 4 && renderSummaryStep()}
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* ═══ 11. SUCCESS MODAL ═══ */}
-      <Modal visible={showSuccess} transparent animationType="fade" onRequestClose={() => setShowSuccess(false)}>
-        <View style={s.modalOverlay}>
-          <Animated.View entering={FadeInUp.duration(500).springify().springify()} style={s.modalCard}>
-            <View style={s.modalSuccessIcon}>
+      {/* Success Modal */}
+      <Modal visible={showSuccess} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.modalCard}>
+            <View style={styles.modalSuccessIcon}>
               <GoonaIcon icon={CheckCircle} size={48} color="#AEEA00" />
             </View>
-            <Text style={s.modalTitle}>Sale Recorded{'\n'}Successfully</Text>
-            <Text style={s.modalAmount}>&#x20A6;{netRevenue.toLocaleString()}</Text>
-            <View style={s.modalMeta}>
-              <View style={s.modalMetaRow}>
-                <Text style={s.modalMetaLabel}>Transaction ID</Text>
-                <Text style={s.modalMetaVal}>{txId}</Text>
+            <Text style={styles.modalTitle}>Sale Recorded{'\n'}Successfully</Text>
+            <Text style={styles.modalAmount}>&#x20A6;{total.toLocaleString('en-NG')}</Text>
+            <View style={styles.modalMeta}>
+              <View style={styles.modalMetaRow}>
+                <Text style={styles.modalMetaLabel}>Transaction ID</Text>
+                <Text style={styles.modalMetaVal}>{txId}</Text>
               </View>
-              <View style={s.modalMetaRow}>
-                <Text style={s.modalMetaLabel}>Timestamp</Text>
-                <Text style={s.modalMetaVal}>{new Date().toLocaleString()}</Text>
+              <View style={styles.modalMetaRow}>
+                <Text style={styles.modalMetaLabel}>Product</Text>
+                <Text style={styles.modalMetaVal}>{product === 'other' ? (customProductName || 'Custom') : product ? PRODUCTS[product].label : '-'}</Text>
               </View>
-              <View style={s.modalMetaRow}>
-                <Text style={s.modalMetaLabel}>Updated Revenue</Text>
-                <Text style={[s.modalMetaVal, { color: '#AEEA00' }]}>&#x20A6;5.6M</Text>
+              <View style={styles.modalMetaRow}>
+                <Text style={styles.modalMetaLabel}>Quantity</Text>
+                <Text style={styles.modalMetaVal}>{qty} {displayUnit}</Text>
               </View>
             </View>
-            <View style={s.modalActions}>
-              <TouchableOpacity style={s.modalBtn} activeOpacity={0.85} onPress={() => {
-                setShowSuccess(false)
-                resetForm()
-              }}>
-                <Text style={s.modalBtnText}>Record Another Sale</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalBtn} activeOpacity={0.85} onPress={() => { setShowSuccess(false); resetForm() }}>
+                <Text style={styles.modalBtnText}>Record Another Sale</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.modalBtnOutline} activeOpacity={0.85} onPress={() => {
+              <TouchableOpacity style={styles.modalBtnOutline} activeOpacity={0.85} onPress={() => {
                 setShowSuccess(false)
                 router.push('/records/sales-revenue' as any)
               }}>
-                <Text style={s.modalBtnOutlineText}>View Reports</Text>
+                <Text style={styles.modalBtnOutlineText}>View Sales Analytics</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={s.modalClose} activeOpacity={0.7} onPress={() => {
-              setShowSuccess(false)
-              resetForm()
-            }}>
-              <Text style={s.modalCloseText}>Share Receipt</Text>
-            </TouchableOpacity>
           </Animated.View>
         </View>
       </Modal>
 
-      {/* ═══ 12. GOONA DOCK ═══ */}
       <BottomDock />
     </View>
   )
 }
 
-/* ─── Styles ─── */
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAF7' },
-  kav: { flex: 1 },
+  flex: { flex: 1 },
   scroll: { flex: 1 },
   scrollInner: { paddingHorizontal: H_PAD },
 
-  /* bg */
-  bgGlow: { position: 'absolute', top: -60, right: -60, width: 300, height: 300, borderRadius: 150, backgroundColor: 'rgba(232,245,233,0.3)', zIndex: 0 },
-  bgContour1: { position: 'absolute', top: '8%', left: '-8%', width: 320, height: 100, zIndex: 0, borderWidth: 1, borderColor: 'rgba(46,125,50,0.04)', borderTopLeftRadius: 160, borderTopRightRadius: 160, borderBottomWidth: 0, transform: [{ rotate: '5deg' }] },
-  bgContour2: { position: 'absolute', bottom: '20%', right: '-12%', width: 260, height: 80, zIndex: 0, borderWidth: 1, borderColor: 'rgba(46,125,50,0.04)', borderBottomLeftRadius: 130, borderBottomRightRadius: 130, borderTopWidth: 0, transform: [{ rotate: '-7deg' }] },
-
-  /* 1. header */
+  /* Header */
   topNav: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   navBack: { width: 38, height: 38, borderRadius: 12, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
   navCenter: { flex: 1 },
   topTitle: { fontWeight: '800', fontSize: 22, color: '#1B1B1B' },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   liveText: { fontSize: 10, fontWeight: '600', color: '#16A34A', letterSpacing: 0.3 },
-  navSpacer: { width: 38 },
 
-  /* 2. summary */
-  summaryCard: { borderRadius: 28, padding: 18, overflow: 'hidden', shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.2, shadowRadius: 40, elevation: 6 },
-  summaryGlow: { position: 'absolute', top: '-40%', right: '-20%', width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(174,234,0,0.08)' },
-  summaryGrid: { flexDirection: 'row' },
-  summaryCell: { flex: 1, alignItems: 'center', paddingVertical: 4 },
-  summaryVal: { fontWeight: '800', fontSize: 20, color: '#fff', letterSpacing: -0.3 },
-  summaryLabel: { fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.6)', marginTop: 1 },
+  /* Metrics Strip */
+  metricsStrip: {
+    flexDirection: 'row', backgroundColor: 'white', borderRadius: 20, padding: 14,
+    marginTop: 8, marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2,
+  },
+  metricCell: { flex: 1, alignItems: 'center' },
+  metricDivider: { width: 1, backgroundColor: '#F1F5F1', marginVertical: 4 },
+  metricValue: { fontSize: 16, fontWeight: '800', color: '#1B1B1B' },
+  metricLabel: { fontSize: 10, fontWeight: '500', color: '#94A3B8', marginTop: 1 },
 
-  /* 3. buyer */
-  buyerCard: { backgroundColor: 'white', borderRadius: 28, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 18, elevation: 2 },
-  typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
-  typeChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 50, backgroundColor: '#F1F5F1', borderWidth: 1.5, borderColor: '#E2E8E0' },
-  typeChipSelected: { backgroundColor: 'rgba(46,125,50,0.08)', borderColor: '#2E7D32' },
-  typeChipText: { fontSize: 12, fontWeight: '600', color: '#64748B' },
-  typeChipTextSelected: { color: '#2E7D32' },
+  /* Step Indicator */
+  stepRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 16, paddingHorizontal: 8 },
+  stepGroup: { flexDirection: 'row', alignItems: 'center', flexShrink: 0 },
+  stepDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#F1F5F1', alignItems: 'center', justifyContent: 'center' },
+  stepDotActive: { backgroundColor: '#2E7D32' },
+  stepDotDone: { backgroundColor: '#16A34A' },
+  stepDotNum: { fontSize: 12, fontWeight: '700', color: '#94A3B8' },
+  stepDotNumActive: { color: '#FFF' },
+  stepDotDoneText: { fontSize: 12, fontWeight: '700', color: '#FFF' },
+  stepLabel: { fontSize: 12, fontWeight: '600', color: '#94A3B8', marginLeft: 5 },
+  stepLabelActive: { color: '#2E7D32' },
+  stepLabelDone: { color: '#16A34A' },
+  stepLine: { flex: 1, height: 2, backgroundColor: '#F1F5F1', marginHorizontal: 6 },
+  stepLineDone: { backgroundColor: '#16A34A' },
 
-  /* 4. product */
-  prodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  /* product card styles inline in component */
+  /* Step Content */
+  stepContent: { paddingTop: 4 },
+  stepTitle: { fontSize: 24, fontWeight: '800', color: '#1B1B1B', letterSpacing: -0.5 },
+  stepSub: { fontSize: 14, color: '#94A3B8', marginTop: 2, marginBottom: 20 },
 
-  /* 5. quantity & weight */
-  qwCard: { backgroundColor: 'white', borderRadius: 28, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 18, elevation: 2 },
-  qwRow: { flexDirection: 'row', gap: 10 },
-  qwHalf: { flex: 1 },
-  qwCalc: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, backgroundColor: '#F0FDF4', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12 },
-  qwCalcText: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
+  /* Product Grid */
+  productGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  productCard: {
+    width: (SCREEN_W - H_PAD * 2 - 10) / 2, backgroundColor: 'white', borderRadius: 22, padding: 18, alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#E8ECEE',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 1,
+  },
+  productCardSelected: { borderColor: '#2E7D32', backgroundColor: '#FAFDF8' },
+  productIconWrap: { width: 52, height: 52, borderRadius: 16, backgroundColor: '#F8FAF7', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  productIconWrapSelected: { backgroundColor: 'rgba(46,125,50,0.08)' },
+  productEmoji: { fontSize: 24 },
+  productLabel: { fontSize: 15, fontWeight: '700', color: '#1B1B1B', marginBottom: 2 },
+  productLabelSelected: { color: '#2E7D32' },
+  productPrice: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
 
-  /* 6. pricing */
-  pricingCard: { backgroundColor: 'white', borderRadius: 28, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 18, elevation: 2 },
-  pricingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  pricingDivider: { height: 1, backgroundColor: '#F1F5F1', marginVertical: 2 },
-  pricingLabel: { fontSize: 13, fontWeight: '500', color: '#64748B' },
-  pricingInputRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  pricingCurrency: { fontSize: 16, fontWeight: '700', color: '#1B1B1B' },
-  pricingInput: { fontSize: 16, fontWeight: '700', color: '#1B1B1B', textAlign: 'right', minWidth: 60, paddingVertical: 2, borderBottomWidth: 1.5, borderBottomColor: '#E8ECEE' },
-  pricingUnit: { fontSize: 12, fontWeight: '500', color: '#94A3B8' },
-  pricingTotal: { fontSize: 16, fontWeight: '800', color: '#1B1B1B' },
+  /* Custom Product */
+  customNameCard: { backgroundColor: 'white', borderRadius: 24, padding: 20, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
+  customNameInput: { fontSize: 18, fontWeight: '700', color: '#1B1B1B', paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: '#E8ECEE' },
+  unitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  unitChip: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 50, backgroundColor: '#F1F5F1', borderWidth: 1.5, borderColor: '#E2E8E0' },
+  unitChipSelected: { backgroundColor: 'rgba(46,125,50,0.08)', borderColor: '#2E7D32' },
+  unitChipText: { fontSize: 12, fontWeight: '600', color: '#64748B' },
+  unitChipTextSelected: { color: '#2E7D32' },
+  customUnitInput: { fontSize: 16, fontWeight: '600', color: '#1B1B1B', paddingVertical: 10, marginTop: 10, borderBottomWidth: 2, borderBottomColor: '#E8ECEE' },
 
-  /* 7. payment */
-  payRow: { flexDirection: 'row', gap: 8 },
-  payCard: { flex: 1, backgroundColor: 'white', borderRadius: 20, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#E8ECEE', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 1 },
-  payCardSelected: { borderColor: '#2E7D32', backgroundColor: '#FAFDF8' },
-  payIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#F8FAF7', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
-  payIconSelected: { backgroundColor: 'rgba(46,125,50,0.08)' },
-  payIconText: { fontSize: 18 },
-  payLabel: { fontSize: 11, fontWeight: '600', color: '#64748B' },
-  payLabelSelected: { color: '#2E7D32' },
+  /* Quantity */
+  quantityCard: { backgroundColor: 'white', borderRadius: 24, padding: 20, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
+  quantityLabel: { fontSize: 13, fontWeight: '600', color: '#64748B', marginBottom: 12 },
+  quantityRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  qtyBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#F1F5F1', alignItems: 'center', justifyContent: 'center' },
+  qtyBtnText: { fontSize: 22, fontWeight: '700', color: '#1B1B1B' },
+  quantityInput: { flex: 1, fontSize: 32, fontWeight: '800', color: '#1B1B1B', textAlign: 'center', paddingVertical: 8 },
+  quantityUnit: { fontSize: 12, fontWeight: '600', color: '#94A3B8', textAlign: 'center', marginTop: 8 },
 
-  /* 8. breakdown */
-  breakdownCard: { borderRadius: 28, padding: 20, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 30, elevation: 4 },
-  breakdownGlow: { position: 'absolute', top: '-30%', right: '-15%', width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(174,234,0,0.03)' },
-  bdRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 },
-  bdRowBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
-  bdLabel: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.6)' },
-  bdValue: { fontSize: 16, fontWeight: '800' },
-  iqSuggestion: { marginTop: 14, padding: 14, backgroundColor: 'rgba(174,234,0,0.04)', borderRadius: 16, borderLeftWidth: 3, borderLeftColor: '#AEEA00' },
-  iqBadge: { alignSelf: 'flex-start', backgroundColor: '#2E7D32', paddingVertical: 2, paddingHorizontal: 8, borderRadius: 50, marginBottom: 6 },
-  iqBadgeText: { fontSize: 9, fontWeight: '700', color: '#fff' },
-  iqText: { fontSize: 12, lineHeight: 18, color: 'rgba(255,255,255,0.8)' },
+  /* Price */
+  priceCard: { backgroundColor: 'white', borderRadius: 24, padding: 20, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
+  priceLabel: { fontSize: 13, fontWeight: '600', color: '#64748B', marginBottom: 8 },
+  priceInputRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  priceCurrency: { fontSize: 24, fontWeight: '800', color: '#1B1B1B' },
+  priceInput: { flex: 1, fontSize: 24, fontWeight: '800', color: '#1B1B1B', paddingVertical: 4 },
+  totalPreview: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F1' },
+  totalPreviewLabel: { fontSize: 13, fontWeight: '500', color: '#94A3B8' },
+  totalPreviewValue: { fontSize: 18, fontWeight: '800', color: '#2E7D32' },
 
-  /* 9. notes */
-  notesCard: { backgroundColor: 'white', borderRadius: 28, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 18, elevation: 2 },
-  attachRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  attachBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 14, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: 'rgba(46,125,50,0.1)' },
-  attachText: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
-  attachBadge: { marginTop: 8, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: '#F0FDF4', borderRadius: 50, alignSelf: 'flex-start' },
-  attachBadgeText: { fontSize: 11, fontWeight: '600', color: '#2E7D32' },
+  /* Payment */
+  paymentGrid: { flexDirection: 'row', gap: 8 },
+  paymentCard: {
+    flex: 1, backgroundColor: 'white', borderRadius: 20, padding: 16, alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#E8ECEE',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 1,
+  },
+  paymentCardSelected: { borderColor: '#2E7D32', backgroundColor: '#FAFDF8' },
+  paymentIconWrap: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#F8FAF7', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  paymentIconWrapSelected: { backgroundColor: 'rgba(46,125,50,0.08)' },
+  paymentEmoji: { fontSize: 22 },
+  paymentLabel: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  paymentLabelSelected: { color: '#2E7D32' },
 
-  /* 10. submit */
-  submitWrap: { marginTop: 24, marginBottom: 8 },
-  submitBtn: { borderRadius: 20, overflow: 'hidden', shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 24, elevation: 6 },
-  submitGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 18 },
-  submitText: { fontWeight: '700', fontSize: 17, color: '#fff' },
+  /* Summary */
+  summaryCard: { backgroundColor: 'white', borderRadius: 24, padding: 20, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
+  summaryDivider: { height: 1, backgroundColor: '#F1F5F1' },
+  summaryLabel: { fontSize: 14, color: '#64748B' },
+  summaryValue: { fontSize: 14, fontWeight: '700', color: '#1B1B1B' },
+  summaryTotalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, marginTop: 4, borderTopWidth: 2, borderTopColor: '#2E7D32' },
+  summaryTotalLabel: { fontSize: 16, fontWeight: '700', color: '#1B1B1B' },
+  summaryTotalValue: { fontSize: 22, fontWeight: '900', color: '#2E7D32', letterSpacing: -0.5 },
 
-  /* 11. modal */
+  /* Continue Button */
+  continueBtn: { paddingVertical: 16, borderRadius: 16, backgroundColor: '#2E7D32', alignItems: 'center', marginTop: 16 },
+  continueBtnDisabled: { backgroundColor: '#E2E8E0' },
+  continueBtnText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
+  continueBtnTextDisabled: { color: '#94A3B8' },
+
+  /* Buyer Details Toggle */
+  buyerToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, marginBottom: 8 },
+  buyerToggleText: { fontSize: 13, fontWeight: '600', color: '#2E7D32' },
+
+  /* Buyer Section */
+  buyerSection: { backgroundColor: 'white', borderRadius: 24, padding: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
+  buyerInputWrap: { marginBottom: 12 },
+  buyerInputLabel: { fontSize: 11, fontWeight: '600', color: '#64748B', marginBottom: 4, letterSpacing: 0.3 },
+  buyerInput: { backgroundColor: '#F8FAF7', borderRadius: 14, padding: 14, fontSize: 15, fontWeight: '600', color: '#1B1B1B', borderWidth: 1.5, borderColor: '#E8ECEE' },
+  buyerTypeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  buyerTypeChip: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 50, backgroundColor: '#F1F5F1', borderWidth: 1.5, borderColor: '#E2E8E0' },
+  buyerTypeChipSelected: { backgroundColor: 'rgba(46,125,50,0.08)', borderColor: '#2E7D32' },
+  buyerTypeChipText: { fontSize: 12, fontWeight: '600', color: '#64748B' },
+  buyerTypeChipTextSelected: { color: '#2E7D32' },
+
+  /* Save */
+  saveBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    paddingVertical: 18, borderRadius: 20, backgroundColor: '#2E7D32', marginTop: 8,
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 24, elevation: 6,
+  },
+  saveBtnDisabled: { opacity: 0.6 },
+  saveBtnText: { fontWeight: '700', fontSize: 17, color: '#FFF' },
+
+  /* Modal */
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   modalCard: { width: '100%', maxWidth: 360, backgroundColor: '#F8FAF7', borderRadius: 40, padding: 28, alignItems: 'center' },
   modalSuccessIcon: { marginBottom: 16 },
@@ -678,20 +716,7 @@ const s = StyleSheet.create({
   modalMetaVal: { fontSize: 12, fontWeight: '600', color: '#1B1B1B' },
   modalActions: { width: '100%', gap: 8, marginTop: 16 },
   modalBtn: { paddingVertical: 14, borderRadius: 16, backgroundColor: '#2E7D32', alignItems: 'center' },
-  modalBtnText: { fontWeight: '700', fontSize: 14, color: '#fff' },
+  modalBtnText: { fontWeight: '700', fontSize: 14, color: '#FFF' },
   modalBtnOutline: { paddingVertical: 14, borderRadius: 16, borderWidth: 1.5, borderColor: '#E2E8E0', alignItems: 'center' },
   modalBtnOutlineText: { fontWeight: '600', fontSize: 14, color: '#1B1B1B' },
-  modalClose: { marginTop: 12, paddingVertical: 6 },
-  modalCloseText: { fontSize: 13, fontWeight: '500', color: '#2E7D32' },
-})
-
-/* ─── Product card styles (needed outside component) ─── */
-const prodStyles = StyleSheet.create({
-  card: { width: (SCREEN_W - H_PAD * 2 - 10) / 2, backgroundColor: 'white', borderRadius: 22, padding: 16, alignItems: 'center', borderWidth: 1.5, borderColor: '#E8ECEE', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 1 },
-  cardSelected: { borderColor: '#2E7D32', backgroundColor: '#FAFDF8' },
-  icon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  iconText: { fontSize: 20 },
-  label: { fontSize: 13, fontWeight: '700', color: '#1B1B1B', marginBottom: 2 },
-  labelSelected: { color: '#2E7D32' },
-  price: { fontSize: 11, fontWeight: '600', color: '#64748B' },
 })

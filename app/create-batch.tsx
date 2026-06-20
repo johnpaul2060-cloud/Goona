@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { useBatchStore } from '../store/useBatchStore'
+import { formatInput, parseAmount } from '../utils/format'
 
 function usePressScale() {
   const scale = useSharedValue(1)
@@ -39,14 +40,8 @@ function formatDate(d: Date): string {
   return `${day} / ${month} / ${year}`
 }
 
-function formatWithCommas(val: string): string {
-  const digits = val.replace(/\D/g, '')
-  if (!digits) return ''
-  return parseInt(digits, 10).toLocaleString('en-US')
-}
-
 function parseNumeric(val: string): number {
-  return parseInt(val.replace(/\D/g, ''), 10) || 0
+  return parseAmount(val)
 }
 
 function LivestockIcon({ type, selected }: { type: string; selected: boolean }) {
@@ -374,7 +369,7 @@ export default function CreateBatchScreen() {
                   <Text style={styles.fieldLbl}>Purchase Cost</Text>
                   <TextInput
                     style={styles.fieldInput}
-                    value={formatWithCommas(purchaseCost)}
+                    value={formatInput(purchaseCost)}
                     onChangeText={(v) => setPurchaseCost(v.replace(/\D/g, ''))}
                     placeholder="0.00"
                     placeholderTextColor="#A0AEA1"
@@ -400,7 +395,7 @@ export default function CreateBatchScreen() {
                   <Text style={styles.fieldLbl}>Feed Cost</Text>
                   <TextInput
                     style={styles.fieldInput}
-                    value={formatWithCommas(feedCost)}
+                    value={formatInput(feedCost)}
                     onChangeText={(v) => setFeedCost(v.replace(/\D/g, ''))}
                     placeholder="0.00"
                     placeholderTextColor="#A0AEA1"
@@ -425,7 +420,7 @@ export default function CreateBatchScreen() {
                   <Text style={styles.fieldLbl}>Medication Cost</Text>
                   <TextInput
                     style={styles.fieldInput}
-                    value={formatWithCommas(medicationCost)}
+                    value={formatInput(medicationCost)}
                     onChangeText={(v) => setMedicationCost(v.replace(/\D/g, ''))}
                     placeholder="0.00"
                     placeholderTextColor="#A0AEA1"
@@ -528,19 +523,19 @@ export default function CreateBatchScreen() {
               <View style={styles.forecastGrid}>
                 <View>
                   <Text style={styles.forecastLbl}>Est. Total Cost</Text>
-                  <Text style={styles.forecastVal}>₦{totalCost.toLocaleString('en-US')}</Text>
+                  <Text style={styles.forecastVal}>₦{totalCost.toLocaleString('en-NG')}</Text>
                 </View>
                 <View>
                   <Text style={styles.forecastLbl}>Expected Revenue</Text>
-                  <Text style={styles.forecastVal}>₦{expectedRevenue.toLocaleString('en-US')}</Text>
+                  <Text style={styles.forecastVal}>₦{expectedRevenue.toLocaleString('en-NG')}</Text>
                 </View>
                 <View>
                   <Text style={styles.forecastLbl}>Forecast Profit</Text>
-                  <Text style={[styles.forecastVal, { color: '#16A34A' }]}>₦{forecastProfit.toLocaleString('en-US')}</Text>
+                  <Text style={[styles.forecastVal, { color: '#16A34A' }]}>₦{forecastProfit.toLocaleString('en-NG')}</Text>
                 </View>
                 <View>
                   <Text style={styles.forecastLbl}>Reinvestment Goal</Text>
-                  <Text style={[styles.forecastVal, { color: '#2E7D32' }]}>₦{reinvestmentGoal.toLocaleString('en-US')}</Text>
+                  <Text style={[styles.forecastVal, { color: '#2E7D32' }]}>₦{reinvestmentGoal.toLocaleString('en-NG')}</Text>
                 </View>
               </View>
             </Animated.View>

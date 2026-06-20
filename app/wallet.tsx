@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../components/ui/GoonaIcon'
+import { formatNaira } from '../utils/format'
 import {
   ArrowLeft, Wallet, ArrowUpRight, ArrowDownLeft,
   Copy, Share2, Plus, Send, Landmark, Smartphone,
@@ -68,7 +69,7 @@ const PAYMENT_METHODS = [
 ]
 
 function formatCurrency(n: number) {
-  return '\u20A6' + n.toLocaleString()
+  return formatNaira(n)
 }
 
 export default function WalletScreen() {

@@ -45,7 +45,7 @@ function getBadge(progress: number): { text: string; bg: string; color: string }
 function formatNaira(amount: number): string {
   if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1)}M`
   if (amount >= 1000) return `₦${(amount / 1000).toFixed(0)}k`
-  return `₦${amount.toLocaleString('en-US')}`
+  return `₦${amount.toLocaleString('en-NG')}`
 }
 
 function estimateFeedKgStr(quantity: number, livestockType: string, weeks: number): string {

@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
 import { ArrowLeft, TrendingUp, TrendingDown, Download, BarChart3, PieChart, Calendar, Sparkles, Package, Users, Zap, Wrench, Truck, Receipt } from 'lucide-react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import BottomDock from '../../../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -135,8 +134,6 @@ export default function ReportsScreen() {
           </Text>
         </Animated.View>
       </ScrollView>
-
-      <BottomDock />
     </View>
   )
 }

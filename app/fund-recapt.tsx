@@ -13,6 +13,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 import BottomDock from '../components/navigation/BottomDock'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
+import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
 const DEMO_PROJECTS = [
   { id: 1, icon: '\u{1F33E}', name: 'Feed Purchase', target: 500000, saved: 250000 },
@@ -38,13 +39,13 @@ const DEMO_UPCOMING = [
 const QUICK_AMOUNTS = [5000, 10000, 20000, 50000, 100000]
 
 function formatCurrency(n: number) {
-  return '\u20A6' + n.toLocaleString()
+  return formatNaira(n)
 }
 
 function formatCompactCurrency(n: number) {
   if (n >= 1000000) return '\u20A6' + (n / 1000000).toFixed(1) + 'M'
   if (n >= 1000) return '\u20A6' + (n / 1000).toFixed(0) + 'k'
-  return '\u20A6' + n.toLocaleString()
+  return '\u20A6' + n.toLocaleString('en-NG')
 }
 
 export default function FundRecaptScreen() {
@@ -69,7 +70,8 @@ export default function FundRecaptScreen() {
     ? Math.round((totalSaved / totalTarget) * 100)
     : 0
 
-  const customAmount = Math.max(0, parseInt(customAmountStr.replace(/[^0-9]/g, ''), 10) || 0)
+  const customAmount = parseAmount(customAmountStr)
+  const customAmountDisplay = formatInput(customAmountStr)
 
   const handleQuickAmount = useCallback((amount: number) => {
     setQuickAmount(amount)
@@ -288,10 +290,10 @@ export default function FundRecaptScreen() {
           </View>
 
           <View style={styles.quickCustomRow}>
-            <Text style={styles.quickCustomPrefix}>₦</Text>
+            <Text style={styles.quickCustomPrefix}>{'\u20A6'}</Text>
             <TextInput
               style={styles.quickCustomInput}
-              value={customAmountStr}
+              value={customAmountDisplay}
               onChangeText={handleCustomAmountChange}
               keyboardType="numeric"
               placeholder="Custom amount"

@@ -9,6 +9,7 @@ import GoonaIcon from '../../../../components/ui/GoonaIcon'
 import { ArrowLeft, Plus, Package, Truck, Users, Wrench, Zap, ShoppingCart, Camera, Check, X, Receipt } from 'lucide-react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../../../../components/navigation/BottomDock'
+import { formatInput, parseAmount } from '../../../../utils/format'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -24,19 +25,22 @@ const CATEGORIES = [
 export default function CreateExpenseScreen() {
   const insets = useSafeAreaInsets()
   const [selectedCategory, setSelectedCategory] = useState('')
-  const [amount, setAmount] = useState('')
+  const [amountRaw, setAmountRaw] = useState('')
   const [vendor, setVendor] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
+  const amountNum = parseAmount(amountRaw)
+  const displayAmount = formatInput(amountRaw)
+
   const handleSave = useCallback(() => {
-    if (!amount || !selectedCategory) return
+    if (!amountNum || !selectedCategory) return
     setSaving(true)
     setTimeout(() => {
       setSaving(false)
 if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses' as any) }
     }, 800)
-  }, [amount, selectedCategory])
+  }, [amountNum, selectedCategory])
 
   return (
     <View style={styles.container}>
@@ -62,16 +66,19 @@ if (router.canGoBack()) { router.back() } else { router.replace('/records/expens
           <Text style={styles.headerTitle}>Log Farm{"\n"}Expense</Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(500).delay(140).springify()} style={styles.formSection}>
-          <Text style={styles.formLabel}>Amount (₦)</Text>
-          <TextInput
-            style={styles.amountInput}
-            placeholder="0.00"
-            placeholderTextColor="#CBD5E1"
-            keyboardType="decimal-pad"
-            value={amount}
-            onChangeText={setAmount}
-          />
+        <Animated.View entering={FadeInUp.duration(500).delay(140).springify()} style={styles.amountCard}>
+          <Text style={styles.amountCardLabel}>Amount ({'\u20A6'})</Text>
+          <View style={styles.amountInputRow}>
+            <Text style={styles.amountPrefix}>{'\u20A6'}</Text>
+            <TextInput
+              style={[styles.amountInput, amountNum > 0 && styles.amountInputValid]}
+              placeholder="0"
+              placeholderTextColor="#CBD5E1"
+              keyboardType="numeric"
+              value={displayAmount}
+              onChangeText={(v) => setAmountRaw(v.replace(/[^0-9]/g, ''))}
+            />
+          </View>
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(500).delay(180).springify()} style={styles.formSection}>
@@ -129,10 +136,10 @@ if (router.canGoBack()) { router.back() } else { router.replace('/records/expens
 
         <Animated.View entering={FadeInUp.duration(500).delay(360).springify()} style={styles.saveSection}>
           <TouchableOpacity
-            style={[styles.saveBtn, (!amount || !selectedCategory) && styles.saveBtnDisabled]}
+            style={[styles.saveBtn, (!amountNum || !selectedCategory) && styles.saveBtnDisabled]}
             activeOpacity={0.8}
             onPress={handleSave}
-            disabled={!amount || !selectedCategory || saving}
+            disabled={!amountNum || !selectedCategory || saving}
           >
             <GoonaIcon icon={saving ? Check : Plus} size={20} color="#FFF" />
             <Text style={styles.saveText}>{saving ? 'Saving...' : 'Record Expense'}</Text>
@@ -210,17 +217,43 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     letterSpacing: 0.2,
   },
-  amountInput: {
+  amountCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1B1B1B',
+    borderRadius: 20,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  amountCardLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+    letterSpacing: 0.2,
+    marginBottom: 12,
+  },
+  amountInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  amountPrefix: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#1B1B1B',
+    marginRight: 8,
+  },
+  amountInput: {
+    flex: 1,
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#1B1B1B',
     textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  amountInputValid: {
+    color: '#2E7D32',
   },
   categoryGrid: {
     flexDirection: 'row',
