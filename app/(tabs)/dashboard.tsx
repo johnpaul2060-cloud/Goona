@@ -3,11 +3,18 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import GoonaIcon from '../../components/ui/GoonaIcon';
 import NotificationBadge from '../../components/NotificationBadge';
-import { Bell, BarChart3, ClipboardList, Sparkles, FileText, Award, ShoppingCart, Banknote, BrainCircuit, CloudSun, TrendingUp, Shield } from 'lucide-react-native';
+import {
+  Bell, BarChart3, ClipboardList, Sparkles, FileText, Award,
+  ShoppingCart, Banknote, BrainCircuit, CloudSun, TrendingUp,
+  Shield, CheckCircle, AlertCircle, Clock, Droplets, GraduationCap,
+  TrendingDown, Activity, CloudRain, Thermometer, ChevronRight,
+} from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
+import { useEffect, useState } from 'react';
+import { useWeatherStore, seedWeatherForecast } from '../../store/useWeatherStore';
 
 const { width } = Dimensions.get('window');
 
@@ -37,10 +44,76 @@ function usePressScale(scaleTo = 0.96) {
   }
 }
 
+type PrioritySeverity = 'info' | 'attention' | 'urgent'
+const PRIORITY_COLORS: Record<PrioritySeverity, { text: string; bg: string; border: string; dot: string }> = {
+  info:      { text: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0', dot: '#16A34A' },
+  attention: { text: '#D97706', bg: '#FFFBEB', border: '#FDE68A', dot: '#F59E0B' },
+  urgent:    { text: '#DC2626', bg: '#FEF2F2', border: '#FECACA', dot: '#EF4444' },
+}
+const TODAY_PRIORITIES: { icon: any; label: string; desc: string; severity: PrioritySeverity }[] = [
+  { icon: Clock, label: 'Medication due today', desc: 'Newcastle vaccine scheduled for Batch A — 420 broilers', severity: 'urgent' },
+  { icon: AlertCircle, label: 'Feed stock running low', desc: 'Grower feed at 15% reserve — order within 48 hours', severity: 'attention' },
+  { icon: ClipboardList, label: 'Water log not submitted', desc: 'Yesterday\'s water consumption record is missing', severity: 'info' },
+]
+
+type HealthStatus = 'ok' | 'warning' | 'info'
+const HEALTH_ITEMS: { icon: any; label: string; status: string; type: HealthStatus }[] = [
+  { icon: CheckCircle, label: 'Feed', status: 'Logged Today', type: 'ok' },
+  { icon: CheckCircle, label: 'Water', status: 'Logged Today', type: 'ok' },
+  { icon: AlertCircle, label: 'Medication', status: 'Due Today', type: 'warning' },
+  { icon: Shield, label: 'Mortality', status: '2 Birds Reported', type: 'info' },
+]
+
+const QUICK_ACTIONS = [
+  { label: 'Record Sale', icon: ShoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/record-sale' as const },
+  { label: 'Farm Expenses', icon: Banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/expenses' as const },
+  { label: 'Daily Records', icon: ClipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' as const },
+  { label: 'Budget', icon: BarChart3, color: '#F59E0B', bg: '#FFFBEB', route: '/(tabs)/records/expenses/budget' as const },
+  { label: 'Reports', icon: FileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/expenses/reports' as const },
+  { label: 'Academy', icon: GraduationCap, color: '#F97316', bg: '#FFF7ED', route: '/goona-academy' as const },
+]
+
+const PULSES = [
+  { icon: TrendingUp, color: '#16A34A', bg: '#F0FDF4', label: 'Farm performing above target', badge: '+12%', badgeColor: '#16A34A' },
+  { icon: TrendingDown, color: '#F59E0B', bg: '#FFFBEB', label: 'Feed conversion declining', badge: '-8%', badgeColor: '#D97706' },
+  { icon: Activity, color: '#16A34A', bg: '#F0FDF4', label: 'Production efficiency improved', badge: '+8%', badgeColor: '#16A34A' },
+]
+
+const ROUTE_FALLBACKS: Record<string, string> = {
+  '/(tabs)/records/expenses/budget': '/(tabs)/records/expenses',
+  '/(tabs)/records/expenses/reports': '/(tabs)/records/expenses',
+}
+
 export default function DashboardScreen() {
   const router = useRouter();
   const batches = useBatchStore((s) => s.batches)
-  const pressScales = [usePressScale(), usePressScale(), usePressScale(), usePressScale()]
+  const weatherStore = useWeatherStore()
+  const [pulseIdx, setPulseIdx] = useState(0)
+
+  const navigateSafe = (route: string) => {
+    const fallback = ROUTE_FALLBACKS[route]
+    if (fallback) {
+      try { router.push(route as any) } catch { router.push(fallback as any) }
+    } else {
+      router.push(route as any)
+    }
+  }
+
+  useEffect(() => {
+    seedWeatherForecast()
+    const interval = setInterval(() => {
+      setPulseIdx(i => (i + 1) % PULSES.length)
+    }, 6000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const today = weatherStore.getToday()
+  const temp = today?.tempHigh ?? 31
+  const humidity = today?.humidity ?? 68
+  const rainProb = today?.rainProbability ?? 15
+
+  const pulse = PULSES[pulseIdx]
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -52,6 +125,7 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.scrollInner}
         showsVerticalScrollIndicator={false}
       >
+        {/* ─── GREETING ─── */}
         <View style={styles.greeting}>
           <View>
             <Text style={styles.greetingSub}>Good Morning 👋</Text>
@@ -64,6 +138,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* ─── HERO FARM CARD ─── */}
         <Animated.View entering={FadeIn.duration(500)} style={styles.heroCard}>
           <LinearGradient
             colors={['#2E7D32', '#1B5E20', '#0D3B0F']}
@@ -116,207 +191,177 @@ export default function DashboardScreen() {
           </View>
         </Animated.View>
 
+        {/* ─── TODAY'S PRIORITIES ─── */}
         <View style={styles.secHead}>
-          <Text style={styles.secTitle}>Operations</Text>
+          <Text style={styles.secTitle}>Today's Priorities</Text>
         </View>
+        {TODAY_PRIORITIES.slice(0, 3).map((p, i) => {
+          const c = PRIORITY_COLORS[p.severity]
+          return (
+            <Animated.View key={i} entering={FadeIn.duration(400).delay(i * 80)} style={[styles.priorityCard, { backgroundColor: c.bg, borderColor: c.border }]}>
+              <View style={[styles.priorityDot, { backgroundColor: c.dot }]} />
+              <View style={[styles.priorityIconWrap, { backgroundColor: c.dot + '18' }]}>
+                <GoonaIcon icon={p.icon} size={18} color={c.text} />
+              </View>
+              <View style={styles.priorityInfo}>
+                <Text style={[styles.priorityLabel, { color: c.text }]}>{p.label}</Text>
+                <Text style={styles.priorityDesc}>{p.desc}</Text>
+              </View>
+            </Animated.View>
+          )
+        })}
 
-        <View style={styles.actionsGrid}>
-          {[
-            { label: 'Record Sale', desc: 'Track revenue and transactions', color: '#F0FDF4', iconColor: '#16A34A', route: '/record-sale' as any, icon: (c: string) => <GoonaIcon icon={ShoppingCart} size={24} color={c} /> },
-            { label: 'Farm Expenses', desc: 'Monitor operational spending', color: '#FFF1F2', iconColor: '#EF4444', route: '/(tabs)/records/expenses' as const, icon: (c: string) => <GoonaIcon icon={Banknote} size={24} color={c} /> },
-            { label: 'Daily Records', desc: 'Capture farm activities', color: '#EEF3FF', iconColor: '#1A56FF', route: '/(tabs)/records/daily-operations' as const, icon: (c: string) => <GoonaIcon icon={ClipboardList} size={24} color={c} /> },
-            { label: 'Daily Challenge', desc: 'Complete productivity goals', color: '#FFF7ED', iconColor: '#F97316', route: '/academy/daily-challenge' as const, icon: (c: string) => <GoonaIcon icon={Award} size={24} color={c} /> },
-          ].map((a: any, i) => {
-            const p = pressScales[i]
+        {/* ─── FARM HEALTH SNAPSHOT ─── */}
+        <View style={styles.secHead}>
+          <Text style={styles.secTitle}>Farm Health Snapshot</Text>
+        </View>
+        <View style={styles.healthGrid}>
+          {HEALTH_ITEMS.map((h, i) => {
+            const dotColor = h.type === 'ok' ? '#16A34A' : h.type === 'warning' ? '#F59E0B' : '#1A56FF'
+            const textColor = h.type === 'ok' ? '#16A34A' : h.type === 'warning' ? '#D97706' : '#1A56FF'
             return (
-              <Animated.View key={i} style={[p.style, { position: 'relative' }]}>
-                <TouchableOpacity
-                  style={[styles.actionCard]}
-                  activeOpacity={0.9}
-                  onPress={() => router.push({ pathname: a.route, params: a.params })}
-                  onPressIn={p.onPressIn}
-                  onPressOut={p.onPressOut}
-                >
-                  <View style={[styles.actionIcon, { backgroundColor: a.color }]}>
-                    {a.icon(a.iconColor)}
-                  </View>
-                  <Text style={styles.actionLabel}>{a.label}</Text>
-                  <Text style={styles.actionDesc}>{a.desc}</Text>
-                </TouchableOpacity>
-              </Animated.View>
+              <View key={i} style={styles.healthChip}>
+                <GoonaIcon icon={h.icon} size={14} color={dotColor} />
+                <View style={styles.healthInfo}>
+                  <Text style={styles.healthLabel}>{h.label}</Text>
+                  <Text style={[styles.healthStatus, { color: textColor }]}>{h.status}</Text>
+                </View>
+              </View>
             )
           })}
         </View>
 
+        {/* ─── QUICK ACTIONS ─── */}
+        <View style={styles.secHead}>
+          <Text style={styles.secTitle}>Quick Actions</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.qaScroll}>
+          {QUICK_ACTIONS.map((a, i) => (
+            <TouchableOpacity
+              key={i}
+              style={styles.qaCard}
+              activeOpacity={0.85}
+              onPress={() => navigateSafe(a.route)}
+            >
+              <View style={[styles.qaIcon, { backgroundColor: a.bg }]}>
+                <GoonaIcon icon={a.icon} size={26} color={a.color} />
+              </View>
+              <Text style={styles.qaLabel}>{a.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* ─── GOONA IQ RECOMMENDATION ─── */}
         <Animated.View entering={FadeIn.duration(400)} style={styles.iqCard}>
           <View style={styles.iqHead}>
-            <View style={styles.iqHeadLeft}>
-              <View style={styles.iqBadge}>
-                <GoonaIcon icon={BrainCircuit} size={14} color="#2E7D32" />
-                <Text style={styles.iqBadgeText}>GOONA IQ</Text>
-              </View>
+            <View style={styles.iqBadgeRow}>
+              <GoonaIcon icon={Sparkles} size={14} color="#2E7D32" />
+              <Text style={styles.iqBadgeText}>GOONA IQ</Text>
             </View>
             <TouchableOpacity onPress={() => router.push('/goona-iq')}>
               <Text style={styles.iqCta}>Details</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.iqGrid}>
-            <View style={styles.iqItem}>
-              <GoonaIcon icon={TrendingUp} size={14} color="#16A34A" />
-              <Text style={styles.iqItemText}>Feed efficiency improved by <Text style={{ fontWeight: '700', color: '#16A34A' }}>8%</Text></Text>
+          <View style={styles.iqRecommendation}>
+            <GoonaIcon icon={BrainCircuit} size={22} color="#2E7D32" />
+            <Text style={styles.iqRecText}>
+              Save ₦85,000 this week to remain on track for your next production cycle.
+            </Text>
+          </View>
+        </Animated.View>
+
+        {/* ─── WEATHER INTELLIGENCE ─── */}
+        <Animated.View entering={FadeIn.duration(400)} style={styles.weatherCard}>
+          <View style={styles.weatherHead}>
+            <GoonaIcon icon={CloudSun} size={18} color="#2E7D32" />
+            <Text style={styles.weatherTitle}>Weather Intelligence</Text>
+          </View>
+          <View style={styles.weatherBody}>
+            <View style={styles.weatherMain}>
+              <View style={styles.weatherRow}>
+                <View style={styles.weatherStat}>
+                  <GoonaIcon icon={Thermometer} size={14} color="#F59E0B" />
+                  <Text style={styles.weatherVal}>{temp}°C</Text>
+                  <Text style={styles.weatherLbl}>Temperature</Text>
+                </View>
+                <View style={styles.weatherDiv} />
+                <View style={styles.weatherStat}>
+                  <GoonaIcon icon={Droplets} size={14} color="#1A56FF" />
+                  <Text style={styles.weatherVal}>{humidity}%</Text>
+                  <Text style={styles.weatherLbl}>Humidity</Text>
+                </View>
+                <View style={styles.weatherDiv} />
+                <View style={styles.weatherStat}>
+                  <GoonaIcon icon={CloudRain} size={14} color="#6366F1" />
+                  <Text style={styles.weatherVal}>{rainProb}%</Text>
+                  <Text style={styles.weatherLbl}>Rain</Text>
+                </View>
+              </View>
             </View>
-            <View style={styles.iqItem}>
-              <GoonaIcon icon={Shield} size={14} color="#1A56FF" />
-              <Text style={styles.iqItemText}>Mortality risk remains <Text style={{ fontWeight: '700', color: '#1A56FF' }}>low</Text></Text>
-            </View>
-            <View style={styles.iqItem}>
-              <GoonaIcon icon={BarChart3} size={14} color="#F59E0B" />
-              <Text style={styles.iqItemText}>Savings target is <Text style={{ fontWeight: '700', color: '#F59E0B' }}>on track</Text></Text>
-            </View>
-            <View style={styles.iqItem}>
-              <GoonaIcon icon={CloudSun} size={14} color="#6366F1" />
-              <Text style={styles.iqItemText}>Feed purchase due in <Text style={{ fontWeight: '700', color: '#6366F1' }}>3 days</Text></Text>
+            <View style={styles.weatherRec}>
+              <GoonaIcon icon={BrainCircuit} size={12} color="#2E7D32" />
+              <Text style={styles.weatherRecText}>
+                {rainProb > 50 ? 'Prepare drainage before expected rainfall today.' : 'Reduce litter moisture monitoring today.'}
+              </Text>
             </View>
           </View>
         </Animated.View>
 
-        <View style={styles.secHead}>
-          <Text style={styles.secTitle}>Farm Analytics</Text>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/records/analytics' as any)}><Text style={styles.secLink}>View All</Text></TouchableOpacity>
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.analyticsScroll}>
-          {[
-            { metric: '1,250kg', label: 'Feed Usage', trend: '↑ +12%', trendColor: '#16A34A', bars: [40, 55, 70, 50, 80], barColor: '#16A34A' },
-            { metric: '1.8%', label: 'Mortality Rate', trend: '↓ -0.4%', trendColor: '#16A34A', bars: [70, 55, 45, 35, 30], barColor: '#EF4444' },
-            { metric: '8,420', label: 'Egg Production', trend: '↑ +18%', trendColor: '#16A34A', bars: [30, 45, 55, 70, 85], barColor: '#F59E0B' },
-            { metric: '₦480k', label: 'Expenses', trend: '↑ +6%', trendColor: '#EF4444', bars: [40, 55, 50, 65, 75], barColor: '#1A56FF' },
-          ].map((a, i) => (
-            <View key={i} style={styles.analyticsCard}>
-              <Text style={styles.analyticsMetric}>{a.metric}</Text>
-              <Text style={styles.analyticsLabel}>{a.label}</Text>
-              <Text style={[styles.analyticsTrend, { color: a.trendColor }]}>{a.trend}</Text>
-              <View style={styles.miniChart}>
-                {a.bars.map((h, j) => (
-                  <View key={j} style={[styles.miniBar, { height: `${h}%`, backgroundColor: j === a.bars.length - 1 ? a.barColor : '#E2E8E0' }]} />
-                ))}
-              </View>
+        {/* ─── PRODUCTION PULSE ─── */}
+        <Animated.View key={pulseIdx} entering={FadeIn.duration(500)} style={[styles.pulseCard, { backgroundColor: pulse.bg }]}>
+          <View style={styles.pulseRow}>
+            <View style={[styles.pulseIconWrap, { backgroundColor: pulse.color + '20' }]}>
+              <GoonaIcon icon={pulse.icon} size={20} color={pulse.color} />
             </View>
-          ))}
-        </ScrollView>
-
-        <View style={styles.secHead}>
-          <Text style={styles.secTitle}>Active Batches</Text>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/batches' as any)}><Text style={styles.secLink}>See All</Text></TouchableOpacity>
-        </View>
-
-        {batches.slice(0, 2).map((b) => {
-          const prog = computeProgress(b.startDate, b.duration)
-          const badgeClr = prog > 80 ? '#F59E0B' : prog > 40 ? '#16A34A' : '#1A56FF'
-          const badgeBg = prog > 80 ? '#FFFBEB' : prog > 40 ? '#F0FDF4' : '#EEF3FF'
-          const badgeTxt = prog > 80 ? 'Near Harvest' : prog > 40 ? 'Active' : 'Early Stage'
-          const borderClr = prog > 80 ? '#F59E0B' : '#16A34A'
-          const weeks = weeksSince(b.startDate)
-          const totalW = parseWeeks(b.duration)
-          return (
-          <TouchableOpacity
-            key={b.id}
-            style={[styles.batchCard, { borderLeftColor: borderClr }]}
-            activeOpacity={0.85}
-            onPress={() => router.push({ pathname: '/batch-details/[id]', params: { id: b.id } })}
-          >
-            <View style={styles.batchTop}>
-              <Text style={styles.batchName}>{b.batchName}</Text>
-              <View style={[styles.batchBadge, { backgroundColor: badgeBg }]}>
-                <Text style={[styles.batchBadgeText, { color: badgeClr }]}>{badgeTxt}</Text>
-              </View>
+            <View style={styles.pulseInfo}>
+              <Text style={[styles.pulseLabel, { color: pulse.color }]}>{pulse.label}</Text>
             </View>
-            <View style={styles.batchDetails}>
-              <View><Text style={styles.batchDetailLbl}>Type</Text><Text style={styles.batchDetailVal}>{b.livestockType}</Text></View>
-              <View><Text style={styles.batchDetailLbl}>Birds</Text><Text style={styles.batchDetailVal}>{b.quantity}</Text></View>
-              <View><Text style={styles.batchDetailLbl}>Week</Text><Text style={styles.batchDetailVal}>{Math.min(weeks + 1, totalW)}/{totalW}</Text></View>
+            <View style={[styles.pulseBadge, { backgroundColor: pulse.color + '20' }]}>
+              <Text style={[styles.pulseBadgeText, { color: pulse.badgeColor }]}>{pulse.badge}</Text>
             </View>
-            <View style={styles.batchProgress}>
-              <View style={styles.batchProgHead}>
-                <Text style={{ fontSize: 11, color: '#94A3B8' }}>Feed Cycle Progress</Text>
-                <Text style={{ fontSize: 11, color: '#94A3B8' }}>{prog}%</Text>
-              </View>
-              <View style={styles.batchProgTrack}>
-                <View style={[styles.batchProgFill, { width: `${prog}%`, backgroundColor: borderClr }]} />
-              </View>
-            </View>
-          </TouchableOpacity>
-          )
-        })}
-
-        <View style={styles.secHead}>
-          <Text style={styles.secTitle}>Smart Insights</Text>
-        </View>
-
-        <TouchableOpacity style={styles.insightCard} activeOpacity={0.8} onPress={() => router.push('/goona-iq')}>
-          <View style={styles.insightIconBig}>
-            <GoonaIcon icon={Sparkles} size={22} color="#F9A825" />
           </View>
-          <View style={styles.insightBody}>
-            <Text style={styles.insightText}>
-              Mortality has reduced by <Text style={{ fontWeight: '700' }}>12%</Text> this month. Your feeding consistency is improving.
-            </Text>
-            <Text style={styles.insightCta}>View Insights →</Text>
+        </Animated.View>
+
+        {/* ─── ACTIVE BATCHES ─── */}
+        {batches.length > 0 && (
+          <>
+            <View style={styles.secHead}>
+              <Text style={styles.secTitle}>Active Batches</Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/batches' as any)}><Text style={styles.secLink}>See All</Text></TouchableOpacity>
+            </View>
+            {batches.slice(0, 2).map((b) => {
+              const prog = computeProgress(b.startDate, b.duration)
+              const borderClr = prog > 80 ? '#F59E0B' : '#16A34A'
+              return (
+                <TouchableOpacity key={b.id} style={[styles.batchCard, { borderLeftColor: borderClr }]} activeOpacity={0.85}
+                  onPress={() => router.push({ pathname: '/batch-details/[id]', params: { id: b.id } })}
+                >
+                  <View style={styles.batchTop}>
+                    <Text style={styles.batchName}>{b.batchName}</Text>
+                  </View>
+                  <View style={styles.batchDetails}>
+                    <View><Text style={styles.batchDetailLbl}>Type</Text><Text style={styles.batchDetailVal}>{b.livestockType}</Text></View>
+                    <View><Text style={styles.batchDetailLbl}>Birds</Text><Text style={styles.batchDetailVal}>{b.quantity}</Text></View>
+                  </View>
+                  <View style={styles.batchProgress}>
+                    <View style={styles.batchProgTrack}>
+                      <View style={[styles.batchProgFill, { width: `${prog}%`, backgroundColor: borderClr }]} />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )
+            })}
+          </>
+        )}
+
+        {/* ─── DAILY CHALLENGE ─── */}
+        <TouchableOpacity style={styles.challengeCard} activeOpacity={0.8} onPress={() => router.push('/academy/daily-challenge')}>
+          <View style={styles.challengeIconWrap}>
+            <GoonaIcon icon={Award} size={18} color="#F97316" />
           </View>
+          <Text style={styles.challengeText}>Daily Challenge</Text>
+          <GoonaIcon icon={ChevronRight} size={16} color="#94A3B8" />
         </TouchableOpacity>
-
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/weather-details')}>
-          <Animated.View entering={FadeIn.duration(400)} style={styles.weatherCard}>
-            <View style={styles.weatherHead}>
-              <View style={styles.weatherHeadLeft}>
-                <GoonaIcon icon={CloudSun} size={18} color="#2E7D32" />
-                <Text style={styles.weatherTitle}>Farm Weather</Text>
-              </View>
-              <Text style={styles.weatherLocation}>📍 Lagos, Nigeria</Text>
-            </View>
-            <View style={styles.weatherGrid}>
-              <View style={styles.weatherItem}>
-                <Text style={styles.weatherItemVal}>32°C</Text>
-                <Text style={styles.weatherItemLbl}>Temperature</Text>
-              </View>
-              <View style={styles.weatherDivider} />
-              <View style={styles.weatherItem}>
-                <Text style={styles.weatherItemVal}>68%</Text>
-                <Text style={styles.weatherItemLbl}>Humidity</Text>
-              </View>
-              <View style={styles.weatherDivider} />
-              <View style={styles.weatherItem}>
-                <Text style={styles.weatherItemVal}>15mm</Text>
-                <Text style={styles.weatherItemLbl}>Rainfall</Text>
-              </View>
-            </View>
-          </Animated.View>
-        </TouchableOpacity>
-
-        <View style={styles.secHead}>
-          <Text style={styles.secTitle}>Recent Activity</Text>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/records' as any)}><Text style={styles.secLink}>View all</Text></TouchableOpacity>
-        </View>
-
-        <View style={styles.feedCard}>
-          {[
-            { icon: '#F0FDF4', iconColor: '#16A34A', title: 'Fed Layer Farm Batch A', desc: '8 bags of grower feed', time: '8:30 AM' },
-            { icon: '#EEF3FF', iconColor: '#1A56FF', title: 'Vaccination Recorded', desc: 'Newcastle vaccine given to 420 broilers', time: '7:15 AM' },
-            { icon: '#FFFBEB', iconColor: '#F59E0B', title: 'Eggs Collected', desc: '12 crates — 360 eggs collected', time: 'Yesterday' },
-            { icon: '#F0FDF4', iconColor: '#16A34A', title: 'Staff Attendance', desc: '8 of 10 workers checked in', time: 'Yesterday' },
-          ].map((f, i) => (
-            <TouchableOpacity key={i} style={styles.feedRow} activeOpacity={0.7} onPress={() => router.push('/(tabs)/records' as any)}>
-              <View style={[styles.feedIcon, { backgroundColor: f.icon }]}>
-                <GoonaIcon icon={FileText} size={18} color={f.iconColor} />
-              </View>
-              <View style={styles.feedInfo}>
-                <Text style={styles.feedTitle}>{f.title}</Text>
-                <Text style={styles.feedDesc}>{f.desc}</Text>
-              </View>
-              <Text style={styles.feedTime}>{f.time}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -343,7 +388,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 14, elevation: 3,
   },
-  notifDot: { position: 'absolute', top: 10, right: 10, width: 10, height: 10, borderRadius: 5, backgroundColor: '#16A34A', borderWidth: 2, borderColor: 'white' },
   heroCard: {
     backgroundColor: '#2E7D32', borderRadius: 30, padding: 24, marginTop: 18, overflow: 'hidden',
     shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.25, shadowRadius: 40, elevation: 8,
@@ -379,44 +423,48 @@ const styles = StyleSheet.create({
   secHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 14, zIndex: 5 },
   secTitle: { fontSize: 18, fontWeight: '700', color: '#1F2937' },
   secLink: { fontSize: 13, fontWeight: '500', color: '#2E7D32' },
-  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, zIndex: 5 },
-  actionCard: {
-    width: (width - 64) / 2, backgroundColor: 'white', borderRadius: 22, padding: 20,
-    alignItems: 'center',
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08, shadowRadius: 24, elevation: 4,
-    borderWidth: 1, borderColor: 'rgba(46,125,50,0.06)',
+
+  /* ─── TODAY'S PRIORITIES ─── */
+  priorityCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: 16, padding: 14, marginBottom: 8,
+    borderWidth: 1, overflow: 'hidden',
   },
-  actionIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  actionLabel: { fontSize: 15, fontWeight: '600', color: '#1F2937' },
-  actionDesc: { fontSize: 11, color: '#94A3B8', marginTop: 4, textAlign: 'center' },
-  analyticsScroll: { paddingBottom: 4, zIndex: 5 },
-  analyticsCard: {
-    minWidth: 150, backgroundColor: 'white', borderRadius: 22, padding: 16,
-    marginRight: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+  priorityDot: { width: 4, height: '100%', position: 'absolute', left: 0, top: 0, bottom: 0, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 },
+  priorityIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  priorityInfo: { flex: 1 },
+  priorityLabel: { fontSize: 14, fontWeight: '700' },
+  priorityDesc: { fontSize: 11, color: '#64748B', marginTop: 1, lineHeight: 15 },
+
+  /* ─── FARM HEALTH SNAPSHOT ─── */
+  healthGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 8,
+  },
+  healthChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'white', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
+    width: (width - 48) / 2,
+  },
+  healthInfo: { flex: 1 },
+  healthLabel: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
+  healthStatus: { fontSize: 12, fontWeight: '700', marginTop: 1 },
+
+  /* ─── QUICK ACTIONS ─── */
+  qaScroll: { paddingBottom: 4, zIndex: 5 },
+  qaCard: {
+    width: 86, height: 96,
+    backgroundColor: 'white', borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center', gap: 8,
+    marginRight: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.05, shadowRadius: 20, elevation: 2,
   },
-  analyticsMetric: { fontSize: 22, fontWeight: '800', color: '#1F2937', marginTop: 0 },
-  analyticsLabel: { fontSize: 12, color: '#64748B', marginTop: 1 },
-  analyticsTrend: { fontSize: 11, fontWeight: '600', marginTop: 6 },
-  miniChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 28, marginTop: 8 },
-  miniBar: { width: 6, borderRadius: 2 },
-  batchCard: {
-    backgroundColor: 'white', borderRadius: 24, padding: 18, marginBottom: 12,
-    borderLeftWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05, shadowRadius: 20, elevation: 2,
-  },
-  batchTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  batchName: { fontSize: 17, fontWeight: '700', color: '#1F2937' },
-  batchBadge: { paddingHorizontal: 12, paddingVertical: 3, borderRadius: 100 },
-  batchBadgeText: { fontSize: 11, fontWeight: '600' },
-  batchDetails: { flexDirection: 'row', gap: 20, marginTop: 10 },
-  batchDetailLbl: { fontSize: 11, color: '#94A3B8' },
-  batchDetailVal: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
-  batchProgress: { marginTop: 12 },
-  batchProgHead: { flexDirection: 'row', justifyContent: 'space-between' },
-  batchProgTrack: { height: 6, backgroundColor: '#F1F5F9', borderRadius: 100, marginTop: 4, overflow: 'hidden' },
-  batchProgFill: { height: '100%', borderRadius: 100 },
+  qaIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  qaLabel: { fontSize: 11, fontWeight: '600', color: '#1B1B1B' },
+
+  /* ─── GOONA IQ RECOMMENDATION ─── */
   iqCard: {
     backgroundColor: 'white', borderRadius: 24, padding: 18, marginTop: 18,
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
@@ -424,52 +472,71 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(46,125,50,0.08)',
   },
   iqHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  iqHeadLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iqBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100,
-    backgroundColor: 'rgba(46,125,50,0.08)',
-  },
+  iqBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   iqBadgeText: { fontSize: 11, fontWeight: '700', color: '#2E7D32', letterSpacing: 0.5 },
   iqCta: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
-  iqGrid: { gap: 10 },
-  iqItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iqItemText: { fontSize: 13, color: '#374151', flex: 1, lineHeight: 18 },
+  iqRecommendation: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  iqRecText: { fontSize: 14, color: '#374151', lineHeight: 20, flex: 1 },
+
+  /* ─── WEATHER INTELLIGENCE ─── */
   weatherCard: {
-    backgroundColor: 'white', borderRadius: 24, padding: 18, marginTop: 18,
+    backgroundColor: 'white', borderRadius: 24, padding: 18, marginTop: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
     borderWidth: 1, borderColor: 'rgba(46,125,50,0.08)',
   },
-  weatherHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  weatherHeadLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  weatherHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 },
   weatherTitle: { fontSize: 15, fontWeight: '700', color: '#1F2937' },
-  weatherLocation: { fontSize: 11, color: '#94A3B8' },
-  weatherGrid: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
-  weatherItem: { alignItems: 'center', flex: 1 },
-  weatherItemVal: { fontSize: 20, fontWeight: '800', color: '#1F2937' },
-  weatherItemLbl: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
-  weatherDivider: { width: 1, height: 32, backgroundColor: '#E2E8F0' },
-  insightCard: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 14,
-    backgroundColor: '#E8F5E9', borderRadius: 24, padding: 18,
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 1,
+  weatherBody: {},
+  weatherMain: { marginBottom: 12 },
+  weatherRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
+  weatherStat: { alignItems: 'center', flex: 1, gap: 4 },
+  weatherVal: { fontSize: 18, fontWeight: '800', color: '#1F2937' },
+  weatherLbl: { fontSize: 10, color: '#94A3B8' },
+  weatherDiv: { width: 1, height: 28, backgroundColor: '#E2E8F0' },
+  weatherRec: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#F0FDF4', borderRadius: 12, padding: 10,
   },
-  insightIconBig: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: 'white',
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1,
+  weatherRecText: { fontSize: 12, color: '#374151', flex: 1, lineHeight: 16 },
+
+  /* ─── PRODUCTION PULSE ─── */
+  pulseCard: {
+    borderRadius: 20, padding: 16, marginTop: 16,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
   },
-  insightBody: { flex: 1 },
-  insightText: { fontSize: 13, lineHeight: 20, color: '#1F2937' },
-  insightCta: { fontSize: 12, fontWeight: '600', color: '#2E7D32', marginTop: 6 },
-  feedCard: { backgroundColor: 'white', borderRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 2 },
-  feedRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  feedIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  feedInfo: { flex: 1, minWidth: 0 },
-  feedTitle: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
-  feedDesc: { fontSize: 12, color: '#64748B', marginTop: 1 },
-  feedTime: { fontSize: 11, color: '#94A3B8', flexShrink: 0 },
+  pulseRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  pulseIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  pulseInfo: { flex: 1 },
+  pulseLabel: { fontSize: 14, fontWeight: '600' },
+  pulseBadge: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 6 },
+  pulseBadgeText: { fontSize: 11, fontWeight: '700' },
+
+  /* ─── ACTIVE BATCHES ─── */
+  batchCard: {
+    backgroundColor: 'white', borderRadius: 24, padding: 18, marginBottom: 12,
+    borderLeftWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05, shadowRadius: 20, elevation: 2,
+  },
+  batchTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  batchName: { fontSize: 17, fontWeight: '700', color: '#1F2937' },
+  batchDetails: { flexDirection: 'row', gap: 20, marginTop: 10 },
+  batchDetailLbl: { fontSize: 11, color: '#94A3B8' },
+  batchDetailVal: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
+  batchProgress: { marginTop: 12 },
+  batchProgTrack: { height: 6, backgroundColor: '#F1F5F9', borderRadius: 100, overflow: 'hidden' },
+  batchProgFill: { height: '100%', borderRadius: 100 },
+
+  /* ─── DAILY CHALLENGE ─── */
+  challengeCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: 'white', borderRadius: 16, padding: 14, marginTop: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04, shadowRadius: 12, elevation: 1,
+  },
+  challengeIconWrap: {
+    width: 36, height: 36, borderRadius: 10, backgroundColor: '#FFF7ED',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  challengeText: { fontSize: 14, fontWeight: '600', color: '#1F2937', flex: 1 },
 });
-
-
