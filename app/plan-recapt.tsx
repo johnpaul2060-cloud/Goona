@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../components/navigation/BottomDock'
+import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
 
 const PROJECTS = [
   { icon: '\u{1F425}', label: 'Restocking', purposes: ['Broilers', 'Layers', 'Fingerlings', 'Livestock replacement'] },
@@ -69,6 +70,7 @@ function getNextContributionDate(plan: 'Daily' | 'Weekly' | 'Monthly'): Date {
 
 export default function PlanRecaptScreen() {
   const insets = useSafeAreaInsets()
+  const walletStatus = useWalletStore((s) => s.walletStatus)
 
   const [goalName, setGoalName] = useState('')
   const [amountRaw, setAmountRaw] = useState('')
@@ -256,6 +258,11 @@ export default function PlanRecaptScreen() {
                 style={styles.confirmBtn}
                 activeOpacity={0.85}
                 onPress={() => {
+                  if (walletStatus !== 'activated') {
+                    setPendingReturnUrl(`/fund-project?name=${encodeURIComponent(goalName)}&target=${targetAmount}&saved=0&plan=${selectedPlan}&amount=${nextAmount}`)
+                    router.push('/wallet-activation')
+                    return
+                  }
                   router.push(
                     `/fund-project?name=${encodeURIComponent(goalName)}&target=${targetAmount}&saved=0&plan=${selectedPlan}&amount=${nextAmount}`,
                   )

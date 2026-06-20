@@ -13,7 +13,7 @@ import {
   CreditCard, ChevronRight, Check,
 } from 'lucide-react-native'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
-import BottomDock from '../components/navigation/BottomDock'
+import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
 
 const QUICK_ACTIONS = [
   { icon: Plus, label: 'Add Money', color: '#2E7D32' },
@@ -75,6 +75,7 @@ export default function WalletScreen() {
   const insets = useSafeAreaInsets()
   const [showAccount, setShowAccount] = useState(false)
   const [copied, setCopied] = useState(false)
+  const walletStatus = useWalletStore((s) => s.walletStatus)
 
   const balance = 1250000
 
@@ -85,6 +86,15 @@ export default function WalletScreen() {
   }
 
   const handleAction = (label: string) => {
+    if (label === 'Account') {
+      setShowAccount(!showAccount)
+      return
+    }
+    if (walletStatus !== 'activated') {
+      setPendingReturnUrl('/wallet')
+      router.push('/wallet-activation')
+      return
+    }
     switch (label) {
       case 'Add Money':
         Alert.alert('Add Money', 'Fund your wallet via:\n\n• Card\n• Bank Transfer\n• USSD')
@@ -95,16 +105,12 @@ export default function WalletScreen() {
       case 'Withdraw':
         Alert.alert('Withdraw', 'Withdraw to your bank account.\n\nFeature coming soon.')
         break
-      case 'Account':
-        setShowAccount(!showAccount)
-        break
     }
   }
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -288,7 +294,6 @@ export default function WalletScreen() {
         </Animated.View>
       </ScrollView>
 
-      <BottomDock />
     </View>
   )
 }

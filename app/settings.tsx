@@ -5,7 +5,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Bell, Clock, Users, Sparkles, BarChart3, RefreshCw, CloudOff, Server, Phone, Key, Smile, FileText, AlertTriangle, Globe, Moon, Wallet, HelpCircle, MessageSquare, Shield, Info, ChevronRight, Pencil, User, X, Check, Sprout, MapPin } from 'lucide-react-native'
+import { ArrowLeft, Bell, Clock, Users, Sparkles, BarChart3, RefreshCw, CloudOff, Server, Phone, Key, Smile, FileText, AlertTriangle, Globe, Moon, Wallet, HelpCircle, MessageSquare, Shield, Info, ChevronRight, Pencil, User, X, Check, Sprout, MapPin, Award, Fingerprint, Building2 } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import BottomDock from '../components/navigation/BottomDock'
 import { useSettingsStore } from '../store/useSettingsStore'
 import { useAuthStore } from '../store/useAuthStore'
+import { useWalletStore } from '../store/useWalletStore'
 
 const { width: SW } = Dimensions.get('window')
 const IS_SMALL = SW < 375
@@ -130,6 +131,8 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets()
   const store = useSettingsStore()
   const authRole = useAuthStore((s) => s.role)
+  const walletStatus = useWalletStore((s) => s.walletStatus)
+  const kyc = useWalletStore((s) => s.kyc)
 
   /* modal visibility */
   const [modals, setModals] = useState({ profile: false, pin: false, iq: false, recapt: false, worker: false, sim: false, theme: false })
@@ -188,6 +191,14 @@ export default function SettingsScreen() {
     { key: 'devices', icon: icBg('#F1F5F9', <GoonaIcon icon={Phone} size={16} color="#64748B" />), title: 'Device Management', desc: 'Manage connected devices', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Device Management', 'You have 2 connected devices.\n\n• iPhone 15 Pro\n• Samsung Galaxy Tab') },
     { key: 'sessions', icon: icBg('#F1F5F9', <GoonaIcon icon={FileText} size={16} color="#64748B" />), title: 'Login Sessions', desc: 'Manage active sessions', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Active Sessions', '1 active session\nLast login: Today 9:30 AM') },
     ...(authRole === 'Owner' ? [{ key: 'killswitch', icon: icBg('rgba(239,68,68,0.06)', <GoonaIcon icon={AlertTriangle} size={16} color="#DC2626" />), title: 'Remote Kill Switch', desc: 'Revoke all device access', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/kill-switch' as any) }] : []),
+  ]
+
+  const walletLabel = walletStatus === 'activated' ? 'Activated' : walletStatus === 'pending' ? 'Verification Pending' : 'Not Activated'
+  const walletIcon = walletStatus === 'activated' ? Check : walletStatus === 'pending' ? Clock : Wallet
+
+  const walletRows = [
+    { key: 'wallet', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Wallet} size={16} color="#00695C" />), title: 'GOONA Wallet', desc: `Status: ${walletLabel}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => router.push('/wallet-activation')}>{walletStatus === 'activated' ? 'Manage' : 'Activate'}</Text>, onPress: () => router.push('/wallet-activation') },
+    { key: 'verification', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Award} size={16} color="#00695C" />), title: 'Verification Center', desc: `${kyc.step1.completed ? '\u2713 ' : ''}${kyc.step2.completed ? 'BVN ' : ''}${kyc.step3.completed ? 'NIN ' : ''}${kyc.step4.completed ? 'Selfie ' : ''}${kyc.step5.completed ? 'Biz' : ''}`.trim() || 'Not started', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/verification-center') },
   ]
 
   const dataRows = [
@@ -287,12 +298,13 @@ export default function SettingsScreen() {
         <SettingsSection title="Workforce & Permissions" rows={workerRows} index={2} />
         <SettingsSection title="Data & Sync" rows={dataRows} index={3} />
         <SettingsSection title="Security & Access" rows={secRows} index={4} />
+        <SettingsSection title="GOONA Wallet" rows={walletRows} index={5} />
         <SettingsSection title="Farm Boundaries" rows={[
           { key: 'boundaries', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={MapPin} size={16} color="#00695C" />), title: 'Farm Boundaries', desc: 'Manage geofences, zones, and restricted areas', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/farm-boundaries' as any) },
-        ]} index={5} />
-        <SettingsSection title="GOONA IQ" rows={iqRows} index={6} />
-        <SettingsSection title="Theme & Experience" rows={themeRows} index={7} />
-        <SettingsSection title="Help & Support" rows={helpRows} index={8} />
+        ]} index={6} />
+        <SettingsSection title="GOONA IQ" rows={iqRows} index={7} />
+        <SettingsSection title="Theme & Experience" rows={themeRows} index={8} />
+        <SettingsSection title="Help & Support" rows={helpRows} index={9} />
 
         {/* DANGER ZONE */}
         <Animated.View entering={FadeInUp.duration(500).delay(900).springify()} style={{ borderRadius: 24, backgroundColor: 'rgba(254,202,202,0.15)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.06)', padding: 16, marginTop: 22 }}>

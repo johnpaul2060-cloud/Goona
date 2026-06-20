@@ -12,6 +12,7 @@ import {
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 import BottomDock from '../components/navigation/BottomDock'
+import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
 
 const DEMO_PROJECTS = [
   { id: 1, icon: '\u{1F33E}', name: 'Feed Purchase', target: 500000, saved: 250000 },
@@ -80,9 +81,16 @@ export default function FundRecaptScreen() {
     setQuickAmount(null)
   }, [])
 
+  const walletStatus = useWalletStore((s) => s.walletStatus)
+
   const handleFundProject = useCallback((projectId: number) => {
+    if (walletStatus !== 'activated') {
+      setPendingReturnUrl('/fund-recapt')
+      router.push('/wallet-activation')
+      return
+    }
     router.push(`/fund-project?id=${projectId}`)
-  }, [])
+  }, [walletStatus])
 
   return (
     <View style={styles.container}>
@@ -293,7 +301,14 @@ export default function FundRecaptScreen() {
               <TouchableOpacity
                 style={styles.quickFundBtn}
                 activeOpacity={0.8}
-                onPress={() => router.push('/fund-project?id=1')}
+                onPress={() => {
+                  if (walletStatus !== 'activated') {
+                    setPendingReturnUrl('/fund-recapt')
+                    router.push('/wallet-activation')
+                    return
+                  }
+                  router.push('/fund-project?id=1')
+                }}
               >
                 <Text style={styles.quickFundBtnText}>Add</Text>
               </TouchableOpacity>

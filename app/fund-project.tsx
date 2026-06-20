@@ -8,9 +8,10 @@ import {
   ArrowLeft, CheckCircle, CreditCard, Wallet, Building, Smartphone,
 } from 'lucide-react-native'
 import { StatusBar } from 'expo-status-bar'
-import { router, useLocalSearchParams } from 'expo-router'
+import { router, useLocalSearchParams, usePathname } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
+import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
 
 const PROJECTS = [
   { id: 1, icon: '\u{1F33E}', name: 'Feed Purchase', target: 500000, saved: 250000 },
@@ -56,6 +57,21 @@ export default function FundProjectScreen() {
     amount?: string
     contributionType?: string
   }>()
+  const pathname = usePathname()
+  const walletStatus = useWalletStore((s) => s.walletStatus)
+  const hasRedirected = useRef(false)
+
+  useEffect(() => {
+    if (walletStatus !== 'activated' && !hasRedirected.current) {
+      hasRedirected.current = true
+      const qs = Object.entries(params)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`)
+        .join('&')
+      setPendingReturnUrl(`${pathname}?${qs}`)
+      router.replace('/wallet-activation')
+    }
+  }, [walletStatus])
 
   const project = useMemo(() => {
     if (params.name) {
@@ -114,185 +130,185 @@ export default function FundProjectScreen() {
       <StatusBar style="dark" />
 
       {showSuccess ? (
-        /* ── SUCCESS ── */
-        <View style={styles.successWrap}>
-          <Animated.View
-            entering={FadeInDown.duration(400).springify()}
-            style={styles.successCard}
-          >
-            <View style={styles.successIcon}>
-              <GoonaIcon icon={CheckCircle} size={48} color="#2E7D32" />
-            </View>
-            <Text style={styles.successTitle}>Payment Successful</Text>
-            <Text style={styles.successSub}>
-              Your contribution of {formatCurrency(amount)} has been applied to {project.name}.
-            </Text>
-
-            <View style={styles.successDetails}>
-              <View style={styles.successRow}>
-                <Text style={styles.successLabel}>Amount</Text>
-                <Text style={styles.successValue}>{formatCurrency(amount)}</Text>
-              </View>
-              <View style={styles.successDivider} />
-              <View style={styles.successRow}>
-                <Text style={styles.successLabel}>Method</Text>
-                <Text style={styles.successValue}>
-                  {PAYMENT_METHODS.find(m => m.id === selectedMethod)?.label}
-                </Text>
-              </View>
-              <View style={styles.successDivider} />
-              <View style={styles.successRow}>
-                <Text style={styles.successLabel}>Status</Text>
-                <Text style={[styles.successValue, { color: '#2E7D32' }]}>Successful</Text>
-              </View>
-            </View>
-          </Animated.View>
-
-          <TouchableOpacity
-            style={styles.successBtn}
-            activeOpacity={0.85}
-            onPress={() => router.replace('/(tabs)/recapitalization')}
-          >
-            <Text style={styles.successBtnText}>Return to Recapitalization</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[
-            styles.scrollInner,
-            { paddingBottom: insets.bottom + 140 },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* ── HERO HEADER ── */}
-          <Animated.View
-            entering={FadeInDown.duration(600).springify()}
-            style={[styles.heroSection, { paddingTop: insets.top + 16 }]}
-          >
-            <TouchableOpacity
-              style={styles.backBtn}
-              activeOpacity={0.7}
-              onPress={() => router.back()}
-            >
-              <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
-            </TouchableOpacity>
-
-            <Text style={styles.heroTitle}>
-              {isQuickFund ? 'Activate Project' : 'Fund Project'}
-            </Text>
-            <Text style={styles.heroSub}>
-              {isQuickFund ? 'Confirm your contribution to activate this project.' : 'Add money to your project and track your funding.'}
-            </Text>
-          </Animated.View>
-
-          {/* ── AMOUNT SECTION ── */}
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(80).springify()}
-          >
-            {isQuickFund ? (
-              <>
-                <Text style={styles.sectionLabel}>{contributionTypeLabel}</Text>
-                <View style={styles.quickAmountCard}>
-                  <Text style={styles.quickAmountLabel}>Amount</Text>
-                  <Text style={styles.quickAmountValue}>{formatCurrency(amount)}</Text>
-                </View>
-              </>
-            ) : (
-              <>
-                <Text style={styles.sectionLabel}>Amount to Fund</Text>
-                <View style={styles.amountCard}>
-                  <View style={styles.amountRow}>
-                    <Text style={styles.amountPrefix}>₦</Text>
-                    <TextInput
-                      style={styles.amountInput}
-                      value={displayAmount}
-                      onChangeText={handleAmountChange}
-                      keyboardType="numeric"
-                      placeholder="0"
-                      placeholderTextColor="#CBD5E1"
-                      autoFocus
-                    />
-                  </View>
-                </View>
-                <View style={styles.quickRow}>
-                  {QUICK_AMOUNTS.map((val) => {
-                    const active = amount === val
-                    return (
-                      <TouchableOpacity
-                        key={val}
-                        style={[styles.quickChip, active && styles.quickChipActive]}
-                        activeOpacity={0.8}
-                        onPress={() => handleQuickAmount(val)}
-                      >
-                        <Text
-                          style={[styles.quickChipText, active && styles.quickChipTextActive]}
-                        >
-                          {formatCompactCurrency(val)}
-                        </Text>
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
-              </>
-            )}
-          </Animated.View>
-
-          {/* ── PAYMENT METHOD ── */}
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(140).springify()}
-          >
-            <Text style={styles.sectionLabel}>Payment Method</Text>
-            <View style={styles.methodStack}>
-              {PAYMENT_METHODS.map((method) => {
-                const active = selectedMethod === method.id
-                return (
-                  <TouchableOpacity
-                    key={method.id}
-                    style={[styles.methodCard, active && styles.methodCardActive]}
-                    activeOpacity={0.85}
-                    onPress={() => setSelectedMethod(method.id)}
-                  >
-                    <View style={styles.methodLeft}>
-                      <View style={styles.methodIconWrap}>
-                        <GoonaIcon icon={method.icon} size={16} color="#2E7D32" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.methodName}>{method.label}</Text>
-                        <Text style={styles.methodDesc}>{method.desc}</Text>
-                      </View>
-                    </View>
-                    {active && <GoonaIcon icon={CheckCircle} size={18} color="#2E7D32" />}
-                  </TouchableOpacity>
-                )
-              })}
-            </View>
-          </Animated.View>
-
-          {/* ── COMPACT SUMMARY + CONFIRM ── */}
-          {selectedMethod && (
+          /* ── SUCCESS ── */
+          <View style={styles.successWrap}>
             <Animated.View
-              entering={FadeInDown.duration(400).delay(200).springify()}
+              entering={FadeInDown.duration(400).springify()}
+              style={styles.successCard}
             >
-              <View style={styles.compactSummary}>
-                <Text style={styles.compactSummaryText}>
-                  {project.icon} {project.name} • {formatCurrency(amount)} • {PAYMENT_METHODS.find(m => m.id === selectedMethod)?.label}
-                </Text>
+              <View style={styles.successIcon}>
+                <GoonaIcon icon={CheckCircle} size={48} color="#2E7D32" />
               </View>
+              <Text style={styles.successTitle}>Payment Successful</Text>
+              <Text style={styles.successSub}>
+                Your contribution of {formatCurrency(amount)} has been applied to {project.name}.
+              </Text>
 
-              <TouchableOpacity
-                style={styles.submitBtn}
-                activeOpacity={0.85}
-                onPress={handleSubmit}
-              >
-                <GoonaIcon icon={CheckCircle} size={20} color="#FFFFFF" />
-                <Text style={styles.submitText}>Confirm Payment</Text>
-              </TouchableOpacity>
+              <View style={styles.successDetails}>
+                <View style={styles.successRow}>
+                  <Text style={styles.successLabel}>Amount</Text>
+                  <Text style={styles.successValue}>{formatCurrency(amount)}</Text>
+                </View>
+                <View style={styles.successDivider} />
+                <View style={styles.successRow}>
+                  <Text style={styles.successLabel}>Method</Text>
+                  <Text style={styles.successValue}>
+                    {PAYMENT_METHODS.find(m => m.id === selectedMethod)?.label}
+                  </Text>
+                </View>
+                <View style={styles.successDivider} />
+                <View style={styles.successRow}>
+                  <Text style={styles.successLabel}>Status</Text>
+                  <Text style={[styles.successValue, { color: '#2E7D32' }]}>Successful</Text>
+                </View>
+              </View>
             </Animated.View>
-          )}
-        </ScrollView>
-      )}
+
+            <TouchableOpacity
+              style={styles.successBtn}
+              activeOpacity={0.85}
+              onPress={() => router.replace('/(tabs)/recapitalization')}
+            >
+              <Text style={styles.successBtnText}>Return to Recapitalization</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.scrollInner,
+              { paddingBottom: insets.bottom + 140 },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* ── HERO HEADER ── */}
+            <Animated.View
+              entering={FadeInDown.duration(600).springify()}
+              style={[styles.heroSection, { paddingTop: insets.top + 16 }]}
+            >
+              <TouchableOpacity
+                style={styles.backBtn}
+                activeOpacity={0.7}
+                onPress={() => router.back()}
+              >
+                <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+              </TouchableOpacity>
+
+              <Text style={styles.heroTitle}>
+                {isQuickFund ? 'Activate Project' : 'Fund Project'}
+              </Text>
+              <Text style={styles.heroSub}>
+                {isQuickFund ? 'Confirm your contribution to activate this project.' : 'Add money to your project and track your funding.'}
+              </Text>
+            </Animated.View>
+
+            {/* ── AMOUNT SECTION ── */}
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(80).springify()}
+            >
+              {isQuickFund ? (
+                <>
+                  <Text style={styles.sectionLabel}>{contributionTypeLabel}</Text>
+                  <View style={styles.quickAmountCard}>
+                    <Text style={styles.quickAmountLabel}>Amount</Text>
+                    <Text style={styles.quickAmountValue}>{formatCurrency(amount)}</Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.sectionLabel}>Amount to Fund</Text>
+                  <View style={styles.amountCard}>
+                    <View style={styles.amountRow}>
+                      <Text style={styles.amountPrefix}>₦</Text>
+                      <TextInput
+                        style={styles.amountInput}
+                        value={displayAmount}
+                        onChangeText={handleAmountChange}
+                        keyboardType="numeric"
+                        placeholder="0"
+                        placeholderTextColor="#CBD5E1"
+                        autoFocus
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.quickRow}>
+                    {QUICK_AMOUNTS.map((val) => {
+                      const active = amount === val
+                      return (
+                        <TouchableOpacity
+                          key={val}
+                          style={[styles.quickChip, active && styles.quickChipActive]}
+                          activeOpacity={0.8}
+                          onPress={() => handleQuickAmount(val)}
+                        >
+                          <Text
+                            style={[styles.quickChipText, active && styles.quickChipTextActive]}
+                          >
+                            {formatCompactCurrency(val)}
+                          </Text>
+                        </TouchableOpacity>
+                      )
+                    })}
+                  </View>
+                </>
+              )}
+            </Animated.View>
+
+            {/* ── PAYMENT METHOD ── */}
+            <Animated.View
+              entering={FadeInDown.duration(400).delay(140).springify()}
+            >
+              <Text style={styles.sectionLabel}>Payment Method</Text>
+              <View style={styles.methodStack}>
+                {PAYMENT_METHODS.map((method) => {
+                  const active = selectedMethod === method.id
+                  return (
+                    <TouchableOpacity
+                      key={method.id}
+                      style={[styles.methodCard, active && styles.methodCardActive]}
+                      activeOpacity={0.85}
+                      onPress={() => setSelectedMethod(method.id)}
+                    >
+                      <View style={styles.methodLeft}>
+                        <View style={styles.methodIconWrap}>
+                          <GoonaIcon icon={method.icon} size={16} color="#2E7D32" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.methodName}>{method.label}</Text>
+                          <Text style={styles.methodDesc}>{method.desc}</Text>
+                        </View>
+                      </View>
+                      {active && <GoonaIcon icon={CheckCircle} size={18} color="#2E7D32" />}
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            </Animated.View>
+
+            {/* ── COMPACT SUMMARY + CONFIRM ── */}
+            {selectedMethod && (
+              <Animated.View
+                entering={FadeInDown.duration(400).delay(200).springify()}
+              >
+                <View style={styles.compactSummary}>
+                  <Text style={styles.compactSummaryText}>
+                    {project.icon} {project.name} • {formatCurrency(amount)} • {PAYMENT_METHODS.find(m => m.id === selectedMethod)?.label}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  activeOpacity={0.85}
+                  onPress={handleSubmit}
+                >
+                  <GoonaIcon icon={CheckCircle} size={20} color="#FFFFFF" />
+                  <Text style={styles.submitText}>Confirm Payment</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
+          </ScrollView>
+        )}
     </KeyboardAvoidingView>
   )
 }

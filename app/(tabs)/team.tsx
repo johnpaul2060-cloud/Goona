@@ -15,6 +15,7 @@ import Animated, {
   withTiming, withSpring, withDelay, FadeInUp, FadeIn,
 } from 'react-native-reanimated'
 import BottomDock from '../../components/navigation/BottomDock'
+import { useAuthStore } from '../../store/useAuthStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -567,11 +568,13 @@ const afStyles = StyleSheet.create({
 /* ─── Hero Card ─── */
 function HeroCard() {
   const { style: farmPress, onPressIn: farmIn, onPressOut: farmOut } = usePressScale()
+  const role = useAuthStore((s) => s.role)
+  const isOwnerOrManager = role === 'Owner' || role === 'Manager'
 
   return (
     <Animated.View entering={FadeInUp.duration(600).delay(250).springify()}>
       <Pressable
-        onPress={() => router.push('/worker-dashboard' as any)}
+        onPress={() => router.push(isOwnerOrManager ? '/farm-management' : '/worker-dashboard')}
         onPressIn={farmIn}
         onPressOut={farmOut}
       >
