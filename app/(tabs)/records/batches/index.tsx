@@ -62,7 +62,7 @@ export default function BatchManagementScreen() {
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
           <Pressable
             style={styles.navBack}
-            onPress={() => router.replace('/(tabs)/records' as any)}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/records' as any)}
           >
             <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
           </Pressable>

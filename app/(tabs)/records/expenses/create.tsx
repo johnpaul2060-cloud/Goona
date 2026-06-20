@@ -34,7 +34,7 @@ export default function CreateExpenseScreen() {
     setSaving(true)
     setTimeout(() => {
       setSaving(false)
-      if (router.canGoBack()) { router.back() } else { router.replace('/(tabs)/records/expenses' as any) }
+if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses' as any) }
     }, 800)
   }, [amount, selectedCategory])
 

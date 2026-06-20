@@ -36,7 +36,7 @@ export default function CategoriesScreen() {
           <TouchableOpacity
             style={styles.navBack}
             activeOpacity={0.7}
-            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/(tabs)/records/expenses' as any) } }}
+            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses' as any) } }}
           >
             <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>

@@ -113,7 +113,7 @@ export default function FundRecaptScreen() {
           <TouchableOpacity
             style={styles.backBtn}
             activeOpacity={0.7}
-            onPress={() => router.back()}
+            onPress={() => router.push('/recapitalization')}
           >
             <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>

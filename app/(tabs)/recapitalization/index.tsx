@@ -7,7 +7,7 @@ import {
 import { router } from 'expo-router'
 import Svg, { Circle } from 'react-native-svg'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
-import { Bell, MoreHorizontal, TrendingUp, TrendingDown, Check, Flame, Sparkles, Plus, ShieldCheck, FileText, Target, ChevronLeft, ChevronRight, X, Info, Wallet } from 'lucide-react-native'
+import { Bell, MoreHorizontal, TrendingUp, TrendingDown, FileText, Check, Flame, Sparkles, Plus, ShieldCheck, Target, ChevronLeft, ChevronRight, X, Info, Wallet } from 'lucide-react-native'
 import { BlurView } from 'expo-blur'
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
 import Animated, {
@@ -120,12 +120,6 @@ const bellStyles = StyleSheet.create({
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-
-const PRODUCTION_GOALS = [
-  { title: 'Broiler Restocking', target: '₦2.5M', saved: '₦1.2M', progress: 0.48, timeline: 'Q3 2026', color: '#2E7D32' },
-  { title: 'Feed Reserve', target: '₦1.8M', saved: '₦450k', progress: 0.25, timeline: 'Q1 2027', color: '#1A56FF' },
-  { title: 'Emergency Reserve', target: '₦800k', saved: '₦520k', progress: 0.65, timeline: 'Q4 2026', color: '#F59E0B' },
-]
 
 function RecapitalizationHeroCard({ index }: { index: number }) {
   const animStyle = useStaggerEntry(index)
@@ -561,213 +555,6 @@ function DayDetailModal({
   )
 }
 
-function RecapitalizationProgressCard({ index }: { index: number }) {
-  const animStyle = useStaggerEntry(index, 100)
-  const records = useRecoveryStore((s) => s.records)
-  const now = new Date()
-  const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
-  const streak = computeStreak(records)
-  const stats = computeMonthlyStats(records, now.getFullYear(), now.getMonth())
-
-  let totalSaved = 0
-  let totalMissed = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
-    if (r.status === 'missed') totalMissed++
-  }
-  const totalTarget = 2500000
-  const overallProgress = Math.min(totalSaved / totalTarget, 1)
-
-  const dynamicSteps = [
-    { label: 'Restocking Fund', value: `\u20A6${Math.min(totalSaved, 1800000).toLocaleString()}`, progress: Math.min(totalSaved / 1800000, 1), color: '#2E7D32' },
-    { label: 'Feed Reserve', value: `\u20A6${Math.min(Math.round(totalSaved * 0.4), 950000).toLocaleString()}`, progress: Math.min((totalSaved * 0.4) / 950000, 1), color: '#16A34A' },
-    { label: 'Equipment Replacement', value: `\u20A6${Math.min(Math.round(totalSaved * 0.2), 420000).toLocaleString()}`, progress: Math.min((totalSaved * 0.2) / 420000, 1), color: '#1A56FF' },
-    { label: 'Emergency Reserve', value: `\u20A6${Math.min(Math.round(totalSaved * 0.15), 500000).toLocaleString()}`, progress: Math.min((totalSaved * 0.15) / 500000, 1), color: '#7C3AED' },
-  ]
-
-  return (
-    <Animated.View style={[animStyle, styles.reinvestCard]}>
-      <View style={styles.secHead}>
-        <Text style={styles.secTitle}>Production Readiness Progress</Text>
-        <Text style={styles.secLink}>{Math.round(overallProgress * 100)}%</Text>
-      </View>
-
-      <View style={{ marginBottom: S.pad(16) }}>
-        <View style={{ height: S.scale(8), backgroundColor: '#F1F5F9', borderRadius: 100, overflow: 'hidden' }}>
-          <AnimatedProgressFill progress={overallProgress} color="#2E7D32" />
-        </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-          <Text style={styles.overallText}>{'\u20A6'}{totalSaved.toLocaleString()} recapt</Text>
-          <Text style={styles.overallTargetText}>Target: {'\u20A6'}2,500,000</Text>
-        </View>
-      </View>
-
-      {dynamicSteps.map((step, i) => {
-        const isLast = i === dynamicSteps.length - 1
-        return (
-          <View key={step.label} style={styles.reinvestRow}>
-            <View style={styles.reinvestLeft}>
-              <View style={[styles.reinvestDot, { backgroundColor: step.color }]} />
-              {!isLast && <View style={styles.reinvestLine} />}
-            </View>
-            <View style={styles.reinvestContent}>
-              <View style={styles.reinvestTop}>
-                <Text style={styles.reinvestLabel} numberOfLines={1}>{step.label}</Text>
-                <Text style={styles.reinvestValue}>{step.value}</Text>
-              </View>
-              <View style={styles.reinvestTrack}>
-                <AnimatedProgressFill progress={step.progress} color={step.color} />
-              </View>
-              <Text style={styles.reinvestPercent}>{Math.round(step.progress * 100)}% of target</Text>
-            </View>
-          </View>
-        )
-      })}
-
-      <View style={{ flexDirection: 'row', gap: S.pad(8), marginTop: S.pad(4) }}>
-        <View style={[styles.summaryChip, { backgroundColor: '#F0FDF4' }]}>
-          <Text style={[styles.summaryChipValue, { color: '#166534' }]}>{streak}d</Text>
-          <Text style={[styles.summaryChipLabel, { color: '#16A34A' }]}>Streak</Text>
-        </View>
-        <View style={[styles.summaryChip, { backgroundColor: '#FFF1F2' }]}>
-          <Text style={[styles.summaryChipValue, { color: '#991B1B' }]}>{totalMissed}</Text>
-          <Text style={[styles.summaryChipLabel, { color: '#EF4444' }]}>Missed</Text>
-        </View>
-        <View style={[styles.summaryChip, { backgroundColor: '#F0FDF4' }]}>
-          <Text style={[styles.summaryChipValue, { color: '#166534' }]}>{stats.exceeded}</Text>
-          <Text style={[styles.summaryChipLabel, { color: '#16A34A' }]}>Exceeded</Text>
-        </View>
-      </View>
-    </Animated.View>
-  )
-}
-
-function TransactionCard({ index }: { index: number }) {
-  const animStyle = useStaggerEntry(index, 90)
-  const { style: pressStyle, onPressIn, onPressOut } = usePressScale()
-  const records = useRecoveryStore((s) => s.records)
-  const now = new Date()
-
-  /* Build activity list from store records */
-  const activity = Object.entries(records)
-    .filter(([dateStr]) => {
-      const [y, m, d] = dateStr.split('-').map(Number)
-      const dDate = new Date(y, m - 1, d)
-      return dDate <= now && dDate >= new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
-    })
-    .sort(([a], [b]) => b.localeCompare(a))
-    .slice(0, 5)
-    .map(([dateStr, rec]) => {
-      const [y, m, d] = dateStr.split('-').map(Number)
-      const date = new Date(y, m - 1, d)
-      const dayDiff = Math.floor((now.getTime() - date.getTime()) / 86400000)
-      const timeStr = dayDiff === 0 ? 'Today' : dayDiff === 1 ? 'Yesterday' : `${dayDiff} days ago`
-      if (rec.status === 'completed') {
-        return { title: `Weekly recapt contribution`, amount: `+${rec.amount ? '\u20A6' + rec.amount.toLocaleString() : ''}`, positive: true, status: 'Verified', time: timeStr }
-      }
-      if (rec.status === 'exceeded') {
-        return { title: `Extra added to recapt`, amount: `+${rec.amount ? '\u20A6' + rec.amount.toLocaleString() : ''}`, positive: true, status: 'Verified', time: timeStr }
-      }
-      if (rec.status === 'partial') {
-        return { title: `Partial contribution`, amount: `+${rec.amount ? '\u20A6' + rec.amount.toLocaleString() : ''}`, positive: true, status: 'Pending', time: timeStr }
-      }
-      if (rec.status === 'missed') {
-        return { title: `Missed contribution`, amount: '-₦85,000', positive: false, status: 'Missed', time: timeStr }
-      }
-      return null
-    })
-    .filter(Boolean) as { title: string; amount: string; positive: boolean; status: string; time: string }[]
-
-  if (activity.length === 0) return null
-
-  const statusColors: Record<string, { bg: string; text: string }> = {
-    Verified: { bg: '#E8F5E9', text: '#2E7D32' },
-    Pending: { bg: '#FFFBEB', text: '#F59E0B' },
-    Missed: { bg: '#FFF1F2', text: '#EF4444' },
-  }
-
-  return (
-    <Animated.View style={[animStyle, pressStyle, styles.txCard]} onTouchStart={onPressIn} onTouchEnd={onPressOut}>
-      <View style={styles.secHead}>
-        <Text style={styles.secTitle}>Recapt Activity</Text>
-        <Text style={styles.secLink}>{activity.length} entries</Text>
-      </View>
-
-      {activity.map((tx, i) => {
-        const sc = statusColors[tx.status] || { bg: '#F1F5F9', text: '#64748B' }
-        return (
-          <View key={i} style={[styles.txRow, i === activity.length - 1 && { borderBottomWidth: 0 }]}>
-            <View style={styles.txLeft}>
-              <Text style={styles.txTitle} numberOfLines={1}>{tx.title}</Text>
-              <View style={styles.txMeta}>
-                <Text style={styles.txTime}>{tx.time}</Text>
-                <View style={[styles.txStatusPill, { backgroundColor: sc.bg }]}>
-                  <Text style={[styles.txStatusText, { color: sc.text }]}>{tx.status}</Text>
-                </View>
-              </View>
-            </View>
-            <Text style={[styles.txAmount, { color: tx.positive ? '#16A34A' : '#EF4444' }]}>{tx.amount}</Text>
-          </View>
-        )
-      })}
-    </Animated.View>
-  )
-}
-
-
-
-function ProductionGoalCard({ index }: { index: number }) {
-  const animStyle = useStaggerEntry(index, 100)
-  const { style: pressStyle, onPressIn, onPressOut } = usePressScale()
-  const records = useRecoveryStore((s) => s.records)
-
-  let totalSaved = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
-  }
-
-  const targets = PRODUCTION_GOALS.map((g) => {
-    const saved = Math.round(totalSaved * (g.progress * 0.3 + 0.1))
-    const progress = Math.min(saved / parseInt(g.target.replace(/[^0-9]/g, '')), 1)
-    return { ...g, saved: '\u20A6' + saved.toLocaleString(), progress }
-  })
-
-  return (
-    <Animated.View style={[animStyle, pressStyle, styles.goalCard]} onTouchStart={onPressIn} onTouchEnd={onPressOut}>
-      <View style={styles.secHead}>
-        <Text style={styles.secTitle}>Production Goals</Text>
-        <Text style={styles.secLink}>See All</Text>
-      </View>
-
-      {targets.map((goal, i) => (
-        <View key={goal.title} style={[styles.goalRow, i === targets.length - 1 && { borderBottomWidth: 0 }]}>
-          <View style={styles.goalTop}>
-            <View style={styles.goalHeadLeft}>
-              <View style={[styles.goalIconWrap, { backgroundColor: `${goal.color}15` as any }]}>
-                <GoonaIcon icon={Target} size={18} color="#2E7D32" />
-              </View>
-              <View style={styles.goalInfo}>
-                <Text style={styles.goalTitle}>{goal.title}</Text>
-                <Text style={styles.goalTimeline}>{goal.timeline}</Text>
-              </View>
-            </View>
-            <Text style={styles.goalPercent}>{Math.round(goal.progress * 100)}%</Text>
-          </View>
-          <View style={styles.goalTrack}>
-            <AnimatedProgressFill progress={goal.progress} color={goal.color} />
-          </View>
-          <View style={styles.goalMeta}>
-            <Text style={styles.goalSaved}>{goal.saved} recapt</Text>
-            <Text style={styles.goalTarget}>Target: {goal.target}</Text>
-          </View>
-        </View>
-      ))}
-    </Animated.View>
-  )
-}
-
 function QuickActionButton({ label, icon, index, onPress }: { label: string; icon: React.ReactNode; index: number; onPress?: () => void }) {
   const animStyle = useStaggerEntry(index, 60)
   const s1 = useSharedValue(1)
@@ -885,17 +672,11 @@ export default function RecapitalizationDashboardScreen() {
         >
           <QuickActionButton label="Plan Recapt" icon={<GoonaIcon icon={Plus} size={18} color="#16A34A" />} index={0} onPress={() => router.push('/plan-recapt')} />
           <QuickActionButton label="Fund Recapt" icon={<GoonaIcon icon={ShieldCheck} size={18} color="#2E7D32" />} index={1} onPress={() => router.push('/fund-recapt')} />
-          <QuickActionButton label="Project Timeline" icon={<GoonaIcon icon={TrendingUp} size={18} color="#2E7D32" />} index={2} />
-          <QuickActionButton label="Readiness Report" icon={<GoonaIcon icon={FileText} size={18} color="#2E7D32" />} index={3} />
+          <QuickActionButton label="Project Timeline" icon={<GoonaIcon icon={TrendingUp} size={18} color="#2E7D32" />} index={2} onPress={() => router.push('/recapitalization/project-timeline')} />
+          <QuickActionButton label="Readiness Report" icon={<GoonaIcon icon={FileText} size={18} color="#2E7D32" />} index={3} onPress={() => router.push('/recapitalization/readiness-report')} />
         </ScrollView>
 
         <RecoveryTrackerCalendar index={1} onDayPress={handleDayPress} />
-        <RecapitalizationProgressCard index={2} />
-        <TransactionCard index={3} />
-
-        <GoonaIqRecoveryInsight index={4} />
-
-        <ProductionGoalCard index={5} />
       </ScrollView>
 
       <RecoveryCheckInModal
@@ -906,59 +687,6 @@ export default function RecapitalizationDashboardScreen() {
 
       <BottomDock hidden={keyboardH > 0} />
     </View>
-  )
-}
-
-function GoonaIqRecoveryInsight({ index }: { index: number }) {
-  const animStyle = useStaggerEntry(index, 105)
-  const records = useRecoveryStore((s) => s.records)
-  const messages = generateInsights(records)
-  const streak = computeStreak(records)
-  const now = new Date()
-  const stats = computeMonthlyStats(records, now.getFullYear(), now.getMonth())
-  const totalDays = now.getDate()
-  const completedDays = stats.completed + stats.exceeded
-  const consistency = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0
-
-  if (messages.length === 0 && streak === 0) return null
-  return (
-    <Animated.View style={[animStyle, styles.behaviorCard]}>
-      <View style={styles.secHead}>
-        <Text style={styles.secTitle}>{'\u{1F9E0}'} GOONA IQ Recapt Insight</Text>
-      </View>
-      <View style={styles.insightMetaRow}>
-        <View style={[styles.behaviorChip, { backgroundColor: '#F0FDF4' }]}>
-          <Text style={[styles.behaviorChipValue, { color: '#166534' }]}>{consistency}%</Text>
-          <Text style={[styles.behaviorChipLabel, { color: '#16A34A' }]}>Consistency</Text>
-        </View>
-        <View style={[styles.behaviorChip, { backgroundColor: '#FFFBEB' }]}>
-          <Text style={[styles.behaviorChipValue, { color: '#92400E' }]}>{streak}d</Text>
-          <Text style={[styles.behaviorChipLabel, { color: '#D97706' }]}>Streak</Text>
-        </View>
-        <View style={[styles.behaviorChip, { backgroundColor: '#FFF1F2' }]}>
-          <Text style={[styles.behaviorChipValue, { color: '#991B1B' }]}>{stats.missed}</Text>
-          <Text style={[styles.behaviorChipLabel, { color: '#EF4444' }]}>Missed</Text>
-        </View>
-      </View>
-      {messages.map((msg, i) => (
-        <View key={i} style={[styles.behaviorRow, i === messages.length - 1 && { borderBottomWidth: 0 }]}>
-          <View style={styles.behaviorIconWrap}>
-            <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
-          </View>
-          <Text style={styles.behaviorText}>{msg}</Text>
-        </View>
-      ))}
-      {consistency >= 80 && (
-        <View style={[styles.achievementBanner, { backgroundColor: '#F0FDF4', borderLeftColor: '#16A34A' }]}>
-          <Text style={[styles.achievementText, { color: '#166534' }]}>{'\u{1F3C6}'} Strong preparation discipline. You are on track for timely production cycle restart.</Text>
-        </View>
-      )}
-      {stats.missed > 0 && (
-        <View style={[styles.warningBanner, { backgroundColor: '#FFF1F2', borderLeftColor: '#EF4444' }]}>
-          <Text style={[styles.warningText, { color: '#991B1B' }]}>{'\u26A0\uFE0F'} Missed recapt delays your restart timeline. Try to stay consistent.</Text>
-        </View>
-      )}
-    </Animated.View>
   )
 }
 

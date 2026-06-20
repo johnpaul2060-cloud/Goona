@@ -100,7 +100,7 @@ export default function ExpensesScreen() {
           <Animated.View style={backPress.style}>
             <Pressable
               style={styles.navBtn}
-               onPress={() => router.replace('/(tabs)/records' as any)}
+               onPress={() => router.canGoBack() ? router.back() : router.replace('/records' as any)}
               onPressIn={backPress.onPressIn}
               onPressOut={backPress.onPressOut}
             >
