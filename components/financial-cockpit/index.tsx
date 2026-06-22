@@ -521,51 +521,16 @@ export function CollapsedBudgetSummary({ items }: { items: BudgetItem[] }) {
 
 /* ══════════════════════════════════════════════════════════════
    NextCycleCockpit — Collapsible Readiness Intelligence Module
+   Powered by FSRS (Farm Start Readiness Score) engine
    ══════════════════════════════════════════════════════════════ */
 
-type ReadinessLevel = 'ready' | 'almost_ready' | 'not_ready'
+import type { FSRSResult } from '../../store/fsrsEngine'
 
-const READINESS_CONFIG: Record<ReadinessLevel, { label: string; color: string; bg: string }> = {
-  ready: { label: 'Ready', color: '#16A34A', bg: '#F0FDF4' },
-  almost_ready: { label: 'Almost Ready', color: '#F59E0B', bg: '#FFFBEB' },
-  not_ready: { label: 'Not Ready', color: '#EF4444', bg: '#FEF2F2' },
-}
-
-function computeReadiness(completed: number, total: number, totalSaved: number, target: number, streak: number): {
-  level: ReadinessLevel
-  score: number
-  insight: string
-  restartDate: Date
-} {
-  const opsPct = total > 0 ? completed / total : 0
-  const fundingPct = target > 0 ? Math.min(totalSaved / target, 1) : 0
-  const streakWeeks = Math.max(1, Math.floor(streak / 7))
-  const score = Math.min(Math.round(fundingPct * 100 + streakWeeks * 2 + opsPct * 30), 100)
-
-  const daysUntilRestart = Math.max(14, Math.round((1 - fundingPct) * 60) + (total - completed) * 3)
-  const restartDate = new Date()
-  restartDate.setDate(restartDate.getDate() + daysUntilRestart)
-
-  let level: ReadinessLevel
-  let insight: string
-
-  if (score >= 80 && completed === total) {
-    level = 'ready'
-    insight = `Farm is ${score}% ready — cycle restart possible in ${daysUntilRestart} days`
-  } else if (score >= 50) {
-    const missing = total - completed
-    const topMissing = missing > 0 ? 'items pending' : 'funding gap remains'
-    level = 'almost_ready'
-    insight = `Farm is ${score}% ready — ${missing > 0 ? `${missing} ${topMissing}` : topMissing} before cycle restart`
-  } else {
-    const reasons: string[] = []
-    if (completed < total) reasons.push(`${total - completed} checklist items incomplete`)
-    if (fundingPct < 0.5) reasons.push('funding below 50% target')
-    level = 'not_ready'
-    insight = `Farm is ${score}% ready — ${reasons.join(', ')}. Estimated restart: ${restartDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
-  }
-
-  return { level, score, insight, restartDate }
+const FSRS_EMOJI_MAP: Record<string, string> = {
+  fully_ready: '\u2705',
+  mostly_ready: '\u2705',
+  partially_ready: '\u26A0\uFE0F',
+  not_ready: '\uD83D\uDD34',
 }
 
 interface NextCycleCockpitProps {
@@ -574,26 +539,18 @@ interface NextCycleCockpitProps {
   items: Record<string, boolean>
   onItemToggle: (key: string) => void
   checklistDefs: { key: string; label: string; emoji: string }[]
-  totalSaved: number
-  streak: number
+  fsrs: FSRSResult
 }
 
 export function NextCycleCockpit({
   expanded, onToggle, items, onItemToggle, checklistDefs,
-  totalSaved, streak,
+  fsrs,
 }: NextCycleCockpitProps) {
-  const target = 2500000
   const completed = checklistDefs.filter(d => items[d.key]).length
   const total = checklistDefs.length
   const allComplete = completed === total
-  const { level, score, insight, restartDate } = useMemo(
-    () => computeReadiness(completed, total, totalSaved, target, streak),
-    [completed, total, totalSaved, target, streak],
-  )
-  const cfg = READINESS_CONFIG[level]
   const missingCount = total - completed
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  const restartStr = `${restartDate.getDate()} ${months[restartDate.getMonth()]} ${restartDate.getFullYear()}`
+  const cfg = { label: fsrs.levelLabel, color: fsrs.levelColor, bg: fsrs.levelBg }
 
   return (
     <ReAnimated.View layout={ReLayout.springify()} style={cockpitStyles.nextCycleCard}>
@@ -603,7 +560,6 @@ export function NextCycleCockpit({
           <View style={[cockpitStyles.nextCycleCollapsed, { borderLeftColor: cfg.color }]}>
             <View style={cockpitStyles.collapsedRow}>
               <View style={cockpitStyles.collapsedTitleRow}>
-                <Text style={cockpitStyles.collapsedTitle}>Next Cycle Readiness</Text>
                 <View style={[cockpitStyles.collapsedChip, { backgroundColor: cfg.bg, borderColor: cfg.color + '40' }]}>
                   <View style={[cockpitStyles.collapsedChipDot, { backgroundColor: cfg.color }]} />
                   <Text style={[cockpitStyles.collapsedChipText, { color: cfg.color }]}>{cfg.label}</Text>
@@ -611,9 +567,9 @@ export function NextCycleCockpit({
               </View>
               <View style={cockpitStyles.collapsedMeta}>
                 <View style={cockpitStyles.collapsedPctRow}>
-                  <AnimatedMetricValue value={score} suffix="%" variant="full" formatter={(n) => String(n)} />
+                  <AnimatedMetricValue value={fsrs.totalScore} suffix="%" variant="full" formatter={(n) => String(n)} />
                   <View style={cockpitStyles.collapsedMiniBar}>
-                    <AnimatedProgressBar progress={score} height={4} />
+                    <AnimatedProgressBar progress={fsrs.totalScore} height={4} />
                   </View>
                 </View>
                 <View style={cockpitStyles.collapsedKpiRow}>
@@ -622,12 +578,12 @@ export function NextCycleCockpit({
                   </Text>
                   <Text style={cockpitStyles.collapsedKpiSep}>·</Text>
                   <Text style={cockpitStyles.collapsedKpi}>
-                    <Text style={{ fontWeight: '700' }}>{restartStr}</Text>
+                    <Text style={{ fontWeight: '700' }}>{fsrs.restartLabel}</Text>
                   </Text>
                   {missingCount > 0 && (
                     <>
                       <Text style={cockpitStyles.collapsedKpiSep}>·</Text>
-                      <Text style={[cockpitStyles.collapsedKpi, { color: level === 'not_ready' ? '#EF4444' : '#F59E0B' }]}>
+                      <Text style={[cockpitStyles.collapsedKpi, { color: fsrs.level === 'not_ready' ? '#EF4444' : '#F59E0B' }]}>
                         {missingCount} pending
                       </Text>
                     </>
@@ -636,7 +592,7 @@ export function NextCycleCockpit({
               </View>
             </View>
             <View style={cockpitStyles.collapsedInsightRow}>
-              <Text style={cockpitStyles.collapsedInsightText}>{insight}</Text>
+              <Text style={cockpitStyles.collapsedInsightText}>{fsrs.insight}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -650,17 +606,16 @@ export function NextCycleCockpit({
             <View style={[cockpitStyles.nextCycleHeader, { borderBottomColor: cfg.color + '20' }]}>
               <View style={cockpitStyles.nextCycleHeaderLeft}>
                 <View style={cockpitStyles.nextCycleScoreRing}>
-                  <AnimatedMetricValue value={score} suffix="%" variant="full" formatter={(n) => String(n)} />
+                  <AnimatedMetricValue value={fsrs.totalScore} suffix="%" variant="full" formatter={(n) => String(n)} />
                 </View>
                 <View>
-                  <Text style={cockpitStyles.nextCycleTitle}>Next Cycle Readiness</Text>
-                  <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                  <View style={{ flexDirection: 'row', gap: 6, marginTop: 0 }}>
                     <View style={[cockpitStyles.collapsedChip, { backgroundColor: cfg.bg, borderColor: cfg.color + '40' }]}>
                       <View style={[cockpitStyles.collapsedChipDot, { backgroundColor: cfg.color }]} />
                       <Text style={[cockpitStyles.collapsedChipText, { color: cfg.color }]}>{cfg.label}</Text>
                     </View>
                     <View style={[cockpitStyles.collapsedChip, { backgroundColor: '#EEF3FF', borderColor: '#1A56FF40' }]}>
-                      <Text style={[cockpitStyles.collapsedChipText, { color: '#1A56FF' }]}>Restart: {restartStr}</Text>
+                      <Text style={[cockpitStyles.collapsedChipText, { color: '#1A56FF' }]}>Restart: {fsrs.restartLabel}</Text>
                     </View>
                   </View>
                 </View>
@@ -680,7 +635,7 @@ export function NextCycleCockpit({
             </View>
             <View style={[cockpitStyles.kpiCard, { backgroundColor: '#FAFAFA' }]}>
               <Text style={[cockpitStyles.kpiLabel, { color: '#94A3B8' }]}>RESTART</Text>
-              <Text style={[cockpitStyles.metricValue, { fontSize: 14 }]}>{restartStr}</Text>
+              <Text style={[cockpitStyles.metricValue, { fontSize: 14 }]}>{fsrs.restartLabel}</Text>
             </View>
           </View>
 
@@ -688,16 +643,32 @@ export function NextCycleCockpit({
           <View style={cockpitStyles.nextCycleProgressSection}>
             <View style={cockpitStyles.nextCycleProgressHeader}>
               <Text style={cockpitStyles.nextCycleProgressLabel}>Readiness Progress</Text>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: cfg.color }}>{score}%</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: cfg.color }}>{fsrs.totalScore}%</Text>
             </View>
-            <AnimatedProgressBar progress={score} />
+            <AnimatedProgressBar progress={fsrs.totalScore} />
           </View>
 
           {/* Insight */}
           <View style={cockpitStyles.nextCycleInsightBox}>
-            <Text style={cockpitStyles.nextCycleInsightIcon}>{level === 'ready' ? '✅' : level === 'almost_ready' ? '⚠️' : '🔴'}</Text>
-            <Text style={cockpitStyles.nextCycleInsightText}>{insight}</Text>
+            <Text style={cockpitStyles.nextCycleInsightIcon}>{FSRS_EMOJI_MAP[fsrs.level] ?? '\u26A0\uFE0F'}</Text>
+            <Text style={cockpitStyles.nextCycleInsightText}>{fsrs.insight}</Text>
           </View>
+
+          {/* Missing Categories Summary */}
+          {fsrs.missingFactors.length > 0 && (
+            <View style={cockpitStyles.nextCycleMissingSection}>
+              <View style={cockpitStyles.nextCycleMissingHeader}>
+                <Text style={cockpitStyles.nextCycleMissingTitle}>Key Missing Factors</Text>
+                <Text style={cockpitStyles.nextCycleMissingCount}>{fsrs.missingFactors.length}</Text>
+              </View>
+              {fsrs.missingFactors.slice(0, 4).map((factor) => (
+                <View key={factor} style={cockpitStyles.nextCycleMissingRow}>
+                  <View style={cockpitStyles.nextCycleMissingDot} />
+                  <Text style={cockpitStyles.nextCycleMissingFactor}>{factor}</Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* Checklist */}
           <View style={cockpitStyles.nextCycleChecklist}>
@@ -959,11 +930,6 @@ const cockpitStyles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#16A34A',
   },
-  nextCycleTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
   nextCycleProgressSection: {
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -1058,5 +1024,53 @@ const cockpitStyles = StyleSheet.create({
   nextCycleCheckLabelDone: {
     color: '#16A34A',
     textDecorationLine: 'line-through',
+  },
+
+  /* Missing Factors Section */
+  nextCycleMissingSection: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  nextCycleMissingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  nextCycleMissingTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  nextCycleMissingCount: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#F59E0B',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  nextCycleMissingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 3,
+  },
+  nextCycleMissingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F59E0B',
+  },
+  nextCycleMissingFactor: {
+    fontSize: 11,
+    color: '#78350F',
   },
 })

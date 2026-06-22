@@ -6,6 +6,7 @@ import {
 } from 'react-native'
 import { usePriorityEngine, PRIORITY_COLORS, useDomainColor, usePriorityBanner } from '../../../store/farmPriorityEngine'
 import { RecapFundingCockpit, BudgetFundingCockpit, CollapsedRecapSummary, CollapsedBudgetSummary, NextCycleCockpit, type DriverItem, type BudgetItem } from '../../../components/financial-cockpit'
+import { useFSRS } from '../../../store/fsrsEngine'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -749,7 +750,7 @@ function DayDetailModal({
 }
 
 /* ─── 6. GOONA IQ INSIGHTS ─── */
-function GoonaIqInsights({ index, opsCompleted }: { index: number; opsCompleted: number }) {
+function GoonaIqInsights({ index, opsCompleted, fsrs }: { index: number; opsCompleted: number; fsrs: import('../../../store/fsrsEngine').FSRSResult }) {
   const animStyle = useStaggerEntry(index, 110)
   const records = useRecoveryStore((s) => s.records)
   const opsTotal = CHECKLIST_DEFS.length
@@ -767,6 +768,15 @@ function GoonaIqInsights({ index, opsCompleted }: { index: number; opsCompleted:
   const insights: {
     icon: any; color: string; bg: string; title: string; desc: string
   }[] = []
+
+  /* ─── FSRS Readiness Insight (always first) ─── */
+  insights.push({
+    icon: Icons.sparkles,
+    color: fsrs.levelColor,
+    bg: fsrs.levelBg,
+    title: `FSRS: ${fsrs.levelLabel} (${fsrs.totalScore}/100)`,
+    desc: fsrs.insight,
+  })
 
   if (missedCount > 0) {
     insights.push({
@@ -866,12 +876,6 @@ export default function RecapitalizationDashboardScreen() {
   }, [])
 
   const records = useRecoveryStore((s) => s.records)
-  const streak = computeStreak(records)
-  let totalSaved = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
-  }
 
   /* ─── Checklist State ─── */
   const [checklist, setChecklist] = useState<Record<ChecklistKey, boolean>>({
@@ -879,6 +883,9 @@ export default function RecapitalizationDashboardScreen() {
   })
   const toggleChecklist = (key: ChecklistKey) => setChecklist(prev => ({ ...prev, [key]: !prev[key] }))
   const opsCompleted = CHECKLIST_DEFS.filter(d => checklist[d.key]).length
+
+  /* ─── FSRS Engine ─── */
+  const fsrs = useFSRS(checklist, CHECKLIST_DEFS)
 
   /* ─── Collapsible Sections ─── */
   const [recapFundingOpen, setRecapFundingOpen] = useState(true)
@@ -895,12 +902,6 @@ export default function RecapitalizationDashboardScreen() {
   const toggleNextCycle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setNextCycleOpen(prev => !prev)
-  }
-
-  let recTotalSaved = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) recTotalSaved += r.amount
   }
 
   /* ─── Scroll refs ─── */
@@ -1005,12 +1006,11 @@ export default function RecapitalizationDashboardScreen() {
           items={checklist}
           onItemToggle={(key) => toggleChecklist(key as ChecklistKey)}
           checklistDefs={CHECKLIST_DEFS}
-          totalSaved={recTotalSaved}
-          streak={streak}
+          fsrs={fsrs}
         />
 
         {/* ─── GOONA IQ INSIGHTS ─── */}
-        <GoonaIqInsights index={6} opsCompleted={opsCompleted} />
+        <GoonaIqInsights index={6} opsCompleted={opsCompleted} fsrs={fsrs} />
 
         <View style={{ height: 40 }} />
       </ScrollView>
