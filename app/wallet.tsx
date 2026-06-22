@@ -8,6 +8,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../components/ui/GoonaIcon'
 import { formatNaira } from '../utils/format'
+import { FARM_NAME } from '../constants/farm'
 import { Icons } from '../shared/icons'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
@@ -145,7 +146,7 @@ export default function WalletScreen() {
           <View style={styles.balanceMeta}>
             <View style={styles.balanceMetaItem}>
               <Text style={styles.balanceMetaLabel}>Account Name</Text>
-              <Text style={styles.balanceMetaValue}>Adewale Farms</Text>
+              <Text style={styles.balanceMetaValue}>{FARM_NAME}</Text>
             </View>
             <View style={styles.balanceMetaItem}>
               <Text style={styles.balanceMetaLabel}>Account Number</Text>
@@ -185,7 +186,7 @@ export default function WalletScreen() {
             <View style={styles.accountCard}>
               <View style={styles.accountRow}>
                 <Text style={styles.accountLabel}>Account Name</Text>
-                <Text style={styles.accountValue}>Adewale Farms</Text>
+                <Text style={styles.accountValue}>{FARM_NAME}</Text>
               </View>
               <View style={styles.accountRow}>
                 <Text style={styles.accountLabel}>Account Number</Text>

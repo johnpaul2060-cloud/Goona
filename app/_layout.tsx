@@ -8,6 +8,7 @@ import BiometricGate from '../components/Biometric/BiometricGate'
 import { useAuthStore } from '../store/useAuthStore'
 import { useSettingsStore } from '../store/useSettingsStore'
 import NotificationInitializer from '../components/NotificationInitializer'
+import { PriorityProvider } from '../store/farmPriorityEngine'
 
 const isExpoGo = Constants.executionEnvironment === 'storeClient'
 
@@ -200,12 +201,14 @@ export default function RootLayout() {
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BiometricGateManager>
-          <NotificationInitializer />
-          {ready ? (
-            <Stack screenOptions={{ headerShown: false, gestureEnabled: false }} />
-          ) : (
-            <View style={{ flex: 1, backgroundColor: '#F8FAF7' }} />
-          )}
+          <PriorityProvider>
+            <NotificationInitializer />
+            {ready ? (
+              <Stack screenOptions={{ headerShown: false, gestureEnabled: false }} />
+            ) : (
+              <View style={{ flex: 1, backgroundColor: '#F8FAF7' }} />
+            )}
+          </PriorityProvider>
         </BiometricGateManager>
       </GestureHandlerRootView>
     </ErrorBoundary>

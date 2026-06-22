@@ -8,6 +8,7 @@ import GoonaIcon from '../components/ui/GoonaIcon'
 import { Icons } from '../shared/icons'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { FARM_NAME } from '../constants/farm'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
@@ -53,7 +54,7 @@ const DECISION_RESPONSES: Record<number, { text: string; confidence: string }> =
 }
 
 const LEADERBOARD = [
-  { rank: 1, name: 'Adewale Farms', detail: '98% Survival Rate', region: 'Western', color: '#F59E0B' },
+  { rank: 1, name: FARM_NAME, detail: '98% Survival Rate', region: 'Western', color: '#F59E0B' },
   { rank: 2, name: 'GreenNest Farms', detail: '42% Profit Margin', region: 'Eastern', color: '#94A3B8' },
   { rank: 3, name: 'Ifeanyi Poultry', detail: 'Lowest Mortality Record', region: 'Central', color: '#CD7F32' },
 ]

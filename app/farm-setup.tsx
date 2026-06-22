@@ -266,7 +266,7 @@ export default function FarmSetupScreen() {
                     style={styles.fieldInput}
                     value={farmName}
                     onChangeText={setFarmName}
-                    placeholder="e.g. Green Valley Poultry"
+                    placeholder="e.g. OLOHI POULTRY FARM"
                     placeholderTextColor="#A0AEA1"
                   />
                 </View>

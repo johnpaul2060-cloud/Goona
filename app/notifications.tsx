@@ -9,6 +9,7 @@ import GoonaIcon from '../components/ui/GoonaIcon'
 import { Icons } from '../shared/icons'
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated'
 import { useNotificationStore, AppNotification, CATEGORY_CONFIG, PRIORITY_CONFIG } from '../store/useNotificationStore'
+import { useSmartNotifications, PRIORITY_COLORS } from '../store/farmPriorityEngine'
 import WeatherNotificationSync from '../components/WeatherNotificationSync'
 
 const CAT_ICONS: Record<string, React.ElementType> = {
@@ -98,13 +99,14 @@ export default function NotificationsScreen() {
     seedDemoNotifications()
   }, [])
 
+  const smartNotif = useSmartNotifications()
   const filtered = useMemo(() => {
-    let items = notifications.filter((n) => n.status !== 'archived')
+    let items = smartNotif.filtered.filter((n) => n.status !== 'archived')
     if (activeFilter !== 'all') {
       items = items.filter((n) => n.category === activeFilter)
     }
     return items
-  }, [notifications, activeFilter])
+  }, [smartNotif.filtered, activeFilter])
 
   const unreadTotal = useMemo(() => notifications.filter((n) => n.status === 'unread').length, [notifications])
 
@@ -151,6 +153,20 @@ export default function NotificationsScreen() {
         <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.headerSection}>
           <Text style={styles.headerLabel}>Notification Hub</Text>
           <Text style={styles.headerTitle}>Stay informed{'\n'}about your farm</Text>
+          <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+            <View style={[styles.priorityBadge, { backgroundColor: PRIORITY_COLORS[smartNotif.minNotificationLevel] + '18' }]}>
+              <Text style={[styles.priorityText, { color: PRIORITY_COLORS[smartNotif.minNotificationLevel], fontSize: 10 }]}>
+                Min: {smartNotif.minNotificationLevel.toUpperCase()}
+              </Text>
+            </View>
+            {smartNotif.activeRule !== 'stable' && (
+              <View style={[styles.priorityBadge, { backgroundColor: '#EF444418' }]}>
+                <Text style={{ fontSize: 10, fontWeight: '600', color: '#EF4444' }}>
+                  {smartNotif.activeRule.replace('_', ' ').toUpperCase()}
+                </Text>
+              </View>
+            )}
+          </View>
         </Animated.View>
 
         {/* ─── FILTER TABS ─── */}

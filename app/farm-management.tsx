@@ -6,6 +6,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { StatusBar } from 'expo-status-bar'
+import { FARM_NAME } from '../constants/farm'
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const result: T[][] = []
@@ -45,7 +46,7 @@ export default function FarmManagementScreen() {
               <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 18, fontWeight: '700', color: '#1F2937' }}>Adewale Farms</Text>
+              <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 18, fontWeight: '700', color: '#1F2937' }}>{FARM_NAME}</Text>
               <Text style={{ fontSize: 12, color: '#2E7D32', fontWeight: '500' }}>Farm Management Center</Text>
             </View>
           </View>

@@ -5,6 +5,8 @@ import { router } from 'expo-router'
 import { Icons } from '../../shared/icons'
 import { useFarmChatStore } from '../../store/useFarmChatStore'
 import { useAuthStore } from '../../store/useAuthStore'
+import { usePrioritizedChat, PRIORITY_COLORS } from '../../store/farmPriorityEngine'
+import { FARM_NAME } from '../../constants/farm'
 import FeedPostCard from '../../components/farmchat/FeedPostCard'
 import ConversationListItem from '../../components/farmchat/ConversationListItem'
 import BottomDock from '../../components/navigation/BottomDock'
@@ -122,10 +124,12 @@ export default function FarmChatScreen() {
 
   useEffect(() => { seedDemoData() }, [])
 
+  const { rankedFeed, pinnedFeedType } = usePrioritizedChat()
+
   const visiblePosts = useMemo(() => {
-    if (isManagement(userRole)) return feedPosts
-    return feedPosts.filter((p) => p.visibility !== 'management')
-  }, [feedPosts, userRole])
+    if (isManagement(userRole)) return rankedFeed
+    return rankedFeed.filter((p) => p.visibility !== 'management')
+  }, [rankedFeed, userRole])
 
   const openConversation = useCallback((convId: string) => {
     router.push(`/(tabs)/chat/${convId}`)
@@ -180,6 +184,14 @@ export default function FarmChatScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
+      {pinnedFeedType && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8 }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
+          <Text style={{ fontSize: 12, fontWeight: '600', color: '#EF4444', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Priority Feed — {pinnedFeedType.replace('_', ' ')}
+          </Text>
+        </View>
+      )}
       <SectionDivider label="Today" count={12} />
     </View>
   )
@@ -199,7 +211,7 @@ export default function FarmChatScreen() {
             </View>
           </View>
           <TouchableOpacity style={styles.farmSelector}>
-            <Text style={styles.farmName}>Greenacre Farm</Text>
+            <Text style={styles.farmName}>{FARM_NAME}</Text>
             <Icons.chevronDown size={14} color="#64748B" />
           </TouchableOpacity>
         </View>
@@ -238,22 +250,25 @@ export default function FarmChatScreen() {
         <FlatList
           data={visiblePosts}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.timelineRow}>
-              <View style={styles.timelineLine}>
-                <View style={[styles.timelineDot, { backgroundColor: '#16A34A' }]} />
-                <View style={styles.timelineConnector} />
+          renderItem={({ item, index }) => {
+            const dotColor = item.isAlert ? '#EF4444' : item.riskLevel === 'high' ? '#F59E0B' : index < 2 && pinnedFeedType && item.type === pinnedFeedType ? '#EF4444' : '#16A34A'
+            return (
+              <View style={[styles.timelineRow, item.isAlert && { backgroundColor: '#FEF2F2', borderRadius: 12, marginHorizontal: 8, paddingVertical: 4 }]}>
+                <View style={styles.timelineLine}>
+                  <View style={[styles.timelineDot, { backgroundColor: dotColor }]} />
+                  <View style={styles.timelineConnector} />
+                </View>
+                <View style={styles.timelineContent}>
+                  <FeedPostCard
+                    post={item}
+                    onLike={() => toggleLike(item.id)}
+                    onSave={() => toggleSave(item.id)}
+                    onComment={() => setCommentingPostId(item.id)}
+                  />
+                </View>
               </View>
-              <View style={styles.timelineContent}>
-                <FeedPostCard
-                  post={item}
-                  onLike={() => toggleLike(item.id)}
-                  onSave={() => toggleSave(item.id)}
-                  onComment={() => setCommentingPostId(item.id)}
-                />
-              </View>
-            </View>
-          )}
+            )
+          }}
           ListHeaderComponent={renderFeedHeader}
           contentContainerStyle={{ paddingBottom: DOCK_TOTAL_HEIGHT + 40 }}
           showsVerticalScrollIndicator={false}

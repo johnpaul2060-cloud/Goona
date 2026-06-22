@@ -17,6 +17,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import BottomDock from '../../components/navigation/BottomDock'
 import { useAuthStore } from '../../store/useAuthStore'
+import { FARM_NAME } from '../../constants/farm'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -594,7 +595,7 @@ function HeroCard() {
           <Text style={heroStyles.labelText}>WORKFORCE OPERATIONS ACTIVE</Text>
         </View>
 
-        <Text style={heroStyles.farmName}>Adewale Farms</Text>
+        <Text style={heroStyles.farmName}>{FARM_NAME}</Text>
         <Text style={heroStyles.subtext}>Operational Command Center</Text>
 
         <View style={heroStyles.walletStrip}>

@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import MapView, { Marker, Polygon, Circle } from 'react-native-maps'
 import BottomDock from '../components/navigation/BottomDock'
+import { FARM_NAME } from '../constants/farm'
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
 
@@ -370,7 +371,7 @@ export default function WorkforceLiveScreen() {
               {ZONE_POLYGONS.map(zone => (
                 <TouchableOpacity
                   key={zone.id}
-                  onPress={() => Alert.alert(zone.name, `${zone.color === '#EF4444' ? 'Restricted' : 'Operational'} zone.\n\nPart of the Adewale Farms geofence.`)}
+                  onPress={() => Alert.alert(zone.name, `${zone.color === '#EF4444' ? 'Restricted' : 'Operational'} zone.\n\nPart of the ${FARM_NAME} geofence.`)}
                   style={[s.zoneChip, { borderColor: zone.color, backgroundColor: `${zone.color}10` }]}
                 >
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: zone.color }} />

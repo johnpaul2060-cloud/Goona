@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { FARM_NAME } from '../constants/farm'
 
 export interface ProfileData {
   name: string
@@ -120,7 +121,7 @@ interface SettingsState {
 
 const defaultProfile: ProfileData = {
   name: 'Adewale Johnson', role: 'Farm Owner & Operations Lead',
-  farmName: 'Adewale Farms', email: 'adewale@example.com',
+  farmName: FARM_NAME, email: 'adewale@example.com',
   phone: '+234 800 000 0000', location: 'Oyo State, Nigeria',
   farmType: 'Poultry', productionSize: 'Medium (500-2000 birds)',
 }

@@ -8,6 +8,7 @@ import GoonaIcon from '../components/ui/GoonaIcon'
 import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
+import { FARM_NAME } from '../constants/farm'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../components/navigation/BottomDock'
@@ -82,7 +83,7 @@ export default function FarmBoundariesScreen() {
             style={s.summaryCard}>
             <View style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.06)' }} />
             <Text style={{ fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.6)', letterSpacing: 0.5, marginBottom: 6 }}>FARM BOUNDARY</Text>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: '#AEEA00' }}>Adewale Farms — 12.4 hectares</Text>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#AEEA00' }}>{FARM_NAME} — 12.4 hectares</Text>
             <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>Boundary set &bull; Geofence active</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' }}

@@ -4,6 +4,8 @@ import {
   StyleSheet, Dimensions, Keyboard, PanResponder, Modal, Platform, LayoutAnimation, UIManager,
   useWindowDimensions,
 } from 'react-native'
+import { usePriorityEngine, PRIORITY_COLORS, useDomainColor, usePriorityBanner } from '../../../store/farmPriorityEngine'
+import { RecapFundingCockpit, BudgetFundingCockpit, CollapsedRecapSummary, CollapsedBudgetSummary, NextCycleCockpit, type DriverItem, type BudgetItem } from '../../../components/financial-cockpit'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true)
@@ -249,46 +251,21 @@ function ActionRail({ index, onBudgetPress }: { index: number; onBudgetPress?: (
 }
 
 /* ─── 4. RECAP FUNDING BREAKDOWN ─── */
-const DRIVER_ITEMS = [
+const DRIVER_ITEMS: DriverItem[] = [
   { emoji: '\uD83D\uDC23', label: 'Restocking Fund', pct: 100, funded: 1200000, remaining: 0, target: 1200000, color: '#2E7D32', bg: '#F0FDF4' },
   { emoji: '\uD83C\uDF3D', label: 'Feed Reserve', pct: 82, funded: 820000, remaining: 180000, target: 1000000, color: '#F59E0B', bg: '#FFFBEB' },
   { emoji: '\uD83D\uDC8A', label: 'Medication Fund', pct: 67, funded: 503000, remaining: 247000, target: 750000, color: '#1A56FF', bg: '#EEF3FF' },
   { emoji: '\uD83D\uDEA8', label: 'Emergency Buffer', pct: 54, funded: 325000, remaining: 275000, target: 600000, color: '#EF4444', bg: '#FEF2F2' },
 ]
 
-function FundingBreakdown({ index }: { index: number }) {
+function FundingBreakdown({ index, expanded }: { index: number; expanded: boolean }) {
   const animStyle = useStaggerEntry(index, 70)
-
-  return (
-    <Animated.View style={[animStyle, styles.driversCard]}>
-      <View style={styles.driversList}>
-        {DRIVER_ITEMS.map((item) => (
-          <View key={item.label} style={styles.driverRow}>
-            <View style={styles.driverTop}>
-              <View style={styles.driverLabelRow}>
-                <Text style={styles.driverEmoji}>{item.emoji}</Text>
-                <Text style={styles.driverLabel}>{item.label}</Text>
-              </View>
-              <Text style={[styles.driverPct, { color: item.color }]}>{item.pct}%</Text>
-            </View>
-            <View style={styles.driverBarBg}>
-              <View style={[styles.driverBarFill, { width: `${item.pct}%`, backgroundColor: item.color }]} />
-            </View>
-            <View style={styles.driverAmounts}>
-              <Text style={styles.driverFunded}>{'\u20A6'}{item.funded.toLocaleString('en-NG')} funded</Text>
-              {item.remaining > 0 && (
-                <Text style={styles.driverRemaining}>{'\u20A6'}{item.remaining.toLocaleString('en-NG')} remaining</Text>
-              )}
-            </View>
-          </View>
-        ))}
-      </View>
-    </Animated.View>
-  )
+  if (!expanded) return <CollapsedRecapSummary items={DRIVER_ITEMS} />
+  return <Animated.View style={animStyle}><RecapFundingCockpit items={DRIVER_ITEMS} /></Animated.View>
 }
 
 /* ─── 4b. BUDGET FUNDING BREAKDOWN ─── */
-const BUDGET_ITEMS = [
+const BUDGET_ITEMS: BudgetItem[] = [
   { emoji: '\uD83D\uDCBC', label: 'Salaries & Labour', pct: 74, allocated: 450000, spent: 333000, remaining: 117000, budget: 450000, color: '#7C3AED', bg: '#F3E8FF' },
   { emoji: '\uD83C\uDF3D', label: 'Feed Purchases', pct: 92, allocated: 680000, spent: 625600, remaining: 54400, budget: 680000, color: '#16A34A', bg: '#F0FDF4' },
   { emoji: '\uD83D\uDC8A', label: 'Medication', pct: 45, allocated: 200000, spent: 90000, remaining: 110000, budget: 200000, color: '#1A56FF', bg: '#EEF3FF' },
@@ -296,38 +273,10 @@ const BUDGET_ITEMS = [
   { emoji: '\u26A1', label: 'Utilities / Logistics', pct: 58, allocated: 280000, spent: 162400, remaining: 117600, budget: 280000, color: '#EF4444', bg: '#FEF2F2' },
 ]
 
-function BudgetBreakdown({ index }: { index: number }) {
+function BudgetBreakdown({ index, expanded }: { index: number; expanded: boolean }) {
   const animStyle = useStaggerEntry(index, 90)
-
-  return (
-    <Animated.View style={[animStyle, styles.driversCard]}>
-      <View style={styles.driversList}>
-        {BUDGET_ITEMS.map((item) => {
-          const pct = Math.round((item.spent / item.budget) * 100)
-          return (
-            <View key={item.label} style={styles.driverRow}>
-              <View style={styles.driverTop}>
-                <View style={styles.driverLabelRow}>
-                  <Text style={styles.driverEmoji}>{item.emoji}</Text>
-                  <Text style={styles.driverLabel}>{item.label}</Text>
-                </View>
-                <Text style={[styles.driverPct, { color: pct > 90 ? '#EF4444' : item.color }]}>{pct}%</Text>
-              </View>
-              <View style={styles.driverBarBg}>
-                <View style={[styles.driverBarFill, { width: `${Math.min(pct, 100)}%`, backgroundColor: pct > 90 ? '#EF4444' : item.color }]} />
-              </View>
-              <View style={styles.driverAmounts}>
-                <Text style={styles.driverFunded}>{'\u20A6'}{item.spent.toLocaleString('en-NG')} used of {'\u20A6'}{item.budget.toLocaleString('en-NG')}</Text>
-                {item.remaining > 0 && (
-                  <Text style={styles.driverRemaining}>{'\u20A6'}{item.remaining.toLocaleString('en-NG')} left</Text>
-                )}
-              </View>
-            </View>
-          )
-        })}
-      </View>
-    </Animated.View>
-  )
+  if (!expanded) return <CollapsedBudgetSummary items={BUDGET_ITEMS} />
+  return <Animated.View style={animStyle}><BudgetFundingCockpit items={BUDGET_ITEMS} /></Animated.View>
 }
 
 /* ─── 5. READY FOR NEXT CYCLE CHECKLIST ─── */
@@ -903,6 +852,12 @@ export default function RecapitalizationDashboardScreen() {
   const TOP = insets.top
   const TOP_BAR_H = 56
 
+  const finColor = useDomainColor('financial')
+  const opsColor = useDomainColor('farm_operations')
+  const envColor = useDomainColor('environment')
+  const priorityBanner = usePriorityBanner()
+  const priorityState = usePriorityEngine()
+
   const [checkInDate, setCheckInDate] = useState<Date | null>(null)
   const [showCheckIn, setShowCheckIn] = useState(false)
   const handleDayPress = useCallback((d: Date) => {
@@ -928,6 +883,7 @@ export default function RecapitalizationDashboardScreen() {
   /* ─── Collapsible Sections ─── */
   const [recapFundingOpen, setRecapFundingOpen] = useState(true)
   const [budgetFundingOpen, setBudgetFundingOpen] = useState(true)
+  const [nextCycleOpen, setNextCycleOpen] = useState(false)
   const toggleRecapFunding = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setRecapFundingOpen(prev => !prev)
@@ -935,6 +891,16 @@ export default function RecapitalizationDashboardScreen() {
   const toggleBudgetFunding = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setBudgetFundingOpen(prev => !prev)
+  }
+  const toggleNextCycle = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setNextCycleOpen(prev => !prev)
+  }
+
+  let recTotalSaved = 0
+  for (const key in records) {
+    const r = records[key]
+    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) recTotalSaved += r.amount
   }
 
   /* ─── Scroll refs ─── */
@@ -967,9 +933,16 @@ export default function RecapitalizationDashboardScreen() {
             <Text style={styles.headerTitle}>Recapitalization</Text>
             <Text style={styles.headerSub}>Production Readiness Command</Text>
           </View>
-          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7} onPress={() => router.push('/recapt-notifications')}>
-            <AnimatedBell />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {priorityBanner.level && (
+              <View style={[styles.headerBtn, { backgroundColor: PRIORITY_COLORS[priorityBanner.level] + '15', borderWidth: 0 }]}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: PRIORITY_COLORS[priorityBanner.level] }} />
+              </View>
+            )}
+            <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7} onPress={() => router.push('/recapt-notifications')}>
+              <AnimatedBell />
+            </TouchableOpacity>
+          </View>
         </View>
       </BlurView>
 
@@ -1001,11 +974,11 @@ export default function RecapitalizationDashboardScreen() {
         {/* ─── RECAP FUNDING BREAKDOWN ─── */}
         <View style={styles.sectionHead}>
           <TouchableOpacity style={styles.sectionHeadToggle} onPress={toggleRecapFunding} activeOpacity={0.7}>
-            <Text style={styles.secTitle}>Recap Funding Breakdown</Text>
+            <Text style={styles.secTitle}>Recap Funding</Text>
             <GoonaIcon icon={Icons.chevronDown} size={16} color="#94A3B8" style={{ transform: recapFundingOpen ? [{ rotate: '0deg' }] : [{ rotate: '-90deg' }] }} />
           </TouchableOpacity>
         </View>
-        {recapFundingOpen && <FundingBreakdown index={3} />}
+        <FundingBreakdown index={3} expanded={recapFundingOpen} />
 
         {/* ─── BUDGET FUNDING BREAKDOWN ─── */}
         <View
@@ -1014,19 +987,27 @@ export default function RecapitalizationDashboardScreen() {
         >
           <TouchableOpacity style={styles.sectionHeadToggle} onPress={toggleBudgetFunding} activeOpacity={0.7}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.secTitle}>Budget Funding Breakdown</Text>
+              <Text style={styles.secTitle}>Budget Funding</Text>
               <Text style={styles.secSub}>Short-term operational planning for current cycle</Text>
             </View>
             <GoonaIcon icon={Icons.chevronDown} size={16} color="#94A3B8" style={{ transform: budgetFundingOpen ? [{ rotate: '0deg' }] : [{ rotate: '-90deg' }] }} />
           </TouchableOpacity>
         </View>
-        {budgetFundingOpen && <BudgetBreakdown index={4} />}
+        <BudgetBreakdown index={4} expanded={budgetFundingOpen} />
 
-        {/* ─── READY FOR NEXT CYCLE ─── */}
+        {/* ─── NEXT CYCLE READINESS ─── */}
         <View style={styles.sectionHead}>
-          <Text style={styles.secTitle}>Ready for Next Cycle?</Text>
+          <Text style={styles.secTitle}>Next Cycle Readiness</Text>
         </View>
-        <ReadyForNextCycleChecklist index={5} items={checklist} onToggle={toggleChecklist} />
+        <NextCycleCockpit
+          expanded={nextCycleOpen}
+          onToggle={toggleNextCycle}
+          items={checklist}
+          onItemToggle={(key) => toggleChecklist(key as ChecklistKey)}
+          checklistDefs={CHECKLIST_DEFS}
+          totalSaved={recTotalSaved}
+          streak={streak}
+        />
 
         {/* ─── GOONA IQ INSIGHTS ─── */}
         <GoonaIqInsights index={6} opsCompleted={opsCompleted} />
@@ -1124,23 +1105,7 @@ const styles = StyleSheet.create({
   actionRailLabel: { fontSize: S.font(S.isSmall ? 11 : 12), fontWeight: '700', color: '#1B1B1B' },
 
   /* ─── READINESS DRIVERS ─── */
-  driversCard: {
-    backgroundColor: 'white', borderRadius: S.scale(24), padding: S.pad(18),
-    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06, shadowRadius: 20, elevation: 2,
-  },
-  driversList: { gap: S.pad(14) },
-  driverRow: {},
-  driverTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  driverLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  driverEmoji: { fontSize: S.font(16) },
-  driverLabel: { fontSize: S.font(13), fontWeight: '600', color: '#1B1B1B' },
-  driverPct: { fontSize: S.font(15), fontWeight: '800' },
-  driverBarBg: { height: 6, borderRadius: 3, backgroundColor: '#F1F5F9', overflow: 'hidden' },
-  driverBarFill: { height: '100%', borderRadius: 3 },
-  driverAmounts: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  driverFunded: { fontSize: S.font(10), fontWeight: '500', color: '#94A3B8' },
-  driverRemaining: { fontSize: S.font(10), fontWeight: '600', color: '#EF4444' },
+  driversCard: {},
 
   /* ─── READY FOR NEXT CYCLE ─── */
   rfncCard: {

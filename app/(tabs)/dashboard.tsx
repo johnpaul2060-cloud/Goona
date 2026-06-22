@@ -8,8 +8,18 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeIn } from '
 import { LinearGradient } from 'expo-linear-gradient';
 import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useWeatherStore, seedWeatherForecast } from '../../store/useWeatherStore';
+import { FARM_NAME } from '../../constants/farm';
+import {
+  useAdaptiveDashboard,
+  useAdaptiveQuickActions,
+  usePriorityBanner,
+  usePriorityEngine,
+  PRIORITY_COLORS,
+  type PriorityLevel,
+  type DashboardCardPriority,
+} from '../../store/farmPriorityEngine';
 
 const { width } = Dimensions.get('window');
 
@@ -40,7 +50,7 @@ function usePressScale(scaleTo = 0.96) {
 }
 
 type PrioritySeverity = 'info' | 'attention' | 'urgent'
-const PRIORITY_COLORS: Record<PrioritySeverity, { text: string; bg: string; border: string; dot: string }> = {
+const SEVERITY_COLORS: Record<PrioritySeverity, { text: string; bg: string; border: string; dot: string }> = {
   info:      { text: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0', dot: '#16A34A' },
   attention: { text: '#D97706', bg: '#FFFBEB', border: '#FDE68A', dot: '#F59E0B' },
   urgent:    { text: '#DC2626', bg: '#FEF2F2', border: '#FECACA', dot: '#EF4444' },
@@ -59,14 +69,14 @@ const HEALTH_ITEMS: { icon: any; label: string; status: string; type: HealthStat
   { icon: Icons.shield, label: 'Mortality', status: '2 Birds Reported', type: 'info' },
 ]
 
-const QUICK_ACTIONS = [
-  { label: 'Record Sale', icon: Icons.shoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/record-sale' as const },
-  { label: 'Expenses', icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/expenses' as const },
-  { label: 'Daily Records', icon: Icons.clipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' as const },
-  { label: 'Budget', icon: Icons.barChart3, color: '#F59E0B', bg: '#FFFBEB', route: '/(tabs)/records/expenses/budget' as const },
-  { label: 'Reports', icon: Icons.fileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/expenses/reports' as const },
-  { label: 'Academy', icon: Icons.graduationCap, color: '#F97316', bg: '#FFF7ED', route: '/goona-academy' as const },
-]
+const ACTION_ICONS: Record<string, { icon: any; color: string; bg: string; route: string }> = {
+  'Record Sale': { icon: Icons.shoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/record-sale' },
+  'Expenses': { icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/expenses' },
+  'Daily Records': { icon: Icons.clipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' },
+  'Budget': { icon: Icons.barChart3, color: '#F59E0B', bg: '#FFFBEB', route: '/(tabs)/records/expenses/budget' },
+  'Reports': { icon: Icons.fileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/expenses/reports' },
+  'Academy': { icon: Icons.graduationCap, color: '#F97316', bg: '#FFF7ED', route: '/goona-academy' },
+}
 
 const PULSES = [
   { icon: Icons.trendingUp, color: '#16A34A', bg: '#F0FDF4', label: 'Farm performing above target', badge: '+12%', badgeColor: '#16A34A' },
@@ -74,16 +84,43 @@ const PULSES = [
   { icon: Icons.activity, color: '#16A34A', bg: '#F0FDF4', label: 'Production efficiency improved', badge: '+8%', badgeColor: '#16A34A' },
 ]
 
+function PriorityBannerCard({ message, level }: { message: string; level: PriorityLevel }) {
+  const bc = PRIORITY_COLORS[level]
+  return (
+    <Animated.View entering={FadeIn.duration(400)} style={[styles.bannerCard, { backgroundColor: bc + '15', borderColor: bc + '40' }]}>
+      <View style={[styles.bannerDot, { backgroundColor: bc }]} />
+      <GoonaIcon icon={Icons.shieldAlert} size={18} color={bc} />
+      <Text style={[styles.bannerText, { color: bc }]}>{message}</Text>
+    </Animated.View>
+  )
+}
+
 const ROUTE_FALLBACKS: Record<string, string> = {
   '/(tabs)/records/expenses/budget': '/(tabs)/records/expenses',
   '/(tabs)/records/expenses/reports': '/(tabs)/records/expenses',
 }
+
+type SectionEntry = { id: string; render: () => React.ReactNode; priority: number; highlight: boolean; badge: string | null }
 
 export default function DashboardScreen() {
   const router = useRouter();
   const batches = useBatchStore((s) => s.batches)
   const weatherStore = useWeatherStore()
   const [pulseIdx, setPulseIdx] = useState(0)
+
+  const cardPriorities = useAdaptiveDashboard()
+  const adaptiveActions = useAdaptiveQuickActions()
+  const banner = usePriorityBanner()
+  const engineState = usePriorityEngine()
+
+  const cardLookup = useMemo(() => {
+    const map: Record<string, DashboardCardPriority> = {}
+    for (const c of cardPriorities) map[c.id] = c
+    return map
+  }, [cardPriorities])
+
+  const getCard = (id: string): DashboardCardPriority =>
+    cardLookup[id] ?? { id, label: '', priority: 50, highlight: false, badge: null }
 
   const navigateSafe = (route: string) => {
     const fallback = ROUTE_FALLBACKS[route]
@@ -141,8 +178,11 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* ─── PRIORITY BANNER ─── */}
+        {banner.message && banner.level && <PriorityBannerCard message={banner.message} level={banner.level} />}
+
         {/* ─── HERO FARM CARD ─── */}
-        <Animated.View entering={FadeIn.duration(500)} style={styles.heroCard}>
+        <Animated.View entering={FadeIn.duration(400)} style={[styles.heroCard, getCard('hero').highlight && styles.heroCardHighlight]}>
           <LinearGradient
             colors={['#065F46', '#047857']}
             start={{ x: 0, y: 0 }}
@@ -161,7 +201,7 @@ export default function DashboardScreen() {
                   <Text style={styles.heroBadgeText}>High Performing Farm</Text>
                 </View>
               </View>
-              <Text style={styles.heroFarmName}>Green Valley Poultry</Text>
+              <Text style={styles.heroFarmName}>{FARM_NAME}</Text>
             </View>
             <TouchableOpacity style={styles.heroChartBtn}>
               <GoonaIcon icon={Icons.barChart3} size={22} color="#FFFFFF" />
@@ -199,7 +239,7 @@ export default function DashboardScreen() {
           <Text style={styles.secTitle}>Today's Priorities</Text>
         </View>
         {TODAY_PRIORITIES.slice(0, 3).map((p, i) => {
-          const c = PRIORITY_COLORS[p.severity]
+          const c = SEVERITY_COLORS[p.severity]
           return (
             <Animated.View key={i} entering={FadeIn.duration(400).delay(i * 80)} style={[styles.priorityCard, { backgroundColor: c.bg, borderColor: c.border }]}>
               <View style={[styles.priorityDot, { backgroundColor: c.dot }]} />
@@ -237,21 +277,30 @@ export default function DashboardScreen() {
         {/* ─── QUICK ACTIONS ─── */}
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Quick Actions</Text>
+            {engineState.decision.bannerLevel && (
+            <Text style={[styles.secLink, { color: PRIORITY_COLORS[engineState.decision.bannerLevel] }]}>
+              {engineState.decision.dominantLabel} Focus
+            </Text>
+          )}
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.qaScroll}>
-          {QUICK_ACTIONS.map((a, i) => (
-            <TouchableOpacity
-              key={i}
-              style={styles.qaCard}
-              activeOpacity={0.85}
-              onPress={() => navigateSafe(a.route)}
-            >
-              <View style={[styles.qaIcon, { backgroundColor: a.bg }]}>
-                <GoonaIcon icon={a.icon} size={26} color={a.color} />
-              </View>
-              <Text style={styles.qaLabel}>{a.label}</Text>
-            </TouchableOpacity>
-          ))}
+          {adaptiveActions.map((a, i) => {
+            const config = ACTION_ICONS[a.label]
+            if (!config) return null
+            return (
+              <TouchableOpacity
+                key={a.label}
+                style={[styles.qaCard, a.highlight && { borderWidth: 2, borderColor: '#F59E0B', backgroundColor: '#FFFBEB' }]}
+                activeOpacity={0.85}
+                onPress={() => navigateSafe(config.route)}
+              >
+                <View style={[styles.qaIcon, { backgroundColor: config.bg }]}>
+                  <GoonaIcon icon={config.icon} size={26} color={config.color} />
+                </View>
+                <Text style={styles.qaLabel}>{a.label}</Text>
+              </TouchableOpacity>
+            )
+          })}
         </ScrollView>
 
         {/* ─── GOONA IQ RECOMMENDATION ─── */}
@@ -544,4 +593,17 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   challengeText: { fontSize: 14, fontWeight: '600', color: '#1F2937', flex: 1 },
+
+  /* ─── PRIORITY BANNER ─── */
+  bannerCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderRadius: 16, padding: 14, marginTop: 12,
+    borderWidth: 1, overflow: 'hidden',
+  },
+  bannerDot: { width: 4, height: '100%', position: 'absolute', left: 0, top: 0, bottom: 0, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 },
+  bannerText: { fontSize: 13, fontWeight: '600', flex: 1, lineHeight: 18 },
+  heroCardHighlight: {
+    shadowColor: '#EF4444', shadowOpacity: 0.3, shadowRadius: 24,
+    borderWidth: 2, borderColor: '#EF444480',
+  },
 });

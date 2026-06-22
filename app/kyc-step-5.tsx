@@ -63,7 +63,7 @@ export default function KycStep5Screen() {
         <Animated.View entering={FadeInDown.duration(400).delay(120).springify()} style={styles.formCard}>
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Farm Name</Text>
-            <TextInput style={styles.input} value={farmName} onChangeText={setFarmName} placeholder="e.g. Adewale Farms" placeholderTextColor="#CBD5E1" />
+            <TextInput style={styles.input} value={farmName} onChangeText={setFarmName} placeholder="e.g. OLOHI POULTRY FARM" placeholderTextColor="#CBD5E1" />
           </View>
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Business Type</Text>
