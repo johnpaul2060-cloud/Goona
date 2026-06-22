@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, StyleSheet, LayoutChangeEvent, View } from 'rea
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, cancelAnimation, withDelay, runOnJS } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from './ui/GoonaIcon'
-import { CircleAlert, ChevronRight } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { useTickerStore } from '../store/useTickerStore'
 import { getWeatherInfo, isWeatherMessage, isHighSeverity } from '../utils/weatherIntelligence'
 
@@ -43,7 +43,7 @@ export default function GoonaMarqueeAlert({
   const isWeather = isWeatherMessage(current)
   const isHigh = isHighSeverity(current)
   const weatherIcon = isWeather ? getWeatherInfo(current) : null
-  const displayIcon = weatherIcon ? weatherIcon.icon : CircleAlert
+  const displayIcon = weatherIcon ? weatherIcon.icon : Icons.circleAlert
   const displayIconColor = weatherIcon ? weatherIcon.color : '#2E7D32'
 
   const cycle = useCallback(() => {
@@ -135,7 +135,7 @@ export default function GoonaMarqueeAlert({
           </Animated.View>
         </View>
         <View style={styles.chevronWrap}>
-          <GoonaIcon icon={ChevronRight} size={10} color="#2E7D32" />
+          <GoonaIcon icon={Icons.chevronRight} size={10} color="#2E7D32" />
         </View>
       </View>
     </TouchableOpacity>

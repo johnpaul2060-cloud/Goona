@@ -8,19 +8,15 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../components/ui/GoonaIcon'
 import { formatNaira } from '../utils/format'
-import {
-  ArrowLeft, Wallet, ArrowUpRight, ArrowDownLeft,
-  Copy, Share2, Plus, Send, Landmark, Smartphone,
-  CreditCard, ChevronRight, Check,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
 
 const QUICK_ACTIONS = [
-  { icon: Plus, label: 'Add Money', color: '#2E7D32' },
-  { icon: Send, label: 'Transfer', color: '#00695C' },
-  { icon: ArrowUpRight, label: 'Withdraw', color: '#1B5E20' },
-  { icon: Landmark, label: 'Account', color: '#0F766E' },
+  { icon: Icons.plus, label: 'Add Money', color: '#2E7D32' },
+  { icon: Icons.send, label: 'Transfer', color: '#00695C' },
+  { icon: Icons.arrowUpRight, label: 'Withdraw', color: '#1B5E20' },
+  { icon: Icons.landmark, label: 'Account', color: '#0F766E' },
 ]
 
 const DEMO_TRANSACTIONS = [
@@ -62,10 +58,10 @@ const DEMO_TRANSACTIONS = [
 ]
 
 const PAYMENT_METHODS = [
-  { icon: CreditCard, label: 'Card', desc: 'Visa, Mastercard, Verve' },
-  { icon: Landmark, label: 'Bank Transfer', desc: 'Transfer from your bank' },
-  { icon: Smartphone, label: 'USSD', desc: 'Pay with USSD code' },
-  { icon: Wallet, label: 'Wallet Balance', desc: 'Use GOONA balance' },
+  { icon: Icons.creditCard, label: 'Card', desc: 'Visa, Mastercard, Verve' },
+  { icon: Icons.landmark, label: 'Bank Transfer', desc: 'Transfer from your bank' },
+  { icon: Icons.smartphone, label: 'USSD', desc: 'Pay with USSD code' },
+  { icon: Icons.wallet, label: 'Wallet Balance', desc: 'Use GOONA balance' },
 ]
 
 function formatCurrency(n: number) {
@@ -130,7 +126,7 @@ export default function WalletScreen() {
             activeOpacity={0.7}
             onPress={() => router.back()}
           >
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
           <Text style={styles.title}>GOONA Wallet</Text>
           <Text style={styles.subtitle}>Receive, save and pay for farm operations.</Text>
@@ -216,7 +212,7 @@ export default function WalletScreen() {
                   activeOpacity={0.7}
                   onPress={() => Alert.alert('Share', 'Share account details via:\n\n• WhatsApp\n• SMS\n• Email')}
                 >
-                  <GoonaIcon icon={Share2} size={16} color="#2E7D32" />
+                  <GoonaIcon icon={Icons.share2} size={16} color="#2E7D32" />
                   <Text style={[styles.accountBtnText, { color: '#2E7D32' }]}>Share</Text>
                 </TouchableOpacity>
               </View>
@@ -244,7 +240,7 @@ export default function WalletScreen() {
                 <Text style={styles.paymentLabel}>{method.label}</Text>
                 <Text style={styles.paymentDesc}>{method.desc}</Text>
               </View>
-              <GoonaIcon icon={ChevronRight} size={16} color="#94A3B8" />
+              <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
             </TouchableOpacity>
           ))}
         </Animated.View>

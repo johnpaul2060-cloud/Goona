@@ -4,7 +4,7 @@ import {
   TextInput, Modal, KeyboardAvoidingView, Platform,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, AlertTriangle, Shield, ShieldCheck, Search, X, Users, UserCheck, UserX, Clock, ChevronRight, Sprout } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -49,7 +49,7 @@ function ModalShell({ visible, onClose, title, children }: { visible: boolean; o
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
           <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '85%' }}>
             <View style={{ alignItems: 'center', marginBottom: 8 }}><View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} /></View>
-            <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={X} size={18} color="#94A3B8" /></TouchableOpacity>
+            <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={Icons.x} size={18} color="#94A3B8" /></TouchableOpacity>
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F2937', marginBottom: 20 }}>{title}</Text>
             {children}
           </Animated.View>
@@ -189,7 +189,7 @@ export default function KillSwitchScreen() {
       <View style={{ flex: 1, backgroundColor: '#F8F9F5' }}>
         <StatusBar style="dark" />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-          <GoonaIcon icon={Shield} size={48} color="#CBD5E1" />
+          <GoonaIcon icon={Icons.shield} size={48} color="#CBD5E1" />
           <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F2937', marginTop: 16 }}>Access Restricted</Text>
           <Text style={{ fontSize: 13, color: '#64748B', textAlign: 'center', marginTop: 8 }}>Only farm owners can access the Kill Switch.</Text>
           <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={{ marginTop: 24, paddingVertical: 12, paddingHorizontal: 32, backgroundColor: '#00695C', borderRadius: 12 }}>
@@ -213,9 +213,9 @@ export default function KillSwitchScreen() {
         <ScrollView style={{ flex: 1, zIndex: 1 }} contentContainerStyle={{ paddingHorizontal: IS_SMALL ? 16 : 24, paddingTop: 0, paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: IS_SMALL ? 44 : 54 }}>
-          <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}><GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" /></TouchableOpacity>
+          <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}><GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" /></TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <GoonaIcon icon={Sprout} size={22} color="#00695C" />
+            <GoonaIcon icon={Icons.sprout} size={22} color="#00695C" />
             <Text style={{ fontWeight: '700', fontSize: 14, color: '#1B1B1B' }}>GOONA</Text>
           </View>
           <Text style={{ fontSize: 14, fontWeight: '500', color: '#616161' }}>Kill Switch</Text>
@@ -232,22 +232,22 @@ export default function KillSwitchScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <Text style={{ fontWeight: '700', fontSize: 13, color: '#1F2937' }}>Security Overview</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(22,163,74,0.08)', paddingVertical: 3, paddingHorizontal: 10, borderRadius: 50 }}>
-              <GoonaIcon icon={ShieldCheck} size={12} color="#16A34A" />
+              <GoonaIcon icon={Icons.shieldCheck} size={12} color="#16A34A" />
               <Text style={{ fontSize: 10, fontWeight: '600', color: '#16A34A' }}>Farm Secure</Text>
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <StatBox icon={<GoonaIcon icon={Users} size={16} color="#00695C" />} label="Active Workers" value={String(stats.activeWorkers)} color="#00695C" />
-            <StatBox icon={<GoonaIcon icon={UserCheck} size={16} color="#6366F1" />} label="Active Managers" value={String(stats.activeManagers)} color="#6366F1" />
-            <StatBox icon={<GoonaIcon icon={AlertTriangle} size={16} color="#F59E0B" />} label="Suspended" value={String(stats.suspended)} color="#F59E0B" />
-            <StatBox icon={<GoonaIcon icon={UserX} size={16} color="#DC2626" />} label="Revoked" value={String(stats.revoked)} color="#DC2626" />
+            <StatBox icon={<GoonaIcon icon={Icons.users} size={16} color="#00695C" />} label="Active Workers" value={String(stats.activeWorkers)} color="#00695C" />
+            <StatBox icon={<GoonaIcon icon={Icons.userCheck} size={16} color="#6366F1" />} label="Active Managers" value={String(stats.activeManagers)} color="#6366F1" />
+            <StatBox icon={<GoonaIcon icon={Icons.alertTriangle} size={16} color="#F59E0B" />} label="Suspended" value={String(stats.suspended)} color="#F59E0B" />
+            <StatBox icon={<GoonaIcon icon={Icons.userX} size={16} color="#DC2626" />} label="Revoked" value={String(stats.revoked)} color="#DC2626" />
           </View>
         </Animated.View>
 
         {/* SEARCH + FILTERS */}
         <Animated.View entering={FadeInUp.duration(500).delay(240).springify()} style={{ marginTop: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderRadius: 14, paddingHorizontal: 14, height: 44, gap: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 8, elevation: 1 }}>
-            <GoonaIcon icon={Search} size={16} color="#94A3B8" />
+            <GoonaIcon icon={Icons.search} size={16} color="#94A3B8" />
             <TextInput
               style={{ flex: 1, fontSize: 14, color: '#1F2937', paddingVertical: 0 }}
               placeholder="Search by name or role..."
@@ -257,7 +257,7 @@ export default function KillSwitchScreen() {
             />
             {search.length > 0 && (
               <TouchableOpacity onPress={() => setSearch('')}>
-                <GoonaIcon icon={X} size={16} color="#94A3B8" />
+                <GoonaIcon icon={Icons.x} size={16} color="#94A3B8" />
               </TouchableOpacity>
             )}
           </View>
@@ -288,7 +288,7 @@ export default function KillSwitchScreen() {
           <Text style={{ fontWeight: '700', fontSize: 13, color: '#00695C', marginBottom: 8, paddingHorizontal: 4, letterSpacing: 0.3 }}>Farm Users ({filteredUsers.length})</Text>
           {filteredUsers.length === 0 ? (
             <View style={{ backgroundColor: 'white', borderRadius: 22, padding: 32, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.03, shadowRadius: 20, elevation: 2 }}>
-              <GoonaIcon icon={Users} size={28} color="#CBD5E1" />
+              <GoonaIcon icon={Icons.users} size={28} color="#CBD5E1" />
               <Text style={{ fontSize: 13, color: '#94A3B8', marginTop: 8 }}>No users match your search.</Text>
             </View>
           ) : (
@@ -376,7 +376,7 @@ export default function KillSwitchScreen() {
             <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 22 }}>This action removes the user from farm access immediately.</Text>
             <View style={{ marginTop: 12, backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 10, padding: 12 }}>
               <Text style={{ fontSize: 12, color: '#991B1B', fontWeight: '500', marginBottom: 6 }}>The user loses access to:</Text>
-              {['Farm records', 'FarmChat', 'Reports', 'Analytics', 'Assigned tasks'].map((item) => (
+              {['Farm records', 'Reports', 'Analytics', 'Assigned tasks'].map((item) => (
                 <View key={item} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                   <Text style={{ fontSize: 10, color: '#DC2626' }}>{'\u2B24'}</Text>
                   <Text style={{ fontSize: 12, color: '#991B1B' }}>{item}</Text>
@@ -402,7 +402,7 @@ export default function KillSwitchScreen() {
         {selectedUser && (
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16, backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12 }}>
-              <GoonaIcon icon={AlertTriangle} size={22} color="#DC2626" />
+              <GoonaIcon icon={Icons.alertTriangle} size={22} color="#DC2626" />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: '600', color: '#991B1B' }}>Final Confirmation Required</Text>
                 <Text style={{ fontSize: 12, color: '#B91C1C' }}>This action cannot be undone</Text>
@@ -440,7 +440,7 @@ export default function KillSwitchScreen() {
       <ModalShell visible={showSuccessModal} onClose={() => setShowSuccessModal(false)} title="Access Revoked Successfully">
         <View style={{ alignItems: 'center', paddingVertical: 16 }}>
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(220,38,38,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-            <GoonaIcon icon={ShieldCheck} size={28} color="#DC2626" />
+            <GoonaIcon icon={Icons.shieldCheck} size={28} color="#DC2626" />
           </View>
           <Text style={{ fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 8 }}>Access Revoked Successfully</Text>
           <Text style={{ fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 20 }}>User access has been removed.</Text>

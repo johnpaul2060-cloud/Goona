@@ -8,19 +8,18 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useRecoveryStore, CheckInStatus } from '../store/useRecoveryStore'
 import GoonaIcon from './ui/GoonaIcon'
-import { Check, X, Minus, Star, CircleCheck } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { formatInput, parseAmount } from '../utils/format'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 type ActiveStatus = Exclude<CheckInStatus, 'none'>
 
-import type { LucideProps } from 'lucide-react-native'
-const STATUS_CONFIG: { key: ActiveStatus; label: string; description: string; icon: React.ElementType<LucideProps> }[] = [
-  { key: 'completed', label: 'Completed', description: 'You met your recovery target', icon: Check },
-  { key: 'partial', label: 'Partial', description: 'You recovered some of the target', icon: Minus },
-  { key: 'missed', label: 'Missed', description: 'You skipped this period', icon: X },
-  { key: 'exceeded', label: 'Exceeded', description: 'You recovered more than planned', icon: Star },
+const STATUS_CONFIG: { key: ActiveStatus; label: string; description: string; icon: any }[] = [
+  { key: 'completed', label: 'Completed', description: 'You met your recovery target', icon: Icons.check },
+  { key: 'partial', label: 'Partial', description: 'You recovered some of the target', icon: Icons.minus },
+  { key: 'missed', label: 'Missed', description: 'You skipped this period', icon: Icons.x },
+  { key: 'exceeded', label: 'Exceeded', description: 'You recovered more than planned', icon: Icons.star },
 ]
 
 function fmtDate(d: Date): string {
@@ -130,12 +129,12 @@ export default function RecoveryCheckInModal({
         <View style={styles.sheetHeader}>
           <View style={styles.sheetTitleRow}>
             <View style={styles.sheetTitleIcon}>
-              <GoonaIcon icon={CircleCheck} size={20} color="#2E7D32" />
+              <GoonaIcon icon={Icons.circleCheck} size={20} color="#2E7D32" />
             </View>
             <Text style={styles.sheetTitle}>Recovery Check-in</Text>
           </View>
           <TouchableOpacity onPress={onClose} style={styles.sheetCloseBtn} activeOpacity={0.7}>
-            <GoonaIcon icon={X} size={20} color="#94A3B8" />
+            <GoonaIcon icon={Icons.x} size={20} color="#94A3B8" />
           </TouchableOpacity>
         </View>
 
@@ -180,7 +179,7 @@ export default function RecoveryCheckInModal({
                   styles.optionRadio,
                   active && { borderColor: selectedBorder(opt.key), backgroundColor: selectedBorder(opt.key) },
                 ]}>
-                  {active && <GoonaIcon icon={Check} size={10} color="white" strokeWidth={3} />}
+                  {active && <GoonaIcon icon={Icons.check} size={10} color="white" strokeWidth={3} />}
                 </View>
               </Pressable>
             )

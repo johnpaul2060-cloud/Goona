@@ -20,7 +20,7 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 import GoonaIcon from '../ui/GoonaIcon';
-import { ArrowRight, Shield, RefreshCw, Heart, Wheat, Skull, CircleCheck, PiggyBank, ShieldCheck, Users } from 'lucide-react-native';
+import { Icons } from '../../shared/icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_SLIDES = 3;
@@ -219,9 +219,9 @@ const SLIDES: SlideData[] = [
     contourBottom: { bottom: '20%', rotate: '-8deg' },
     floatingCards: (
       <>
-        <FloatingCard top="28%" right={6} iconBg="#F0FDF4" icon={<GoonaIcon icon={Shield} size={14} color="#16A34A" />} label="Records Secured" />
-        <FloatingCard bottom="22%" left={4} iconBg="#EEF3FF" icon={<GoonaIcon icon={RefreshCw} size={14} color="#1A56FF" />} label="Offline Sync Active" />
-        <FloatingCard bottom="46%" right={8} iconBg="#FFF1F2" icon={<GoonaIcon icon={Heart} size={14} color="#EF4444" />} label="Farm Protected" />
+        <FloatingCard top="28%" right={6} iconBg="#F0FDF4" icon={<GoonaIcon icon={Icons.shield} size={14} color="#16A34A" />} label="Records Secured" />
+        <FloatingCard bottom="22%" left={4} iconBg="#EEF3FF" icon={<GoonaIcon icon={Icons.refreshCw} size={14} color="#1A56FF" />} label="Offline Sync Active" />
+        <FloatingCard bottom="46%" right={8} iconBg="#FFF1F2" icon={<GoonaIcon icon={Icons.heart} size={14} color="#EF4444" />} label="Farm Protected" />
       </>
     ),
   },
@@ -237,9 +237,9 @@ const SLIDES: SlideData[] = [
     contourBottom: { bottom: '15%', rotate: '-8deg' },
     floatingCards: (
       <>
-        <FloatingCard top="18%" right={2} iconBg="#E8F5E9" icon={<GoonaIcon icon={Wheat} size={14} color="#2E7D32" />} label="Feed" value="218 kg" />
-        <FloatingCard bottom="32%" left={2} iconBg="#FFF1F2" icon={<GoonaIcon icon={Skull} size={14} color="#EF4444" />} label="Mortality" value="2 birds" />
-        <FloatingCard bottom="30%" right={4} iconBg="#F0FDF4" icon={<GoonaIcon icon={CircleCheck} size={14} color="#16A34A" />} label="Growth +12%" />
+        <FloatingCard top="18%" right={2} iconBg="#E8F5E9" icon={<GoonaIcon icon={Icons.wheat} size={14} color="#2E7D32" />} label="Feed" value="218 kg" />
+        <FloatingCard bottom="32%" left={2} iconBg="#FFF1F2" icon={<GoonaIcon icon={Icons.skull} size={14} color="#EF4444" />} label="Mortality" value="2 birds" />
+        <FloatingCard bottom="30%" right={4} iconBg="#F0FDF4" icon={<GoonaIcon icon={Icons.circleCheck} size={14} color="#16A34A" />} label="Growth +12%" />
       </>
     ),
   },
@@ -255,9 +255,9 @@ const SLIDES: SlideData[] = [
     contourBottom: { bottom: '18%', rotate: '-10deg' },
     floatingCards: (
       <>
-        <FloatingCard top="24%" right={3} iconBg="#FFFBEB" icon={<GoonaIcon icon={PiggyBank} size={14} color="#F9A825" />} label="Reinvestment" value="42% Complete" />
-        <FloatingCard bottom="34%" left={0} iconBg="#F0FDF4" icon={<GoonaIcon icon={ShieldCheck} size={14} color="#16A34A" />} label="Savings Goal On Track" />
-        <FloatingCard bottom="30%" right={2} iconBg="#EEF3FF" icon={<GoonaIcon icon={Users} size={14} color="#1A56FF" />} label="Farm Expansion" />
+        <FloatingCard top="24%" right={3} iconBg="#FFFBEB" icon={<GoonaIcon icon={Icons.piggyBank} size={14} color="#F9A825" />} label="Reinvestment" value="42% Complete" />
+        <FloatingCard bottom="34%" left={0} iconBg="#F0FDF4" icon={<GoonaIcon icon={Icons.shieldCheck} size={14} color="#16A34A" />} label="Savings Goal On Track" />
+        <FloatingCard bottom="30%" right={2} iconBg="#EEF3FF" icon={<GoonaIcon icon={Icons.users} size={14} color="#1A56FF" />} label="Farm Expansion" />
       </>
     ),
   },
@@ -385,7 +385,7 @@ export default function OnboardingScreen({ onDone, onSignIn }: OnboardingScreenP
         }}
       >
         <Text style={styles.ctaText}>{currentSlide.ctaLabel}</Text>
-        {currentIndex < TOTAL_SLIDES - 1 && <GoonaIcon icon={ArrowRight} size={18} color="white" />}
+        {currentIndex < TOTAL_SLIDES - 1 && <GoonaIcon icon={Icons.arrowRight} size={18} color="white" />}
       </TouchableOpacity>
 
       <View style={styles.signinRow}>

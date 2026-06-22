@@ -23,7 +23,7 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 import GoonaIcon from '../../components/ui/GoonaIcon';
-import { ShieldCheck, RefreshCw, ShieldAlert, Wheat, Skull, CircleCheck, TrendingUp, PiggyBank, Users, ArrowRight, Sprout } from 'lucide-react-native';
+import { Icons } from '../../shared/icons';
 
 const TOTAL_SLIDES = 3;
 
@@ -165,9 +165,9 @@ const SLIDES: SlideData[] = [
     subtitle: 'Track livestock, savings, and farm records safely in one trusted platform.',
     illustration: Slide1Illustration,
     floatingCards: [
-      { id: 's1-c1', style: { top: 28, right: 6 }, bgIcon: C.greenVeryPale, label: 'Records Secured', icon: <GoonaIcon icon={ShieldCheck} size={14} color="#16A34A" /> },
-      { id: 's1-c2', style: { bottom: 22, left: 4 }, bgIcon: C.shieldBlue, label: 'Offline Sync Active', icon: <GoonaIcon icon={RefreshCw} size={14} color="#1A56FF" /> },
-      { id: 's1-c3', style: { bottom: 46, right: 8 }, bgIcon: C.redLight, label: 'Farm Protected', icon: <GoonaIcon icon={ShieldAlert} size={14} color="#EF4444" /> },
+      { id: 's1-c1', style: { top: 28, right: 6 }, bgIcon: C.greenVeryPale, label: 'Records Secured', icon: <GoonaIcon icon={Icons.shieldCheck} size={14} color="#16A34A" /> },
+      { id: 's1-c2', style: { bottom: 22, left: 4 }, bgIcon: C.shieldBlue, label: 'Offline Sync Active', icon: <GoonaIcon icon={Icons.refreshCw} size={14} color="#1A56FF" /> },
+      { id: 's1-c3', style: { bottom: 46, right: 8 }, bgIcon: C.redLight, label: 'Farm Protected', icon: <GoonaIcon icon={Icons.shieldAlert} size={14} color="#EF4444" /> },
     ],
   },
   {
@@ -175,9 +175,9 @@ const SLIDES: SlideData[] = [
     subtitle: 'Monitor batches, feeding, expenses, and growth with real-time insights.',
     illustration: Slide2Illustration,
     floatingCards: [
-      { id: 's2-c1', style: { top: 18, right: 2 }, bgIcon: C.greenPale, label: 'Feed', value: '218 kg', icon: <GoonaIcon icon={Wheat} size={14} color="#2E7D32" /> },
-      { id: 's2-c2', style: { bottom: 32, left: 2 }, bgIcon: C.redLight, label: 'Mortality', value: '2 birds', icon: <GoonaIcon icon={Skull} size={14} color="#EF4444" /> },
-      { id: 's2-c3', style: { bottom: 30, right: 4 }, bgIcon: C.greenVeryPale, label: 'Growth +12%', icon: <GoonaIcon icon={CircleCheck} size={14} color="#16A34A" /> },
+      { id: 's2-c1', style: { top: 18, right: 2 }, bgIcon: C.greenPale, label: 'Feed', value: '218 kg', icon: <GoonaIcon icon={Icons.wheat} size={14} color="#2E7D32" /> },
+      { id: 's2-c2', style: { bottom: 32, left: 2 }, bgIcon: C.redLight, label: 'Mortality', value: '2 birds', icon: <GoonaIcon icon={Icons.skull} size={14} color="#EF4444" /> },
+      { id: 's2-c3', style: { bottom: 30, right: 4 }, bgIcon: C.greenVeryPale, label: 'Growth +12%', icon: <GoonaIcon icon={Icons.circleCheck} size={14} color="#16A34A" /> },
     ],
   },
   {
@@ -185,9 +185,9 @@ const SLIDES: SlideData[] = [
     subtitle: 'Save consistently, reinvest profits, and build long-term farm success.',
     illustration: Slide3Illustration,
     floatingCards: [
-      { id: 's3-c1', style: { top: 24, right: 3 }, bgIcon: C.goldLight, label: 'Reinvestment', value: '42% Complete', icon: <GoonaIcon icon={TrendingUp} size={14} color="#F9A825" /> },
-      { id: 's3-c2', style: { bottom: 34, left: 0 }, bgIcon: C.greenVeryPale, label: 'Savings Goal On Track', icon: <GoonaIcon icon={PiggyBank} size={14} color="#16A34A" /> },
-      { id: 's3-c3', style: { bottom: 30, right: 2 }, bgIcon: C.shieldBlue, label: 'Farm Expansion', icon: <GoonaIcon icon={Users} size={14} color="#1A56FF" /> },
+      { id: 's3-c1', style: { top: 24, right: 3 }, bgIcon: C.goldLight, label: 'Reinvestment', value: '42% Complete', icon: <GoonaIcon icon={Icons.trendingUp} size={14} color="#F9A825" /> },
+      { id: 's3-c2', style: { bottom: 34, left: 0 }, bgIcon: C.greenVeryPale, label: 'Savings Goal On Track', icon: <GoonaIcon icon={Icons.piggyBank} size={14} color="#16A34A" /> },
+      { id: 's3-c3', style: { bottom: 30, right: 2 }, bgIcon: C.shieldBlue, label: 'Farm Expansion', icon: <GoonaIcon icon={Icons.users} size={14} color="#1A56FF" /> },
     ],
   },
 ];
@@ -431,7 +431,7 @@ export default function OnboardingCarousel() {
       {/* ===== FIXED TOP BAR ===== */}
       <View style={styles.topBar}>
         <View style={styles.logoMini}>
-          <GoonaIcon icon={Sprout} size={28} color="#2E7D32" />
+          <GoonaIcon icon={Icons.sprout} size={28} color="#2E7D32" />
           <Text style={styles.logoMiniText}>GOONA</Text>
         </View>
         <View style={styles.topRight}>
@@ -471,7 +471,7 @@ export default function OnboardingCarousel() {
             onPressOut={() => animateButton(1)}>
             <LinearGradient colors={['#2E7D32', '#43A047']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaGradient}>
               <Text style={styles.ctaText}>Next</Text>
-              <GoonaIcon icon={ArrowRight} size={18} color="white" />
+              <GoonaIcon icon={Icons.arrowRight} size={18} color="white" />
             </LinearGradient>
           </Pressable>
         )}

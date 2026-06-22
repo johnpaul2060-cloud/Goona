@@ -6,7 +6,7 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { ArrowLeft, Plus, Package, Truck, Users, Wrench, Zap, ShoppingCart, Camera, Check, X, Receipt } from 'lucide-react-native'
+import { Icons } from '../../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../../../../components/navigation/BottomDock'
 import { formatInput, parseAmount } from '../../../../utils/format'
@@ -14,12 +14,12 @@ import { formatInput, parseAmount } from '../../../../utils/format'
 const { width: SCREEN_W } = Dimensions.get('window')
 
 const CATEGORIES = [
-  { label: 'Feed', icon: Package, color: '#16A34A' },
-  { label: 'Transport', icon: Truck, color: '#F59E0B' },
-  { label: 'Medication', icon: Receipt, color: '#EF4444' },
-  { label: 'Salaries', icon: Users, color: '#1A56FF' },
-  { label: 'Utilities', icon: Zap, color: '#8B5CF6' },
-  { label: 'Repairs', icon: Wrench, color: '#06B6D4' },
+  { label: 'Feed', icon: Icons.package, color: '#16A34A' },
+  { label: 'Transport', icon: Icons.truck, color: '#F59E0B' },
+  { label: 'Medication', icon: Icons.receipt, color: '#EF4444' },
+  { label: 'Salaries', icon: Icons.users, color: '#1A56FF' },
+  { label: 'Utilities', icon: Icons.zap, color: '#8B5CF6' },
+  { label: 'Repairs', icon: Icons.wrench, color: '#06B6D4' },
 ]
 
 export default function CreateExpenseScreen() {
@@ -55,7 +55,7 @@ if (router.canGoBack()) { router.back() } else { router.replace('/records/expens
             activeOpacity={0.7}
             onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/(tabs)/records/expenses' as any) } }}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Record Expense</Text>
           <View style={styles.navSpacer} />
@@ -129,7 +129,7 @@ if (router.canGoBack()) { router.back() } else { router.replace('/records/expens
 
         <Animated.View entering={FadeInUp.duration(500).delay(300).springify()}>
           <TouchableOpacity style={styles.receiptBtn} activeOpacity={0.7}>
-            <GoonaIcon icon={Camera} size={18} color="#2E7D32" />
+            <GoonaIcon icon={Icons.camera} size={18} color="#2E7D32" />
             <Text style={styles.receiptText}>Attach Receipt</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -141,7 +141,7 @@ if (router.canGoBack()) { router.back() } else { router.replace('/records/expens
             onPress={handleSave}
             disabled={!amountNum || !selectedCategory || saving}
           >
-            <GoonaIcon icon={saving ? Check : Plus} size={20} color="#FFF" />
+            <GoonaIcon icon={saving ? Icons.check : Icons.plus} size={20} color="#FFF" />
             <Text style={styles.saveText}>{saving ? 'Saving...' : 'Record Expense'}</Text>
           </TouchableOpacity>
         </Animated.View>

@@ -7,11 +7,7 @@ import {
 import { router } from 'expo-router'
 import Svg, { Circle, Text as SvgText } from 'react-native-svg'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
-import {
-  Bell, TrendingUp, TrendingDown, Check, Flame,
-  Sparkles, Target, ChevronLeft, ChevronRight, X, Info,
-  ChevronDown, Calendar,
-} from 'lucide-react-native'
+import { Icons } from '../../../shared/icons'
 import { BlurView } from 'expo-blur'
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient'
 import Animated, {
@@ -90,7 +86,7 @@ function AnimatedBell() {
   return (
     <View style={{ width: 20, height: 20 }}>
       <Animated.View style={pulseStyle}>
-        <GoonaIcon icon={Bell} size={20} color={count > 0 ? '#DC2626' : '#1F2937'} />
+        <GoonaIcon icon={Icons.bell} size={20} color={count > 0 ? '#EF4444' : '#1B1B1B'} />
       </Animated.View>
       {count > 0 && (
         <View style={bellStyles.badge}>
@@ -104,9 +100,9 @@ const bellStyles = StyleSheet.create({
   badge: {
     position: 'absolute', top: -6, right: -6,
     minWidth: 17, height: 17, borderRadius: 8.5,
-    backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 3,
-    shadowColor: '#DC2626', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4,
+    shadowColor: '#EF4444', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4,
   },
   badgeText: { fontSize: 9, fontWeight: '800', color: '#fff', includeFontPadding: false },
 })
@@ -155,7 +151,7 @@ function ProductionReadinessHero({ index }: { index: number }) {
   return (
     <Animated.View style={[animStyle, pressStyle]} onTouchStart={onPressIn} onTouchEnd={onPressOut}>
       <ExpoLinearGradient
-        colors={['#2E7D32', '#1B5E20']}
+colors={['#065F46', '#047857']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.heroCard}
@@ -202,7 +198,7 @@ function ProductionReadinessHero({ index }: { index: number }) {
           <View style={styles.heroMetaItem}>
             <Text style={styles.heroMetaLabel}>Streak</Text>
             <View style={styles.heroMetaStreak}>
-              <GoonaIcon icon={Flame} size={12} color="#F59E0B" />
+              <GoonaIcon icon={Icons.flame} size={12} color="#F59E0B" />
               <Text style={[styles.heroMetaValue, { color: '#F59E0B' }]}>{streakWeeks}w</Text>
             </View>
           </View>
@@ -216,7 +212,7 @@ function ProductionReadinessHero({ index }: { index: number }) {
 
 /* ─── 3. QUICK ACTIONS RAIL ─── */
 const ACTION_RAIL = [
-  { emoji: '\u2795', label: 'Fund', color: '#16A34A', bg: '#F0FDF4', route: '/fund-recapt' as const },
+  { emoji: '\u2795', label: 'Fund', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
   { emoji: '\uD83D\uDCC5', label: 'Plan', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
   { emoji: '\uD83D\uDCC8', label: 'Timeline', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/project-timeline' as const },
   { emoji: '\uD83D\uDCCA', label: 'Report', color: '#8B5CF6', bg: '#F5F3FF', route: '/recapitalization/readiness-report' as const },
@@ -246,7 +242,7 @@ function ActionRail({ index }: { index: number }) {
 
 /* ─── 4. FUNDING BREAKDOWN ─── */
 const DRIVER_ITEMS = [
-  { emoji: '\uD83D\uDC23', label: 'Restocking Fund', pct: 100, funded: 1200000, remaining: 0, target: 1200000, color: '#16A34A', bg: '#F0FDF4' },
+  { emoji: '\uD83D\uDC23', label: 'Restocking Fund', pct: 100, funded: 1200000, remaining: 0, target: 1200000, color: '#2E7D32', bg: '#F0FDF4' },
   { emoji: '\uD83C\uDF3D', label: 'Feed Reserve', pct: 82, funded: 820000, remaining: 180000, target: 1000000, color: '#F59E0B', bg: '#FFFBEB' },
   { emoji: '\uD83D\uDC8A', label: 'Medication Fund', pct: 67, funded: 503000, remaining: 247000, target: 750000, color: '#1A56FF', bg: '#EEF3FF' },
   { emoji: '\uD83D\uDEA8', label: 'Emergency Buffer', pct: 54, funded: 325000, remaining: 275000, target: 600000, color: '#EF4444', bg: '#FEF2F2' },
@@ -327,7 +323,7 @@ function ReadyForNextCycleChecklist({
     return (
       <Animated.View style={[animStyle, styles.rfncCard, styles.rfncComplete]}>
         <View style={styles.rfncCheckBig}>
-          <GoonaIcon icon={Check} size={28} color="#16A34A" />
+          <GoonaIcon icon={Icons.check} size={28} color="#2E7D32" />
         </View>
         <Text style={styles.rfncReadyLabel}>READY TO START</Text>
         <Text style={styles.rfncReadyDesc}>
@@ -335,19 +331,19 @@ function ReadyForNextCycleChecklist({
         </Text>
         <View style={styles.rfncReadyMeta}>
           <View style={styles.rfncMetaItem}>
-            <GoonaIcon icon={Calendar} size={14} color="#16A34A" />
+            <GoonaIcon icon={Icons.calendar} size={14} color="#2E7D32" />
             <Text style={styles.rfncMetaLabel}>Recommended Start Date</Text>
             <Text style={styles.rfncMetaValue}>{restartStr}</Text>
           </View>
           <View style={styles.rfncMetaDivider} />
           <View style={styles.rfncMetaItem}>
-            <GoonaIcon icon={TrendingUp} size={14} color="#16A34A" />
+            <GoonaIcon icon={Icons.trendingUp} size={14} color="#2E7D32" />
             <Text style={styles.rfncMetaLabel}>Est. Production Capacity</Text>
             <Text style={styles.rfncMetaValue}>{Math.round(1200000 / 2500)} birds per cycle</Text>
           </View>
           <View style={styles.rfncMetaDivider} />
           <View style={styles.rfncMetaItem}>
-            <GoonaIcon icon={Target} size={14} color="#16A34A" />
+            <GoonaIcon icon={Icons.target} size={14} color="#2E7D32" />
             <Text style={styles.rfncMetaLabel}>Readiness Score</Text>
             <Text style={styles.rfncMetaValue}>{readinessPct}%</Text>
           </View>
@@ -376,7 +372,7 @@ function ReadyForNextCycleChecklist({
           return (
             <TouchableOpacity key={def.key} style={[styles.rfncRow, done && styles.rfncRowDone]} activeOpacity={0.7} onPress={() => onToggle(def.key)}>
               <View style={[styles.rfncCheck, done && styles.rfncCheckDone]}>
-                {done && <GoonaIcon icon={Check} size={16} color="white" />}
+                {done && <GoonaIcon icon={Icons.check} size={16} color="white" />}
               </View>
               <Text style={styles.rfncEmoji}>{def.emoji}</Text>
               <Text style={[styles.rfncLabel, done && styles.rfncLabelDone]}>{def.label}</Text>
@@ -453,7 +449,7 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
   const stateColors: Record<string, string> = {
     completed: '#2E7D32', exceeded: '#AEEA00',
     partial: '#F59E0B', missed: '#EF4444',
-    upcoming: '#D97706', forecast: '#D1D5DB', none: '#F1F5F9',
+    upcoming: '#F59E0B', forecast: '#D1D5DB', none: '#F1F5F9',
   }
 
   const pulse = useSharedValue(1)
@@ -481,7 +477,7 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
       <TouchableOpacity activeOpacity={0.7} onPress={() => setExpanded(!expanded)}>
         <View style={styles.calCollapsed}>
           <View style={styles.calCollapsedLeft}>
-            <GoonaIcon icon={Calendar} size={16} color="#2E7D32" />
+            <GoonaIcon icon={Icons.calendar} size={16} color="#2E7D32" />
             <Text style={styles.calCollapsedMonth}>{monthName} {viewYear}</Text>
           </View>
           <View style={styles.calCollapsedRight}>
@@ -490,12 +486,12 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
                 <Text style={styles.calMissedBadgeText}>{missedCount} missed</Text>
               </View>
             )}
-            <GoonaIcon icon={Flame} size={14} color="#F59E0B" />
+            <GoonaIcon icon={Icons.flame} size={14} color="#F59E0B" />
             <Text style={styles.calCollapsedStreak}>{streak}d</Text>
             {consistencyScore > 0 && (
               <Text style={styles.calConsistency}>{consistencyScore}%</Text>
             )}
-            <GoonaIcon icon={ChevronDown} size={14} color="#94A3B8" style={{ transform: expanded ? [{ rotate: '180deg' }] : [] }} />
+            <GoonaIcon icon={Icons.chevronDown} size={14} color="#94A3B8" style={{ transform: expanded ? [{ rotate: '180deg' }] : [] }} />
           </View>
         </View>
 
@@ -512,14 +508,14 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
           </View>
           <View style={styles.calQuickStatDiv} />
           <View style={styles.calQuickStat}>
-            <Text style={[styles.calQuickStatValue, { color: consistencyScore >= 80 ? '#16A34A' : '#F59E0B' }]}>{consistencyScore}%</Text>
+            <Text style={[styles.calQuickStatValue, { color: consistencyScore >= 80 ? '#2E7D32' : '#F59E0B' }]}>{consistencyScore}%</Text>
             <Text style={styles.calQuickStatLabel}>Consistency</Text>
           </View>
           {upcomingDue > 0 && (
             <>
               <View style={styles.calQuickStatDiv} />
               <View style={styles.calQuickStat}>
-                <Text style={[styles.calQuickStatValue, { color: '#D97706' }]}>{upcomingDue}</Text>
+                <Text style={[styles.calQuickStatValue, { color: '#F59E0B' }]}>{upcomingDue}</Text>
                 <Text style={styles.calQuickStatLabel}>Due Soon</Text>
               </View>
             </>
@@ -532,13 +528,13 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
           {/* Navigation */}
           <View style={styles.calNavRow}>
             <TouchableOpacity onPress={goPrev} style={styles.calNavBtn} activeOpacity={0.7}>
-              <GoonaIcon icon={ChevronLeft} size={16} color="#1F2937" />
+              <GoonaIcon icon={Icons.chevronLeft} size={16} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={{ flex: 1, alignItems: 'center' }}>
               <Text style={styles.calTitle}>{monthName} {viewYear}</Text>
             </View>
             <TouchableOpacity onPress={goNext} style={styles.calNavBtn} activeOpacity={0.7}>
-              <GoonaIcon icon={ChevronRight} size={16} color="#1F2937" />
+              <GoonaIcon icon={Icons.chevronRight} size={16} color="#1B1B1B" />
             </TouchableOpacity>
           </View>
 
@@ -601,8 +597,8 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
                             styles.calDayNum,
                             isToday && styles.calDayNumToday,
                             isFuture && { opacity: 0.5 },
-                            status === 'missed' && { color: '#DC2626' },
-                            status === 'upcoming' && { color: '#D97706', fontWeight: '600' },
+                            status === 'missed' && { color: '#EF4444' },
+                            status === 'upcoming' && { color: '#F59E0B', fontWeight: '600' },
                           ]}>{day}</Text>
                         </TouchableOpacity>
                       )
@@ -667,7 +663,7 @@ function DayDetailModal({
   const sc: Record<string, string> = {
     completed: '#2E7D32', exceeded: '#AEEA00',
     partial: '#F59E0B', missed: '#EF4444',
-    upcoming: '#D97706', forecast: '#D1D5DB', none: '#94A3B8',
+    upcoming: '#F59E0B', forecast: '#D1D5DB', none: '#94A3B8',
   }
   const sl: Record<string, string> = {
     completed: 'Recapt Completed', exceeded: 'Exceeded Target',
@@ -695,7 +691,7 @@ function DayDetailModal({
             <View style={styles.modalHandle} />
           </View>
           <TouchableOpacity style={styles.modalCloseBtn} onPress={onClose} activeOpacity={0.7}>
-            <GoonaIcon icon={X} size={18} color="#1F2937" />
+            <GoonaIcon icon={Icons.x} size={18} color="#1B1B1B" />
           </TouchableOpacity>
 
           <View style={styles.modalDateHead}>
@@ -722,14 +718,14 @@ function DayDetailModal({
             {isFuture && (
               <View style={styles.modalAmountRow}>
                 <Text style={styles.modalAmountLabel}>Status</Text>
-                <Text style={[styles.modalAmountValue, { color: '#D97706', fontSize: 13 }]}>Scheduled</Text>
+                <Text style={[styles.modalAmountValue, { color: '#F59E0B', fontSize: 13 }]}>Scheduled</Text>
               </View>
             )}
           </View>
 
           <View style={styles.modalInsight}>
             <View style={styles.modalInsightHeader}>
-              <GoonaIcon icon={Info} size={14} color="#2E7D32" />
+              <GoonaIcon icon={Icons.info} size={14} color="#2E7D32" />
               <Text style={styles.modalInsightLabel}>GOONA IQ</Text>
             </View>
             <Text style={styles.modalInsightText}>{insight}</Text>
@@ -774,7 +770,7 @@ function GoonaIqInsights({ index, opsCompleted }: { index: number; opsCompleted:
 
   if (missedCount > 0) {
     insights.push({
-      icon: TrendingDown,
+      icon: Icons.trendingDown,
       color: missedCount > 3 ? '#EF4444' : '#F59E0B',
       bg: missedCount > 3 ? '#FEF2F2' : '#FFFBEB',
       title: 'Contribution Alert',
@@ -786,13 +782,13 @@ function GoonaIqInsights({ index, opsCompleted }: { index: number; opsCompleted:
 
   if (opsCompleted < opsTotal) {
     insights.push({
-      icon: Target, color: '#F59E0B', bg: '#FFFBEB',
+      icon: Icons.target, color: '#F59E0B', bg: '#FFFBEB',
       title: 'Complete Your Checklist',
       desc: `Finish your Ready for Next Cycle checklist — ${opsTotal - opsCompleted} item${opsTotal - opsCompleted > 1 ? 's' : ''} remaining. GOONA will generate a restart recommendation once all items are completed.`,
     })
   } else {
     insights.push({
-      icon: Target, color: '#1A56FF', bg: '#EEF3FF',
+      icon: Icons.target, color: '#2E7D32', bg: '#EEF3FF',
       title: 'Restart Recommendation',
       desc: gap > 0
         ? `Close the funding gap of ${'\u20A6'}{gap.toLocaleString('en-NG')} to unlock your full production budget.`
@@ -802,13 +798,13 @@ function GoonaIqInsights({ index, opsCompleted }: { index: number; opsCompleted:
 
   if (gap > 500000) {
     insights.push({
-      icon: TrendingUp, color: '#16A34A', bg: '#F0FDF4',
+      icon: Icons.trendingUp, color: '#2E7D32', bg: '#F0FDF4',
       title: 'Savings Opportunity',
       desc: `Increasing contributions by even ${'\u20A6'}5,000 per cycle could cut your restart timeline by weeks.`,
     })
   } else if (totalSaved >= target) {
     insights.push({
-      icon: Sparkles, color: '#16A34A', bg: '#F0FDF4',
+      icon: Icons.sparkles, color: '#2E7D32', bg: '#F0FDF4',
       title: 'Fully Funded',
       desc: 'You\'ve reached your funding target. Any additional savings accelerate your restart timeline or provide extra working capital.',
     })
@@ -817,7 +813,7 @@ function GoonaIqInsights({ index, opsCompleted }: { index: number; opsCompleted:
   return (
     <Animated.View style={animStyle}>
       <View style={styles.iqSectionHead}>
-        <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+        <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
         <Text style={styles.iqTitle}>GOONA IQ Insights</Text>
       </View>
       {insights.map((ins, i) => {
@@ -962,8 +958,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
     paddingHorizontal: S.pad(20),
   },
-  headerTitle: { fontSize: S.font(S.isSmall ? 22 : 28), fontWeight: '800', color: '#1B1B1B' },
-  headerSub: { fontSize: S.font(S.isSmall ? 11 : 13), color: '#A0AEA1', marginTop: 1 },
+  headerTitle: { fontSize: S.font(S.isSmall ? 22 : 28), fontWeight: '800', color: '#111827' },
+  headerSub: { fontSize: S.font(S.isSmall ? 11 : 13), color: '#6B7280', marginTop: 1 },
   headerBtn: {
     width: S.scale(42), height: S.scale(42), borderRadius: S.scale(21), backgroundColor: 'rgba(255,255,255,0.85)',
     alignItems: 'center', justifyContent: 'center',
@@ -974,7 +970,7 @@ const styles = StyleSheet.create({
   scrollInner: { paddingHorizontal: S.pad(20) },
   sectionHead: { marginTop: S.pad(S.isSmall ? 16 : 22), marginBottom: S.pad(S.isSmall ? 8 : 12) },
 
-  secTitle: { fontSize: S.font(S.isSmall ? 16 : 18), fontWeight: '700', color: '#1F2937' },
+  secTitle: { fontSize: S.font(S.isSmall ? 18 : 20), fontWeight: '800', color: '#1F2937' },
 
   /* ─── HERO ─── */
   heroCard: {
@@ -1029,7 +1025,7 @@ const styles = StyleSheet.create({
   driversCard: {
     backgroundColor: 'white', borderRadius: S.scale(24), padding: S.pad(18),
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05, shadowRadius: 20, elevation: 2,
+    shadowOpacity: 0.06, shadowRadius: 20, elevation: 2,
   },
   driversList: { gap: S.pad(14) },
   driverRow: {},
@@ -1048,7 +1044,7 @@ const styles = StyleSheet.create({
   rfncCard: {
     backgroundColor: 'white', borderRadius: S.scale(24), padding: S.pad(18),
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05, shadowRadius: 20, elevation: 2,
+    shadowOpacity: 0.06, shadowRadius: 20, elevation: 2,
   },
   rfncComplete: {
     backgroundColor: '#F0FDF4', borderWidth: 1.5, borderColor: '#BBF7D0',
@@ -1064,6 +1060,7 @@ const styles = StyleSheet.create({
   },
   rfncProgressFill: { height: '100%', borderRadius: 4, backgroundColor: '#2E7D32' },
   rfncProgressText: { fontSize: S.font(13), fontWeight: '700', color: '#1B1B1B' },
+  rfncProgressText: { fontSize: S.font(13), fontWeight: '700', color: '#1B1B1B' },
   rfncItems: { gap: S.pad(10) },
   rfncRow: {
     flexDirection: 'row', alignItems: 'center', gap: S.pad(12),
@@ -1075,7 +1072,7 @@ const styles = StyleSheet.create({
     width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#D1D5DB',
     alignItems: 'center', justifyContent: 'center',
   },
-  rfncCheckDone: { backgroundColor: '#16A34A', borderColor: '#16A34A' },
+  rfncCheckDone: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
   rfncEmoji: { fontSize: S.font(18) },
   rfncLabel: { fontSize: S.font(14), fontWeight: '500', color: '#64748B', flex: 1 },
   rfncLabelDone: { color: '#1B1B1B', fontWeight: '600' },
@@ -1084,8 +1081,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#DCFCE7', alignItems: 'center', justifyContent: 'center',
     marginBottom: S.pad(12),
   },
-  rfncReadyLabel: { fontSize: S.font(20), fontWeight: '800', color: '#16A34A', marginBottom: S.pad(4) },
-  rfncReadyDesc: { fontSize: S.font(13), color: '#374151', lineHeight: S.font(19), marginBottom: S.pad(16) },
+  rfncReadyLabel: { fontSize: S.font(20), fontWeight: '800', color: '#2E7D32', marginBottom: S.pad(4) },
+  rfncReadyDesc: { fontSize: S.font(13), color: '#64748B', lineHeight: S.font(19), marginBottom: S.pad(16) },
   rfncReadyMeta: {
     backgroundColor: 'white', borderRadius: S.scale(16), padding: S.pad(14),
     borderWidth: 1, borderColor: '#DCFCE7',
@@ -1112,7 +1109,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2, paddingHorizontal: 6, borderRadius: 4, backgroundColor: '#FEF2F2',
   },
   calMissedBadgeText: { fontSize: S.font(9), fontWeight: '700', color: '#EF4444' },
-  calConsistency: { fontSize: S.font(11), fontWeight: '700', color: '#16A34A' },
+  calConsistency: { fontSize: S.font(11), fontWeight: '700', color: '#2E7D32' },
 
   calQuickStats: {
     flexDirection: 'row', alignItems: 'center', marginTop: S.pad(8),
@@ -1125,7 +1122,7 @@ const styles = StyleSheet.create({
 
   calNavRow: { flexDirection: 'row', alignItems: 'center', gap: S.pad(8), marginTop: S.pad(14) },
   calNavBtn: { width: S.scale(32), height: S.scale(32), borderRadius: S.scale(16), backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
-  calTitle: { fontSize: S.font(S.isSmall ? 14 : 16), fontWeight: '700', color: '#1F2937' },
+  calTitle: { fontSize: S.font(S.isSmall ? 14 : 16), fontWeight: '700', color: '#1B1B1B' },
   calDayLabels: { flexDirection: 'row', marginTop: S.pad(12), marginBottom: S.pad(6) },
   calDayLabel: { width: CAL_W, textAlign: 'center', fontSize: S.font(S.isSmall ? 9 : 10), color: '#94A3B8', fontWeight: '500' },
   calGrid: {},
@@ -1139,7 +1136,7 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 1, right: 1, width: 6, height: 6, borderRadius: 3,
     backgroundColor: '#F59E0B', zIndex: 2,
   },
-  calDayNum: { fontSize: S.font(S.isSmall ? 11 : 12), fontWeight: '500', color: '#1F2937' },
+  calDayNum: { fontSize: S.font(S.isSmall ? 11 : 12), fontWeight: '500', color: '#1B1B1B' },
   calDayNumToday: { color: '#2E7D32', fontWeight: '700' },
   calDayPulse: {
     position: 'absolute', width: S.scale(30), height: S.scale(30), borderRadius: S.scale(15),
@@ -1183,7 +1180,7 @@ const styles = StyleSheet.create({
   },
   modalInsightHeader: { flexDirection: 'row', alignItems: 'center', gap: S.pad(6), marginBottom: S.pad(6) },
   modalInsightLabel: { fontSize: S.font(10), fontWeight: '700', color: '#2E7D32' },
-  modalInsightText: { fontSize: S.font(12), color: '#374151', lineHeight: 18 },
+  modalInsightText: { fontSize: S.font(12), color: '#64748B', lineHeight: 18 },
   modalActionBtn: { borderRadius: S.scale(14), overflow: 'hidden' },
   modalActionGrad: { paddingVertical: S.pad(14), alignItems: 'center' },
   modalActionText: { fontSize: S.font(15), fontWeight: '700', color: '#fff' },

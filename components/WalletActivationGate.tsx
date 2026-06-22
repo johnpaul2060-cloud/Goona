@@ -5,7 +5,7 @@ import {
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from './ui/GoonaIcon'
-import { Wallet, ArrowRight } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { useWalletStore } from '../store/useWalletStore'
 
@@ -24,7 +24,7 @@ export default function WalletActivationGate({ children }: Props) {
     <View style={styles.container}>
       <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.card}>
         <View style={styles.iconWrap}>
-          <GoonaIcon icon={Wallet} size={40} color="#2E7D32" />
+          <GoonaIcon icon={Icons.wallet} size={40} color="#2E7D32" />
         </View>
 
         <Text style={styles.title}>Almost There</Text>
@@ -45,7 +45,7 @@ export default function WalletActivationGate({ children }: Props) {
             style={styles.btnGrad}
           >
             <Text style={styles.btnText}>Activate Wallet</Text>
-            <GoonaIcon icon={ArrowRight} size={18} color="#FFFFFF" />
+            <GoonaIcon icon={Icons.arrowRight} size={18} color="#FFFFFF" />
           </LinearGradient>
         </TouchableOpacity>
 

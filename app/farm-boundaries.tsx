@@ -5,7 +5,7 @@ import {
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, MapPin, ShieldAlert, Plus, Pencil, Trash2, Check, X, ChevronRight, Navigation, Radio } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -62,11 +62,11 @@ export default function FarmBoundariesScreen() {
         {/* App Bar */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={s.topNav}>
           <TouchableOpacity style={s.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={s.navTitle}>Farm Boundaries</Text>
           <TouchableOpacity style={s.navBack} onPress={() => router.push('/geofence-editor' as any)} activeOpacity={0.7}>
-            <Plus size={22} color="#00695C" strokeWidth={2.5} />
+            <Icons.plus size={22} color="#00695C" strokeWidth={2.5} />
           </TouchableOpacity>
         </Animated.View>
 
@@ -87,12 +87,12 @@ export default function FarmBoundariesScreen() {
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
               <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' }}
                 onPress={() => Alert.alert('Edit Boundary', 'Drag the boundary corners on the map to adjust the farm perimeter.\n\nGeofence Editor coming soon.')}>
-                <GoonaIcon icon={Pencil} size={12} color="#fff" />
+                <GoonaIcon icon={Icons.pencil} size={12} color="#fff" />
                 <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>Edit Boundary</Text>
               </TouchableOpacity>
               <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' }}
                 onPress={() => router.push('/geofence-editor' as any)}>
-                <GoonaIcon icon={Plus} size={12} color="#fff" />
+                <GoonaIcon icon={Icons.plus} size={12} color="#fff" />
                 <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>Add Zone</Text>
               </TouchableOpacity>
             </View>
@@ -122,7 +122,7 @@ export default function FarmBoundariesScreen() {
               >
                 <Animated.View style={[style, s.zoneCard, { borderLeftColor: zone.color, borderLeftWidth: 3 }]}>
                   <View style={[s.zoneIcon, { backgroundColor: `${zone.color}12` }]}>
-                    <GoonaIcon icon={zone.type === 'restricted' ? ShieldAlert : MapPin} size={18} color={zone.color} />
+                    <GoonaIcon icon={zone.type === 'restricted' ? Icons.shieldAlert : Icons.mapPin} size={18} color={zone.color} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -134,21 +134,21 @@ export default function FarmBoundariesScreen() {
                     <Text style={s.zoneCoords}>{zone.coordinates}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                        <GoonaIcon icon={MapPin} size={10} color="#94A3B8" />
+                        <GoonaIcon icon={Icons.mapPin} size={10} color="#94A3B8" />
                         <Text style={{ fontSize: 10, color: '#94A3B8' }}>{zone.workers} workers</Text>
                       </View>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                        <GoonaIcon icon={Radio} size={10} color="#22C55E" />
+                        <GoonaIcon icon={Icons.radio} size={10} color="#22C55E" />
                         <Text style={{ fontSize: 10, color: '#22C55E' }}>Active</Text>
                       </View>
                     </View>
                   </View>
                   <View style={{ gap: 6 }}>
                     <TouchableOpacity onPress={() => router.push('/geofence-editor' as any)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
-                      <GoonaIcon icon={Pencil} size={14} color="#64748B" />
+                      <GoonaIcon icon={Icons.pencil} size={14} color="#64748B" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(zone.id)} style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(239,68,68,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-                      <GoonaIcon icon={Trash2} size={14} color="#EF4444" />
+                      <GoonaIcon icon={Icons.trash2} size={14} color="#EF4444" />
                     </TouchableOpacity>
                   </View>
                 </Animated.View>
@@ -165,13 +165,13 @@ export default function FarmBoundariesScreen() {
             activeOpacity={0.8}
           >
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(0,105,92,0.08)', alignItems: 'center', justifyContent: 'center' }}>
-              <GoonaIcon icon={Plus} size={20} color="#00695C" />
+              <GoonaIcon icon={Icons.plus} size={20} color="#00695C" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '600', fontSize: 14, color: '#1B1B1B' }}>Create New Zone</Text>
               <Text style={{ fontSize: 11, color: '#64748B' }}>Add operational or restricted area</Text>
             </View>
-            <ChevronRight size={16} color="#94A3B8" strokeWidth={2} />
+            <Icons.chevronRight size={16} color="#94A3B8" strokeWidth={2} />
           </TouchableOpacity>
         </Animated.View>
 

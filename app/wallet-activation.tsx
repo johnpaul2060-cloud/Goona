@@ -8,20 +8,17 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, Wallet, ShieldCheck, Fingerprint, Building2, User,
-  ChevronRight, Check, Camera, Award, CheckCircle,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 import { useWalletStore, isKycFullyCompleted, getPendingReturnUrl, setPendingReturnUrl } from '../store/useWalletStore'
 
 const STEPS = [
-  { icon: User, label: 'Personal Information', desc: 'Name, Date of Birth', route: '/kyc-step-1', step: 1 },
-  { icon: Fingerprint, label: 'BVN Verification', desc: 'Verify your BVN', route: '/kyc-step-2', step: 2 },
-  { icon: ShieldCheck, label: 'Identity Verification', desc: 'Verify your NIN', route: '/kyc-step-3', step: 3 },
-  { icon: Camera, label: 'Selfie Verification', desc: 'Capture a selfie', route: '/kyc-step-4', step: 4 },
-  { icon: Building2, label: 'Business Information', desc: 'Farm name, CAC (Optional)', route: '/kyc-step-5', step: 5 },
+  { icon: Icons.user, label: 'Personal Information', desc: 'Name, Date of Birth', route: '/kyc-step-1', step: 1 },
+  { icon: Icons.fingerprint, label: 'BVN Verification', desc: 'Verify your BVN', route: '/kyc-step-2', step: 2 },
+  { icon: Icons.shieldCheck, label: 'Identity Verification', desc: 'Verify your NIN', route: '/kyc-step-3', step: 3 },
+  { icon: Icons.camera, label: 'Selfie Verification', desc: 'Capture a selfie', route: '/kyc-step-4', step: 4 },
+  { icon: Icons.building2, label: 'Business Information', desc: 'Farm name, CAC (Optional)', route: '/kyc-step-5', step: 5 },
 ]
 
 const BENEFITS = [
@@ -64,7 +61,7 @@ export default function WalletActivationScreen() {
       >
         <Animated.View entering={FadeInDown.duration(600).springify()} style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.back()}>
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
           <Text style={styles.title}>GOONA Wallet</Text>
         </Animated.View>
@@ -80,13 +77,13 @@ export default function WalletActivationScreen() {
         {status === 'activated' ? (
           <Animated.View entering={FadeInUp.duration(400).delay(100).springify()} style={styles.activatedCard}>
             <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.activatedGrad}>
-              <View style={styles.activatedIcon}><GoonaIcon icon={CheckCircle} size={40} color="#FFFFFF" /></View>
+              <View style={styles.activatedIcon}><GoonaIcon icon={Icons.checkCircle} size={40} color="#FFFFFF" /></View>
               <Text style={styles.activatedTitle}>Wallet Activated Successfully</Text>
               <Text style={styles.activatedDesc}>Your identity has been verified and your GOONA Wallet is ready to use.</Text>
               <View style={styles.activatedFeatures}>
                 {['Wallet Account Number: 1234 5678 90', 'Balance: \u20A60.00', 'Receive Money', 'Transfer', 'Withdraw', 'Fund Recapt Goals'].map((f, i) => (
                   <View key={i} style={styles.activatedFeatureRow}>
-                    <GoonaIcon icon={Check} size={14} color="#AEEA00" />
+                    <GoonaIcon icon={Icons.check} size={14} color="#AEEA00" />
                     <Text style={styles.activatedFeatureText}>{f}</Text>
                   </View>
                 ))}
@@ -99,7 +96,7 @@ export default function WalletActivationScreen() {
               <Text style={styles.benefitsTitle}>Unlock Financial Features</Text>
               {BENEFITS.map((b, i) => (
                 <View key={i} style={styles.benefitRow}>
-                  <GoonaIcon icon={Check} size={14} color="#2E7D32" />
+                  <GoonaIcon icon={Icons.check} size={14} color="#2E7D32" />
                   <Text style={styles.benefitText}>{b}</Text>
                 </View>
               ))}
@@ -107,7 +104,7 @@ export default function WalletActivationScreen() {
                 <TouchableOpacity activeOpacity={0.85} style={styles.activateBtn} onPress={() => router.push('/kyc-step-1')}>
                   <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.activateGrad}>
                     <Text style={styles.activateBtnText}>Activate Wallet</Text>
-                    <GoonaIcon icon={ChevronRight} size={18} color="#FFFFFF" />
+                    <GoonaIcon icon={Icons.chevronRight} size={18} color="#FFFFFF" />
                   </LinearGradient>
                 </TouchableOpacity>
               )}
@@ -138,7 +135,7 @@ export default function WalletActivationScreen() {
                     {completed ? (
                       <Text style={styles.stepDoneText}>Done</Text>
                     ) : (
-                      <GoonaIcon icon={ChevronRight} size={16} color="#94A3B8" />
+                      <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
                     )}
                   </TouchableOpacity>
                 )
@@ -157,7 +154,7 @@ export default function WalletActivationScreen() {
                   }
                 }}>
                   <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.activateGrad}>
-                    <GoonaIcon icon={Check} size={20} color="#FFFFFF" />
+                    <GoonaIcon icon={Icons.check} size={20} color="#FFFFFF" />
                     <Text style={styles.activateBtnText}>Activate Wallet</Text>
                   </LinearGradient>
                 </TouchableOpacity>

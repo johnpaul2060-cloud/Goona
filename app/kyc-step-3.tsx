@@ -8,9 +8,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, ChevronRight, ShieldCheck, CheckCircle,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useWalletStore } from '../store/useWalletStore'
 import * as Haptics from 'expo-haptics'
@@ -52,7 +50,7 @@ export default function KycStep3Screen() {
       >
         <Animated.View entering={FadeInDown.duration(600).springify()} style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.back()}>
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
           <View style={styles.stepBadge}><Text style={styles.stepBadgeText}>Step 3 of 5</Text></View>
           <Text style={styles.title}>Identity Verification</Text>
@@ -76,7 +74,7 @@ export default function KycStep3Screen() {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : verified ? (
                 <>
-                  <GoonaIcon icon={CheckCircle} size={18} color="#FFFFFF" />
+                  <GoonaIcon icon={Icons.checkCircle} size={18} color="#FFFFFF" />
                   <Text style={styles.verifyText}>Verified</Text>
                 </>
               ) : (
@@ -91,7 +89,7 @@ export default function KycStep3Screen() {
             <TouchableOpacity activeOpacity={0.85} style={styles.submitBtn} onPress={handleSubmit}>
               <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.submitGrad}>
                 <Text style={styles.submitText}>Continue</Text>
-                <GoonaIcon icon={ChevronRight} size={18} color="#FFFFFF" />
+                <GoonaIcon icon={Icons.chevronRight} size={18} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>

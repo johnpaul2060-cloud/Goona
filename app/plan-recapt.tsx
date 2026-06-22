@@ -5,9 +5,7 @@ import {
 } from 'react-native'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, CheckCircle, Target, Calendar, Plus, Wallet,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -189,7 +187,7 @@ export default function PlanRecaptScreen() {
             activeOpacity={0.7}
             onPress={() => router.push('/recapitalization')}
           >
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
 
           <Text style={styles.heroTitle}>Plan Next Project</Text>
@@ -206,7 +204,7 @@ export default function PlanRecaptScreen() {
               style={styles.successCard}
             >
               <View style={styles.successIcon}>
-                <GoonaIcon icon={CheckCircle} size={32} color="#2E7D32" />
+                <GoonaIcon icon={Icons.checkCircle} size={32} color="#2E7D32" />
               </View>
               <Text style={styles.successTitle}>Project Created Successfully</Text>
               <Text style={styles.successSub}>Your project is ready for its first contribution.</Text>
@@ -218,7 +216,7 @@ export default function PlanRecaptScreen() {
             >
               <View style={styles.summaryHead}>
                 <View style={styles.summaryIcon}>
-                  <GoonaIcon icon={Target} size={16} color="#2E7D32" />
+                  <GoonaIcon icon={Icons.target} size={16} color="#2E7D32" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.summaryPre}>Project</Text>
@@ -269,7 +267,7 @@ export default function PlanRecaptScreen() {
                   )
                 }}
               >
-                <GoonaIcon icon={Wallet} size={18} color="#FFFFFF" />
+                <GoonaIcon icon={Icons.wallet} size={18} color="#FFFFFF" />
                 <Text style={styles.confirmBtnText}>
                   Fund First Contribution — {formatCurrency(nextAmount)}
                 </Text>
@@ -306,7 +304,7 @@ export default function PlanRecaptScreen() {
                       </Text>
                       {active && (
                         <View style={styles.projectCheck}>
-                          <GoonaIcon icon={CheckCircle} size={16} color="#2E7D32" />
+                          <GoonaIcon icon={Icons.checkCircle} size={16} color="#2E7D32" />
                         </View>
                       )}
                     </TouchableOpacity>
@@ -381,7 +379,7 @@ export default function PlanRecaptScreen() {
                   else setTempDate(null)
                 }}
               >
-                <GoonaIcon icon={Calendar} size={20} color="#2E7D32" />
+                <GoonaIcon icon={Icons.calendar} size={20} color="#2E7D32" />
                 <Text
                   style={[
                     styles.dateText,
@@ -414,7 +412,7 @@ export default function PlanRecaptScreen() {
                         setTempDate(null)
                       }}
                     >
-                      <GoonaIcon icon={CheckCircle} size={16} color="#FFFFFF" />
+                      <GoonaIcon icon={Icons.checkCircle} size={16} color="#FFFFFF" />
                       <Text style={styles.confirmDateText}>Confirm Date</Text>
                     </TouchableOpacity>
                   )}
@@ -443,7 +441,7 @@ export default function PlanRecaptScreen() {
                       colors={['#2E7D32', '#1B5E20']}
                       style={styles.recBadgeGrad}
                     >
-                      <GoonaIcon icon={Target} size={12} color="#FFFFFF" />
+                      <GoonaIcon icon={Icons.target} size={12} color="#FFFFFF" />
                     </LinearGradient>
                     <Text style={styles.recBadgeText}>GOONA Recommendation</Text>
                   </View>
@@ -474,7 +472,7 @@ export default function PlanRecaptScreen() {
 
                   <View style={styles.recRecommended}>
                     <View style={styles.recRecommendedBadge}>
-                      <GoonaIcon icon={CheckCircle} size={12} color="#FFFFFF" />
+                      <GoonaIcon icon={Icons.checkCircle} size={12} color="#FFFFFF" />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.recRecommendedLabel}>Recommended: {recommendedPlan}</Text>
@@ -560,7 +558,7 @@ export default function PlanRecaptScreen() {
                   end={{ x: 1, y: 1 }}
                   style={styles.createBtnGrad}
                 >
-                  <GoonaIcon icon={Target} size={20} color="#FFFFFF" />
+                  <GoonaIcon icon={Icons.target} size={20} color="#FFFFFF" />
                   <Text style={styles.createBtnText}>Create Project Plan</Text>
                 </LinearGradient>
               </TouchableOpacity>

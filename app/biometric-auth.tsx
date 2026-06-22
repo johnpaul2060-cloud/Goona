@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Alert, Modal, Keyboard
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Shield, Smartphone, ScanFace, FingerprintPattern, Trash2, X, ChevronRight, Sprout } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -39,7 +39,7 @@ function ModalShell({ visible, onClose, title, children }: { visible: boolean; o
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
           <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '85%' }}>
             <View style={{ alignItems: 'center', marginBottom: 8 }}><View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} /></View>
-            <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={X} size={18} color="#94A3B8" /></TouchableOpacity>
+            <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={Icons.x} size={18} color="#94A3B8" /></TouchableOpacity>
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F2937', marginBottom: 20 }}>{title}</Text>
             {children}
           </Animated.View>
@@ -113,9 +113,9 @@ export default function BiometricAuthScreen() {
       <ScrollView style={{ flex: 1, zIndex: 1 }} contentContainerStyle={{ paddingHorizontal: IS_SMALL ? 16 : 24, paddingTop: 0, paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: IS_SMALL ? 44 : 54 }}>
-          <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}><GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" /></TouchableOpacity>
+          <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}><GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" /></TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <GoonaIcon icon={Sprout} size={22} color="#00695C" />
+            <GoonaIcon icon={Icons.sprout} size={22} color="#00695C" />
             <Text style={{ fontWeight: '700', fontSize: 14, color: '#1B1B1B' }}>GOONA</Text>
           </View>
           <Text style={{ fontSize: 14, fontWeight: '500', color: '#616161' }}>Biometric Auth</Text>
@@ -131,7 +131,7 @@ export default function BiometricAuthScreen() {
         <Animated.View entering={FadeInUp.duration(500).delay(160).springify()} style={{ marginTop: 20, backgroundColor: 'white', borderRadius: 22, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.03, shadowRadius: 20, elevation: 2 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: isEnabled ? 'rgba(22,163,74,0.08)' : 'rgba(148,163,184,0.08)', alignItems: 'center', justifyContent: 'center' }}>
-              <GoonaIcon icon={Shield} size={24} color={isEnabled ? '#16A34A' : '#94A3B8'} />
+              <GoonaIcon icon={Icons.shield} size={24} color={isEnabled ? '#16A34A' : '#94A3B8'} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F2937' }}>Current Status</Text>
@@ -154,7 +154,7 @@ export default function BiometricAuthScreen() {
             <Text style={{ fontWeight: '600', fontSize: 12, color: '#64748B', marginBottom: 8, letterSpacing: 0.5, textTransform: 'uppercase' }}>Authentication Type</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 }}>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(99,102,241,0.08)', alignItems: 'center', justifyContent: 'center' }}>
-                <GoonaIcon icon={biometricType === 'FaceID' ? ScanFace : FingerprintPattern} size={18} color="#6366F1" />
+                <GoonaIcon icon={biometricType === 'FaceID' ? Icons.scanFace : Icons.fingerprintPattern} size={18} color="#6366F1" />
               </View>
               <View>
                 <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F2937' }}>{bioTypeLabel}</Text>
@@ -169,7 +169,7 @@ export default function BiometricAuthScreen() {
           <Text style={{ fontWeight: '700', fontSize: IS_SMALL ? 13 : 14, color: '#00695C', marginBottom: 8, paddingHorizontal: 4, letterSpacing: 0.3 }}>Settings</Text>
           <View style={{ backgroundColor: 'white', borderRadius: 22, paddingVertical: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.03, shadowRadius: 20, elevation: 2, overflow: 'hidden' }}>
             <SettingRow
-              icon={<GoonaIcon icon={Shield} size={16} color="#6366F1" />}
+              icon={<GoonaIcon icon={Icons.shield} size={16} color="#6366F1" />}
               title="Enable Biometric Login"
               desc={isEnabled ? `${bioLabel} login is active` : 'Use Face ID or fingerprint to log in'}
               right={<StyledSwitch value={isEnabled} onToggle={handleToggleBiometric} />}
@@ -177,13 +177,13 @@ export default function BiometricAuthScreen() {
             {isEnabled && (
               <>
                 <SettingRow
-                  icon={<GoonaIcon icon={ScanFace} size={16} color="#64748B" />}
+                  icon={<GoonaIcon icon={Icons.scanFace} size={16} color="#64748B" />}
                   title="Require at App Launch"
                   desc="Authenticate when opening the app"
                   right={<StyledSwitch value={settingsStore.security.requireBiometricAtLaunch} onToggle={() => settingsStore.setSecurityPref('requireBiometricAtLaunch', !settingsStore.security.requireBiometricAtLaunch)} />}
                 />
                 <SettingRow
-                  icon={<GoonaIcon icon={Smartphone} size={16} color="#64748B" />}
+                  icon={<GoonaIcon icon={Icons.smartphone} size={16} color="#64748B" />}
                   title="Require After Inactivity"
                   desc={`After ${settingsStore.security.inactivityTimeoutMinutes} min of inactivity`}
                   right={<StyledSwitch value={settingsStore.security.requireBiometricAfterInactivity} onToggle={() => settingsStore.setSecurityPref('requireBiometricAfterInactivity', !settingsStore.security.requireBiometricAfterInactivity)} />}
@@ -199,14 +199,14 @@ export default function BiometricAuthScreen() {
           <View style={{ backgroundColor: 'white', borderRadius: 22, paddingVertical: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.03, shadowRadius: 20, elevation: 2, overflow: 'hidden' }}>
             {authStore.registeredDevices.length === 0 ? (
               <View style={{ padding: 24, alignItems: 'center' }}>
-                <GoonaIcon icon={Smartphone} size={24} color="#CBD5E1" />
+                <GoonaIcon icon={Icons.smartphone} size={24} color="#CBD5E1" />
                 <Text style={{ fontSize: 13, color: '#94A3B8', marginTop: 8 }}>No devices registered yet</Text>
               </View>
             ) : (
               authStore.registeredDevices.map((device, index) => (
                 <View key={device.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: index < authStore.registeredDevices.length - 1 ? 1 : 0, borderBottomColor: '#F1F5F9' }}>
                   <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(99,102,241,0.06)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <GoonaIcon icon={Smartphone} size={16} color="#6366F1" />
+                    <GoonaIcon icon={Icons.smartphone} size={16} color="#6366F1" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: '600', color: '#1B1B1B' }}>{device.name}</Text>
@@ -217,7 +217,7 @@ export default function BiometricAuthScreen() {
                     </View>
                   </View>
                   <TouchableOpacity activeOpacity={0.7} onPress={() => setShowRemoveDevice(device)} style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(220,38,38,0.06)', alignItems: 'center', justifyContent: 'center' }}>
-                    <GoonaIcon icon={Trash2} size={14} color="#DC2626" />
+                    <GoonaIcon icon={Icons.trash2} size={14} color="#DC2626" />
                   </TouchableOpacity>
                 </View>
               ))
@@ -260,7 +260,7 @@ export default function BiometricAuthScreen() {
         {showRemoveDevice && (
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12, backgroundColor: '#F8FAF7', borderRadius: 12, padding: 12 }}>
-              <GoonaIcon icon={Smartphone} size={20} color="#6366F1" />
+              <GoonaIcon icon={Icons.smartphone} size={20} color="#6366F1" />
               <View>
                 <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F2937' }}>{showRemoveDevice.name}</Text>
                 <Text style={{ fontSize: 12, color: '#64748B' }}>Last login: {showRemoveDevice.lastLogin}</Text>

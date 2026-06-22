@@ -6,14 +6,14 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { ArrowLeft, Download, FileText, FileSpreadsheet, Printer, Share2, CheckCircle } from 'lucide-react-native'
+import { Icons } from '../../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 
 const EXPORT_OPTIONS = [
-  { id: 'pdf', label: 'PDF Report', desc: 'Full budget report with charts', icon: FileText, color: '#EF4444', bg: '#FEF2F2' },
-  { id: 'csv', label: 'CSV Spreadsheet', desc: 'Raw data for Excel / Sheets', icon: FileSpreadsheet, color: '#16A34A', bg: '#F0FDF4' },
-  { id: 'print', label: 'Print', desc: 'Send to a connected printer', icon: Printer, color: '#1A56FF', bg: '#EEF3FF' },
-  { id: 'share', label: 'Share', desc: 'Share via email or messaging', icon: Share2, color: '#8B5CF6', bg: '#F5F3FF' },
+  { id: 'pdf', label: 'PDF Report', desc: 'Full budget report with charts', icon: Icons.fileText, color: '#EF4444', bg: '#FEF2F2' },
+  { id: 'csv', label: 'CSV Spreadsheet', desc: 'Raw data for Excel / Sheets', icon: Icons.fileSpreadsheet, color: '#16A34A', bg: '#F0FDF4' },
+  { id: 'print', label: 'Print', desc: 'Send to a connected printer', icon: Icons.printer, color: '#1A56FF', bg: '#EEF3FF' },
+  { id: 'share', label: 'Share', desc: 'Share via email or messaging', icon: Icons.share2, color: '#8B5CF6', bg: '#F5F3FF' },
 ]
 
 export default function BudgetExportScreen() {
@@ -31,7 +31,7 @@ export default function BudgetExportScreen() {
       <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.successWrap}>
           <View style={styles.successIcon}>
-            <GoonaIcon icon={CheckCircle} size={40} color="#16A34A" />
+            <GoonaIcon icon={Icons.checkCircle} size={40} color="#16A34A" />
           </View>
           <Text style={styles.successTitle}>Export started</Text>
           <Text style={styles.successSub}>Your budget report is being generated. You will be notified when ready.</Text>
@@ -60,7 +60,7 @@ export default function BudgetExportScreen() {
             activeOpacity={0.7}
             onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses/budget' as any) } }}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Export Budget</Text>
           <View style={{ width: 40 }} />
@@ -90,7 +90,7 @@ export default function BudgetExportScreen() {
                     <Text style={styles.exportDesc}>{opt.desc}</Text>
                   </View>
                   <View style={[styles.exportRadio, active && { borderColor: opt.color, backgroundColor: opt.color }]}>
-                    {active && <GoonaIcon icon={CheckCircle} size={14} color="#FFF" />}
+                    {active && <GoonaIcon icon={Icons.checkCircle} size={14} color="#FFF" />}
                   </View>
                 </TouchableOpacity>
               </Animated.View>
@@ -106,7 +106,7 @@ export default function BudgetExportScreen() {
           disabled={!selected}
           onPress={handleExport}
         >
-          <GoonaIcon icon={Download} size={18} color="#FFF" />
+          <GoonaIcon icon={Icons.download} size={18} color="#FFF" />
           <Text style={styles.exportBtnText}>
             {selected ? `Export as ${EXPORT_OPTIONS.find(o => o.id === selected)?.label.split(' ')[0]}` : 'Select format'}
           </Text>

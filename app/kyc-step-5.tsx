@@ -8,9 +8,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, ChevronRight, Building2, Check,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useWalletStore } from '../store/useWalletStore'
 import * as Haptics from 'expo-haptics'
@@ -47,7 +45,7 @@ export default function KycStep5Screen() {
       >
         <Animated.View entering={FadeInDown.duration(600).springify()} style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.back()}>
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
           <View style={styles.stepBadge}><Text style={styles.stepBadgeText}>Step 5 of 5</Text></View>
           <Text style={styles.title}>Business Information</Text>
@@ -55,7 +53,7 @@ export default function KycStep5Screen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(400).delay(80).springify()} style={styles.optionalCard}>
-          <GoonaIcon icon={Building2} size={20} color="#2E7D32" />
+          <GoonaIcon icon={Icons.building2} size={20} color="#2E7D32" />
           <View style={{ flex: 1 }}>
             <Text style={styles.optionalTitle}>Optional Step</Text>
             <Text style={styles.optionalDesc}>You can skip this and come back later.</Text>
@@ -81,7 +79,7 @@ export default function KycStep5Screen() {
           <TouchableOpacity activeOpacity={0.85} style={styles.submitBtn} onPress={handleSubmit}>
             <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.submitGrad}>
               <Text style={styles.submitText}>Save & Continue</Text>
-              <GoonaIcon icon={ChevronRight} size={18} color="#FFFFFF" />
+              <GoonaIcon icon={Icons.chevronRight} size={18} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
           <TouchableOpacity style={styles.skipBtn} activeOpacity={0.7} onPress={handleSkip}>

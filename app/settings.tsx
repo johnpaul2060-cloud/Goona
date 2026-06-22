@@ -5,7 +5,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Bell, Clock, Users, Sparkles, BarChart3, RefreshCw, CloudOff, Server, Phone, Key, Smile, FileText, AlertTriangle, Globe, Moon, Wallet, HelpCircle, MessageSquare, Shield, Info, ChevronRight, Pencil, User, X, Check, Sprout, MapPin, Award, Fingerprint, Building2 } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -95,7 +95,7 @@ function ModalShell({ visible, onClose, title, children }: { visible: boolean; o
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
           <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '85%' }}>
             <View style={{ alignItems: 'center', marginBottom: 8 }}><View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} /></View>
-            <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={X} size={18} color="#94A3B8" /></TouchableOpacity>
+            <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={Icons.x} size={18} color="#94A3B8" /></TouchableOpacity>
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F2937', marginBottom: 20 }}>{title}</Text>
             {children}
           </Animated.View>
@@ -169,70 +169,70 @@ export default function SettingsScreen() {
 
   /* ─── Row builders ─── */
   const notifRows = [
-    { key: 'push', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Bell} size={16} color="#00695C" />), title: 'Push Notifications', desc: 'Receive alerts on your device', right: <StyledSwitch value={store.notifications.push} onToggle={() => store.toggleNotif('push')} /> },
-    { key: 'reminder', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Clock} size={16} color="#00695C" />), title: 'Reminder Alerts', desc: 'Feeding, health, and task reminders', right: <StyledSwitch value={store.notifications.reminder} onToggle={() => store.toggleNotif('reminder')} /> },
-    { key: 'recapReminders', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Wallet} size={16} color="#00695C" />), title: 'Recapt Reminders', desc: 'Weekly recapt contribution alerts', right: <StyledSwitch value={store.notifications.recapReminders} onToggle={() => store.toggleNotif('recapReminders')} /> },
-    { key: 'recovery', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Bell} size={16} color="#00695C" />), title: 'Recapt Notifications', desc: 'Contribution tracking and readiness alerts', right: <StyledSwitch value={store.notifications.recoveryNotifications} onToggle={() => store.toggleNotif('recoveryNotifications')} /> },
-    { key: 'financial', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Wallet} size={16} color="#00695C" />), title: 'Financial Notifications', desc: 'Sales, expenses, and profit alerts', right: <StyledSwitch value={store.notifications.financialNotifications} onToggle={() => store.toggleNotif('financialNotifications')} /> },
-    { key: 'iqAlerts', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Sparkles} size={16} color="#00695C" />), title: 'GOONA IQ Alerts', desc: 'AI-powered operational insights', right: <StyledSwitch value={store.notifications.iqAlerts} onToggle={() => store.toggleNotif('iqAlerts')} /> },
-    { key: 'worker', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Users} size={16} color="#00695C" />), title: 'Worker Activity Updates', desc: 'Get notified when workers log changes', right: <StyledSwitch value={store.notifications.worker} onToggle={() => store.toggleNotif('worker')} /> },
-    { key: 'batch', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={BarChart3} size={16} color="#00695C" />), title: 'Batch Health Alerts', desc: 'Critical batch health notifications', right: <StyledSwitch value={store.notifications.batch} onToggle={() => store.toggleNotif('batch')} /> },
+    { key: 'push', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.bell} size={16} color="#00695C" />), title: 'Push Notifications', desc: 'Receive alerts on your device', right: <StyledSwitch value={store.notifications.push} onToggle={() => store.toggleNotif('push')} /> },
+    { key: 'reminder', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.clock} size={16} color="#00695C" />), title: 'Reminder Alerts', desc: 'Feeding, health, and task reminders', right: <StyledSwitch value={store.notifications.reminder} onToggle={() => store.toggleNotif('reminder')} /> },
+    { key: 'recapReminders', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.wallet} size={16} color="#00695C" />), title: 'Recapt Reminders', desc: 'Weekly recapt contribution alerts', right: <StyledSwitch value={store.notifications.recapReminders} onToggle={() => store.toggleNotif('recapReminders')} /> },
+    { key: 'recovery', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.bell} size={16} color="#00695C" />), title: 'Recapt Notifications', desc: 'Contribution tracking and readiness alerts', right: <StyledSwitch value={store.notifications.recoveryNotifications} onToggle={() => store.toggleNotif('recoveryNotifications')} /> },
+    { key: 'financial', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.wallet} size={16} color="#00695C" />), title: 'Financial Notifications', desc: 'Sales, expenses, and profit alerts', right: <StyledSwitch value={store.notifications.financialNotifications} onToggle={() => store.toggleNotif('financialNotifications')} /> },
+    { key: 'iqAlerts', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.sparkles} size={16} color="#00695C" />), title: 'GOONA IQ Alerts', desc: 'AI-powered operational insights', right: <StyledSwitch value={store.notifications.iqAlerts} onToggle={() => store.toggleNotif('iqAlerts')} /> },
+    { key: 'worker', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.users} size={16} color="#00695C" />), title: 'Worker Activity Updates', desc: 'Get notified when workers log changes', right: <StyledSwitch value={store.notifications.worker} onToggle={() => store.toggleNotif('worker')} /> },
+    { key: 'batch', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.barChart3} size={16} color="#00695C" />), title: 'Batch Health Alerts', desc: 'Critical batch health notifications', right: <StyledSwitch value={store.notifications.batch} onToggle={() => store.toggleNotif('batch')} /> },
   ]
 
   const recaptRows = [
-    { key: 'recaptEnabled', icon: icBg('#F1F5F9', <GoonaIcon icon={Clock} size={16} color="#00695C" />), title: 'Recapt Reminders', desc: store.recaptReminders.enabled ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.recaptReminders.enabled} onToggle={() => store.setRecaptEnabled(!store.recaptReminders.enabled)} /> },
-    { key: 'recaptFreq', icon: icBg('#F1F5F9', <GoonaIcon icon={Bell} size={16} color="#00695C" />), title: 'Reminder Frequency', desc: `Current: ${store.recaptReminders.frequency}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('recapt')}>{store.recaptReminders.frequency}</Text>, onPress: () => open('recapt') },
+    { key: 'recaptEnabled', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.clock} size={16} color="#00695C" />), title: 'Recapt Reminders', desc: store.recaptReminders.enabled ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.recaptReminders.enabled} onToggle={() => store.setRecaptEnabled(!store.recaptReminders.enabled)} /> },
+    { key: 'recaptFreq', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.bell} size={16} color="#00695C" />), title: 'Reminder Frequency', desc: `Current: ${store.recaptReminders.frequency}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('recapt')}>{store.recaptReminders.frequency}</Text>, onPress: () => open('recapt') },
   ]
 
   const secRows = [
-    { key: 'changepin', icon: icBg('#F1F5F9', <GoonaIcon icon={Key} size={16} color="#64748B" />), title: 'Change PIN', desc: store.security.pinProtection ? 'PIN enabled' : 'Set up PIN protection', right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('pin')}>Change</Text>, onPress: () => open('pin') },
-    { key: 'biometric', icon: icBg('rgba(99,102,241,0.06)', <GoonaIcon icon={Smile} size={16} color="#6366F1" />), title: 'Biometric Authentication', desc: store.security.biometric ? 'Face ID / Fingerprint enabled' : 'Set up biometric login', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/biometric-auth' as any) },
-    { key: 'pinProtection', icon: icBg('#F1F5F9', <GoonaIcon icon={Shield} size={16} color="#64748B" />), title: 'PIN Protection', desc: 'Require PIN to open app', right: <StyledSwitch value={store.security.pinProtection} onToggle={() => store.toggleSecurity('pinProtection')} /> },
-    { key: 'devices', icon: icBg('#F1F5F9', <GoonaIcon icon={Phone} size={16} color="#64748B" />), title: 'Device Management', desc: 'Manage connected devices', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Device Management', 'You have 2 connected devices.\n\n• iPhone 15 Pro\n• Samsung Galaxy Tab') },
-    { key: 'sessions', icon: icBg('#F1F5F9', <GoonaIcon icon={FileText} size={16} color="#64748B" />), title: 'Login Sessions', desc: 'Manage active sessions', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Active Sessions', '1 active session\nLast login: Today 9:30 AM') },
-    ...(authRole === 'Owner' ? [{ key: 'killswitch', icon: icBg('rgba(239,68,68,0.06)', <GoonaIcon icon={AlertTriangle} size={16} color="#DC2626" />), title: 'Remote Kill Switch', desc: 'Revoke all device access', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/kill-switch' as any) }] : []),
+    { key: 'changepin', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.key} size={16} color="#64748B" />), title: 'Change PIN', desc: store.security.pinProtection ? 'PIN enabled' : 'Set up PIN protection', right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('pin')}>Change</Text>, onPress: () => open('pin') },
+    { key: 'biometric', icon: icBg('rgba(99,102,241,0.06)', <GoonaIcon icon={Icons.smile} size={16} color="#6366F1" />), title: 'Biometric Authentication', desc: store.security.biometric ? 'Face ID / Fingerprint enabled' : 'Set up biometric login', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/biometric-auth' as any) },
+    { key: 'pinProtection', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.shield} size={16} color="#64748B" />), title: 'PIN Protection', desc: 'Require PIN to open app', right: <StyledSwitch value={store.security.pinProtection} onToggle={() => store.toggleSecurity('pinProtection')} /> },
+    { key: 'devices', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.phone} size={16} color="#64748B" />), title: 'Device Management', desc: 'Manage connected devices', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Device Management', 'You have 2 connected devices.\n\n• iPhone 15 Pro\n• Samsung Galaxy Tab') },
+    { key: 'sessions', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.fileText} size={16} color="#64748B" />), title: 'Login Sessions', desc: 'Manage active sessions', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Active Sessions', '1 active session\nLast login: Today 9:30 AM') },
+    ...(authRole === 'Owner' ? [{ key: 'killswitch', icon: icBg('rgba(239,68,68,0.06)', <GoonaIcon icon={Icons.alertTriangle} size={16} color="#DC2626" />), title: 'Remote Kill Switch', desc: 'Revoke all device access', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/kill-switch' as any) }] : []),
   ]
 
   const walletLabel = walletStatus === 'activated' ? 'Activated' : walletStatus === 'pending' ? 'Verification Pending' : 'Not Activated'
-  const walletIcon = walletStatus === 'activated' ? Check : walletStatus === 'pending' ? Clock : Wallet
+  const walletIcon = walletStatus === 'activated' ? Icons.check : walletStatus === 'pending' ? Icons.clock : Icons.wallet
 
   const walletRows = [
-    { key: 'wallet', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Wallet} size={16} color="#00695C" />), title: 'GOONA Wallet', desc: `Status: ${walletLabel}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => router.push('/wallet-activation')}>{walletStatus === 'activated' ? 'Manage' : 'Activate'}</Text>, onPress: () => router.push('/wallet-activation') },
-    { key: 'verification', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Award} size={16} color="#00695C" />), title: 'Verification Center', desc: `${kyc.step1.completed ? '\u2713 ' : ''}${kyc.step2.completed ? 'BVN ' : ''}${kyc.step3.completed ? 'NIN ' : ''}${kyc.step4.completed ? 'Selfie ' : ''}${kyc.step5.completed ? 'Biz' : ''}`.trim() || 'Not started', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/verification-center') },
+    { key: 'wallet', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.wallet} size={16} color="#00695C" />), title: 'GOONA Wallet', desc: `Status: ${walletLabel}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => router.push('/wallet-activation')}>{walletStatus === 'activated' ? 'Manage' : 'Activate'}</Text>, onPress: () => router.push('/wallet-activation') },
+    { key: 'verification', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.award} size={16} color="#00695C" />), title: 'Verification Center', desc: `${kyc.step1.completed ? '\u2713 ' : ''}${kyc.step2.completed ? 'BVN ' : ''}${kyc.step3.completed ? 'NIN ' : ''}${kyc.step4.completed ? 'Selfie ' : ''}${kyc.step5.completed ? 'Biz' : ''}`.trim() || 'Not started', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/verification-center') },
   ]
 
   const dataRows = [
-    { key: 'autosync', icon: icBg('#F1F5F9', <GoonaIcon icon={RefreshCw} size={16} color="#64748B" />), title: 'Auto Sync', desc: 'Automatically sync farm data', right: <StyledSwitch value={store.data.autosync} onToggle={() => store.toggleData('autosync')} /> },
-    { key: 'offline', icon: icBg('#F1F5F9', <GoonaIcon icon={CloudOff} size={16} color="#64748B" />), title: 'Offline Mode', desc: store.data.offline ? `${store.data.offlineQueue} items in queue` : 'Work without internet', right: <StyledSwitch value={store.data.offline} onToggle={() => store.toggleData('offline')} /> },
-    { key: 'syncnow', icon: icBg('#F1F5F9', <GoonaIcon icon={RefreshCw} size={16} color="#64748B" />), title: 'Sync Now', desc: `Last sync: ${syncBadge}`, right: syncState === 'syncing' ? <ActivityIndicator size="small" color="#2E7D32" /> : syncState === 'done' ? <GoonaIcon icon={Check} size={18} color="#16A34A" /> : <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={handleSync}>Sync</Text>, onPress: syncState === 'idle' ? handleSync : undefined },
-    { key: 'backup', icon: icBg('#F1F5F9', <GoonaIcon icon={Server} size={16} color="#64748B" />), title: 'Backup Data', desc: backupState === 'done' ? 'Backup complete' : 'Create a backup of all farm data', right: backupState === 'backing' ? <ActivityIndicator size="small" color="#2E7D32" /> : backupState === 'done' ? <GoonaIcon icon={Check} size={18} color="#16A34A" /> : <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={handleBackup}>Back Up</Text>, onPress: backupState === 'idle' ? handleBackup : undefined },
+    { key: 'autosync', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.refreshCw} size={16} color="#64748B" />), title: 'Auto Sync', desc: 'Automatically sync farm data', right: <StyledSwitch value={store.data.autosync} onToggle={() => store.toggleData('autosync')} /> },
+    { key: 'offline', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.cloudOff} size={16} color="#64748B" />), title: 'Offline Mode', desc: store.data.offline ? `${store.data.offlineQueue} items in queue` : 'Work without internet', right: <StyledSwitch value={store.data.offline} onToggle={() => store.toggleData('offline')} /> },
+    { key: 'syncnow', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.refreshCw} size={16} color="#64748B" />), title: 'Sync Now', desc: `Last sync: ${syncBadge}`, right: syncState === 'syncing' ? <ActivityIndicator size="small" color="#2E7D32" /> : syncState === 'done' ? <GoonaIcon icon={Icons.check} size={18} color="#16A34A" /> : <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={handleSync}>Sync</Text>, onPress: syncState === 'idle' ? handleSync : undefined },
+    { key: 'backup', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.server} size={16} color="#64748B" />), title: 'Backup Data', desc: backupState === 'done' ? 'Backup complete' : 'Create a backup of all farm data', right: backupState === 'backing' ? <ActivityIndicator size="small" color="#2E7D32" /> : backupState === 'done' ? <GoonaIcon icon={Icons.check} size={18} color="#16A34A" /> : <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={handleBackup}>Back Up</Text>, onPress: backupState === 'idle' ? handleBackup : undefined },
   ]
 
   const iqRows = [
-    { key: 'dailychallenge', icon: icBg('rgba(174,234,0,0.06)', <GoonaIcon icon={Clock} size={16} color="#AEEA00" />), title: 'Daily Challenges', desc: 'Get daily operational scenarios', right: <StyledSwitch value={store.iq.dailychallenge} onToggle={() => store.toggleIq('dailychallenge')} /> },
-    { key: 'leaderboard', icon: icBg('rgba(174,234,0,0.06)', <GoonaIcon icon={Sparkles} size={16} color="#AEEA00" />), title: 'Leaderboard Visibility', desc: 'Show your farm on rankings', right: <StyledSwitch value={store.iq.leaderboard} onToggle={() => store.toggleIq('leaderboard')} /> },
-    { key: 'aiprefs', icon: icBg('rgba(174,234,0,0.06)', <GoonaIcon icon={BarChart3} size={16} color="#AEEA00" />), title: 'AI Preferences', desc: `Sensitivity ${store.iq.aiSensitivity}/5 · Freq ${store.iq.recommendationFrequency}/5`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('iq')}>Configure</Text>, onPress: () => open('iq') },
+    { key: 'dailychallenge', icon: icBg('rgba(174,234,0,0.06)', <GoonaIcon icon={Icons.clock} size={16} color="#AEEA00" />), title: 'Daily Challenges', desc: 'Get daily operational scenarios', right: <StyledSwitch value={store.iq.dailychallenge} onToggle={() => store.toggleIq('dailychallenge')} /> },
+    { key: 'leaderboard', icon: icBg('rgba(174,234,0,0.06)', <GoonaIcon icon={Icons.sparkles} size={16} color="#AEEA00" />), title: 'Leaderboard Visibility', desc: 'Show your farm on rankings', right: <StyledSwitch value={store.iq.leaderboard} onToggle={() => store.toggleIq('leaderboard')} /> },
+    { key: 'aiprefs', icon: icBg('rgba(174,234,0,0.06)', <GoonaIcon icon={Icons.barChart3} size={16} color="#AEEA00" />), title: 'AI Preferences', desc: `Sensitivity ${store.iq.aiSensitivity}/5 · Freq ${store.iq.recommendationFrequency}/5`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('iq')}>Configure</Text>, onPress: () => open('iq') },
   ]
 
   const workerRows = [
-    { key: 'wp', icon: icBg('#F1F5F9', <GoonaIcon icon={Users} size={16} color="#00695C" />), title: 'Worker Permissions', desc: store.workerPermissions.workerPermissions ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.workerPermissions.workerPermissions} onToggle={() => store.toggleWorkerPermission('workerPermissions')} /> },
-    { key: 'sp', icon: icBg('#F1F5F9', <GoonaIcon icon={Shield} size={16} color="#64748B" />), title: 'Supervisor Permissions', desc: store.workerPermissions.supervisorPermissions ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.workerPermissions.supervisorPermissions} onToggle={() => store.toggleWorkerPermission('supervisorPermissions')} /> },
-    { key: 'rm', icon: icBg('#F1F5F9', <GoonaIcon icon={FileText} size={16} color="#64748B" />), title: 'Role Management', desc: store.workerPermissions.roleManagement ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.workerPermissions.roleManagement} onToggle={() => store.toggleWorkerPermission('roleManagement')} /> },
-    { key: 'wv', icon: icBg('#F1F5F9', <GoonaIcon icon={Globe} size={16} color="#64748B" />), title: 'Workforce Visibility', desc: store.workerPermissions.workforceVisibility ? 'Visible on dashboard' : 'Hidden', right: <StyledSwitch value={store.workerPermissions.workforceVisibility} onToggle={() => store.toggleWorkerPermission('workforceVisibility')} /> },
+    { key: 'wp', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.users} size={16} color="#00695C" />), title: 'Worker Permissions', desc: store.workerPermissions.workerPermissions ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.workerPermissions.workerPermissions} onToggle={() => store.toggleWorkerPermission('workerPermissions')} /> },
+    { key: 'sp', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.shield} size={16} color="#64748B" />), title: 'Supervisor Permissions', desc: store.workerPermissions.supervisorPermissions ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.workerPermissions.supervisorPermissions} onToggle={() => store.toggleWorkerPermission('supervisorPermissions')} /> },
+    { key: 'rm', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.fileText} size={16} color="#64748B" />), title: 'Role Management', desc: store.workerPermissions.roleManagement ? 'Enabled' : 'Disabled', right: <StyledSwitch value={store.workerPermissions.roleManagement} onToggle={() => store.toggleWorkerPermission('roleManagement')} /> },
+    { key: 'wv', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.globe} size={16} color="#64748B" />), title: 'Workforce Visibility', desc: store.workerPermissions.workforceVisibility ? 'Visible on dashboard' : 'Hidden', right: <StyledSwitch value={store.workerPermissions.workforceVisibility} onToggle={() => store.toggleWorkerPermission('workforceVisibility')} /> },
   ]
 
   const helpRows = [
-    { key: 'helpcenter', icon: icBg('#F1F5F9', <GoonaIcon icon={HelpCircle} size={16} color="#64748B" />), title: 'Help Center', desc: 'Guides and FAQs', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/goona-academy' as any) },
-    { key: 'support', icon: icBg('#F1F5F9', <GoonaIcon icon={MessageSquare} size={16} color="#64748B" />), title: 'Contact Support', desc: 'support@goona.farm', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Contact Support', 'Email: support@goona.farm\nResponse time: within 24 hours') },
-    { key: 'privacy', icon: icBg('#F1F5F9', <GoonaIcon icon={Shield} size={16} color="#64748B" />), title: 'Privacy Policy', desc: 'How we handle your data', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Privacy Policy', 'Your farm data is encrypted end-to-end. We never share your data with third parties.') },
-    { key: 'terms', icon: icBg('#F1F5F9', <GoonaIcon icon={FileText} size={16} color="#64748B" />), title: 'Terms & Conditions', desc: 'Service agreement', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Terms & Conditions', 'GOONA Farm Operating System v2.4.1\nLicensed to you. All rights reserved.') },
-    { key: 'version', icon: icBg('#F1F5F9', <GoonaIcon icon={Info} size={16} color="#64748B" />), title: 'App Version', desc: 'GOONA v2.4.1', right: <Badge text="v2.4.1" /> },
+    { key: 'helpcenter', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.helpCircle} size={16} color="#64748B" />), title: 'Help Center', desc: 'Guides and FAQs', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/goona-academy' as any) },
+    { key: 'support', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.messageSquare} size={16} color="#64748B" />), title: 'Contact Support', desc: 'support@goona.farm', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Contact Support', 'Email: support@goona.farm\nResponse time: within 24 hours') },
+    { key: 'privacy', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.shield} size={16} color="#64748B" />), title: 'Privacy Policy', desc: 'How we handle your data', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Privacy Policy', 'Your farm data is encrypted end-to-end. We never share your data with third parties.') },
+    { key: 'terms', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.fileText} size={16} color="#64748B" />), title: 'Terms & Conditions', desc: 'Service agreement', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => Alert.alert('Terms & Conditions', 'GOONA Farm Operating System v2.4.1\nLicensed to you. All rights reserved.') },
+    { key: 'version', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.info} size={16} color="#64748B" />), title: 'App Version', desc: 'GOONA v2.4.1', right: <Badge text="v2.4.1" /> },
   ]
 
   const themeRows = [
-    { key: 'reducedMotion', icon: icBg('#F1F5F9', <GoonaIcon icon={Moon} size={16} color="#64748B" />), title: 'Reduced Motion', desc: 'Minimize animations', right: <StyledSwitch value={store.theme.reducedMotion} onToggle={() => store.setThemePref('reducedMotion', !store.theme.reducedMotion)} /> },
-    { key: 'darkMode', icon: icBg('#F1F5F9', <GoonaIcon icon={Moon} size={16} color="#64748B" />), title: 'Dark Mode', desc: 'Use dark color scheme', right: <StyledSwitch value={store.theme.darkMode} onToggle={() => store.setThemePref('darkMode', !store.theme.darkMode)} /> },
-    { key: 'theme', icon: icBg('#F1F5F9', <GoonaIcon icon={Moon} size={16} color="#64748B" />), title: 'Theme Settings', desc: `Animation: ${store.theme.animationIntensity}/5 · Density: ${store.theme.uiDensity}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('theme')}>Configure</Text>, onPress: () => open('theme') },
+    { key: 'reducedMotion', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.moon} size={16} color="#64748B" />), title: 'Reduced Motion', desc: 'Minimize animations', right: <StyledSwitch value={store.theme.reducedMotion} onToggle={() => store.setThemePref('reducedMotion', !store.theme.reducedMotion)} /> },
+    { key: 'darkMode', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.moon} size={16} color="#64748B" />), title: 'Dark Mode', desc: 'Use dark color scheme', right: <StyledSwitch value={store.theme.darkMode} onToggle={() => store.setThemePref('darkMode', !store.theme.darkMode)} /> },
+    { key: 'theme', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.moon} size={16} color="#64748B" />), title: 'Theme Settings', desc: `Animation: ${store.theme.animationIntensity}/5 · Density: ${store.theme.uiDensity}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('theme')}>Configure</Text>, onPress: () => open('theme') },
   ]
 
   const handleLogout = () => {
@@ -259,9 +259,9 @@ export default function SettingsScreen() {
       <ScrollView style={{ flex: 1, zIndex: 1 }} contentContainerStyle={{ paddingHorizontal: IS_SMALL ? 16 : 24, paddingTop: 0, paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: IS_SMALL ? 44 : 54 }}>
-          <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}><GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" /></TouchableOpacity>
+          <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}><GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" /></TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <GoonaIcon icon={Sprout} size={22} color="#00695C" />
+            <GoonaIcon icon={Icons.sprout} size={22} color="#00695C" />
             <Text style={{ fontWeight: '700', fontSize: 14, color: '#1B1B1B' }}>GOONA</Text>
           </View>
           <Text style={{ fontSize: 14, fontWeight: '500', color: '#616161' }}>Settings</Text>
@@ -271,7 +271,7 @@ export default function SettingsScreen() {
         <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: IS_SMALL ? 14 : 20 }}>
           <Text style={{ fontWeight: '800', fontSize: IS_SMALL ? 26 : 30, lineHeight: IS_SMALL ? 32 : 36, color: '#1F2937' }}>Settings</Text>
           <TouchableOpacity activeOpacity={0.85} onPress={() => open('profile')} style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.7)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 }}>
-            <GoonaIcon icon={User} size={18} color="#1F2937" />
+            <GoonaIcon icon={Icons.user} size={18} color="#1F2937" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -289,7 +289,7 @@ export default function SettingsScreen() {
               <Text style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>{store.profile.role}</Text>
               <Text style={{ fontSize: 12, color: '#00695C', fontWeight: '600', marginTop: 2 }}>{store.profile.farmName}</Text>
             </View>
-            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><GoonaIcon icon={Pencil} size={16} color="#64748B" /></View>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><GoonaIcon icon={Icons.pencil} size={16} color="#64748B" /></View>
           </TouchableOpacity>
         </BlurView>
 
@@ -300,7 +300,7 @@ export default function SettingsScreen() {
         <SettingsSection title="Security & Access" rows={secRows} index={4} />
         <SettingsSection title="GOONA Wallet" rows={walletRows} index={5} />
         <SettingsSection title="Farm Boundaries" rows={[
-          { key: 'boundaries', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={MapPin} size={16} color="#00695C" />), title: 'Farm Boundaries', desc: 'Manage geofences, zones, and restricted areas', right: <GoonaIcon icon={ChevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/farm-boundaries' as any) },
+          { key: 'boundaries', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.mapPin} size={16} color="#00695C" />), title: 'Farm Boundaries', desc: 'Manage geofences, zones, and restricted areas', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/farm-boundaries' as any) },
         ]} index={6} />
         <SettingsSection title="GOONA IQ" rows={iqRows} index={7} />
         <SettingsSection title="Theme & Experience" rows={themeRows} index={8} />

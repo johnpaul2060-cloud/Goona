@@ -4,10 +4,7 @@ import {
   StyleSheet, Dimensions, Alert,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, MapPin, Battery, Bell,
-  Navigation, Radio, Target,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import Animated, {
@@ -107,7 +104,7 @@ function MapFallback({ selectedWorker, onSelectWorker }: {
       {/* Map header bar */}
       <View style={s.fallbackHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <MapPin size={14} color="#00695C" strokeWidth={2.5} />
+          <Icons.mapPin size={14} color="#00695C" strokeWidth={2.5} />
           <Text style={{ fontSize: 12, fontWeight: '600', color: '#334155' }}>Farm Layout</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -177,7 +174,7 @@ function MapFallback({ selectedWorker, onSelectWorker }: {
 
       {/* Fallback footer */}
       <View style={s.fallbackFooter}>
-        <Radio size={12} color="#22C55E" strokeWidth={2} />
+        <Icons.radio size={12} color="#22C55E" strokeWidth={2} />
         <Text style={{ fontSize: 10, color: '#64748B' }}>Map unavailable — showing farm layout</Text>
         <View style={{ flex: 1 }} />
         <Text style={{ fontSize: 9, color: '#94A3B8' }}>{present} workers</Text>
@@ -191,11 +188,11 @@ const present = WORKER_POSITIONS.length
 const activeLocations = [...new Set(WORKER_POSITIONS.filter(w => w.status === 'active').map(w => w.location))].length
 
 const GEOFENCE_EVENTS = [
-  { text: 'Chinedu entered Poultry House A', time: '2 min ago', icon: Navigation, color: '#22C55E' },
-  { text: 'Aminat exited Feed Warehouse', time: '8 min ago', icon: MapPin, color: '#F59E0B' },
-  { text: 'Funmi entered Fish Pond zone', time: '15 min ago', icon: Navigation, color: '#22C55E' },
-  { text: 'Tunde completed perimeter checkpoint', time: '22 min ago', icon: Target, color: '#6366F1' },
-  { text: 'Segun moved to Poultry House B', time: '30 min ago', icon: Radio, color: '#00695C' },
+  { text: 'Chinedu entered Poultry House A', time: '2 min ago', icon: Icons.navigation, color: '#22C55E' },
+  { text: 'Aminat exited Feed Warehouse', time: '8 min ago', icon: Icons.mapPin, color: '#F59E0B' },
+  { text: 'Funmi entered Fish Pond zone', time: '15 min ago', icon: Icons.navigation, color: '#22C55E' },
+  { text: 'Tunde completed perimeter checkpoint', time: '22 min ago', icon: Icons.target, color: '#6366F1' },
+  { text: 'Segun moved to Poultry House B', time: '30 min ago', icon: Icons.radio, color: '#00695C' },
 ]
 
 export default function WorkforceLiveScreen() {
@@ -216,14 +213,14 @@ export default function WorkforceLiveScreen() {
         {/* App Bar */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={s.topNav}>
           <TouchableOpacity style={s.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <PulseDot color="#22C55E" size={5} />
             <Text style={s.navLabel}>Workforce Live</Text>
           </View>
           <TouchableOpacity style={s.navBack} onPress={fitToMarkers}>
-            <GoonaIcon icon={Target} size={18} color="#00695C" />
+            <GoonaIcon icon={Icons.target} size={18} color="#00695C" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -314,11 +311,11 @@ export default function WorkforceLiveScreen() {
                   </View>
                   <View style={s.calloutDetails}>
                     <View style={s.calloutRow}>
-                      <GoonaIcon icon={MapPin} size={12} color="#64748B" />
+                      <GoonaIcon icon={Icons.mapPin} size={12} color="#64748B" />
                       <Text style={s.calloutText}>{selectedWorker.location} — {selectedWorker.lastSeen}</Text>
                     </View>
                     <View style={s.calloutRow}>
-                      <Battery size={12} color={selectedWorker.battery > 20 ? '#22C55E' : '#EF4444'} strokeWidth={2} />
+                      <Icons.battery size={12} color={selectedWorker.battery > 20 ? '#22C55E' : '#EF4444'} strokeWidth={2} />
                       <Text style={s.calloutText}>Battery: {selectedWorker.battery}%</Text>
                     </View>
                     <View style={s.calloutRow}>
@@ -333,7 +330,7 @@ export default function WorkforceLiveScreen() {
             {/* Map overlay buttons */}
             <View style={s.mapOverlayBtn}>
               <TouchableOpacity style={s.mapBtn} onPress={fitToMarkers}>
-                <Target size={16} color="#00695C" strokeWidth={2.5} />
+                <Icons.target size={16} color="#00695C" strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
           </MapErrorBoundary>
@@ -349,19 +346,19 @@ export default function WorkforceLiveScreen() {
             </View>
             <View style={s.statusDiv} />
             <View style={s.statusItem}>
-              <GoonaIcon icon={MapPin} size={14} color="#00695C" />
+              <GoonaIcon icon={Icons.mapPin} size={14} color="#00695C" />
               <Text style={s.statusValue}>{ZONE_POLYGONS.length}</Text>
               <Text style={s.statusLabel}>Zones</Text>
             </View>
             <View style={s.statusDiv} />
             <View style={s.statusItem}>
-              <GoonaIcon icon={Bell} size={14} color="#EF4444" />
+              <GoonaIcon icon={Icons.bell} size={14} color="#EF4444" />
               <Text style={s.statusValue}>1</Text>
               <Text style={s.statusLabel}>Alert</Text>
             </View>
             <View style={s.statusDiv} />
             <View style={s.statusItem}>
-              <Radio size={14} color="#22C55E" strokeWidth={2} />
+              <Icons.radio size={14} color="#22C55E" strokeWidth={2} />
               <Text style={[s.statusLabel, { color: '#22C55E', fontWeight: '600' }]}>Active</Text>
             </View>
           </Animated.View>
@@ -422,10 +419,10 @@ export default function WorkforceLiveScreen() {
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontWeight: '600', fontSize: 13, color: '#1B1B1B' }}>{w.name}</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                          <GoonaIcon icon={MapPin} size={10} color="#64748B" />
+                          <GoonaIcon icon={Icons.mapPin} size={10} color="#64748B" />
                           <Text style={{ fontSize: 10, color: '#64748B' }}>{w.location}</Text>
                           <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#D1D5DB', marginHorizontal: 4 }} />
-                          <Battery size={10} color={w.battery > 20 ? '#22C55E' : '#EF4444'} strokeWidth={2} />
+                          <Icons.battery size={10} color={w.battery > 20 ? '#22C55E' : '#EF4444'} strokeWidth={2} />
                           <Text style={{ fontSize: 10, color: '#94A3B8' }}>{w.battery}%</Text>
                         </View>
                       </View>

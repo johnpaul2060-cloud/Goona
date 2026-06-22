@@ -6,11 +6,7 @@ import {
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
-import {
-  ArrowLeft, Wheat, Skull, Pill, Egg, Droplets, Eye, Calendar,
-  ChevronDown, ClipboardList, CheckCircle, Sparkles, Clock, FileText,
-  TrendingUp, TrendingDown, AlertTriangle,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, {
   FadeInUp, FadeInDown,
 } from 'react-native-reanimated'
@@ -20,21 +16,21 @@ import BottomDock from '../components/navigation/BottomDock'
 import BatchPickerModal from '../components/BatchPickerModal'
 
 const RECORD_TYPES = [
-  { key: 'feed' as const, label: 'Feed', icon: Wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', emoji: '\uD83C\uDF3D' },
-  { key: 'mortality' as const, label: 'Mortality', icon: Skull, iconBg: '#FFF1F2', iconColor: '#EF4444', emoji: '\uD83D\uDC80' },
-  { key: 'medication' as const, label: 'Medication', icon: Pill, iconBg: '#EEF3FF', iconColor: '#1A56FF', emoji: '\uD83D\uDC8A' },
-  { key: 'eggs' as const, label: 'Eggs', icon: Egg, iconBg: '#F0FDF4', iconColor: '#16A34A', emoji: '\uD83E\uDD5A' },
-  { key: 'water' as const, label: 'Water', icon: Droplets, iconBg: '#EEF3FF', iconColor: '#0EA5E9', emoji: '\uD83D\uDCA7' },
-  { key: 'observation' as const, label: 'Notes', icon: Eye, iconBg: '#F5F3FF', iconColor: '#8B5CF6', emoji: '\uD83D\uDCDD' },
+  { key: 'feed' as const, label: 'Feed', icon: Icons.wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', emoji: '\uD83C\uDF3D' },
+  { key: 'mortality' as const, label: 'Mortality', icon: Icons.skull, iconBg: '#FFF1F2', iconColor: '#EF4444', emoji: '\uD83D\uDC80' },
+  { key: 'medication' as const, label: 'Medication', icon: Icons.pill, iconBg: '#EEF3FF', iconColor: '#1A56FF', emoji: '\uD83D\uDC8A' },
+  { key: 'eggs' as const, label: 'Eggs', icon: Icons.egg, iconBg: '#F0FDF4', iconColor: '#16A34A', emoji: '\uD83E\uDD5A' },
+  { key: 'water' as const, label: 'Water', icon: Icons.droplets, iconBg: '#EEF3FF', iconColor: '#0EA5E9', emoji: '\uD83D\uDCA7' },
+  { key: 'observation' as const, label: 'Notes', icon: Icons.eye, iconBg: '#F5F3FF', iconColor: '#8B5CF6', emoji: '\uD83D\uDCDD' },
 ] as const
 
 type RecordKey = (typeof RECORD_TYPES)[number]['key']
 
 const SNAPSHOT_METRICS = [
-  { label: 'Feed Logged', value: '120 kg', icon: Wheat, color: '#F59E0B', bg: '#FFFBEB', trend: 'up' as const, change: '+8% vs yesterday' },
-  { label: 'Water Logged', value: '80 L', icon: Droplets, color: '#0EA5E9', bg: '#EEF3FF', trend: 'up' as const, change: '+12% vs yesterday' },
-  { label: 'Mortality', value: '2 birds', icon: Skull, color: '#EF4444', bg: '#FFF1F2', trend: 'down' as const, change: '-1 vs yesterday' },
-  { label: 'Egg Production', value: '360 eggs', icon: Egg, color: '#16A34A', bg: '#F0FDF4', trend: 'up' as const, change: '+5% vs yesterday' },
+  { label: 'Feed Logged', value: '120 kg', icon: Icons.wheat, color: '#F59E0B', bg: '#FFFBEB', trend: 'up' as const, change: '+8% vs yesterday' },
+  { label: 'Water Logged', value: '80 L', icon: Icons.droplets, color: '#0EA5E9', bg: '#EEF3FF', trend: 'up' as const, change: '+12% vs yesterday' },
+  { label: 'Mortality', value: '2 birds', icon: Icons.skull, color: '#EF4444', bg: '#FFF1F2', trend: 'down' as const, change: '-1 vs yesterday' },
+  { label: 'Egg Production', value: '360 eggs', icon: Icons.egg, color: '#16A34A', bg: '#F0FDF4', trend: 'up' as const, change: '+5% vs yesterday' },
 ]
 
 const DAILY_LOGS = [
@@ -49,17 +45,17 @@ const DAILY_LOGS = [
 const PROGRESS_PCT = Math.round((DAILY_LOGS.filter(l => l.done).length / DAILY_LOGS.length) * 100)
 
 const RECENT_ACTIVITY = [
-  { icon: Wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', title: '120kg Feed Logged', time: 'Today, 8:30 AM', batch: 'Broiler Batch A', date: '20 Jun 2026' },
-  { icon: Pill, iconBg: '#EEF3FF', iconColor: '#1A56FF', title: 'Medication — Newcastle vaccine', time: 'Today, 7:15 AM', batch: '420 broilers', date: '20 Jun 2026' },
-  { icon: Egg, iconBg: '#F0FDF4', iconColor: '#16A34A', title: '360 Eggs Collected', time: 'Yesterday, 4:00 PM', batch: 'Layer Batch B', date: '19 Jun 2026' },
-  { icon: Droplets, iconBg: '#EEF3FF', iconColor: '#0EA5E9', title: '80L Water Consumed', time: 'Yesterday, 3:00 PM', batch: 'Broiler Batch A', date: '19 Jun 2026' },
-  { icon: Skull, iconBg: '#FFF1F2', iconColor: '#EF4444', title: '2 Mortality Recorded', time: 'Yesterday, 2:15 PM', batch: 'Broiler Batch A', date: '19 Jun 2026' },
+  { icon: Icons.wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', title: '120kg Feed Logged', time: 'Today, 8:30 AM', batch: 'Broiler Batch A', date: '20 Jun 2026' },
+  { icon: Icons.pill, iconBg: '#EEF3FF', iconColor: '#1A56FF', title: 'Medication — Newcastle vaccine', time: 'Today, 7:15 AM', batch: '420 broilers', date: '20 Jun 2026' },
+  { icon: Icons.egg, iconBg: '#F0FDF4', iconColor: '#16A34A', title: '360 Eggs Collected', time: 'Yesterday, 4:00 PM', batch: 'Layer Batch B', date: '19 Jun 2026' },
+  { icon: Icons.droplets, iconBg: '#EEF3FF', iconColor: '#0EA5E9', title: '80L Water Consumed', time: 'Yesterday, 3:00 PM', batch: 'Broiler Batch A', date: '19 Jun 2026' },
+  { icon: Icons.skull, iconBg: '#FFF1F2', iconColor: '#EF4444', title: '2 Mortality Recorded', time: 'Yesterday, 2:15 PM', batch: 'Broiler Batch A', date: '19 Jun 2026' },
 ]
 
 const IQ_INSIGHTS = [
-  { icon: TrendingUp, color: '#F59E0B', bg: '#FFFBEB', title: 'Feed Consumption', desc: 'Feed consumption is 12% below expected for this cycle. Consider reviewing feed formulation.', severity: 'low' as const },
-  { icon: TrendingDown, color: '#16A34A', bg: '#F0FDF4', title: 'Mortality Trend', desc: 'Mortality trend is normal at 0.4% — well below the 2% threshold. Continue current practices.', severity: 'normal' as const },
-  { icon: AlertTriangle, color: '#EF4444', bg: '#FEF2F2', title: 'Water Usage Alert', desc: 'Water usage elevated by 8% today. Check for leaks or adjust drinker pressure.', severity: 'elevated' as const },
+  { icon: Icons.trendingUp, color: '#F59E0B', bg: '#FFFBEB', title: 'Feed Consumption', desc: 'Feed consumption is 12% below expected for this cycle. Consider reviewing feed formulation.', severity: 'low' as const },
+  { icon: Icons.trendingDown, color: '#16A34A', bg: '#F0FDF4', title: 'Mortality Trend', desc: 'Mortality trend is normal at 0.4% — well below the 2% threshold. Continue current practices.', severity: 'normal' as const },
+  { icon: Icons.alertTriangle, color: '#EF4444', bg: '#FEF2F2', title: 'Water Usage Alert', desc: 'Water usage elevated by 8% today. Check for leaks or adjust drinker pressure.', severity: 'elevated' as const },
 ]
 
 const SCREEN_W = Dimensions.get('window').width
@@ -135,7 +131,7 @@ function QuickLogSheet({
         <Animated.View entering={FadeInDown.duration(350).springify()} style={qsStyles.sheet}>
           <View style={qsStyles.handle} />
           <View style={qsStyles.contextPill}>
-            <GoonaIcon icon={Calendar} size={12} color="#2E7D32" />
+            <GoonaIcon icon={Icons.calendar} size={12} color="#2E7D32" />
             <Text style={qsStyles.contextText}>{dateStr}  •  {batch}</Text>
           </View>
           <ScrollView
@@ -147,27 +143,27 @@ function QuickLogSheet({
             {type === 'feed' && (
               <View>
                 <Text style={qsStyles.sheetTitle}>Log Feed Usage</Text>
-                <FormField label="Feed Type" placeholder="e.g. Grower feed" icon={<GoonaIcon icon={Wheat} size={16} color="#A0AEA1" />} autoFocus />
+                <FormField label="Feed Type" placeholder="e.g. Grower feed" icon={<GoonaIcon icon={Icons.wheat} size={16} color="#A0AEA1" />} autoFocus />
                 <FormField label="Quantity" placeholder="0 kg" suffix="kg" />
                 <FormField label="Cost" placeholder="0.00" prefix={'\u20A6'} onFocus={scrollToInput} />
-                <FormField label="Time" placeholder="e.g. 8:30 AM" icon={<GoonaIcon icon={Clock} size={16} color="#A0AEA1" />} onFocus={scrollToInput} />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={FileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
+                <FormField label="Time" placeholder="e.g. 8:30 AM" icon={<GoonaIcon icon={Icons.clock} size={16} color="#A0AEA1" />} onFocus={scrollToInput} />
+                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
               </View>
             )}
             {type === 'mortality' && (
               <View>
                 <Text style={qsStyles.sheetTitle}>Log Mortality</Text>
                 <FormField label="Number of Birds Lost" placeholder="0" autoFocus />
-                <FormField label="Suspected Cause" placeholder="e.g. Heat stress" icon={<GoonaIcon icon={FileText} size={16} color="#A0AEA1" />} onFocus={scrollToInput} />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={FileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
+                <FormField label="Suspected Cause" placeholder="e.g. Heat stress" icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} onFocus={scrollToInput} />
+                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
               </View>
             )}
             {type === 'medication' && (
               <View>
                 <Text style={qsStyles.sheetTitle}>Log Medication</Text>
-                <FormField label="Medication Name" placeholder="e.g. Newcastle vaccine" icon={<GoonaIcon icon={Pill} size={16} color="#A0AEA1" />} autoFocus />
+                <FormField label="Medication Name" placeholder="e.g. Newcastle vaccine" icon={<GoonaIcon icon={Icons.pill} size={16} color="#A0AEA1" />} autoFocus />
                 <FormField label="Quantity Administered" placeholder="e.g. 1 vial (500 doses)" onFocus={scrollToInput} />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={FileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
+                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
               </View>
             )}
             {type === 'eggs' && (
@@ -175,25 +171,25 @@ function QuickLogSheet({
                 <Text style={qsStyles.sheetTitle}>Log Egg Production</Text>
                 <FormField label="Eggs Collected" placeholder="0 eggs" suffix="eggs" autoFocus />
                 <FormField label="Estimated Value" placeholder="0.00" prefix={'\u20A6'} onFocus={scrollToInput} />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={FileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
+                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
               </View>
             )}
             {type === 'water' && (
               <View>
                 <Text style={qsStyles.sheetTitle}>Log Water Usage</Text>
                 <FormField label="Water Used" placeholder="0 litres" suffix="L" autoFocus />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={FileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
+                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
               </View>
             )}
             {type === 'observation' && (
               <View>
                 <Text style={qsStyles.sheetTitle}>Add Observation Note</Text>
-                <FormField label="Notes" placeholder="Describe what you observed..." icon={<GoonaIcon icon={Eye} size={16} color="#A0AEA1" />} multiline autoFocus />
+                <FormField label="Notes" placeholder="Describe what you observed..." icon={<GoonaIcon icon={Icons.eye} size={16} color="#A0AEA1" />} multiline autoFocus />
               </View>
             )}
           </ScrollView>
           <TouchableOpacity style={qsStyles.saveBtn} activeOpacity={0.9} onPress={onSave}>
-            <GoonaIcon icon={CheckCircle} size={18} color="white" />
+            <GoonaIcon icon={Icons.checkCircle} size={18} color="white" />
             <Text style={qsStyles.saveText}>Save Record</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -267,7 +263,7 @@ export default function DailyRecordsScreen() {
           <AnimatedCard>
             <View style={styles.topNav}>
               <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.back()}>
-                <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+                <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
               </TouchableOpacity>
               <Text style={styles.topTitle}>Farm Operations</Text>
               <View style={styles.spacer} />
@@ -291,9 +287,9 @@ export default function DailyRecordsScreen() {
                   activeOpacity={0.7}
                   onPress={() => setShowBatchPicker(true)}
                 >
-                  <GoonaIcon icon={ClipboardList} size={14} color="#2E7D32" />
+                  <GoonaIcon icon={Icons.clipboardList} size={14} color="#2E7D32" />
                   <Text style={styles.contextText} numberOfLines={1}>{selectedBatch}</Text>
-                  <ChevronDown size={10} color="#2E7D32" />
+                  <Icons.chevronDown size={10} color="#2E7D32" />
                 </TouchableOpacity>
                 <View style={styles.contextDivider} />
                 <TouchableOpacity
@@ -301,9 +297,9 @@ export default function DailyRecordsScreen() {
                   activeOpacity={0.7}
                   onPress={() => setShowDatePicker(true)}
                 >
-                  <GoonaIcon icon={Calendar} size={14} color="#2E7D32" />
+                  <GoonaIcon icon={Icons.calendar} size={14} color="#2E7D32" />
                   <Text style={styles.contextText}>{dateStr}</Text>
-                  <ChevronDown size={10} color="#2E7D32" />
+                  <Icons.chevronDown size={10} color="#2E7D32" />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -358,7 +354,7 @@ export default function DailyRecordsScreen() {
           <View style={styles.snapshotGrid}>
             {SNAPSHOT_METRICS.map((m, i) => {
               const IconComp = m.icon
-              const TrendIcon = m.trend === 'up' ? TrendingUp : TrendingDown
+              const TrendIcon = m.trend === 'up' ? Icons.trendingUp : Icons.trendingDown
               return (
                 <AnimatedCard key={m.label} delay={320 + i * 50}>
                   <View style={[styles.snapCard, { borderLeftColor: m.color }]}>
@@ -403,7 +399,7 @@ export default function DailyRecordsScreen() {
                     <Text style={[styles.progressLogLabel, log.done && styles.progressLogDone]}>
                       {log.label}
                     </Text>
-                    {log.done && <GoonaIcon icon={CheckCircle} size={10} color="#16A34A" />}
+                    {log.done && <GoonaIcon icon={Icons.checkCircle} size={10} color="#16A34A" />}
                   </View>
                 ))}
               </View>
@@ -413,7 +409,7 @@ export default function DailyRecordsScreen() {
           {/* ─── 6. GOONA IQ INSIGHTS ─── */}
           <AnimatedCard delay={640}>
             <View style={styles.sectionHeader}>
-              <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+              <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
               <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>GOONA IQ Insights</Text>
             </View>
           </AnimatedCard>

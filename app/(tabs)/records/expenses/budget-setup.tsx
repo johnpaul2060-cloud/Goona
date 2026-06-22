@@ -6,23 +6,20 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import {
-  ArrowLeft, Check, CheckCircle, Target,
-  AlertTriangle, Package, Truck, Users, Wrench, Zap, Receipt,
-} from 'lucide-react-native'
+import { Icons } from '../../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { formatInput, parseAmount, formatNaira } from '../../../../utils/format'
 
 const PERIODS = ['Weekly', 'Monthly', 'Quarterly', 'Production Cycle', 'Custom'] as const
 
 const CATEGORIES = [
-  { key: 'feed', label: 'Feed', icon: Package, color: '#16A34A' },
-  { key: 'salaries', label: 'Salaries', icon: Users, color: '#1A56FF' },
-  { key: 'medication', label: 'Medication', icon: Receipt, color: '#EF4444' },
-  { key: 'transport', label: 'Transport', icon: Truck, color: '#F59E0B' },
-  { key: 'utilities', label: 'Utilities', icon: Zap, color: '#8B5CF6' },
-  { key: 'repairs', label: 'Repairs', icon: Wrench, color: '#06B6D4' },
-  { key: 'other', label: 'Other', icon: Package, color: '#64748B' },
+  { key: 'feed', label: 'Feed', icon: Icons.package, color: '#16A34A' },
+  { key: 'salaries', label: 'Salaries', icon: Icons.users, color: '#1A56FF' },
+  { key: 'medication', label: 'Medication', icon: Icons.receipt, color: '#EF4444' },
+  { key: 'transport', label: 'Transport', icon: Icons.truck, color: '#F59E0B' },
+  { key: 'utilities', label: 'Utilities', icon: Icons.zap, color: '#8B5CF6' },
+  { key: 'repairs', label: 'Repairs', icon: Icons.wrench, color: '#06B6D4' },
+  { key: 'other', label: 'Other', icon: Icons.package, color: '#64748B' },
 ] as const
 
 const FARM_TEMPLATES = [
@@ -204,7 +201,7 @@ export default function BudgetSetupScreen() {
               <Text style={[styles.periodLabel, active && styles.periodLabelActive]}>{p}</Text>
               {active && (
                 <View style={styles.periodCheck}>
-                  <GoonaIcon icon={Check} size={12} color="#FFF" />
+                  <GoonaIcon icon={Icons.check} size={12} color="#FFF" />
                 </View>
               )}
             </TouchableOpacity>
@@ -234,7 +231,7 @@ export default function BudgetSetupScreen() {
         </View>
       </View>
       <View style={styles.amountHint}>
-        <GoonaIcon icon={Target} size={14} color="#2E7D32" />
+        <GoonaIcon icon={Icons.target} size={14} color="#2E7D32" />
         <Text style={styles.amountHintText}>
           {period ? `Your ${period.toLowerCase()} budget will be ${formatNaira(totalBudget || 0)}` : 'Select a period first'}
         </Text>
@@ -320,14 +317,14 @@ export default function BudgetSetupScreen() {
 
       {allocationMode === 'percentage' && allocatedPct > 100 && (
         <View style={styles.allocWarning}>
-          <GoonaIcon icon={AlertTriangle} size={14} color="#EF4444" />
+          <GoonaIcon icon={Icons.alertTriangle} size={14} color="#EF4444" />
           <Text style={styles.allocWarningText}>Allocation exceeds 100% by {(allocatedPct - 100).toFixed(1)}%</Text>
         </View>
       )}
 
       {allocationMode === 'amount' && remaining < 0 && (
         <View style={styles.allocWarning}>
-          <GoonaIcon icon={AlertTriangle} size={14} color="#EF4444" />
+          <GoonaIcon icon={Icons.alertTriangle} size={14} color="#EF4444" />
           <Text style={styles.allocWarningText}>Allocation exceeds budget by {formatNaira(Math.abs(remaining))}</Text>
         </View>
       )}
@@ -402,7 +399,7 @@ export default function BudgetSetupScreen() {
             >
               <View style={styles.alertLeft}>
                 <View style={[styles.alertCheckbox, active && styles.alertCheckboxActive]}>
-                  {active && <GoonaIcon icon={Check} size={12} color="#FFF" />}
+                  {active && <GoonaIcon icon={Icons.check} size={12} color="#FFF" />}
                 </View>
                 <View>
                   <Text style={styles.alertLabel}>{a.label}</Text>
@@ -461,7 +458,7 @@ export default function BudgetSetupScreen() {
       <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.successWrap}>
           <View style={styles.successIcon}>
-            <GoonaIcon icon={CheckCircle} size={40} color="#16A34A" />
+            <GoonaIcon icon={Icons.checkCircle} size={40} color="#16A34A" />
           </View>
           <Text style={styles.successTitle}>Budget saved!</Text>
           <Text style={styles.successSub}>Your {period?.toLowerCase()} budget is now active.</Text>
@@ -519,7 +516,7 @@ export default function BudgetSetupScreen() {
             activeOpacity={0.7}
             onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses/budget' as any) } }}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Set Budget</Text>
           <View style={{ width: 40 }} />

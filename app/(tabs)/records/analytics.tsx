@@ -6,16 +6,16 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
-import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Users, Wheat, Egg, Sparkles, Skull, Wallet, DollarSign, Clock, ShieldCheck } from 'lucide-react-native'
+import { Icons } from '../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { Pressable } from 'react-native'
 import BottomDock from '../../../components/navigation/BottomDock'
 
 const METRICS = [
-  { label: 'Avg Mortality Rate', value: '2.1%', trend: '-0.3%', up: true, icon: Skull, color: '#EF4444', bg: '#FFF1F2' },
-  { label: 'Feed Efficiency', value: '86%', trend: '+4%', up: true, icon: Wheat, color: '#16A34A', bg: '#F0FDF4' },
-  { label: 'Revenue Trend', value: '+18%', trend: '+6%', up: true, icon: TrendingUp, color: '#F59E0B', bg: '#FFFBEB' },
-  { label: 'Prod. Performance', value: '92%', trend: '+2%', up: true, icon: Activity, color: '#1A56FF', bg: '#EEF3FF' },
+  { label: 'Avg Mortality Rate', value: '2.1%', trend: '-0.3%', up: true, icon: Icons.skull, color: '#EF4444', bg: '#FFF1F2' },
+  { label: 'Feed Efficiency', value: '86%', trend: '+4%', up: true, icon: Icons.wheat, color: '#16A34A', bg: '#F0FDF4' },
+  { label: 'Revenue Trend', value: '+18%', trend: '+6%', up: true, icon: Icons.trendingUp, color: '#F59E0B', bg: '#FFFBEB' },
+  { label: 'Prod. Performance', value: '92%', trend: '+2%', up: true, icon: Icons.activity, color: '#1A56FF', bg: '#EEF3FF' },
 ]
 
 const BATCH_COMPARISON = [
@@ -25,10 +25,10 @@ const BATCH_COMPARISON = [
 ]
 
 const WORKER_PROD = [
-  { task: 'Feeding', rate: '95%', icon: Wheat },
-  { task: 'Cleaning', rate: '88%', icon: Activity },
-  { task: 'Medication', rate: '92%', icon: ShieldCheck },
-  { task: 'Harvesting', rate: '78%', icon: Egg },
+  { task: 'Feeding', rate: '95%', icon: Icons.wheat },
+  { task: 'Cleaning', rate: '88%', icon: Icons.activity },
+  { task: 'Medication', rate: '92%', icon: Icons.shieldCheck },
+  { task: 'Harvesting', rate: '78%', icon: Icons.egg },
 ]
 
 export default function AnalyticsScreen() {
@@ -48,11 +48,11 @@ export default function AnalyticsScreen() {
             style={styles.navBack}
             onPress={() => router.canGoBack() ? router.back() : router.replace('/records' as any)}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </Pressable>
           <Text style={styles.topTitle}>Analytics</Text>
           <Pressable style={styles.navBtn}>
-            <GoonaIcon icon={BarChart3} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.barChart3} size={20} color="#1F2937" />
           </Pressable>
         </Animated.View>
 
@@ -75,7 +75,7 @@ export default function AnalyticsScreen() {
               <Text style={styles.metricValue}>{m.value}</Text>
               <Text style={styles.metricLabel}>{m.label}</Text>
               <View style={styles.metricTrendRow}>
-                <GoonaIcon icon={m.up ? TrendingUp : TrendingDown} size={11} color={m.up ? '#16A34A' : '#EF4444'} />
+                <GoonaIcon icon={m.up ? Icons.trendingUp : Icons.trendingDown} size={11} color={m.up ? '#16A34A' : '#EF4444'} />
                 <Text style={[styles.metricTrend, { color: m.up ? '#16A34A' : '#EF4444' }]}>{m.trend}</Text>
               </View>
             </Animated.View>
@@ -120,7 +120,7 @@ export default function AnalyticsScreen() {
         <Animated.View entering={FadeInUp.duration(500).delay(520).springify()}>
           <Pressable style={styles.insightCard} onPress={() => router.push('/goona-iq' as any)}>
             <View style={styles.insightHeader}>
-              <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+              <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
               <Text style={styles.insightTitle}>GOONA IQ Forecast</Text>
             </View>
             <Text style={styles.insightText}>

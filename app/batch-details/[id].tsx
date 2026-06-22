@@ -6,7 +6,7 @@ import {
 import Svg, { Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
-import { ArrowLeft, Wheat, ShieldCheck, TrendingUp, Shield, Egg, MoreHorizontal, ClipboardList, Skull, Wallet } from 'lucide-react-native'
+import { Icons } from '../../shared/icons'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -114,10 +114,10 @@ const BATCH_DETAILS: Record<string, {
       { title: 'Sales Recorded', desc: '12 crates of eggs — ₦54,000 revenue', time: '2 days ago' },
     ],
     analytics: [
-      { metric: '84%', label: 'Feed Efficiency', trend: '↑ +12%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 85], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Wheat} size={16} color={c} /> },
-      { metric: '98.2%', label: 'Survival Rate', trend: '↑ +1.4%', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={ShieldCheck} size={16} color={c} /> },
-      { metric: '+18%', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={TrendingUp} size={16} color={c} /> },
-      { metric: '₦820k', label: 'Est. Profit', trend: '↑ +24%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Shield} size={16} color={c} /> },
+      { metric: '84%', label: 'Feed Efficiency', trend: '↑ +12%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 85], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
+      { metric: '98.2%', label: 'Survival Rate', trend: '↑ +1.4%', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
+      { metric: '+18%', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
+      { metric: '₦820k', label: 'Est. Profit', trend: '↑ +24%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
     reinvest: { pct: 72, goal: '₦350,000', saved: '₦252,000', weekly: '₦18,000', readiness: '3 weeks' },
     insights: [
@@ -148,10 +148,10 @@ const BATCH_DETAILS: Record<string, {
       { title: 'Bulk Egg Sale', desc: '48 crates — ₦216,000 revenue', time: '3 days ago' },
     ],
     analytics: [
-      { metric: '91%', label: 'Feed Efficiency', trend: '↑ +8%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [50, 65, 75, 85, 91], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Wheat} size={16} color={c} /> },
-      { metric: '97.6%', label: 'Survival Rate', trend: '↑ +0.8%', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [70, 75, 85, 90, 97.6], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={ShieldCheck} size={16} color={c} /> },
-      { metric: '+22%', label: 'Egg Production', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Egg} size={16} color={c} /> },
-      { metric: '₦1.2M', label: 'Est. Profit', trend: '↑ +18%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Shield} size={16} color={c} /> },
+      { metric: '91%', label: 'Feed Efficiency', trend: '↑ +8%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [50, 65, 75, 85, 91], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
+      { metric: '97.6%', label: 'Survival Rate', trend: '↑ +0.8%', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [70, 75, 85, 90, 97.6], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
+      { metric: '+22%', label: 'Egg Production', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.egg} size={16} color={c} /> },
+      { metric: '₦1.2M', label: 'Est. Profit', trend: '↑ +18%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
     reinvest: { pct: 85, goal: '₦420,000', saved: '₦357,000', weekly: '₦22,000', readiness: '2 weeks' },
     insights: [
@@ -182,10 +182,10 @@ const BATCH_DETAILS: Record<string, {
       { title: 'Mortality Monitoring', desc: 'Increased monitoring schedule implemented', time: '2 days ago' },
     ],
     analytics: [
-      { metric: '62%', label: 'Feed Efficiency', trend: '↓ -4%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [55, 60, 62, 58, 55], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Wheat} size={16} color={c} /> },
-      { metric: '95.8%', label: 'Survival Rate', trend: '↓ -1.2%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [85, 88, 92, 95.8, 94], activeBars: [3], icon: (c: string) => <GoonaIcon icon={ShieldCheck} size={16} color={c} /> },
-      { metric: '+8%', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [25, 35, 50, 60, 70], activeBars: [3, 4], icon: (c: string) => <GoonaIcon icon={TrendingUp} size={16} color={c} /> },
-      { metric: '₦380k', label: 'Est. Profit', trend: '↓ -6%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [30, 45, 55, 50, 45], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Shield} size={16} color={c} /> },
+      { metric: '62%', label: 'Feed Efficiency', trend: '↓ -4%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [55, 60, 62, 58, 55], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
+      { metric: '95.8%', label: 'Survival Rate', trend: '↓ -1.2%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [85, 88, 92, 95.8, 94], activeBars: [3], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
+      { metric: '+8%', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [25, 35, 50, 60, 70], activeBars: [3, 4], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
+      { metric: '₦380k', label: 'Est. Profit', trend: '↓ -6%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [30, 45, 55, 50, 45], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
     reinvest: { pct: 45, goal: '₦280,000', saved: '₦126,000', weekly: '₦14,000', readiness: '6 weeks' },
     insights: [
@@ -233,10 +233,10 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
       { title: 'Performance Tracking Active', desc: 'Feed, medication, and growth data being recorded', time: `${Math.max(0, weeks - 2)} week${weeks - 2 === 1 ? '' : 's'} ago`, warn: false },
     ],
     analytics: [
-      { metric: '—', label: 'Feed Efficiency', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 50], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Wheat} size={16} color={c} /> },
-      { metric: '—', label: 'Survival Rate', trend: '', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3], icon: (c: string) => <GoonaIcon icon={ShieldCheck} size={16} color={c} /> },
-      { metric: '—', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={TrendingUp} size={16} color={c} /> },
-      { metric: formatNaira(estRevenue), label: 'Est. Revenue', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Shield} size={16} color={c} /> },
+      { metric: '—', label: 'Feed Efficiency', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 50], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
+      { metric: '—', label: 'Survival Rate', trend: '', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
+      { metric: '—', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
+      { metric: formatNaira(estRevenue), label: 'Est. Revenue', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
     reinvest: {
       pct: 45,
@@ -284,11 +284,11 @@ export default function BatchDetailsScreen() {
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
           <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.canGoBack() ? router.back() : router.replace('/batches' as any)}>
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>{batch.name}</Text>
           <TouchableOpacity style={styles.menuBtn} activeOpacity={0.85}>
-            <GoonaIcon icon={MoreHorizontal} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.moreHorizontal} size={20} color="#1F2937" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -378,11 +378,11 @@ export default function BatchDetailsScreen() {
                 onPress={a.route ? () => router.push(a.route) : undefined}
               >
                 <View style={[styles.qaIcon, { backgroundColor: a.bg }]}>
-                  {i === 0 && <GoonaIcon icon={ClipboardList} size={20} color={a.iconColor} />}
-                  {i === 1 && <GoonaIcon icon={Wheat} size={20} color={a.iconColor} />}
-                  {i === 2 && <GoonaIcon icon={Skull} size={20} color={a.iconColor} />}
-                  {i === 3 && <GoonaIcon icon={Wallet} size={20} color={a.iconColor} />}
-                  {i === 4 && <GoonaIcon icon={TrendingUp} size={20} color={a.iconColor} />}
+                  {i === 0 && <GoonaIcon icon={Icons.clipboardList} size={20} color={a.iconColor} />}
+                  {i === 1 && <GoonaIcon icon={Icons.wheat} size={20} color={a.iconColor} />}
+                  {i === 2 && <GoonaIcon icon={Icons.skull} size={20} color={a.iconColor} />}
+                  {i === 3 && <GoonaIcon icon={Icons.wallet} size={20} color={a.iconColor} />}
+                  {i === 4 && <GoonaIcon icon={Icons.trendingUp} size={20} color={a.iconColor} />}
                 </View>
                 <Text style={styles.qaLabel}>{a.label}</Text>
               </TouchableOpacity>
@@ -519,7 +519,7 @@ export default function BatchDetailsScreen() {
             style={[styles.insightCard, { backgroundColor: ins.bg }]}
           >
             <View style={styles.insightIcon}>
-              <GoonaIcon icon={Wheat} size={20} color={ins.iconColor} />
+              <GoonaIcon icon={Icons.wheat} size={20} color={ins.iconColor} />
             </View>
             <Text style={styles.insightText}>
               {ins.text.split(/(\d+%|\d+\.?\d*%)/).map((part, j) => (

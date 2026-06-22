@@ -6,19 +6,19 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { ArrowLeft, Package, Truck, Users, Wrench, Zap, Receipt, Plus, Trash2, MoreHorizontal, Edit3 } from 'lucide-react-native'
+import { Icons } from '../../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../../../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
 const CATEGORIES = [
-  { label: 'Feed', icon: Package, color: '#16A34A', bg: '#F0FDF4', count: 24, amount: '₦185,000' },
-  { label: 'Transport', icon: Truck, color: '#F59E0B', bg: '#FFFBEB', count: 8, amount: '₦42,500' },
-  { label: 'Medication', icon: Receipt, color: '#EF4444', bg: '#FFF1F2', count: 12, amount: '₦67,000' },
-  { label: 'Salaries', icon: Users, color: '#1A56FF', bg: '#EEF3FF', count: 6, amount: '₦540,000' },
-  { label: 'Utilities', icon: Zap, color: '#8B5CF6', bg: '#F5F3FF', count: 4, amount: '₦28,000' },
-  { label: 'Repairs', icon: Wrench, color: '#06B6D4', bg: '#ECFEFF', count: 3, amount: '₦15,500' },
+  { label: 'Feed', icon: Icons.package, color: '#16A34A', bg: '#F0FDF4', count: 24, amount: '₦185,000' },
+  { label: 'Transport', icon: Icons.truck, color: '#F59E0B', bg: '#FFFBEB', count: 8, amount: '₦42,500' },
+  { label: 'Medication', icon: Icons.receipt, color: '#EF4444', bg: '#FFF1F2', count: 12, amount: '₦67,000' },
+  { label: 'Salaries', icon: Icons.users, color: '#1A56FF', bg: '#EEF3FF', count: 6, amount: '₦540,000' },
+  { label: 'Utilities', icon: Icons.zap, color: '#8B5CF6', bg: '#F5F3FF', count: 4, amount: '₦28,000' },
+  { label: 'Repairs', icon: Icons.wrench, color: '#06B6D4', bg: '#ECFEFF', count: 3, amount: '₦15,500' },
 ]
 
 export default function CategoriesScreen() {
@@ -38,7 +38,7 @@ export default function CategoriesScreen() {
             activeOpacity={0.7}
             onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses' as any) } }}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Categories</Text>
           <TouchableOpacity
@@ -46,7 +46,7 @@ export default function CategoriesScreen() {
             activeOpacity={0.7}
             onPress={() => setEditing(!editing)}
           >
-            <GoonaIcon icon={editing ? Edit3 : MoreHorizontal} size={20} color="#1F2937" />
+            <GoonaIcon icon={editing ? Icons.edit3 : Icons.moreHorizontal} size={20} color="#1F2937" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -72,7 +72,7 @@ export default function CategoriesScreen() {
               <Text style={styles.categoryAmount}>{c.amount}</Text>
               {editing && (
                 <TouchableOpacity style={styles.deleteBtn} activeOpacity={0.7}>
-                  <GoonaIcon icon={Trash2} size={16} color="#EF4444" />
+                  <GoonaIcon icon={Icons.trash2} size={16} color="#EF4444" />
                 </TouchableOpacity>
               )}
             </View>
@@ -81,7 +81,7 @@ export default function CategoriesScreen() {
 
         <Animated.View entering={FadeInUp.duration(500).delay(420).springify()}>
           <TouchableOpacity style={styles.addBtn} activeOpacity={0.7}>
-            <GoonaIcon icon={Plus} size={18} color="#2E7D32" />
+            <GoonaIcon icon={Icons.plus} size={18} color="#2E7D32" />
             <Text style={styles.addText}>Add Custom Category</Text>
           </TouchableOpacity>
         </Animated.View>

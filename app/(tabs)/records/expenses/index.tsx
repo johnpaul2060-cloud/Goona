@@ -6,7 +6,7 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { ArrowLeft, Search, Receipt, TrendingUp, TrendingDown, Users, Zap, Sparkles, Plus, Wallet, PiggyBank, FileText, Truck, Package, Wrench, CreditCard, AlertTriangle } from 'lucide-react-native'
+import { Icons } from '../../../../shared/icons'
 import Animated, {
   useSharedValue, useAnimatedStyle, withDelay, withTiming,
   withSpring, Easing, FadeInUp,
@@ -50,10 +50,10 @@ function usePressScale() {
 }
 
 const ANALYTICS = [
-  { label: 'Feed Costs', value: '₦185k', trend: '+12%', trendUp: false, color: '#16A34A', icon: Package },
-  { label: 'Staff Expenses', value: '₦94k', trend: '–2%', trendUp: true, color: '#1A56FF', icon: Users },
-  { label: 'Burn Rate', value: '₦42k/wk', trend: '+5%', trendUp: false, color: '#F59E0B', icon: Zap },
-  { label: 'Utilities', value: '₦28k', trend: '–8%', trendUp: true, color: '#EF4444', icon: Wrench },
+  { label: 'Feed Costs', value: '₦185k', trend: '+12%', trendUp: false, color: '#16A34A', icon: Icons.package },
+  { label: 'Staff Expenses', value: '₦94k', trend: '–2%', trendUp: true, color: '#1A56FF', icon: Icons.users },
+  { label: 'Burn Rate', value: '₦42k/wk', trend: '+5%', trendUp: false, color: '#F59E0B', icon: Icons.zap },
+  { label: 'Utilities', value: '₦28k', trend: '–8%', trendUp: true, color: '#EF4444', icon: Icons.wrench },
 ]
 
 interface QuickAction {
@@ -67,17 +67,17 @@ interface QuickAction {
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { label: 'Record Expense', bg: '#F0FDF4', color: '#16A34A', icon: Plus, route: '/records/expenses/create' },
-  { label: 'Categories', bg: '#EEF3FF', color: '#1A56FF', icon: Wallet, route: '/records/expenses/categories', badge: '6', badgeColor: '#1A56FF' },
-  { label: 'Reports', bg: '#FFFBEB', color: '#F59E0B', icon: FileText, route: '/records/expenses/reports', badge: '3', badgeColor: '#F59E0B' },
-  { label: 'Budget', bg: '#F5F3FF', color: '#7C3AED', icon: PiggyBank, route: '/records/expenses/budget', badge: '88%', badgeColor: '#F59E0B' },
+  { label: 'Record Expense', bg: '#F0FDF4', color: '#16A34A', icon: Icons.plus, route: '/records/expenses/create' },
+  { label: 'Categories', bg: '#EEF3FF', color: '#1A56FF', icon: Icons.wallet, route: '/records/expenses/categories', badge: '6', badgeColor: '#1A56FF' },
+  { label: 'Reports', bg: '#FFFBEB', color: '#F59E0B', icon: Icons.fileText, route: '/records/expenses/reports', badge: '3', badgeColor: '#F59E0B' },
+  { label: 'Budget', bg: '#F5F3FF', color: '#7C3AED', icon: Icons.piggyBank, route: '/records/expenses/budget', badge: '88%', badgeColor: '#F59E0B' },
 ]
 
 const RECENT_EXPENSES = [
-  { category: 'Feed', amount: '₦85,000', vendor: 'AgroFeed Ltd', date: 'Today, 9:30 AM', icon: Package, color: '#16A34A', bg: '#F0FDF4' },
-  { category: 'Transport', amount: '₦12,500', vendor: 'Logistics Co', date: 'Yesterday', icon: Truck, color: '#F59E0B', bg: '#FFFBEB' },
-  { category: 'Medication', amount: '₦24,000', vendor: 'VetMart', date: '2 days ago', icon: Receipt, color: '#EF4444', bg: '#FFF1F2' },
-  { category: 'Salary', amount: '₦180,000', vendor: 'Farm Staff (6)', date: '3 days ago', icon: Users, color: '#1A56FF', bg: '#EEF3FF' },
+  { category: 'Feed', amount: '₦85,000', vendor: 'AgroFeed Ltd', date: 'Today, 9:30 AM', icon: Icons.package, color: '#16A34A', bg: '#F0FDF4' },
+  { category: 'Transport', amount: '₦12,500', vendor: 'Logistics Co', date: 'Yesterday', icon: Icons.truck, color: '#F59E0B', bg: '#FFFBEB' },
+  { category: 'Medication', amount: '₦24,000', vendor: 'VetMart', date: '2 days ago', icon: Icons.receipt, color: '#EF4444', bg: '#FFF1F2' },
+  { category: 'Salary', amount: '₦180,000', vendor: 'Farm Staff (6)', date: '3 days ago', icon: Icons.users, color: '#1A56FF', bg: '#EEF3FF' },
 ]
 
 export default function ExpensesScreen() {
@@ -104,12 +104,12 @@ export default function ExpensesScreen() {
               onPressIn={backPress.onPressIn}
               onPressOut={backPress.onPressOut}
             >
-              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </Pressable>
           </Animated.View>
           <Text style={styles.topTitle}>Farm Expenses</Text>
           <Pressable style={styles.navBtn}>
-            <GoonaIcon icon={Search} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.search} size={20} color="#1F2937" />
           </Pressable>
         </Animated.View>
 
@@ -130,7 +130,7 @@ export default function ExpensesScreen() {
                 <Text style={styles.anValue}>{a.value}</Text>
                 <Text style={styles.anLabel}>{a.label}</Text>
                 <View style={styles.anTrendRow}>
-                  <GoonaIcon icon={a.trendUp ? TrendingUp : TrendingDown} size={12} color={a.trendUp ? '#16A34A' : '#EF4444'} />
+                  <GoonaIcon icon={a.trendUp ? Icons.trendingUp : Icons.trendingDown} size={12} color={a.trendUp ? '#16A34A' : '#EF4444'} />
                   <Text style={[styles.anTrend, { color: a.trendUp ? '#16A34A' : '#EF4444' }]}>{a.trend}</Text>
                 </View>
               </Animated.View>
@@ -212,7 +212,7 @@ export default function ExpensesScreen() {
             onPress={() => router.push('/records/expenses/reports' as any)}
           >
             <View style={styles.insightHeader}>
-              <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+              <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
               <Text style={styles.insightTitle}>GOONA IQ Expense Insight</Text>
             </View>
             <Text style={styles.insightText}>

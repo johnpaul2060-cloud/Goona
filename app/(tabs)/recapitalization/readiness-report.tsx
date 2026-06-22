@@ -8,10 +8,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { formatNaira } from '../../../utils/format'
-import {
-  ArrowLeft, TrendingUp, TrendingDown, Target, Award,
-  Lightbulb, AlertTriangle, CheckCircle, Clock, BarChart,
-} from 'lucide-react-native'
+import { Icons } from '../../../shared/icons'
 import { BlurView } from 'expo-blur'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -63,9 +60,9 @@ export default function ReadinessReportScreen() {
   ]
 
   const recommendations = [
-    { icon: Clock, text: 'Increase daily contribution by \u20A65,000 to meet Q3 target', color: '#2E7D32' },
-    { icon: Target, text: totalMissed > 3 ? 'You\'ve missed {totalMissed} days. Set up auto-save to stay consistent.' : 'Great consistency! Consider increasing your target.', color: totalMissed > 3 ? '#F59E0B' : '#16A34A' },
-    { icon: TrendingUp, text: 'Allocate 20% of monthly profits to emergency reserve', color: '#1A56FF' },
+    { icon: Icons.clock, text: 'Increase daily contribution by \u20A65,000 to meet Q3 target', color: '#2E7D32' },
+    { icon: Icons.target, text: totalMissed > 3 ? 'You\'ve missed {totalMissed} days. Set up auto-save to stay consistent.' : 'Great consistency! Consider increasing your target.', color: totalMissed > 3 ? '#F59E0B' : '#16A34A' },
+    { icon: Icons.trendingUp, text: 'Allocate 20% of monthly profits to emergency reserve', color: '#1A56FF' },
   ]
 
   return (
@@ -74,7 +71,7 @@ export default function ReadinessReportScreen() {
       <BlurView intensity={55} tint="light" style={[styles.headerBlur, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.push('/recapitalization')}>
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Readiness Report</Text>
@@ -154,13 +151,13 @@ export default function ReadinessReportScreen() {
           <Animated.View entering={FadeInDown.duration(400).delay(150).springify()} style={styles.insightCard}>
             <View style={styles.cardHead}>
               <View style={styles.insightTitleRow}>
-                <GoonaIcon icon={Lightbulb} size={16} color="#F59E0B" />
+                <GoonaIcon icon={Icons.lightbulb} size={16} color="#F59E0B" />
                 <Text style={styles.cardTitle}>GOONA IQ Insights</Text>
               </View>
             </View>
             {insights.map((msg, i) => (
               <View key={i} style={styles.insightRow}>
-                <GoonaIcon icon={msg.includes('missed') || msg.includes('Missed') ? AlertTriangle : CheckCircle} size={14} color={msg.includes('missed') || msg.includes('Missed') ? '#F59E0B' : '#16A34A'} />
+                <GoonaIcon icon={msg.includes('missed') || msg.includes('Missed') ? Icons.alertTriangle : Icons.checkCircle} size={14} color={msg.includes('missed') || msg.includes('Missed') ? '#F59E0B' : '#16A34A'} />
                 <Text style={styles.insightText}>{msg}</Text>
               </View>
             ))}
@@ -171,7 +168,7 @@ export default function ReadinessReportScreen() {
         <Animated.View entering={FadeInDown.duration(400).delay(200).springify()} style={styles.card}>
           <View style={styles.cardHead}>
             <View style={styles.insightTitleRow}>
-              <GoonaIcon icon={BarChart} size={16} color="#1A56FF" />
+              <GoonaIcon icon={Icons.barChart} size={16} color="#1A56FF" />
               <Text style={styles.cardTitle}>Forecast</Text>
             </View>
           </View>
@@ -197,7 +194,7 @@ export default function ReadinessReportScreen() {
         <Animated.View entering={FadeInDown.duration(400).delay(250).springify()} style={styles.card}>
           <View style={styles.cardHead}>
             <View style={styles.insightTitleRow}>
-              <GoonaIcon icon={Award} size={16} color="#2E7D32" />
+              <GoonaIcon icon={Icons.award} size={16} color="#2E7D32" />
               <Text style={styles.cardTitle}>Recommendations</Text>
             </View>
           </View>

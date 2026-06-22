@@ -1,4 +1,4 @@
-import { CloudRain, Sun, Thermometer, CloudSun, Wind, Droplets, CloudLightning, AlertTriangle, ShieldCheck } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 
 /* ── Types ── */
 export interface WeatherAlert {
@@ -21,71 +21,71 @@ export interface ForecastReport {
 
 /* ── HEAT STRESS FORECASTS ── */
 const HEAT: WeatherAlert[] = [
-  { message: 'High heat stress risk detected for Batch A — increase ventilation immediately. Poultry will reduce feed intake above 32°C.', icon: Thermometer, color: '#EF4444', severity: 'high', category: 'heat' },
-  { message: 'Afternoon temperatures may exceed safe poultry threshold by 4°C. Activate emergency ventilation protocols and monitor water consumption hourly.', icon: Thermometer, color: '#EF4444', severity: 'high', category: 'heat' },
-  { message: 'Heat stress forecast for fish pond — oxygen levels may drop. Increase aeration and reduce feeding during peak heat hours.', icon: Sun, color: '#F59E0B', severity: 'high', category: 'heat' },
-  { message: 'Midday heat wave expected — reduce stocking density stress by 15% where possible. Defer handling and transport to cooler evening hours.', icon: Sun, color: '#F59E0B', severity: 'medium', category: 'heat' },
-  { message: 'Warm conditions may reduce egg production by 8-12% this week. Ensure calcium supplementation and cool water availability.', icon: CloudSun, color: '#F59E0B', severity: 'medium', category: 'heat' },
-  { message: 'Temperature fluctuation alert — brooder temperature regulation critical for day-old chicks this week.', icon: Thermometer, color: '#EF4444', severity: 'high', category: 'heat' },
+  { message: 'High heat stress risk detected for Batch A — increase ventilation immediately. Poultry will reduce feed intake above 32°C.', icon: Icons.thermometer, color: '#EF4444', severity: 'high', category: 'heat' },
+  { message: 'Afternoon temperatures may exceed safe poultry threshold by 4°C. Activate emergency ventilation protocols and monitor water consumption hourly.', icon: Icons.thermometer, color: '#EF4444', severity: 'high', category: 'heat' },
+  { message: 'Heat stress forecast for fish pond — oxygen levels may drop. Increase aeration and reduce feeding during peak heat hours.', icon: Icons.sun, color: '#F59E0B', severity: 'high', category: 'heat' },
+  { message: 'Midday heat wave expected — reduce stocking density stress by 15% where possible. Defer handling and transport to cooler evening hours.', icon: Icons.sun, color: '#F59E0B', severity: 'medium', category: 'heat' },
+  { message: 'Warm conditions may reduce egg production by 8-12% this week. Ensure calcium supplementation and cool water availability.', icon: Icons.cloudSun, color: '#F59E0B', severity: 'medium', category: 'heat' },
+  { message: 'Temperature fluctuation alert — brooder temperature regulation critical for day-old chicks this week.', icon: Icons.thermometer, color: '#EF4444', severity: 'high', category: 'heat' },
 ]
 
 /* ── RAINFALL IMPACT FORECASTS ── */
 const RAIN: WeatherAlert[] = [
-  { message: 'Heavy rainfall expected tomorrow morning — secure feed storage areas and check roof drainage. Pond levels may rise 15-20cm.', icon: CloudRain, color: '#1A56FF', severity: 'high', category: 'rain' },
-  { message: 'Rain forecast for this evening — check drainage systems around poultry houses. Standing water increases disease vectors and ammonia levels.', icon: CloudRain, color: '#1A56FF', severity: 'medium', category: 'rain' },
-  { message: 'Prolonged rain may cause feed spoilage in open storage. Move bags to elevated platforms and inspect for moisture damage.', icon: Droplets, color: '#1A56FF', severity: 'high', category: 'rain' },
-  { message: 'Rainy conditions expected — transport routes may become impassable. Schedule feed deliveries 24 hours earlier than usual.', icon: CloudLightning, color: '#6366F1', severity: 'medium', category: 'rain' },
-  { message: 'Light showers likely — ideal for pond water top-up. Capture runoff for irrigation and check water quality post-rain.', icon: CloudRain, color: '#1A56FF', severity: 'low', category: 'rain' },
-  { message: 'Flooding risk elevated in low-lying areas — move portable equipment to higher ground and verify drainage channel capacity.', icon: CloudLightning, color: '#6366F1', severity: 'high', category: 'rain' },
+  { message: 'Heavy rainfall expected tomorrow morning — secure feed storage areas and check roof drainage. Pond levels may rise 15-20cm.', icon: Icons.cloudRain, color: '#1A56FF', severity: 'high', category: 'rain' },
+  { message: 'Rain forecast for this evening — check drainage systems around poultry houses. Standing water increases disease vectors and ammonia levels.', icon: Icons.cloudRain, color: '#1A56FF', severity: 'medium', category: 'rain' },
+  { message: 'Prolonged rain may cause feed spoilage in open storage. Move bags to elevated platforms and inspect for moisture damage.', icon: Icons.droplets, color: '#1A56FF', severity: 'high', category: 'rain' },
+  { message: 'Rainy conditions expected — transport routes may become impassable. Schedule feed deliveries 24 hours earlier than usual.', icon: Icons.cloudLightning, color: '#6366F1', severity: 'medium', category: 'rain' },
+  { message: 'Light showers likely — ideal for pond water top-up. Capture runoff for irrigation and check water quality post-rain.', icon: Icons.cloudRain, color: '#1A56FF', severity: 'low', category: 'rain' },
+  { message: 'Flooding risk elevated in low-lying areas — move portable equipment to higher ground and verify drainage channel capacity.', icon: Icons.cloudLightning, color: '#6366F1', severity: 'high', category: 'rain' },
 ]
 
 /* ── HUMIDITY IMPACT FORECASTS ── */
 const HUMIDITY: WeatherAlert[] = [
-  { message: 'Humidity levels rising above 75% — monitor litter conditions and ammonia hourly. Bacterial growth risk increases significantly in warm, humid conditions.', icon: Droplets, color: '#0891B2', severity: 'high', category: 'humidity' },
-  { message: 'High humidity forecast for 48 hours — coccidiosis risk elevated. Increase litter turning frequency and check bird droppings for signs.', icon: Droplets, color: '#0891B2', severity: 'high', category: 'humidity' },
-  { message: 'Humidity spike detected — respiratory disease risk increasing. Boost ventilation capacity 2 hours earlier than current schedule.', icon: Wind, color: '#0891B2', severity: 'medium', category: 'humidity' },
-  { message: 'Morning condensation alert — check bedding moisture in brooder areas. Wet litter increases pododermatitis risk in broilers.', icon: Droplets, color: '#0891B2', severity: 'medium', category: 'humidity' },
-  { message: 'Prolonged humidity may reduce feed intake. Adjust feed formulation with mould inhibitors and verify storage seals.', icon: Droplets, color: '#0891B2', severity: 'medium', category: 'humidity' },
-  { message: 'Humidity and heat combined — dangerous for poultry. Increase air movement with circulation fans and reduce bird density in affected zones.', icon: Wind, color: '#EF4444', severity: 'high', category: 'humidity' },
+  { message: 'Humidity levels rising above 75% — monitor litter conditions and ammonia hourly. Bacterial growth risk increases significantly in warm, humid conditions.', icon: Icons.droplets, color: '#0891B2', severity: 'high', category: 'humidity' },
+  { message: 'High humidity forecast for 48 hours — coccidiosis risk elevated. Increase litter turning frequency and check bird droppings for signs.', icon: Icons.droplets, color: '#0891B2', severity: 'high', category: 'humidity' },
+  { message: 'Humidity spike detected — respiratory disease risk increasing. Boost ventilation capacity 2 hours earlier than current schedule.', icon: Icons.wind, color: '#0891B2', severity: 'medium', category: 'humidity' },
+  { message: 'Morning condensation alert — check bedding moisture in brooder areas. Wet litter increases pododermatitis risk in broilers.', icon: Icons.droplets, color: '#0891B2', severity: 'medium', category: 'humidity' },
+  { message: 'Prolonged humidity may reduce feed intake. Adjust feed formulation with mould inhibitors and verify storage seals.', icon: Icons.droplets, color: '#0891B2', severity: 'medium', category: 'humidity' },
+  { message: 'Humidity and heat combined — dangerous for poultry. Increase air movement with circulation fans and reduce bird density in affected zones.', icon: Icons.wind, color: '#EF4444', severity: 'high', category: 'humidity' },
 ]
 
 /* ── WATER CONSUMPTION FORECASTS ── */
 const WATER: WeatherAlert[] = [
-  { message: 'Hot weather may increase bird water consumption by 18-25% — top up drinkers 3x daily and check flow rates on all nipple lines.', icon: Droplets, color: '#0EA5E9', severity: 'high', category: 'water' },
-  { message: 'Elevated temperatures expected — each bird may need an extra 50ml per hour. Verify backup water supply tanks are full and operational.', icon: Thermometer, color: '#0EA5E9', severity: 'medium', category: 'water' },
-  { message: 'Water consumption trending up 12% — flush drinker lines to prevent biofilm and check for leaks that may indicate nipple valve issues.', icon: Droplets, color: '#0EA5E9', severity: 'low', category: 'water' },
-  { message: 'Dehydration risk for day-old chicks during transport today. Ensure electrolyte supplements in first drinking water upon arrival.', icon: Droplets, color: '#EF4444', severity: 'high', category: 'water' },
-  { message: 'Water quality alert — high temperatures may promote algal growth in storage tanks. Treat with approved sanitiser and check pH levels.', icon: Droplets, color: '#0EA5E9', severity: 'medium', category: 'water' },
+  { message: 'Hot weather may increase bird water consumption by 18-25% — top up drinkers 3x daily and check flow rates on all nipple lines.', icon: Icons.droplets, color: '#0EA5E9', severity: 'high', category: 'water' },
+  { message: 'Elevated temperatures expected — each bird may need an extra 50ml per hour. Verify backup water supply tanks are full and operational.', icon: Icons.thermometer, color: '#0EA5E9', severity: 'medium', category: 'water' },
+  { message: 'Water consumption trending up 12% — flush drinker lines to prevent biofilm and check for leaks that may indicate nipple valve issues.', icon: Icons.droplets, color: '#0EA5E9', severity: 'low', category: 'water' },
+  { message: 'Dehydration risk for day-old chicks during transport today. Ensure electrolyte supplements in first drinking water upon arrival.', icon: Icons.droplets, color: '#EF4444', severity: 'high', category: 'water' },
+  { message: 'Water quality alert — high temperatures may promote algal growth in storage tanks. Treat with approved sanitiser and check pH levels.', icon: Icons.droplets, color: '#0EA5E9', severity: 'medium', category: 'water' },
 ]
 
 /* ── FEED EFFICIENCY FORECASTS ── */
 const FEED: WeatherAlert[] = [
-  { message: 'Feed efficiency forecast: Conversion ratio may worsen 8% due to heat. Shift feeding to 6 AM and 6 PM when temperatures are cooler.', icon: CloudSun, color: '#D97706', severity: 'medium', category: 'feed' },
-  { message: 'Appetite reduction expected — birds consume 12% less feed above 30°C. Supplement with vitamins and electrolytes in drinking water.', icon: Sun, color: '#D97706', severity: 'high', category: 'feed' },
-  { message: 'Heat-related feed conversion decline predicted. Increase dietary fat by 2% to maintain energy intake during hot periods.', icon: Thermometer, color: '#D97706', severity: 'medium', category: 'feed' },
-  { message: 'Feed spoilage risk elevated in humid conditions. Add mould inhibitor to feed and clean troughs daily to prevent mycotoxin exposure.', icon: Droplets, color: '#D97706', severity: 'high', category: 'feed' },
-  { message: 'Climate-adjusted feeding recommended — early morning feeding may improve weight gain by 4% compared to midday feeding in current conditions.', icon: CloudSun, color: '#2E7D32', severity: 'low', category: 'feed' },
+  { message: 'Feed efficiency forecast: Conversion ratio may worsen 8% due to heat. Shift feeding to 6 AM and 6 PM when temperatures are cooler.', icon: Icons.cloudSun, color: '#D97706', severity: 'medium', category: 'feed' },
+  { message: 'Appetite reduction expected — birds consume 12% less feed above 30°C. Supplement with vitamins and electrolytes in drinking water.', icon: Icons.sun, color: '#D97706', severity: 'high', category: 'feed' },
+  { message: 'Heat-related feed conversion decline predicted. Increase dietary fat by 2% to maintain energy intake during hot periods.', icon: Icons.thermometer, color: '#D97706', severity: 'medium', category: 'feed' },
+  { message: 'Feed spoilage risk elevated in humid conditions. Add mould inhibitor to feed and clean troughs daily to prevent mycotoxin exposure.', icon: Icons.droplets, color: '#D97706', severity: 'high', category: 'feed' },
+  { message: 'Climate-adjusted feeding recommended — early morning feeding may improve weight gain by 4% compared to midday feeding in current conditions.', icon: Icons.cloudSun, color: '#2E7D32', severity: 'low', category: 'feed' },
 ]
 
 /* ── OPERATIONAL RISK FORECASTS ── */
 const SAFETY: WeatherAlert[] = [
-  { message: 'Strong winds expected this evening — secure poultry house netting and feed shed roofs. Wind chill may affect brooder temperature regulation.', icon: Wind, color: '#6366F1', severity: 'high', category: 'safety' },
-  { message: 'Lightning risk in the area — disconnect non-essential electrical equipment. Surge protection recommended for ventilation controllers and monitoring systems.', icon: CloudLightning, color: '#6366F1', severity: 'high', category: 'safety' },
-  { message: 'Storm approach within 12 hours — move portable feeders and drinkers to sheltered storage. Verify generator fuel levels and backup power readiness.', icon: Wind, color: '#6366F1', severity: 'medium', category: 'safety' },
-  { message: 'High-risk production day forecast — weather-related operational stress expected. Consider reduced staffing for field tasks and focus on indoor operations.', icon: AlertTriangle, color: '#F59E0B', severity: 'high', category: 'safety' },
-  { message: 'Disease exposure warning — wet and windy conditions may increase pathogen spread. Restrict farm access and enhance biosecurity protocols today.', icon: ShieldCheck, color: '#6366F1', severity: 'medium', category: 'safety' },
-  { message: 'Extreme weather watch — monitor local forecasts hourly. Prepare emergency feed and water supplies for 72-hour autonomous farm operation.', icon: CloudLightning, color: '#EF4444', severity: 'high', category: 'safety' },
+  { message: 'Strong winds expected this evening — secure poultry house netting and feed shed roofs. Icons.wind chill may affect brooder temperature regulation.', icon: Icons.wind, color: '#6366F1', severity: 'high', category: 'safety' },
+  { message: 'Lightning risk in the area — disconnect non-essential electrical equipment. Surge protection recommended for ventilation controllers and monitoring systems.', icon: Icons.cloudLightning, color: '#6366F1', severity: 'high', category: 'safety' },
+  { message: 'Storm approach within 12 hours — move portable feeders and drinkers to sheltered storage. Verify generator fuel levels and backup power readiness.', icon: Icons.wind, color: '#6366F1', severity: 'medium', category: 'safety' },
+  { message: 'High-risk production day forecast — weather-related operational stress expected. Consider reduced staffing for field tasks and focus on indoor operations.', icon: Icons.alertTriangle, color: '#F59E0B', severity: 'high', category: 'safety' },
+  { message: 'Disease exposure warning — wet and windy conditions may increase pathogen spread. Restrict farm access and enhance biosecurity protocols today.', icon: Icons.shieldCheck, color: '#6366F1', severity: 'medium', category: 'safety' },
+  { message: 'Extreme weather watch — monitor local forecasts hourly. Prepare emergency feed and water supplies for 72-hour autonomous farm operation.', icon: Icons.cloudLightning, color: '#EF4444', severity: 'high', category: 'safety' },
 ]
 
 /* ── GOONA IQ FORECAST INSIGHTS ── */
 const INSIGHTS: WeatherAlert[] = [
-  { message: 'GOONA IQ predicts feed efficiency may drop 6-10% over next 3 days due to rising temperatures. Pre-emptive ventilation adjustment recommended.', icon: CloudSun, color: '#2E7D32', severity: 'medium', category: 'insight' },
-  { message: 'GOONA IQ: Shift feeding schedule to 5 AM - 9 AM window for optimal conversion. Birds consume 22% more during cooler morning periods.', icon: Sun, color: '#2E7D32', severity: 'low', category: 'insight' },
-  { message: 'Climate trend analysis detected — adjusting ventilation 2 hours earlier daily can reduce heat stress mortality by 15% based on your batch data.', icon: Wind, color: '#2E7D32', severity: 'medium', category: 'insight' },
-  { message: 'GOONA IQ: Your Batch A is entering peak heat sensitivity window. Activate heat stress protocol — increase air speed to 2.5m/s across bird level.', icon: Thermometer, color: '#2E7D32', severity: 'high', category: 'insight' },
-  { message: 'Weather pattern shift detected — consider advancing Batch B harvest by 4 days to avoid forecasted storm window. Estimated revenue impact: minimal.', icon: CloudLightning, color: '#2E7D32', severity: 'medium', category: 'insight' },
-  { message: 'GOONA IQ operational forecast: Today is a high-risk production day. Prioritise essential tasks and monitor bird behaviour every 3 hours.', icon: AlertTriangle, color: '#2E7D32', severity: 'high', category: 'insight' },
-  { message: 'AI analysis: Your farm\'s current climate conditions match pre-outbreak patterns. Preemptive probiotic supplementation recommended for respiratory health.', icon: ShieldCheck, color: '#2E7D32', severity: 'medium', category: 'insight' },
+  { message: 'GOONA IQ predicts feed efficiency may drop 6-10% over next 3 days due to rising temperatures. Pre-emptive ventilation adjustment recommended.', icon: Icons.cloudSun, color: '#2E7D32', severity: 'medium', category: 'insight' },
+  { message: 'GOONA IQ: Shift feeding schedule to 5 AM - 9 AM window for optimal conversion. Birds consume 22% more during cooler morning periods.', icon: Icons.sun, color: '#2E7D32', severity: 'low', category: 'insight' },
+  { message: 'Climate trend analysis detected — adjusting ventilation 2 hours earlier daily can reduce heat stress mortality by 15% based on your batch data.', icon: Icons.wind, color: '#2E7D32', severity: 'medium', category: 'insight' },
+  { message: 'GOONA IQ: Your Batch A is entering peak heat sensitivity window. Activate heat stress protocol — increase air speed to 2.5m/s across bird level.', icon: Icons.thermometer, color: '#2E7D32', severity: 'high', category: 'insight' },
+  { message: 'Weather pattern shift detected — consider advancing Batch B harvest by 4 days to avoid forecasted storm window. Estimated revenue impact: minimal.', icon: Icons.cloudLightning, color: '#2E7D32', severity: 'medium', category: 'insight' },
+  { message: 'GOONA IQ operational forecast: Today is a high-risk production day. Prioritise essential tasks and monitor bird behaviour every 3 hours.', icon: Icons.alertTriangle, color: '#2E7D32', severity: 'high', category: 'insight' },
+  { message: 'AI analysis: Your farm\'s current climate conditions match pre-outbreak patterns. Preemptive probiotic supplementation recommended for respiratory health.', icon: Icons.shieldCheck, color: '#2E7D32', severity: 'medium', category: 'insight' },
 ]
 
 const ALL_ALERTS = [...HEAT, ...RAIN, ...HUMIDITY, ...WATER, ...FEED, ...SAFETY, ...INSIGHTS]
@@ -130,23 +130,23 @@ export function generateWeatherAlerts(count = 4): string[] {
 /* ── Given a message, return matching weather icon + color ── */
 export function getWeatherInfo(message: string): { icon: any; color: string } {
   const lower = message.toLowerCase()
-  if (lower.includes('heat stress') || lower.includes('dehydration') || lower.includes('oxygen')) return { icon: Thermometer, color: '#EF4444' }
+  if (lower.includes('heat stress') || lower.includes('dehydration') || lower.includes('oxygen')) return { icon: Icons.thermometer, color: '#EF4444' }
   if (lower.includes('heat') || lower.includes('temperature') || lower.includes('warm')) {
-    if (lower.includes('high') || lower.includes('exceed') || lower.includes('wave')) return { icon: Thermometer, color: '#EF4444' }
-    return { icon: CloudSun, color: '#F59E0B' }
+    if (lower.includes('high') || lower.includes('exceed') || lower.includes('wave')) return { icon: Icons.thermometer, color: '#EF4444' }
+    return { icon: Icons.cloudSun, color: '#F59E0B' }
   }
-  if (lower.includes('flood') || lower.includes('heavy rain') || lower.includes('prolonged rain')) return { icon: CloudLightning, color: '#6366F1' }
-  if (lower.includes('rain') || lower.includes('rainfall') || lower.includes('shower')) return { icon: CloudRain, color: '#1A56FF' }
-  if (lower.includes('coccidiosis') || lower.includes('respiratory') || lower.includes('bacterial')) return { icon: Droplets, color: '#0891B2' }
-  if (lower.includes('humidity') || lower.includes('litter') || lower.includes('ammonia') || lower.includes('condensation')) return { icon: Droplets, color: '#0891B2' }
-  if (lower.includes('water') || lower.includes('drinker') || lower.includes('nipple') || lower.includes('dehydration')) return { icon: Droplets, color: '#0EA5E9' }
-  if (lower.includes('feed') || lower.includes('appetite') || lower.includes('conversion')) return { icon: CloudSun, color: '#D97706' }
-  if (lower.includes('wind') || lower.includes('storm') || lower.includes('lightning')) return { icon: Wind, color: '#6366F1' }
-  if (lower.includes('disease') || lower.includes('biosecurity')) return { icon: ShieldCheck, color: '#6366F1' }
-  if (lower.includes('goona iq') || lower.includes('climate') || lower.includes('insight') || lower.includes('ai analysis')) return { icon: Sun, color: '#2E7D32' }
-  if (lower.includes('ventilation') || lower.includes('airflow') || lower.includes('respiratory') || lower.includes('circulation')) return { icon: Wind, color: '#0891B2' }
-  if (lower.includes('risk') || lower.includes('alert') || lower.includes('watch')) return { icon: AlertTriangle, color: '#F59E0B' }
-  return { icon: CloudSun, color: '#2E7D32' }
+  if (lower.includes('flood') || lower.includes('heavy rain') || lower.includes('prolonged rain')) return { icon: Icons.cloudLightning, color: '#6366F1' }
+  if (lower.includes('rain') || lower.includes('rainfall') || lower.includes('shower')) return { icon: Icons.cloudRain, color: '#1A56FF' }
+  if (lower.includes('coccidiosis') || lower.includes('respiratory') || lower.includes('bacterial')) return { icon: Icons.droplets, color: '#0891B2' }
+  if (lower.includes('humidity') || lower.includes('litter') || lower.includes('ammonia') || lower.includes('condensation')) return { icon: Icons.droplets, color: '#0891B2' }
+  if (lower.includes('water') || lower.includes('drinker') || lower.includes('nipple') || lower.includes('dehydration')) return { icon: Icons.droplets, color: '#0EA5E9' }
+  if (lower.includes('feed') || lower.includes('appetite') || lower.includes('conversion')) return { icon: Icons.cloudSun, color: '#D97706' }
+  if (lower.includes('wind') || lower.includes('storm') || lower.includes('lightning')) return { icon: Icons.wind, color: '#6366F1' }
+  if (lower.includes('disease') || lower.includes('biosecurity')) return { icon: Icons.shieldCheck, color: '#6366F1' }
+  if (lower.includes('goona iq') || lower.includes('climate') || lower.includes('insight') || lower.includes('ai analysis')) return { icon: Icons.sun, color: '#2E7D32' }
+  if (lower.includes('ventilation') || lower.includes('airflow') || lower.includes('respiratory') || lower.includes('circulation')) return { icon: Icons.wind, color: '#0891B2' }
+  if (lower.includes('risk') || lower.includes('alert') || lower.includes('watch')) return { icon: Icons.alertTriangle, color: '#F59E0B' }
+  return { icon: Icons.cloudSun, color: '#2E7D32' }
 }
 
 /* ── Check if message is weather-related ── */

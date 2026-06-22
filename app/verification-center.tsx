@@ -7,21 +7,18 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, Check, X, Mail, Phone, Fingerprint,
-  ShieldCheck, Building2, Camera, User, Award,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useWalletStore, getVerificationScore, getVerifiedCount } from '../store/useWalletStore'
 
 const VERIFICATION_ITEMS = [
-  { key: 'email', label: 'Email Verified', icon: Mail },
-  { key: 'phone', label: 'Phone Verified', icon: Phone },
-  { key: 'bvn', label: 'BVN Verified', icon: Fingerprint },
-  { key: 'nin', label: 'NIN Verified', icon: ShieldCheck },
-  { key: 'selfie', label: 'Selfie Verified', icon: Camera },
-  { key: 'business', label: 'Business Verified', icon: Building2 },
+  { key: 'email', label: 'Email Verified', icon: Icons.mail },
+  { key: 'phone', label: 'Phone Verified', icon: Icons.phone },
+  { key: 'bvn', label: 'BVN Verified', icon: Icons.fingerprint },
+  { key: 'nin', label: 'NIN Verified', icon: Icons.shieldCheck },
+  { key: 'selfie', label: 'Selfie Verified', icon: Icons.camera },
+  { key: 'business', label: 'Business Verified', icon: Icons.building2 },
 ]
 
 export default function VerificationCenterScreen() {
@@ -61,7 +58,7 @@ export default function VerificationCenterScreen() {
       >
         <Animated.View entering={FadeInDown.duration(600).springify()} style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.back()}>
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
           <Text style={styles.title}>Verification Center</Text>
           <Text style={styles.subtitle}>Track your identity verification progress.</Text>
@@ -100,7 +97,7 @@ export default function VerificationCenterScreen() {
                   </View>
                   <Text style={[styles.statusLabel, done && styles.statusLabelDone]}>{item.label}</Text>
                   <View style={[styles.statusBadge, done ? styles.statusBadgeDone : styles.statusBadgePending]}>
-                    {done ? <GoonaIcon icon={Check} size={12} color="#16A34A" /> : <GoonaIcon icon={X} size={12} color="#94A3B8" />}
+                    {done ? <GoonaIcon icon={Icons.check} size={12} color="#16A34A" /> : <GoonaIcon icon={Icons.x} size={12} color="#94A3B8" />}
                     <Text style={[styles.statusBadgeText, { color: done ? '#16A34A' : '#94A3B8' }]}>{done ? 'Verified' : 'Pending'}</Text>
                   </View>
                 </View>
@@ -112,7 +109,7 @@ export default function VerificationCenterScreen() {
         {status === 'not_activated' && (
           <Animated.View entering={FadeInUp.duration(400).delay(200).springify()}>
             <TouchableOpacity style={styles.activateLink} activeOpacity={0.7} onPress={() => router.push('/wallet-activation')}>
-              <GoonaIcon icon={Award} size={16} color="#2E7D32" />
+              <GoonaIcon icon={Icons.award} size={16} color="#2E7D32" />
               <Text style={styles.activateLinkText}>Continue Wallet Activation</Text>
             </TouchableOpacity>
           </Animated.View>

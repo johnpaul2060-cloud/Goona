@@ -15,7 +15,7 @@ import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import GoonaIcon from '../../components/ui/GoonaIcon';
-import { ArrowLeft, User, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
+import { Icons } from '../../shared/icons';
 
 export default function CreateAccountScreen() {
   const [fullName, setFullName] = useState('');
@@ -61,7 +61,7 @@ export default function CreateAccountScreen() {
         >
           <View style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} onPress={() => router.back()}>
-              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={styles.navLogo}>
               <Svg width={18} height={18} viewBox="0 0 18 18">
@@ -93,7 +93,7 @@ export default function CreateAccountScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIcon}>
-                  <GoonaIcon icon={User} size={18} color="#A0AEA1" />
+                  <GoonaIcon icon={Icons.user} size={18} color="#A0AEA1" />
                 </View>
                 <View style={styles.fieldInputWrap}>
                   <Text style={styles.fieldLabel}>FULL NAME</Text>
@@ -137,7 +137,7 @@ export default function CreateAccountScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIcon}>
-                  <GoonaIcon icon={Mail} size={18} color="#A0AEA1" />
+                  <GoonaIcon icon={Icons.mail} size={18} color="#A0AEA1" />
                 </View>
                 <View style={styles.fieldInputWrap}>
                   <Text style={styles.fieldLabel}>EMAIL ADDRESS</Text>
@@ -158,7 +158,7 @@ export default function CreateAccountScreen() {
               <View style={[styles.passwordWrap, focusedField === 'password' && styles.fieldWrapFocused]}>
                 <View style={styles.passwordInputRow}>
                   <View style={styles.fieldIcon}>
-                    <GoonaIcon icon={Lock} size={18} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.lock} size={18} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>PASSWORD</Text>
@@ -182,9 +182,9 @@ export default function CreateAccountScreen() {
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   {showPassword ? (
-                    <GoonaIcon icon={Eye} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.eye} size={20} color="#A0AEA1" />
                   ) : (
-                    <GoonaIcon icon={EyeOff} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.eyeOff} size={20} color="#A0AEA1" />
                   )}
                 </TouchableOpacity>
               </View>
@@ -197,7 +197,7 @@ export default function CreateAccountScreen() {
               <View style={[styles.passwordWrap, focusedField === 'confirmPassword' && styles.fieldWrapFocused, confirmPassword.length > 0 && !doPasswordsMatch && styles.fieldWrapError]}>
                 <View style={styles.passwordInputRow}>
                   <View style={styles.fieldIcon}>
-                    <GoonaIcon icon={Lock} size={18} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.lock} size={18} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>CONFIRM PASSWORD</Text>
@@ -221,9 +221,9 @@ export default function CreateAccountScreen() {
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   {showConfirmPassword ? (
-                    <GoonaIcon icon={Eye} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.eye} size={20} color="#A0AEA1" />
                   ) : (
-                    <GoonaIcon icon={EyeOff} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.eyeOff} size={20} color="#A0AEA1" />
                   )}
                 </TouchableOpacity>
               </View>
@@ -239,7 +239,7 @@ export default function CreateAccountScreen() {
               onPress={() => router.push('/farm-setup')}
             >
               <Text style={styles.continueBtnText}>Continue</Text>
-              <GoonaIcon icon={ArrowRight} size={18} color="white" />
+              <GoonaIcon icon={Icons.arrowRight} size={18} color="white" />
             </TouchableOpacity>
           </View>
 

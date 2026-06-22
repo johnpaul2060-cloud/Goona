@@ -6,7 +6,7 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { ArrowLeft, TrendingUp, TrendingDown, Download, BarChart3, PieChart, Calendar, Sparkles, Package, Users, Zap, Wrench, Truck, Receipt } from 'lucide-react-native'
+import { Icons } from '../../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -22,12 +22,12 @@ const WEEKLY_DATA = [
 ]
 
 const BREAKDOWN = [
-  { label: 'Feed', value: 38, color: '#16A34A', icon: Package },
-  { label: 'Salaries', value: 28, color: '#1A56FF', icon: Users },
-  { label: 'Medication', value: 12, color: '#EF4444', icon: Receipt },
-  { label: 'Transport', value: 8, color: '#F59E0B', icon: Truck },
-  { label: 'Utilities', value: 8, color: '#8B5CF6', icon: Zap },
-  { label: 'Repairs', value: 6, color: '#06B6D4', icon: Wrench },
+  { label: 'Feed', value: 38, color: '#16A34A', icon: Icons.package },
+  { label: 'Salaries', value: 28, color: '#1A56FF', icon: Icons.users },
+  { label: 'Medication', value: 12, color: '#EF4444', icon: Icons.receipt },
+  { label: 'Transport', value: 8, color: '#F59E0B', icon: Icons.truck },
+  { label: 'Utilities', value: 8, color: '#8B5CF6', icon: Icons.zap },
+  { label: 'Repairs', value: 6, color: '#06B6D4', icon: Icons.wrench },
 ]
 
 export default function ReportsScreen() {
@@ -47,11 +47,11 @@ export default function ReportsScreen() {
             activeOpacity={0.7}
             onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses' as any) } }}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Reports</Text>
           <TouchableOpacity style={styles.navAction} activeOpacity={0.7}>
-            <GoonaIcon icon={Download} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.download} size={20} color="#1F2937" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -80,7 +80,7 @@ export default function ReportsScreen() {
               <Text style={styles.summaryValue}>₦348,000</Text>
             </View>
             <View style={styles.summaryBadge}>
-              <GoonaIcon icon={TrendingUp} size={14} color="#EF4444" />
+              <GoonaIcon icon={Icons.trendingUp} size={14} color="#EF4444" />
               <Text style={styles.summaryTrend}>+8.2%</Text>
             </View>
           </View>
@@ -126,7 +126,7 @@ export default function ReportsScreen() {
 
         <Animated.View entering={FadeInUp.duration(500).delay(460).springify()} style={styles.insightCard}>
           <View style={styles.insightHeader}>
-            <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
             <Text style={styles.insightTitle}>GOONA IQ Analysis</Text>
           </View>
           <Text style={styles.insightText}>

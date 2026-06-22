@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, withDelay, Easing, interpolate, Extrapolation } from 'react-native-reanimated'
-import { Thermometer, Droplets, CloudRain, Wind, Sun, CloudSun, CloudLightning, AlertTriangle, Lightbulb, Sprout } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import GoonaIcon from './ui/GoonaIcon'
 import { generateForecastReport, generate3DayForecast, type ForecastReport, type ThreeDayForecast, type DayForecast } from '../utils/weatherIntelligence'
 
 /* ── Condition icon map ── */
 function ConditionIcon({ condition, size = 18 }: { condition: DayForecast['condition']; size?: number }) {
   const map: Record<DayForecast['condition'], { icon: any; color: string }> = {
-    sunny: { icon: Sun, color: '#F59E0B' },
-    cloudy: { icon: CloudSun, color: '#94A3B8' },
-    rainy: { icon: CloudRain, color: '#1A56FF' },
-    stormy: { icon: CloudLightning, color: '#6366F1' },
-    humid: { icon: Droplets, color: '#0891B2' },
+    sunny: { icon: Icons.sun, color: '#F59E0B' },
+    cloudy: { icon: Icons.cloudSun, color: '#94A3B8' },
+    rainy: { icon: Icons.cloudRain, color: '#1A56FF' },
+    stormy: { icon: Icons.cloudLightning, color: '#6366F1' },
+    humid: { icon: Icons.droplets, color: '#0891B2' },
   }
   const m = map[condition]
   return <GoonaIcon icon={m.icon} size={size} color={m.color} />
@@ -74,15 +74,15 @@ function DayForecastCard({ forecast, index }: { forecast: DayForecast; index: nu
 
         <View style={iqwsStyles.dayDetails}>
           <View style={iqwsStyles.dayDetailRow}>
-            <GoonaIcon icon={Droplets} size={10} color="#64748B" />
+            <GoonaIcon icon={Icons.droplets} size={10} color="#64748B" />
             <Text style={iqwsStyles.dayDetailText}>{forecast.humidity}%</Text>
           </View>
           <View style={iqwsStyles.dayDetailRow}>
-            <GoonaIcon icon={CloudRain} size={10} color="#64748B" />
+            <GoonaIcon icon={Icons.cloudRain} size={10} color="#64748B" />
             <Text style={iqwsStyles.dayDetailText}>{forecast.rainProb}%</Text>
           </View>
           <View style={iqwsStyles.dayDetailRow}>
-            <GoonaIcon icon={Wind} size={10} color="#64748B" />
+            <GoonaIcon icon={Icons.wind} size={10} color="#64748B" />
             <Text style={iqwsStyles.dayDetailText}>{forecast.windSpeed}</Text>
           </View>
         </View>
@@ -105,7 +105,7 @@ function AIRecommendationBanner({ text, color }: { text: string; color: string }
   return (
     <View style={[iqwsStyles.aiBanner, { borderColor: `${color}20`, backgroundColor: `${color}06` }]}>
       <View style={[iqwsStyles.aiBannerIcon, { backgroundColor: `${color}15` }]}>
-        <GoonaIcon icon={Lightbulb} size={14} color={color} />
+        <GoonaIcon icon={Icons.lightbulb} size={14} color={color} />
       </View>
       <Text style={[iqwsStyles.aiBannerText, { color }]} numberOfLines={3}>{text}</Text>
     </View>
@@ -172,7 +172,7 @@ export default function GoonaIQWeatherSection() {
       <Animated.View entering={FadeInUp.duration(500).delay(550).springify()} style={iqwsStyles.headerRow}>
         <View style={iqwsStyles.headerLeft}>
           <View style={iqwsStyles.headerIcon}>
-            <GoonaIcon icon={Sprout} size={16} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sprout} size={16} color="#2E7D32" />
           </View>
           <Text style={iqwsStyles.headerTitle}>Weather Intelligence</Text>
         </View>
@@ -183,10 +183,10 @@ export default function GoonaIQWeatherSection() {
 
       {/* Current Conditions */}
       <Animated.View entering={FadeInUp.duration(500).delay(600).springify()} style={iqwsStyles.currentGrid}>
-        <CurrentMetricTile icon={Thermometer} label="Temperature" value={`${report.temperature.current}°C`} color="#F59E0B" />
-        <CurrentMetricTile icon={Droplets} label="Humidity" value={`${report.humidity.current}%`} color="#0891B2" />
-        <CurrentMetricTile icon={CloudRain} label="Rainfall" value={`${report.rainfall.probability}%`} color="#1A56FF" />
-        <CurrentMetricTile icon={Wind} label="Wind" value={report.wind.speed} color="#6366F1" />
+        <CurrentMetricTile icon={Icons.thermometer} label="Temperature" value={`${report.temperature.current}°C`} color="#F59E0B" />
+        <CurrentMetricTile icon={Icons.droplets} label="Humidity" value={`${report.humidity.current}%`} color="#0891B2" />
+        <CurrentMetricTile icon={Icons.cloudRain} label="Rainfall" value={`${report.rainfall.probability}%`} color="#1A56FF" />
+        <CurrentMetricTile icon={Icons.wind} label="Wind" value={report.wind.speed} color="#6366F1" />
       </Animated.View>
 
       {/* Risk + Key Insight */}
@@ -194,7 +194,7 @@ export default function GoonaIQWeatherSection() {
         <RiskScoreRing score={report.operationalRisk.score} />
         <View style={iqwsStyles.insightContent}>
           <View style={iqwsStyles.insightHead}>
-            <GoonaIcon icon={AlertTriangle} size={12} color={report.operationalRisk.color} />
+            <GoonaIcon icon={Icons.alertTriangle} size={12} color={report.operationalRisk.color} />
             <Text style={[iqwsStyles.insightHeadText, { color: report.operationalRisk.color }]}>Operational Risk</Text>
           </View>
           <Text style={iqwsStyles.insightBody} numberOfLines={3}>{forecast.keyInsight}</Text>
@@ -214,7 +214,7 @@ export default function GoonaIQWeatherSection() {
       {report.recommendations.length > 0 && (
         <Animated.View entering={FadeInUp.duration(500).delay(800).springify()} style={iqwsStyles.recommendationsSection}>
           <View style={iqwsStyles.recSectionHead}>
-            <GoonaIcon icon={Lightbulb} size={14} color="#2E7D32" />
+            <GoonaIcon icon={Icons.lightbulb} size={14} color="#2E7D32" />
             <Text style={iqwsStyles.recSectionTitle}>AI Operational Recommendations</Text>
           </View>
           {report.recommendations.map((rec: string, i: number) => (

@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, interpolate, Extrapolation } from 'react-native-reanimated'
-import { Thermometer, Droplets, CloudRain, Wind, Lightbulb, AlertTriangle } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import type { WeatherAlert } from '../utils/weatherIntelligence'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from './ui/GoonaIcon'
@@ -19,7 +19,7 @@ function RiskBadge({ score }: { score: number }) {
   const label = score > 65 ? 'High Risk' : score > 35 ? 'Moderate' : 'Low Risk'
   return (
     <View style={[styles.riskBadge, { backgroundColor: bgColor, borderColor: color }]}>
-      <GoonaIcon icon={AlertTriangle} size={12} color={color} />
+      <GoonaIcon icon={Icons.alertTriangle} size={12} color={color} />
       <Text style={[styles.riskBadgeText, { color }]}>{label}</Text>
     </View>
   )
@@ -98,7 +98,7 @@ function GoonaWeatherPanel({ visible, onClose }: GoonaWeatherPanelProps) {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
-              <GoonaIcon icon={Thermometer} size={22} color="#2E7D32" />
+              <GoonaIcon icon={Icons.thermometer} size={22} color="#2E7D32" />
               <Text style={styles.headerTitle}>Weather Intelligence</Text>
             </View>
             <RiskBadge score={report.operationalRisk.score} />
@@ -106,25 +106,25 @@ function GoonaWeatherPanel({ visible, onClose }: GoonaWeatherPanelProps) {
 
           <View style={styles.metricsGrid}>
             <MetricTile
-              icon={Thermometer}
+              icon={Icons.thermometer}
               label="Temperature"
               value={`${report.temperature.current}°C`}
               color={report.temperature.current > 34 ? '#EF4444' : '#F59E0B'}
             />
             <MetricTile
-              icon={Droplets}
+              icon={Icons.droplets}
               label="Humidity"
               value={`${report.humidity.current}%`}
               color={report.humidity.risk === 'high' ? '#0891B2' : '#0EA5E9'}
             />
             <MetricTile
-              icon={CloudRain}
+              icon={Icons.cloudRain}
               label="Rainfall"
               value={`${report.rainfall.probability}%`}
               color={report.rainfall.expected ? '#1A56FF' : '#6366F1'}
             />
             <MetricTile
-              icon={Wind}
+              icon={Icons.wind}
               label="Wind"
               value={report.wind.speed}
               color={report.wind.risk === 'high' ? '#EF4444' : '#6366F1'}
@@ -134,7 +134,7 @@ function GoonaWeatherPanel({ visible, onClose }: GoonaWeatherPanelProps) {
           {report.recommendations.length > 0 && (
             <View style={styles.recommendationsSection}>
               <View style={styles.sectionHeader}>
-                <GoonaIcon icon={Lightbulb} size={16} color="#2E7D32" />
+                <GoonaIcon icon={Icons.lightbulb} size={16} color="#2E7D32" />
                 <Text style={styles.sectionTitle}>GOONA IQ Recommendations</Text>
               </View>
               {report.recommendations.map((rec: string, i: number) => (
@@ -149,7 +149,7 @@ function GoonaWeatherPanel({ visible, onClose }: GoonaWeatherPanelProps) {
           {report.alerts.length > 0 && (
             <View style={styles.alertsSection}>
               <View style={styles.sectionHeader}>
-                <GoonaIcon icon={AlertTriangle} size={16} color={totalAlerts > 0 ? '#EF4444' : '#2E7D32'} />
+                <GoonaIcon icon={Icons.alertTriangle} size={16} color={totalAlerts > 0 ? '#EF4444' : '#2E7D32'} />
                 <Text style={styles.sectionTitle}>Active Alerts ({report.alerts.length})</Text>
               </View>
               {report.alerts.map((alert: WeatherAlert, i: number) => {

@@ -4,7 +4,7 @@ import {
   StyleSheet, Dimensions, Keyboard,
 } from 'react-native'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
-import { Search, Filter, Lock, RefreshCw, X, AlertCircle, AlertTriangle, Paperclip, FileText, ChevronRight } from 'lucide-react-native'
+import { Icons } from '../../../shared/icons'
 import { BlurView } from 'expo-blur'
 import Animated, {
   useSharedValue, useAnimatedStyle, withDelay, withTiming,
@@ -252,7 +252,7 @@ function SummaryCard({
       <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.summaryCard}>
         <View style={styles.summaryTop}>
           <View style={[styles.summaryIconWrap, { backgroundColor: item.bg }]}>
-            <GoonaIcon icon={FileText} size={18} color={item.iconColor} />
+            <GoonaIcon icon={Icons.fileText} size={18} color={item.iconColor} />
           </View>
           <Text style={[styles.summaryTrend, { color: item.trendUp ? '#16A34A' : '#EF4444' }]}>{item.trend}</Text>
         </View>
@@ -349,13 +349,13 @@ function TimelineItem({
               <View style={styles.timelineMetaRight}>
                 {item.immutable && (
                   <View style={styles.timelineLockRow}>
-                    <GoonaIcon icon={Lock} size={12} color="#94A3B8" />
+                    <GoonaIcon icon={Icons.lock} size={12} color="#94A3B8" />
                     <Text style={styles.timelineLockText}>Immutable</Text>
                   </View>
                 )}
                 {item.verified && (
                   <View style={[styles.timelineSyncBadge, { backgroundColor: '#DDF5F0' }]}>
-                    <GoonaIcon icon={RefreshCw} size={12} color="#0F766E" />
+                    <GoonaIcon icon={Icons.refreshCw} size={12} color="#0F766E" />
                     <Text style={styles.timelineSyncText}>Synced</Text>
                   </View>
                 )}
@@ -364,13 +364,13 @@ function TimelineItem({
 
             {item.priority === 'high' && (
               <View style={styles.priorityChipHigh}>
-                <GoonaIcon icon={AlertCircle} size={14} color="#EF4444" />
+                <GoonaIcon icon={Icons.alertCircle} size={14} color="#EF4444" />
                 <Text style={styles.priorityChipHighText}>High Priority</Text>
               </View>
             )}
             {item.priority === 'medium' && (
               <View style={styles.priorityChipMed}>
-                <GoonaIcon icon={AlertTriangle} size={14} color="#F59E0B" />
+                <GoonaIcon icon={Icons.alertTriangle} size={14} color="#F59E0B" />
                 <Text style={styles.priorityChipMedText}>Medium Priority</Text>
               </View>
             )}
@@ -451,7 +451,7 @@ function RecordModal({
             <Text style={styles.modalSectionTitle}>Attachments</Text>
             {MODAL_DETAIL.attachments.map((a, i) => (
               <View key={i} style={styles.modalAttachRow}>
-                <GoonaIcon icon={Paperclip} size={16} color="#94A3B8" />
+                <GoonaIcon icon={Icons.paperclip} size={16} color="#94A3B8" />
                 <Text style={styles.modalAttachText}>{a}</Text>
               </View>
             ))}
@@ -510,7 +510,7 @@ function EcosystemCard({ item, index }: { item: (typeof ECOSYSTEM_LINKS)[0]; ind
           <Text style={styles.ecosystemLabel}>{item.label}</Text>
           <Text style={styles.ecosystemDesc}>{item.desc}</Text>
         </View>
-        <GoonaIcon icon={ChevronRight} size={16} color="#94A3B8" />
+        <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
       </TouchableOpacity>
     </Animated.View>
   )
@@ -581,10 +581,10 @@ export default function RecordsDashboardScreen() {
               activeOpacity={0.7}
               onPress={() => searchRef.current?.focus()}
             >
-              <GoonaIcon icon={Search} size={18} color="#94A3B8" />
+              <GoonaIcon icon={Icons.search} size={18} color="#94A3B8" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-              <GoonaIcon icon={Filter} size={18} color="#1F2937" />
+              <GoonaIcon icon={Icons.filter} size={18} color="#1F2937" />
             </TouchableOpacity>
           </View>
         </View>
@@ -592,7 +592,7 @@ export default function RecordsDashboardScreen() {
         {/* Search */}
         <Animated.View style={[styles.searchWrap, searchStyle]}>
           <View style={[styles.searchInputRow, searchFocused && styles.searchInputRowFocused]}>
-            <GoonaIcon icon={Search} size={18} color="#94A3B8" />
+            <GoonaIcon icon={Icons.search} size={18} color="#94A3B8" />
             <TextInput
               ref={searchRef}
               style={styles.searchInput}
@@ -604,8 +604,8 @@ export default function RecordsDashboardScreen() {
               onBlur={onSearchBlur}
             />
             {searchText.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchText('')} style={styles.searchClearBtn}>
-                <GoonaIcon icon={X} size={20} color="#1F2937" />
+        <TouchableOpacity onPress={() => setSearchText('')} style={styles.searchClearBtn}>
+                <GoonaIcon icon={Icons.x} size={20} color="#1F2937" />
               </TouchableOpacity>
             )}
           </View>

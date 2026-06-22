@@ -18,7 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import GoonaIcon from '../../components/ui/GoonaIcon';
-import { ArrowLeft, User, Lock, Eye, EyeOff, Check, Shield, LogIn, ScanFace, FingerprintPattern, Globe, Apple, X } from 'lucide-react-native';
+import { Icons } from '../../shared/icons';
 import Svg, { Path } from 'react-native-svg';
 import { useAuthStore, type RegisteredDevice } from '../../store/useAuthStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -157,7 +157,7 @@ export default function LoginScreen() {
         >
           <View style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} onPress={() => { try { router.back() } catch {} }}>
-              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={styles.navLogo}>
               <Svg width={24} height={24} viewBox="0 0 24 24">
@@ -183,7 +183,7 @@ export default function LoginScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIcon}>
-                  <GoonaIcon icon={User} size={20} color="#A0AEA1" />
+                  <GoonaIcon icon={Icons.user} size={20} color="#A0AEA1" />
                 </View>
                 <View style={styles.fieldInputWrap}>
                   <Text style={styles.fieldLabel}>Email / Phone</Text>
@@ -204,7 +204,7 @@ export default function LoginScreen() {
             <View style={styles.fieldGroup}>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIcon}>
-                  <GoonaIcon icon={Lock} size={20} color="#A0AEA1" />
+                  <GoonaIcon icon={Icons.lock} size={20} color="#A0AEA1" />
                 </View>
                 <View style={styles.fieldInputWrap}>
                   <Text style={styles.fieldLabel}>Password</Text>
@@ -223,9 +223,9 @@ export default function LoginScreen() {
                   onPress={() => setPasswordVisible(!passwordVisible)}
                 >
                   {passwordVisible ? (
-                    <GoonaIcon icon={Eye} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.eye} size={20} color="#A0AEA1" />
                   ) : (
-                    <GoonaIcon icon={EyeOff} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.eyeOff} size={20} color="#A0AEA1" />
                   )}
                 </TouchableOpacity>
               </View>
@@ -243,35 +243,35 @@ export default function LoginScreen() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                  {rememberMe && <GoonaIcon icon={Check} size={12} color="white" />}
+                  {rememberMe && <GoonaIcon icon={Icons.check} size={12} color="white" />}
                 </View>
                 <Text style={styles.rememberText}>Keep me signed in</Text>
               </TouchableOpacity>
               <View style={styles.secureBadge}>
-                <GoonaIcon icon={Shield} size={16} color="#2E7D32" />
+                <GoonaIcon icon={Icons.shield} size={16} color="#2E7D32" />
                 <Text style={styles.secureText}>Secure Login</Text>
               </View>
             </View>
 
             <TouchableOpacity style={styles.loginBtn} activeOpacity={0.85} onPress={handleLogin}>
-              <GoonaIcon icon={LogIn} size={20} color="white" />
+              <GoonaIcon icon={Icons.logIn} size={20} color="white" />
               <Text style={styles.loginBtnText}>Login to GOONA</Text>
             </TouchableOpacity>
 
             <View style={styles.bioRow}>
               {isAvailable ? (
                 <TouchableOpacity style={[styles.bioBtn, { borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,0.03)' }]} activeOpacity={0.8} onPress={() => { Keyboard.dismiss(); setShowBioLoginModal(true) }}>
-                  <GoonaIcon icon={isFaceId ? ScanFace : FingerprintPattern} size={20} color="#6366F1" />
+                  <GoonaIcon icon={isFaceId ? Icons.scanFace : Icons.fingerprintPattern} size={20} color="#6366F1" />
                   <Text style={[styles.bioBtnText, { color: '#6366F1' }]}>{bioLabel}</Text>
                 </TouchableOpacity>
               ) : (
                 <>
                   <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8} onPress={() => Alert.alert('Not Available', 'Face ID is not available on this device.')}>
-                    <GoonaIcon icon={ScanFace} size={20} color="#1B1B1B" />
+                    <GoonaIcon icon={Icons.scanFace} size={20} color="#1B1B1B" />
                     <Text style={styles.bioBtnText}>Face ID</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.bioBtn} activeOpacity={0.8} onPress={() => Alert.alert('Not Available', 'Fingerprint authentication is not available on this device.')}>
-                    <GoonaIcon icon={FingerprintPattern} size={20} color="#1B1B1B" />
+                    <GoonaIcon icon={Icons.fingerprintPattern} size={20} color="#1B1B1B" />
                     <Text style={styles.bioBtnText}>Fingerprint</Text>
                   </TouchableOpacity>
                 </>
@@ -286,11 +286,11 @@ export default function LoginScreen() {
 
             <View style={styles.socialRow}>
               <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Google sign-in is under development.')}>
-                <GoonaIcon icon={Globe} size={20} color="#1B1B1B" />
+                <GoonaIcon icon={Icons.globe} size={20} color="#1B1B1B" />
                 <Text style={styles.socialBtnText}>Google</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8} onPress={() => Alert.alert('Coming Soon', 'Apple sign-in is under development.')}>
-                <GoonaIcon icon={Apple} size={20} color="#1B1B1B" />
+                <GoonaIcon icon={Icons.apple} size={20} color="#1B1B1B" />
                 <Text style={styles.socialBtnText}>Apple</Text>
               </TouchableOpacity>
             </View>
@@ -313,9 +313,9 @@ export default function LoginScreen() {
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} />
           <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, alignItems: 'center' }}>
             <View style={{ alignItems: 'center', marginBottom: 8 }}><View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} /></View>
-            <TouchableOpacity onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={X} size={18} color="#94A3B8" /></TouchableOpacity>
+            <TouchableOpacity onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={Icons.x} size={18} color="#94A3B8" /></TouchableOpacity>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(99,102,241,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              <GoonaIcon icon={isFaceId ? ScanFace : FingerprintPattern} size={32} color="#6366F1" />
+              <GoonaIcon icon={isFaceId ? Icons.scanFace : Icons.fingerprintPattern} size={32} color="#6366F1" />
             </View>
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F2937' }}>Login with {bioLabel}</Text>
             <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', marginTop: 6 }}>Use your {bioLabel} to quickly access your farm dashboard.</Text>
@@ -347,9 +347,9 @@ export default function LoginScreen() {
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setShowEnrollModal(false)} />
           <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, alignItems: 'center' }}>
             <View style={{ alignItems: 'center', marginBottom: 8 }}><View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} /></View>
-            <TouchableOpacity onPress={() => setShowEnrollModal(false)} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={X} size={18} color="#94A3B8" /></TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowEnrollModal(false)} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={Icons.x} size={18} color="#94A3B8" /></TouchableOpacity>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(99,102,241,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              <GoonaIcon icon={Shield} size={32} color="#6366F1" />
+              <GoonaIcon icon={Icons.shield} size={32} color="#6366F1" />
             </View>
             <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F2937' }}>Enable Biometric Login?</Text>
             <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', marginTop: 6, lineHeight: 20, paddingHorizontal: 16 }}>

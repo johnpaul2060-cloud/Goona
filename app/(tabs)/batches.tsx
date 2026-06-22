@@ -4,7 +4,7 @@ import {
   StyleSheet, Dimensions, Modal,
 } from 'react-native'
 import GoonaIcon from '../../components/ui/GoonaIcon'
-import { ArrowLeft, Search, Filter, FileText, Users, AlertCircle, ShieldCheck, Plus, ClipboardList, TrendingUp } from 'lucide-react-native'
+import { Icons } from '../../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -77,18 +77,18 @@ function estimateExpectedRevenue(batch: Batch): number {
 }
 
 const OVERVIEW_ICONS = [
-  (c: string) => <GoonaIcon icon={FileText} size={18} color={c} />,
-  (c: string) => <GoonaIcon icon={Users} size={18} color={c} />,
-  (c: string) => <GoonaIcon icon={AlertCircle} size={18} color={c} />,
-  (c: string) => <GoonaIcon icon={ShieldCheck} size={18} color={c} />,
+  (c: string) => <GoonaIcon icon={Icons.fileText} size={18} color={c} />,
+  (c: string) => <GoonaIcon icon={Icons.users} size={18} color={c} />,
+  (c: string) => <GoonaIcon icon={Icons.alertCircle} size={18} color={c} />,
+  (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={18} color={c} />,
 ]
 
 const FAB_ACTIONS = [
-  { label: 'Create Batch', icon: (c: string) => <GoonaIcon icon={Plus} size={20} color={c} />, route: '/create-batch' as const },
-  { label: 'Add Record', icon: (c: string) => <GoonaIcon icon={FileText} size={20} color={c} />, route: '/daily-records' as const },
-  { label: 'Feed Entry', icon: (c: string) => <GoonaIcon icon={ClipboardList} size={20} color={c} />, route: '/daily-records' as const },
-  { label: 'Mortality Log', icon: (c: string) => <GoonaIcon icon={AlertCircle} size={20} color={c} />, route: '/daily-records' as const },
-  { label: 'Revenue Entry', icon: (c: string) => <GoonaIcon icon={TrendingUp} size={20} color={c} />, route: '/records/sales-revenue' as const },
+  { label: 'Create Batch', icon: (c: string) => <GoonaIcon icon={Icons.plus} size={20} color={c} />, route: '/create-batch' as const },
+  { label: 'Add Record', icon: (c: string) => <GoonaIcon icon={Icons.fileText} size={20} color={c} />, route: '/daily-records' as const },
+  { label: 'Feed Entry', icon: (c: string) => <GoonaIcon icon={Icons.clipboardList} size={20} color={c} />, route: '/daily-records' as const },
+  { label: 'Mortality Log', icon: (c: string) => <GoonaIcon icon={Icons.alertCircle} size={20} color={c} />, route: '/daily-records' as const },
+  { label: 'Revenue Entry', icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={20} color={c} />, route: '/records/sales-revenue' as const },
 ]
 
 export default function BatchesScreen() {
@@ -170,11 +170,11 @@ export default function BatchesScreen() {
         <Animated.View entering={FadeInUp.duration(500).springify()}>
           <View style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/dashboard' as any)}>
-              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <Text style={styles.topTitle}>Active Batches</Text>
             <TouchableOpacity style={styles.filterBtn} activeOpacity={0.85}>
-              <GoonaIcon icon={Filter} size={20} color="#1F2937" />
+              <GoonaIcon icon={Icons.filter} size={20} color="#1F2937" />
             </TouchableOpacity>
           </View>
           <Text style={styles.headerSub}>Monitor all production cycles, track performance, and manage operations.</Text>
@@ -183,7 +183,7 @@ export default function BatchesScreen() {
         {/* SEARCH */}
         <Animated.View entering={FadeInUp.duration(500).delay(60).springify()} style={styles.searchWrap}>
           <View style={styles.searchIcon}>
-            <GoonaIcon icon={Search} size={20} color="#A0AEA1" />
+            <GoonaIcon icon={Icons.search} size={20} color="#A0AEA1" />
           </View>
           <TextInput
             style={styles.searchInput}
@@ -193,7 +193,7 @@ export default function BatchesScreen() {
             placeholderTextColor="#A0AEA1"
           />
           <TouchableOpacity style={styles.filterIcon} activeOpacity={0.85}>
-            <GoonaIcon icon={Filter} size={18} color="#A0AEA1" />
+            <GoonaIcon icon={Icons.filter} size={18} color="#A0AEA1" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -267,7 +267,7 @@ export default function BatchesScreen() {
         {filteredBatches.length === 0 && batches.length === 0 && (
           <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.emptyState}>
             <View style={styles.emptyIconCircle}>
-              <GoonaIcon icon={Users} size={32} color="#A0AEA1" />
+              <GoonaIcon icon={Icons.users} size={32} color="#A0AEA1" />
             </View>
             <Text style={styles.emptyTitle}>No production batches yet</Text>
             <Text style={styles.emptySub}>Create your first batch to start tracking livestock growth, feeding, and profitability.</Text>
@@ -276,7 +276,7 @@ export default function BatchesScreen() {
               activeOpacity={0.85}
               onPress={() => router.push('/create-batch')}
             >
-              <GoonaIcon icon={Plus} size={20} color="#FFFFFF" />
+              <GoonaIcon icon={Icons.plus} size={20} color="#FFFFFF" />
               <Text style={styles.emptyCtaText}>Create First Batch</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -411,7 +411,7 @@ export default function BatchesScreen() {
         onPress={() => setFabOpen(!fabOpen)}
       >
         <Animated.View style={fabIconStyle}>
-          <GoonaIcon icon={Plus} size={28} color="#FFFFFF" />
+          <GoonaIcon icon={Icons.plus} size={28} color="#FFFFFF" />
         </Animated.View>
       </TouchableOpacity>
 

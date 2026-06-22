@@ -7,7 +7,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
 } from 'react-native-reanimated'
 import GoonaIcon from './ui/GoonaIcon'
-import { X, Check } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 
 const BATCHES = [
   'Broiler Batch A',
@@ -63,7 +63,7 @@ export default function BatchPickerModal({
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>Select Farm Batch</Text>
           <TouchableOpacity onPress={onClose} style={styles.sheetCloseBtn} activeOpacity={0.7}>
-            <GoonaIcon icon={X} size={20} color="#94A3B8" />
+            <GoonaIcon icon={Icons.x} size={20} color="#94A3B8" />
           </TouchableOpacity>
         </View>
 
@@ -93,7 +93,7 @@ export default function BatchPickerModal({
                 </Text>
                 {active && (
                   <View style={styles.checkBadge}>
-                    <GoonaIcon icon={Check} size={16} color="white" />
+                    <GoonaIcon icon={Icons.check} size={16} color="white" />
                   </View>
                 )}
               </Pressable>

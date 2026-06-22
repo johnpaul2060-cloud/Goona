@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import GoonaIcon from '../../components/ui/GoonaIcon';
-import { ArrowLeft, Mail, Lock, Shield, Eye, EyeOff, CircleCheck, CircleX, Send, ShieldCheck, Lightbulb } from 'lucide-react-native';
+import { Icons } from '../../shared/icons';
 import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -272,7 +272,7 @@ export default function ForgotPasswordScreen() {
   const renderTopNav = () => (
     <View style={styles.topNav}>
       <TouchableOpacity style={styles.navBack} onPress={goBack}>
-        <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+        <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
       </TouchableOpacity>
       <View style={styles.navLogo}>
         <Svg width="24" height="24" viewBox="0 0 24 24">
@@ -333,7 +333,7 @@ export default function ForgotPasswordScreen() {
               <View style={styles.formCard}>
                 <View style={[styles.fieldWrap, emailFocused && styles.fieldWrapFocused]}>
                   <View style={styles.fieldIcon}>
-                    <GoonaIcon icon={Mail} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.mail} size={20} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>Email / Phone</Text>
@@ -363,12 +363,12 @@ export default function ForgotPasswordScreen() {
                   disabled={!email.trim() || isSending}
                   loading={isSending}
                 >
-                  {!isSending && <GoonaIcon icon={Send} size={20} color="white" />}
+                  {!isSending && <GoonaIcon icon={Icons.send} size={20} color="white" />}
                   <Text style={styles.primaryBtnText}>{isSending ? 'Sending...' : 'Send Reset Code'}</Text>
                 </PrimaryButton>
 
                 <View style={styles.securityPill}>
-                  <GoonaIcon icon={Shield} size={14} color="#2E7D32" />
+                  <GoonaIcon icon={Icons.shield} size={14} color="#2E7D32" />
                   <Text style={styles.securityPillText}>Secure encrypted recovery</Text>
                 </View>
               </View>
@@ -422,7 +422,7 @@ export default function ForgotPasswordScreen() {
                 </PrimaryButton>
 
                 <View style={styles.securityPill}>
-                  <GoonaIcon icon={Shield} size={14} color="#2E7D32" />
+                  <GoonaIcon icon={Icons.shield} size={14} color="#2E7D32" />
                   <Text style={styles.securityPillText}>End-to-end encrypted</Text>
                 </View>
               </View>
@@ -443,7 +443,7 @@ export default function ForgotPasswordScreen() {
               <View style={styles.formCard}>
                 <View style={[styles.fieldWrap, newPassFocused && styles.fieldWrapFocused]}>
                   <View style={styles.fieldIcon}>
-                    <GoonaIcon icon={Lock} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.lock} size={20} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>New Password</Text>
@@ -461,7 +461,7 @@ export default function ForgotPasswordScreen() {
                     />
                   </View>
                   <TouchableOpacity style={styles.fieldRight} onPress={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <GoonaIcon icon={Eye} size={20} color="#A0AEA1" /> : <GoonaIcon icon={EyeOff} size={20} color="#A0AEA1" />}
+                    {showPassword ? <GoonaIcon icon={Icons.eye} size={20} color="#A0AEA1" /> : <GoonaIcon icon={Icons.eyeOff} size={20} color="#A0AEA1" />}
                   </TouchableOpacity>
                 </View>
 
@@ -469,7 +469,7 @@ export default function ForgotPasswordScreen() {
 
                 <View style={[styles.fieldWrap, { marginTop: 14 }, confirmFocused && styles.fieldWrapFocused]}>
                   <View style={styles.fieldIcon}>
-                    <GoonaIcon icon={Shield} size={20} color="#A0AEA1" />
+                    <GoonaIcon icon={Icons.shield} size={20} color="#A0AEA1" />
                   </View>
                   <View style={styles.fieldInputWrap}>
                     <Text style={styles.fieldLabel}>Confirm Password</Text>
@@ -487,15 +487,15 @@ export default function ForgotPasswordScreen() {
                     />
                   </View>
                   <View style={styles.fieldRight}>
-                    {confirmMatch === true && <GoonaIcon icon={CircleCheck} size={20} color="#43A047" />}
-                    {confirmMatch === false && <GoonaIcon icon={CircleX} size={20} color="#EF4444" />}
+                    {confirmMatch === true && <GoonaIcon icon={Icons.circleCheck} size={20} color="#43A047" />}
+                    {confirmMatch === false && <GoonaIcon icon={Icons.circleX} size={20} color="#EF4444" />}
                     {confirmMatch === null && <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.4, borderColor: '#CBD5E1' }} />}
                   </View>
                 </View>
 
                 <View style={styles.tipsCard}>
                   <View style={styles.tipsIcon}>
-                    <GoonaIcon icon={Lightbulb} size={18} color="#2E7D32" />
+                    <GoonaIcon icon={Icons.lightbulb} size={18} color="#2E7D32" />
                   </View>
                   <View>
                     <Text style={styles.tipText}>{'  '}Use 8+ characters</Text>
@@ -508,7 +508,7 @@ export default function ForgotPasswordScreen() {
                   onPress={handleResetPassword}
                   disabled={!newPassword || confirmMatch !== true}
                 >
-                  <GoonaIcon icon={ShieldCheck} size={20} color="white" />
+                  <GoonaIcon icon={Icons.shieldCheck} size={20} color="white" />
                   <Text style={styles.primaryBtnText}>Reset Password</Text>
                 </PrimaryButton>
               </View>
@@ -520,7 +520,7 @@ export default function ForgotPasswordScreen() {
             <View style={styles.successContainer}>
               <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
                 <View style={styles.successCircle}>
-                  <GoonaIcon icon={CircleCheck} size={36} color="#16A34A" />
+                  <GoonaIcon icon={Icons.circleCheck} size={36} color="#16A34A" />
                 </View>
               </Animated.View>
 
@@ -534,19 +534,19 @@ export default function ForgotPasswordScreen() {
               <View style={styles.successCard}>
                 <View style={styles.successRow}>
                   <View style={[styles.successRowIcon, { backgroundColor: '#F0FDF4' }]}>
-                    <GoonaIcon icon={ShieldCheck} size={18} color="#16A34A" />
+                    <GoonaIcon icon={Icons.shieldCheck} size={18} color="#16A34A" />
                   </View>
                   <Text style={styles.successRowLabel}>Secure Access Restored</Text>
                 </View>
                 <View style={styles.successRow}>
                   <View style={[styles.successRowIcon, { backgroundColor: '#EEF3FF' }]}>
-                    <GoonaIcon icon={Shield} size={18} color="#1A56FF" />
+                    <GoonaIcon icon={Icons.shield} size={18} color="#1A56FF" />
                   </View>
                   <Text style={styles.successRowLabel}>Login Protection Active</Text>
                 </View>
                 <View style={styles.successRow}>
                   <View style={[styles.successRowIcon, { backgroundColor: '#FFF8E1' }]}>
-                    <GoonaIcon icon={Eye} size={18} color="#F9A825" />
+                    <GoonaIcon icon={Icons.eye} size={18} color="#F9A825" />
                   </View>
                   <Text style={styles.successRowLabel}>Offline Sync Preserved</Text>
                 </View>

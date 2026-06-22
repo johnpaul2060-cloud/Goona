@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text } from 'react-native'
-import { Shield } from 'lucide-react-native'
+import { Icons } from '../../shared/icons'
 import GoonaIcon from '../ui/GoonaIcon'
 
 export interface AuditEntry {
@@ -26,7 +26,7 @@ export default function SecurityAuditLog({ entries }: SecurityAuditLogProps) {
       <View style={{ marginTop: 24 }}>
         <Text style={{ fontWeight: '700', fontSize: 13, color: '#00695C', marginBottom: 12, paddingHorizontal: 4, letterSpacing: 0.3 }}>Audit Log</Text>
         <View style={{ backgroundColor: 'white', borderRadius: 22, padding: 32, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.03, shadowRadius: 20, elevation: 2 }}>
-          <GoonaIcon icon={Shield} size={28} color="#CBD5E1" />
+          <GoonaIcon icon={Icons.shield} size={28} color="#CBD5E1" />
           <Text style={{ fontSize: 13, color: '#94A3B8', marginTop: 8 }}>No audit entries yet</Text>
         </View>
       </View>
@@ -53,7 +53,7 @@ export default function SecurityAuditLog({ entries }: SecurityAuditLogProps) {
               }}
             >
               <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: ac.bg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <GoonaIcon icon={Shield} size={14} color={ac.text} />
+                <GoonaIcon icon={Icons.shield} size={14} color={ac.text} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 13, fontWeight: '600', color: '#1B1B1B' }}>{entry.userName}</Text>

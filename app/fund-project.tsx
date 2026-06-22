@@ -4,9 +4,7 @@ import {
   StyleSheet, Platform, Keyboard, KeyboardAvoidingView,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, CheckCircle, CreditCard, Wallet, Building, Smartphone,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams, usePathname } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -24,10 +22,10 @@ const PROJECTS = [
 const QUICK_AMOUNTS = [5000, 10000, 20000, 50000, 100000]
 
 const PAYMENT_METHODS = [
-  { id: 'card', label: 'Card', desc: 'Visa, Mastercard, Verve', icon: CreditCard },
-  { id: 'bank-transfer', label: 'Bank Transfer', desc: 'Transfer directly from your bank account', icon: Building },
-  { id: 'ussd', label: 'USSD', desc: 'Pay using your bank USSD code', icon: Smartphone },
-  { id: 'wallet', label: 'Wallet Balance', desc: 'Use available GOONA balance', icon: Wallet },
+  { id: 'card', label: 'Card', desc: 'Visa, Mastercard, Verve', icon: Icons.creditCard },
+  { id: 'bank-transfer', label: 'Bank Transfer', desc: 'Transfer directly from your bank account', icon: Icons.building },
+  { id: 'ussd', label: 'USSD', desc: 'Pay using your bank USSD code', icon: Icons.smartphone },
+  { id: 'wallet', label: 'Wallet Balance', desc: 'Use available GOONA balance', icon: Icons.wallet },
 ]
 
 /* Backend processor mapping (internal — not exposed to users):
@@ -138,7 +136,7 @@ export default function FundProjectScreen() {
               style={styles.successCard}
             >
               <View style={styles.successIcon}>
-                <GoonaIcon icon={CheckCircle} size={48} color="#2E7D32" />
+                <GoonaIcon icon={Icons.checkCircle} size={48} color="#2E7D32" />
               </View>
               <Text style={styles.successTitle}>Payment Successful</Text>
               <Text style={styles.successSub}>
@@ -193,7 +191,7 @@ export default function FundProjectScreen() {
                 activeOpacity={0.7}
                 onPress={() => router.back()}
               >
-                <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+                <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
               </TouchableOpacity>
 
               <Text style={styles.heroTitle}>
@@ -280,7 +278,7 @@ export default function FundProjectScreen() {
                           <Text style={styles.methodDesc}>{method.desc}</Text>
                         </View>
                       </View>
-                      {active && <GoonaIcon icon={CheckCircle} size={18} color="#2E7D32" />}
+                      {active && <GoonaIcon icon={Icons.checkCircle} size={18} color="#2E7D32" />}
                     </TouchableOpacity>
                   )
                 })}
@@ -303,7 +301,7 @@ export default function FundProjectScreen() {
                   activeOpacity={0.85}
                   onPress={handleSubmit}
                 >
-                  <GoonaIcon icon={CheckCircle} size={20} color="#FFFFFF" />
+                  <GoonaIcon icon={Icons.checkCircle} size={20} color="#FFFFFF" />
                   <Text style={styles.submitText}>Confirm Payment</Text>
                 </TouchableOpacity>
               </Animated.View>

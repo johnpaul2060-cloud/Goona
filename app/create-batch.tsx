@@ -4,7 +4,7 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native'
 import Svg, { Path, Circle, Rect, Line, Ellipse } from 'react-native-svg'
-import { ArrowLeft, CheckCircle, TrendingUp } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import GoonaIcon from '../components/ui/GoonaIcon'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -200,7 +200,7 @@ export default function CreateBatchScreen() {
           {/* TOP NAV */}
           <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.back()}>
-              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <Text style={styles.topTitle}>Create New Batch</Text>
             <View style={styles.progressPill}>
@@ -517,7 +517,7 @@ export default function CreateBatchScreen() {
               <View style={styles.forecastHead}>
                 <Text style={styles.forecastTitle}>Projected Production Summary</Text>
                 <View style={styles.forecastIcon}>
-                  <GoonaIcon icon={TrendingUp} size={18} color="#16A34A" />
+                  <GoonaIcon icon={Icons.trendingUp} size={18} color="#16A34A" />
                 </View>
               </View>
               <View style={styles.forecastGrid}>
@@ -542,7 +542,7 @@ export default function CreateBatchScreen() {
 
             {/* OFFLINE CHIP */}
             <Animated.View entering={FadeInUp.duration(500).delay(400).springify()} style={styles.offlineChip}>
-              <GoonaIcon icon={CheckCircle} size={14} color="#2E7D32" />
+              <GoonaIcon icon={Icons.checkCircle} size={14} color="#2E7D32" />
               <Text style={styles.offlineText}>Offline Sync Ready</Text>
             </Animated.View>
 
@@ -553,7 +553,7 @@ export default function CreateBatchScreen() {
                 activeOpacity={0.9}
                 onPress={handleCreateBatch}
               >
-                <GoonaIcon icon={CheckCircle} size={20} color="white" />
+                <GoonaIcon icon={Icons.checkCircle} size={20} color="white" />
                 <Text style={styles.primaryBtnText}>Create Batch</Text>
               </TouchableOpacity>
             </Animated.View>
@@ -571,7 +571,7 @@ export default function CreateBatchScreen() {
         <Animated.View style={[styles.successOverlay, successAnimStyle]}>
           <View style={styles.successCard}>
             <View style={styles.successIconCircle}>
-              <GoonaIcon icon={CheckCircle} size={28} color="white" />
+              <GoonaIcon icon={Icons.checkCircle} size={28} color="white" />
             </View>
             <Text style={styles.successTitle}>Batch created successfully</Text>
             <Text style={styles.successSub}>Opening Batch Manager...</Text>

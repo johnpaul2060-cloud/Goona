@@ -6,22 +6,19 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, Bell, Check, X, Clock,
-  ClipboardList, Users, MapPin, TrendingUp, Sparkles, ShieldAlert,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInUp, Layout } from 'react-native-reanimated'
 import { useNotificationStore, AppNotification, CATEGORY_CONFIG, PRIORITY_CONFIG } from '../store/useNotificationStore'
 import WeatherNotificationSync from '../components/WeatherNotificationSync'
 
 const CAT_ICONS: Record<string, React.ElementType> = {
-  all: Bell,
-  operations: ClipboardList,
-  team: Users,
-  weather: MapPin,
-  wallet: TrendingUp,
-  iq: Sparkles,
-  security: ShieldAlert,
+  all: Icons.bell,
+  operations: Icons.clipboardList,
+  team: Icons.users,
+  weather: Icons.mapPin,
+  wallet: Icons.trendingUp,
+  iq: Icons.sparkles,
+  security: Icons.shieldAlert,
 }
 
 const CAT_ORDER = ['all', 'operations', 'team', 'weather', 'wallet', 'iq', 'security'] as const
@@ -46,7 +43,7 @@ function getPriorityBadge(priority: string) {
 function NotificationCard({ n, onRead, onArchive }: { n: AppNotification; onRead: () => void; onArchive: () => void }) {
   const catCfg = CATEGORY_CONFIG[n.category]
   const priCfg = getPriorityBadge(n.priority)
-  const IconComp = CAT_ICONS[n.category] || Bell
+  const IconComp = CAT_ICONS[n.category] || Icons.bell
 
   return (
     <TouchableOpacity
@@ -70,14 +67,14 @@ function NotificationCard({ n, onRead, onArchive }: { n: AppNotification; onRead
           <View style={styles.cardActions}>
             {n.status === 'unread' && <View style={styles.unreadDot} />}
             <TouchableOpacity hitSlop={8} onPress={onArchive}>
-              <GoonaIcon icon={X} size={14} color="#94A3B8" />
+              <GoonaIcon icon={Icons.x} size={14} color="#94A3B8" />
             </TouchableOpacity>
           </View>
         </View>
         <Text style={[styles.cardTitle, n.status === 'unread' && styles.cardTitleUnread]}>{n.title}</Text>
         <Text style={styles.cardDesc} numberOfLines={2}>{n.description}</Text>
         <View style={styles.cardFooter}>
-          <GoonaIcon icon={Clock} size={11} color="#94A3B8" />
+          <GoonaIcon icon={Icons.clock} size={11} color="#94A3B8" />
           <Text style={styles.cardTime}>{timeAgo(n.timestamp)}</Text>
         </View>
       </View>
@@ -138,7 +135,7 @@ export default function NotificationsScreen() {
             activeOpacity={0.7}
             onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/(tabs)/dashboard' as any) } }}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Notifications</Text>
           <TouchableOpacity
@@ -146,7 +143,7 @@ export default function NotificationsScreen() {
             activeOpacity={0.7}
             onPress={() => setShowActions(!showActions)}
           >
-            <GoonaIcon icon={Check} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.check} size={20} color="#1F2937" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -197,7 +194,7 @@ export default function NotificationsScreen() {
               activeOpacity={0.7}
               onPress={() => { markAllAsRead(activeFilter === 'all' ? undefined : activeFilter as any); setShowActions(false) }}
             >
-              <GoonaIcon icon={Check} size={14} color="#2E7D32" />
+              <GoonaIcon icon={Icons.check} size={14} color="#2E7D32" />
               <Text style={styles.actionBtnText}>Mark all as read</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -205,7 +202,7 @@ export default function NotificationsScreen() {
               activeOpacity={0.7}
               onPress={() => { clearArchived(); setShowActions(false) }}
             >
-              <GoonaIcon icon={X} size={14} color="#EF4444" />
+              <GoonaIcon icon={Icons.x} size={14} color="#EF4444" />
               <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>Clear archived</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -215,7 +212,7 @@ export default function NotificationsScreen() {
         {filtered.length === 0 ? (
           <Animated.View entering={FadeInUp.duration(400).springify()} style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <GoonaIcon icon={Bell} size={32} color="#CBD5E1" />
+              <GoonaIcon icon={Icons.bell} size={32} color="#CBD5E1" />
             </View>
             <Text style={styles.emptyTitle}>All caught up</Text>
             <Text style={styles.emptyDesc}>No {activeFilter !== 'all' ? CATEGORY_CONFIG[activeFilter]?.label.toLowerCase() + ' ' : ''}notifications</Text>

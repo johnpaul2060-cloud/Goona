@@ -4,7 +4,7 @@ import {
   StyleSheet, Dimensions,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { BlurView } from 'expo-blur'
 import Animated, {
@@ -217,7 +217,7 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
 
 /* ─── Components ─── */
 function BackIcon() {
-  return <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+  return <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
 }
 
 function NotifCard({

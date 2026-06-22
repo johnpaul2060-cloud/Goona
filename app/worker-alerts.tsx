@@ -4,7 +4,7 @@ import {
   StyleSheet, Dimensions, Modal, TextInput, Alert, Platform,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Clock, User, ClipboardList, AlertCircle, FileText, ChevronRight, RefreshCw, TriangleAlert, Mic, Square, Camera, CheckCircle } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -76,7 +76,7 @@ const PRIORITY_CONFIG: Record<PriorityLevel, { label: string; color: string; bg:
 
 /* ─── Back Icon ─── */
 function BackIcon() {
-  return <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+  return <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
 }
 
 /* ─── Notification Overlay ─── */
@@ -118,7 +118,7 @@ function PushNotificationOverlay({
               <Text style={notifStyles.urgencyLabel}>NEW URGENT TASK</Text>
             </View>
             <TouchableOpacity onPress={onSnooze} activeOpacity={0.7} style={notifStyles.snoozeBtn}>
-              <GoonaIcon icon={Clock} size={16} color="#64748B" />
+              <GoonaIcon icon={Icons.clock} size={16} color="#64748B" />
             </TouchableOpacity>
           </View>
           <Text style={notifStyles.taskTitle}>Morning Feeding \u2014 Pen A</Text>
@@ -218,11 +218,11 @@ function PriorityHeroCard({ status, priority }: { status: TaskStatus; priority: 
 
         <View style={heroStyles.metaRow}>
           <View style={heroStyles.metaItem}>
-            <GoonaIcon icon={Clock} size={14} color="rgba(255,255,255,0.5)" />
+            <GoonaIcon icon={Icons.clock} size={14} color="rgba(255,255,255,0.5)" />
             <Text style={heroStyles.metaText}>Due: 7:30 AM</Text>
           </View>
           <View style={heroStyles.metaItem}>
-            <GoonaIcon icon={User} size={14} color="rgba(255,255,255,0.5)" />
+            <GoonaIcon icon={Icons.user} size={14} color="rgba(255,255,255,0.5)" />
             <Text style={heroStyles.metaText}>Supervisor: Chinedu</Text>
           </View>
         </View>
@@ -290,7 +290,7 @@ function InstructionsSection() {
     <Animated.View entering={FadeInUp.duration(500).delay(250).springify()}>
       <View style={instrStyles.card}>
         <View style={instrStyles.header}>
-          <GoonaIcon icon={ClipboardList} size={18} color="#2E7D32" />
+          <GoonaIcon icon={Icons.clipboardList} size={18} color="#2E7D32" />
           <Text style={instrStyles.headerText}>Operational Instructions</Text>
         </View>
 
@@ -312,7 +312,7 @@ function InstructionsSection() {
         </View>
 
         <View style={instrStyles.notice}>
-          <GoonaIcon icon={AlertCircle} size={14} color="#F59E0B" />
+          <GoonaIcon icon={Icons.alertCircle} size={14} color="#F59E0B" />
           <Text style={instrStyles.noticeText}>Batch warning: Low feed inventory — report to supervisor after completion.</Text>
         </View>
       </View>
@@ -351,13 +351,13 @@ function AttachmentCard({ title, type, pages, onPress }: { title: string; type: 
         onPressOut={onPressOut}
       >
         <View style={attStyles.iconWrap}>
-          <GoonaIcon icon={FileText} size={20} color="#2E7D32" />
+          <GoonaIcon icon={Icons.fileText} size={20} color="#2E7D32" />
         </View>
         <View style={attStyles.info}>
           <Text style={attStyles.title} numberOfLines={1}>{title}</Text>
           <Text style={attStyles.meta}>{type} \u2022 {pages}</Text>
         </View>
-        <GoonaIcon icon={ChevronRight} size={16} color="#94A3B8" />
+        <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
       </Pressable>
     </Animated.View>
   )
@@ -487,7 +487,7 @@ function SyncBar() {
         <View style={syncStyles.content}>
           <View style={syncStyles.left}>
             <View style={syncStyles.iconWrap}>
-              <GoonaIcon icon={RefreshCw} size={16} color="#2E7D32" />
+              <GoonaIcon icon={Icons.refreshCw} size={16} color="#2E7D32" />
             </View>
             <View>
               <Text style={syncStyles.title}>Offline Queued</Text>
@@ -539,7 +539,7 @@ function EscalationWarning() {
       <Animated.View style={[escStyles.card, animStyle]}>
         <View style={escStyles.content}>
           <View style={escStyles.iconWrap}>
-            <GoonaIcon icon={TriangleAlert} size={20} color="#DC2626" />
+            <GoonaIcon icon={Icons.triangleAlert} size={20} color="#DC2626" />
           </View>
           <View style={escStyles.textWrap}>
             <Text style={escStyles.title}>Overdue by 25 minutes</Text>
@@ -630,12 +630,12 @@ function RecordingModal({ visible, onClose }: { visible: boolean; onClose: () =>
           <View style={modalStyles.actions}>
             {!isRecording ? (
               <TouchableOpacity style={modalStyles.recordBtn} activeOpacity={0.85} onPress={startRecording}>
-                <GoonaIcon icon={Mic} size={24} color="#FFFFFF" />
+                <GoonaIcon icon={Icons.mic} size={24} color="#FFFFFF" />
                 <Text style={modalStyles.recordBtnText}>Start Recording</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={modalStyles.stopBtn} activeOpacity={0.85} onPress={stopRecording}>
-                <GoonaIcon icon={Square} size={24} color="#FFFFFF" />
+                <GoonaIcon icon={Icons.square} size={24} color="#FFFFFF" />
                 <Text style={modalStyles.recordBtnText}>Stop & Save</Text>
               </TouchableOpacity>
             )}
@@ -918,7 +918,7 @@ export default function WorkerAlertsScreen() {
             label="Photo"
             gradient={['#2E7D32', '#1B5E20']}
             icon={
-              <GoonaIcon icon={Camera} size={20} color="#FFFFFF" />
+              <GoonaIcon icon={Icons.camera} size={20} color="#FFFFFF" />
             }
             onPress={handlePhotoPress}
           />
@@ -927,7 +927,7 @@ export default function WorkerAlertsScreen() {
             label="Voice"
             gradient={['#7C3AED', '#4C1D95']}
             icon={
-              <GoonaIcon icon={Mic} size={20} color="#FFFFFF" />
+              <GoonaIcon icon={Icons.mic} size={20} color="#FFFFFF" />
             }
             onPress={handleVoicePress}
           />
@@ -936,7 +936,7 @@ export default function WorkerAlertsScreen() {
             label="Notes"
             gradient={['#1A56FF', '#1E3A8A']}
             icon={
-              <GoonaIcon icon={FileText} size={20} color="#FFFFFF" />
+              <GoonaIcon icon={Icons.fileText} size={20} color="#FFFFFF" />
             }
             onPress={() => setShowNotes(true)}
           />
@@ -956,7 +956,7 @@ export default function WorkerAlertsScreen() {
           )}
           {taskStatus === 'completed' && (
             <View style={s.completedBanner}>
-              <GoonaIcon icon={CheckCircle} size={24} color="#16A34A" />
+              <GoonaIcon icon={Icons.checkCircle} size={24} color="#16A34A" />
               <Text style={s.completedText}>Task Completed</Text>
               <Text style={s.completedSub}>Proof has been queued for sync</Text>
             </View>

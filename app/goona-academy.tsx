@@ -5,7 +5,7 @@ import {
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Sprout } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -31,17 +31,17 @@ const SIM_DATA: Record<SimType, {
   broiler: {
     name: '6-Week Broiler Run', weeks: 6, current: 2, birds: 4280, feed: '6.2',
     survival: 97.2, cash: 2.4, projection: 3.8, weight: '2.1', status: 'Your flock is growing steadily.',
-    icon: '\u{1F425}', difficulty: 'Intermediate', diffColor: '#D97706', xp: 450,
+    icon: '\u{1F425}', difficulty: 'Intermediate', diffColor: '#F59E0B', xp: 450,
   },
   layer: {
     name: '18-Month Layer Marathon', weeks: 72, current: 16, birds: 3200, feed: '11.8',
     survival: 93.5, cash: 5.1, projection: 12.6, weight: '1.8', status: 'Peak production phase engaged.',
-    icon: '\u{1F413}', difficulty: 'Advanced', diffColor: '#DC2626', xp: 1200,
+    icon: '\u{1F413}', difficulty: 'Advanced', diffColor: '#EF4444', xp: 1200,
   },
   catfish: {
     name: '6-Month Catfish Cycle', weeks: 24, current: 5, birds: 8700, feed: '4.5',
     survival: 88.4, cash: 1.8, projection: 4.2, weight: '0.9', status: 'Fingerlings adapting well to pond conditions.',
-    icon: '\u{1F41F}', difficulty: 'Intermediate', diffColor: '#D97706', xp: 600,
+    icon: '\u{1F41F}', difficulty: 'Intermediate', diffColor: '#F59E0B', xp: 600,
   },
 }
 
@@ -518,10 +518,10 @@ export default function GoonaAcademyScreen() {
         {/* ─── TOP NAV ─── */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={s.topNav}>
           <TouchableOpacity style={s.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <View style={s.navLogo}>
-            <GoonaIcon icon={Sprout} size={22} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sprout} size={22} color="#2E7D32" />
             <Text style={s.navLogoText}>GOONA</Text>
           </View>
           <Text style={s.navLabel}>Academy</Text>
@@ -572,7 +572,7 @@ export default function GoonaAcademyScreen() {
         <LiveDashboard simType={activeSim} />
 
         {/* ─── DECISION ENGINE ─── */}
-        <SectionHeader title="Decision Engine" tag="CRITICAL" tagColor="#DC2626" tagBg="rgba(239,68,68,0.08)" />
+        <SectionHeader title="Decision Engine" tag="CRITICAL" tagColor="#EF4444" tagBg="rgba(239,68,68,0.08)" />
         <DecisionEngine />
 
         {/* ─── GOONA IQ COACH ─── */}

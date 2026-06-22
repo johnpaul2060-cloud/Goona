@@ -4,11 +4,7 @@ import {
   StyleSheet, Dimensions,
 } from 'react-native'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
-import {
-  ArrowLeft, TrendingUp, TrendingDown, Sparkles, Target,
-  Receipt, Users, DollarSign, BarChart3, FileText,
-  ChevronRight,
-} from 'lucide-react-native'
+import { Icons } from '../../../shared/icons'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle as SvgCircle } from 'react-native-svg'
@@ -34,21 +30,21 @@ const RECENT_TX = [
 ]
 
 const TRANSACTIONS = [
-  { label: 'Sales This Month', value: REVENUE, icon: TrendingUp, color: '#16A34A', bg: '#F0FDF4' },
-  { label: 'Expenses This Month', value: EXPENSES, icon: TrendingDown, color: '#EF4444', bg: '#FEF2F2' },
-  { label: 'Net Profit', value: PROFIT, icon: DollarSign, color: '#1A56FF', bg: '#EEF3FF' },
+  { label: 'Sales This Month', value: REVENUE, icon: Icons.trendingUp, color: '#16A34A', bg: '#F0FDF4' },
+  { label: 'Expenses This Month', value: EXPENSES, icon: Icons.trendingDown, color: '#EF4444', bg: '#FEF2F2' },
+  { label: 'Net Profit', value: PROFIT, icon: Icons.dollarSign, color: '#1A56FF', bg: '#EEF3FF' },
 ]
 
 const QUICK_ACTIONS = [
-  { icon: Receipt, label: 'Record Sale', route: '/record-sale' as const, color: '#16A34A', bg: '#F0FDF4' },
-  { icon: TrendingDown, label: 'Record Expense', route: '/records/expenses/create' as const, color: '#EF4444', bg: '#FEF2F2' },
-  { icon: Sparkles, label: 'Insights', route: undefined as never, color: '#8B5CF6', bg: '#F5F3FF' },
+  { icon: Icons.receipt, label: 'Record Sale', route: '/record-sale' as const, color: '#16A34A', bg: '#F0FDF4' },
+  { icon: Icons.trendingDown, label: 'Record Expense', route: '/records/expenses/create' as const, color: '#EF4444', bg: '#FEF2F2' },
+  { icon: Icons.sparkles, label: 'Insights', route: undefined as never, color: '#8B5CF6', bg: '#F5F3FF' },
 ]
 
 const INSIGHTS = [
-  { icon: TrendingUp, color: '#16A34A', bg: '#F0FDF4', title: 'Top Revenue Source', desc: 'Broilers are your highest revenue contributor at 42% of total sales this month.', impact: '₦2.0M' },
-  { icon: TrendingDown, color: '#EF4444', bg: '#FEF2F2', title: 'Expense Trend', desc: 'Feed costs increased 15% this month. Consider bulk purchasing.', impact: '+₦85k' },
-  { icon: Target, color: '#1A56FF', bg: '#EEF3FF', title: 'Profit Recommendation', desc: 'Increasing Layer production by 20% could add ₦240k to monthly profit.', impact: '+₦240k' },
+  { icon: Icons.trendingUp, color: '#16A34A', bg: '#F0FDF4', title: 'Top Revenue Source', desc: 'Broilers are your highest revenue contributor at 42% of total sales this month.', impact: '₦2.0M' },
+  { icon: Icons.trendingDown, color: '#EF4444', bg: '#FEF2F2', title: 'Expense Trend', desc: 'Feed costs increased 15% this month. Consider bulk purchasing.', impact: '+₦85k' },
+  { icon: Icons.target, color: '#1A56FF', bg: '#EEF3FF', title: 'Profit Recommendation', desc: 'Increasing Layer production by 20% could add ₦240k to monthly profit.', impact: '+₦240k' },
 ]
 
 function HealthGauge({ score }: { score: number }) {
@@ -110,11 +106,11 @@ export default function SalesRevenueScreen() {
               activeOpacity={0.7}
               onPress={() => router.canGoBack() ? router.back() : router.replace('/records' as any)}
             >
-              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <Text style={styles.topTitle}>Sales & Revenue</Text>
             <TouchableOpacity style={styles.chartBtn} activeOpacity={0.8} onPress={() => router.push('/records/sales-revenue' as any)}>
-              <GoonaIcon icon={BarChart3} size={20} color="#1F2937" />
+              <GoonaIcon icon={Icons.barChart3} size={20} color="#1F2937" />
             </TouchableOpacity>
           </View>
         </AnimatedCard>
@@ -164,7 +160,7 @@ export default function SalesRevenueScreen() {
               </View>
             </View>
             <View style={styles.heroIqBar}>
-              <GoonaIcon icon={Sparkles} size={14} color="#D97706" />
+              <GoonaIcon icon={Icons.sparkles} size={14} color="#D97706" />
               <Text style={styles.heroIqText}>GOONA IQ: Revenue up 18% this cycle. Keep up the momentum.</Text>
             </View>
           </View>
@@ -242,7 +238,7 @@ export default function SalesRevenueScreen() {
           <TouchableOpacity style={styles.outstandingCard} activeOpacity={0.7}>
             <View style={styles.outstandingLeft}>
               <View style={styles.outstandingIcon}>
-                <GoonaIcon icon={Users} size={20} color="#F59E0B" />
+                <GoonaIcon icon={Icons.users} size={20} color="#F59E0B" />
               </View>
               <View>
                 <Text style={styles.outstandingLabel}>Outstanding Payments</Text>
@@ -253,7 +249,7 @@ export default function SalesRevenueScreen() {
               <Text style={styles.outstandingAmount}>₦{OUTSTANDING_BALANCE.toLocaleString('en-NG')}</Text>
               <View style={styles.outstandingAction}>
                 <Text style={styles.outstandingActionText}>View details</Text>
-                <GoonaIcon icon={ChevronRight} size={14} color="#2E7D32" />
+                <GoonaIcon icon={Icons.chevronRight} size={14} color="#2E7D32" />
               </View>
             </View>
           </TouchableOpacity>
@@ -270,7 +266,7 @@ export default function SalesRevenueScreen() {
             <View style={styles.txCard}>
               <View style={styles.txLeft}>
                 <View style={[styles.txIcon, { backgroundColor: tx.type === 'sale' ? '#F0FDF4' : '#FEF2F2' }]}>
-                  <GoonaIcon icon={tx.type === 'sale' ? TrendingUp : TrendingDown} size={16} color={tx.type === 'sale' ? '#16A34A' : '#EF4444'} />
+                  <GoonaIcon icon={tx.type === 'sale' ? Icons.trendingUp : Icons.trendingDown} size={16} color={tx.type === 'sale' ? '#16A34A' : '#EF4444'} />
                 </View>
                 <View style={styles.txInfo}>
                   <Text style={styles.txName}>{tx.name}</Text>
@@ -294,7 +290,7 @@ export default function SalesRevenueScreen() {
         {/* ─── GOONA IQ BUSINESS INSIGHTS ─── */}
         <AnimatedCard delay={860}>
           <View style={styles.sectionHeader}>
-            <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
             <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>GOONA IQ Insights</Text>
           </View>
         </AnimatedCard>
@@ -323,14 +319,14 @@ export default function SalesRevenueScreen() {
           <TouchableOpacity style={styles.reportsCard} activeOpacity={0.7} onPress={() => router.push('/records/analytics' as any)}>
             <View style={styles.reportsLeft}>
               <View style={styles.reportsIcon}>
-                <GoonaIcon icon={FileText} size={20} color="#1A56FF" />
+                <GoonaIcon icon={Icons.fileText} size={20} color="#1A56FF" />
               </View>
               <View>
                 <Text style={styles.reportsLabel}>Sales Reports</Text>
                 <Text style={styles.reportsDesc}>View detailed analytics and export data</Text>
               </View>
             </View>
-            <GoonaIcon icon={ChevronRight} size={18} color="#94A3B8" />
+            <GoonaIcon icon={Icons.chevronRight} size={18} color="#94A3B8" />
           </TouchableOpacity>
         </AnimatedCard>
 

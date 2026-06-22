@@ -4,21 +4,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, withSequence, withDelay, interpolate, Extrapolation } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useMemo } from 'react'
-import { House, MessagesSquare, ClipboardList, Users } from 'lucide-react-native'
-import { GoonaNairaIcon } from '../icons/GoonaNairaIcon'
+import { Icons } from '../../shared/icons'
 import GoonaIcon from '../ui/GoonaIcon'
 import GoonaMarqueeAlert from '../GoonaMarqueeAlert'
 import { generateWeatherAlerts } from '../../utils/weatherIntelligence'
-
 const TAB_ROUTES = [
   { label: 'Home', route: '/(tabs)/dashboard' },
-  { label: 'Farmchat', route: '/(tabs)/farm-feed' },
+  { label: 'FarmChat', route: '/(tabs)/farmchat' },
   { label: 'Records', route: '/records' },
   { label: 'Recapt', route: '/recapitalization' },
   { label: 'Teams', route: '/team' },
 ]
 
-const TAB_ICONS = [House, MessagesSquare, ClipboardList, GoonaNairaIcon, Users]
+const TAB_ICONS = [Icons.house, Icons.messagesSquare, Icons.clipboardList, Icons.naira, Icons.users]
 
 function ActiveOrb() {
   const pulse = useSharedValue(1)
@@ -64,7 +62,7 @@ export default function BottomDock({ hidden }: { hidden?: boolean }) {
   const insets = useSafeAreaInsets()
   const activeIndex = (() => {
     if (pathname === '/(tabs)' || pathname === '/(tabs)/dashboard' || pathname === '/dashboard') return 0
-    if (pathname.includes('farm-feed') || pathname.includes('farmchat')) return 1
+    if (pathname.includes('/farmchat') || pathname.includes('/chat/')) return 1
     if (pathname.includes('records') || pathname.includes('sales') || pathname.includes('record-sale') || pathname.includes('create-batch') || pathname.includes('daily-records') || pathname.includes('batch-details') || pathname.includes('/batches')) return 2
     if (pathname.includes('recapitalization') || pathname.includes('recapt') || pathname.includes('plan-recapt')) return 3
     if (pathname.includes('team') || pathname.includes('teams') || pathname.includes('worker') || pathname.includes('settings') || pathname.includes('goona-iq') || pathname.includes('academy') || pathname.includes('farm-profile') || pathname.includes('device-management') || pathname.includes('permissions') || pathname.includes('workforce') || pathname.includes('farm-boundaries') || pathname.includes('geofence')) return 4

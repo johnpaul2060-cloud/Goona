@@ -6,7 +6,7 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
-import { ArrowLeft, Search, Plus, TrendingUp, Users, AlertCircle, ShieldCheck, Egg, Wheat, Sparkles, Clock, Calendar, BarChart3, FileText, ClipboardList } from 'lucide-react-native'
+import { Icons } from '../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { Pressable } from 'react-native'
 import BottomDock from '../../../components/navigation/BottomDock'
@@ -36,10 +36,10 @@ function getBadge(progress: number): { text: string; bg: string; color: string }
 }
 
 const QUICK_ACTIONS = [
-  { label: 'New Batch', icon: Plus, bg: '#F0FDF4', color: '#16A34A', route: '/create-batch' },
-  { label: 'Records', icon: ClipboardList, bg: '#EEF3FF', color: '#1A56FF', route: '/daily-records' },
-  { label: 'Reports', icon: BarChart3, bg: '#FFFBEB', color: '#F59E0B', route: '/batches' },
-  { label: 'Feed', icon: Wheat, bg: '#F5F3FF', color: '#7C3AED', route: '/daily-records' },
+  { label: 'New Batch', icon: Icons.plus, bg: '#F0FDF4', color: '#16A34A', route: '/create-batch' },
+  { label: 'Records', icon: Icons.clipboardList, bg: '#EEF3FF', color: '#1A56FF', route: '/daily-records' },
+  { label: 'Reports', icon: Icons.barChart3, bg: '#FFFBEB', color: '#F59E0B', route: '/batches' },
+  { label: 'Feed', icon: Icons.wheat, bg: '#F5F3FF', color: '#7C3AED', route: '/daily-records' },
 ]
 
 export default function BatchManagementScreen() {
@@ -64,11 +64,11 @@ export default function BatchManagementScreen() {
             style={styles.navBack}
             onPress={() => router.canGoBack() ? router.back() : router.replace('/records' as any)}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </Pressable>
           <Text style={styles.topTitle}>Batch Management</Text>
           <Pressable style={styles.navBtn}>
-            <GoonaIcon icon={Search} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.search} size={20} color="#1F2937" />
           </Pressable>
         </Animated.View>
 
@@ -80,22 +80,22 @@ export default function BatchManagementScreen() {
 
         <Animated.View entering={FadeInUp.duration(500).delay(120).springify()} style={styles.overviewGrid}>
           <View style={[styles.overviewCard, { backgroundColor: '#F0FDF4', width: CARD_W }]}>
-            <GoonaIcon icon={Egg} size={18} color="#16A34A" />
+            <GoonaIcon icon={Icons.egg} size={18} color="#16A34A" />
             <Text style={styles.ovValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{active.length}</Text>
             <Text style={styles.ovLabel}>Active</Text>
           </View>
           <View style={[styles.overviewCard, { backgroundColor: '#EEF3FF', width: CARD_W }]}>
-            <GoonaIcon icon={Users} size={18} color="#1A56FF" />
+            <GoonaIcon icon={Icons.users} size={18} color="#1A56FF" />
             <Text style={styles.ovValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{totalBirds.toLocaleString()}</Text>
             <Text style={styles.ovLabel}>Birds</Text>
           </View>
           <View style={[styles.overviewCard, { backgroundColor: '#FFFBEB', width: CARD_W }]}>
-            <GoonaIcon icon={TrendingUp} size={18} color="#F59E0B" />
+            <GoonaIcon icon={Icons.trendingUp} size={18} color="#F59E0B" />
             <Text style={styles.ovValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{avgProgress}%</Text>
             <Text style={styles.ovLabel}>Avg Progress</Text>
           </View>
           <View style={[styles.overviewCard, { backgroundColor: '#F5F3FF', width: CARD_W }]}>
-            <GoonaIcon icon={ShieldCheck} size={18} color="#7C3AED" />
+            <GoonaIcon icon={Icons.shieldCheck} size={18} color="#7C3AED" />
             <Text style={styles.ovValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{active.filter((b) => computeProgress(b.startDate, b.duration) < 85).length}</Text>
             <Text style={styles.ovLabel}>Healthy</Text>
           </View>
@@ -132,14 +132,14 @@ export default function BatchManagementScreen() {
 
         {active.length === 0 && (
           <Animated.View entering={FadeInUp.duration(400).delay(400).springify()} style={styles.emptyState}>
-            <GoonaIcon icon={ClipboardList} size={40} color="#CBD5E1" />
+            <GoonaIcon icon={Icons.clipboardList} size={40} color="#CBD5E1" />
             <Text style={styles.emptyTitle}>No Active Batches</Text>
             <Text style={styles.emptyDesc}>Create your first production batch to start tracking.</Text>
             <Pressable
               style={styles.emptyCta}
               onPress={() => router.push('/create-batch' as any)}
             >
-              <GoonaIcon icon={Plus} size={18} color="#FFF" />
+              <GoonaIcon icon={Icons.plus} size={18} color="#FFF" />
               <Text style={styles.emptyCtaText}>Create Batch</Text>
             </Pressable>
           </Animated.View>
@@ -161,7 +161,7 @@ export default function BatchManagementScreen() {
               >
                 <View style={styles.batchTop}>
                   <View style={styles.batchNameRow}>
-                    <GoonaIcon icon={Egg} size={16} color={badge.color} />
+                    <GoonaIcon icon={Icons.egg} size={16} color={badge.color} />
                     <Text style={styles.batchName}>{batch.batchName}</Text>
                   </View>
                   <View style={[styles.batchBadge, { backgroundColor: badge.bg }]}>
@@ -192,7 +192,7 @@ export default function BatchManagementScreen() {
 
         <Animated.View entering={FadeInUp.duration(500).delay(500).springify()} style={styles.insightCard}>
           <View style={styles.insightHeader}>
-            <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
             <Text style={styles.insightTitle}>GOONA IQ Batch Insight</Text>
           </View>
           <Text style={styles.insightText}>

@@ -5,7 +5,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Rect, Line } from 'react-native-svg';
-import { ArrowLeft, CheckCircle, ArrowRight, Sparkles } from 'lucide-react-native';
+import { Icons } from '../shared/icons';
 import GoonaIcon from '../components/ui/GoonaIcon';
 
 export default function FarmStructureScreen() {
@@ -39,10 +39,10 @@ export default function FarmStructureScreen() {
       >
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1F2937" />
           </TouchableOpacity>
           <View style={styles.progressPill}>
-            <GoonaIcon icon={CheckCircle} size={12} color="#00695C" style={{ marginRight: 4 }} />
+            <GoonaIcon icon={Icons.checkCircle} size={12} color="#00695C" style={{ marginRight: 4 }} />
             <Text style={styles.progressPillText}>Setup</Text>
           </View>
         </View>
@@ -87,7 +87,7 @@ export default function FarmStructureScreen() {
 
             <TouchableOpacity style={styles.soloBtn} onPress={handleSolo} activeOpacity={0.9}>
               <Text style={styles.optionBtnText}>Continue Solo</Text>
-              <GoonaIcon icon={ArrowRight} size={18} color="white" />
+              <GoonaIcon icon={Icons.arrowRight} size={18} color="white" />
             </TouchableOpacity>
           </TouchableOpacity>
 
@@ -125,14 +125,14 @@ export default function FarmStructureScreen() {
 
             <TouchableOpacity style={styles.teamBtn} onPress={handleTeam} activeOpacity={0.9}>
               <Text style={styles.optionBtnText}>Set Up Team</Text>
-              <GoonaIcon icon={ArrowRight} size={18} color="white" />
+              <GoonaIcon icon={Icons.arrowRight} size={18} color="white" />
             </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
         <View style={styles.iqCard}>
           <View style={styles.iqSparkle}>
-            <GoonaIcon icon={Sparkles} size={20} color="#16A34A" />
+            <GoonaIcon icon={Icons.sparkles} size={20} color="#16A34A" />
           </View>
           <Text style={styles.iqText}>
             Most growing farms start <Text style={{ fontWeight: '700', color: '#00695C' }}>solo</Text> and expand into{' '}
@@ -142,7 +142,7 @@ export default function FarmStructureScreen() {
 
         <View style={styles.bottomInfo}>
           <View style={styles.trustBadge}>
-            <GoonaIcon icon={CheckCircle} size={14} color="#00695C" />
+            <GoonaIcon icon={Icons.checkCircle} size={14} color="#00695C" />
             <Text style={styles.trustBadgeText}>You can always add workers later from Team Settings.</Text>
           </View>
           <TouchableOpacity onPress={handleSkip}>

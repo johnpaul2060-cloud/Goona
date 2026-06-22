@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Text, TouchableOpacity, Keyboard } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Shield, ScanFace, FingerprintPattern } from 'lucide-react-native'
+import { Icons } from '../../shared/icons'
 import GoonaIcon from '../ui/GoonaIcon'
 import { useBiometricAuth } from '../../hooks/useBiometricAuth'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -102,9 +102,9 @@ export default function BiometricGate({ onAuthenticated, onFallback, onClose, vi
       <View style={{ alignItems: 'center', width: '100%', maxWidth: 340 }}>
         <View style={{ width: BADGE_SIZE, height: BADGE_SIZE, borderRadius: BADGE_SIZE / 2, backgroundColor: 'rgba(99,102,241,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
           {isFaceId ? (
-            <GoonaIcon icon={ScanFace} size={36} color="#6366F1" />
+            <GoonaIcon icon={Icons.scanFace} size={36} color="#6366F1" />
           ) : (
-            <GoonaIcon icon={FingerprintPattern} size={36} color="#6366F1" />
+            <GoonaIcon icon={Icons.fingerprintPattern} size={36} color="#6366F1" />
           )}
         </View>
 
@@ -160,7 +160,7 @@ export default function BiometricGate({ onAuthenticated, onFallback, onClose, vi
         onPress={onClose}
         style={{ position: 'absolute', top: insets.top + 12, right: 16, padding: 8 }}
       >
-        <GoonaIcon icon={Shield} size={20} color="#CBD5E1" />
+        <GoonaIcon icon={Icons.shield} size={20} color="#CBD5E1" />
       </TouchableOpacity>
     </View>
   )

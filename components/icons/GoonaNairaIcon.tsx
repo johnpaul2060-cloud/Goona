@@ -1,8 +1,8 @@
 import { forwardRef } from 'react'
 import Svg, { Path, Rect } from 'react-native-svg'
-import type { LucideProps } from 'lucide-react-native'
+import type { IconProps } from '../../shared/icons'
 
-const GoonaNairaIcon = forwardRef<Svg, LucideProps>(({ size = 24, color = '#94A3B8', strokeWidth = 2, ...props }, ref) => (
+const GoonaNairaIcon = forwardRef<Svg, IconProps>(({ size = 24, color = '#94A3B8', strokeWidth = 2, ...props }, ref) => (
   <Svg
     ref={ref}
     width={size}

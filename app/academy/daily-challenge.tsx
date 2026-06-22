@@ -4,7 +4,7 @@ import {
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
-import { ArrowLeft } from 'lucide-react-native'
+import { Icons } from '../../shared/icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import GoonaIcon from '../../components/ui/GoonaIcon'
@@ -28,7 +28,7 @@ export default function DailyChallengeScreen() {
       >
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
           <TouchableOpacity style={styles.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Daily Challenge</Text>
           <View style={{ width: 36 }} />

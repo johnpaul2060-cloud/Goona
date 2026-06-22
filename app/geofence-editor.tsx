@@ -8,13 +8,13 @@ import { StatusBar } from 'expo-status-bar'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, MapPin, ShieldAlert, Save, Trash2 } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
 const ZONE_TYPES = [
-  { key: 'operational' as const, label: 'Operational Zone', desc: 'Worker-accessible areas with geofence tracking', icon: MapPin, color: '#22C55E' },
-  { key: 'restricted' as const, label: 'Restricted Area', desc: 'Limited access zones with entry alerts', icon: ShieldAlert, color: '#EF4444' },
+  { key: 'operational' as const, label: 'Operational Zone', desc: 'Worker-accessible areas with geofence tracking', icon: Icons.mapPin, color: '#22C55E' },
+  { key: 'restricted' as const, label: 'Restricted Area', desc: 'Limited access zones with entry alerts', icon: Icons.shieldAlert, color: '#EF4444' },
 ]
 
 const PRESET_NAMES = ['Poultry House A', 'Poultry House B', 'Hatchery', 'Feed Warehouse', 'Fish Pond', 'Storage Facility', 'Chemical Storage', 'Generator Room', 'Medicine Storage', 'Custom Zone']
@@ -43,14 +43,14 @@ export default function GeofenceEditorScreen() {
         {/* App Bar */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 54 }}>
           <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}>
-            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={{ fontWeight: '700', fontSize: 16, color: '#1B1B1B' }}>Geofence Editor</Text>
           <TouchableOpacity
             onPress={handleSave}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#00695C', paddingVertical: 6, paddingHorizontal: 14, borderRadius: 50 }}
           >
-            <GoonaIcon icon={Save} size={14} color="#fff" />
+            <GoonaIcon icon={Icons.save} size={14} color="#fff" />
             <Text style={{ fontSize: 12, fontWeight: '600', color: '#fff' }}>Save</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -138,7 +138,7 @@ export default function GeofenceEditorScreen() {
             </View>
             <View style={{ alignItems: 'center', gap: 8 }}>
               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(174,234,0,0.1)', alignItems: 'center', justifyContent: 'center' }}>
-                <MapPin size={24} color="#AEEA00" strokeWidth={1.5} />
+                <Icons.mapPin size={24} color="#AEEA00" strokeWidth={1.5} />
               </View>
               <Text style={{ fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.7)' }}>Tap to draw zone boundary</Text>
               <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Polygon coordinates will be saved</Text>
@@ -162,7 +162,7 @@ export default function GeofenceEditorScreen() {
             ])}
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 }}
           >
-            <GoonaIcon icon={Trash2} size={16} color="#EF4444" />
+            <GoonaIcon icon={Icons.trash2} size={16} color="#EF4444" />
             <Text style={{ fontSize: 13, fontWeight: '600', color: '#EF4444' }}>Delete Zone</Text>
           </TouchableOpacity>
         </Animated.View>

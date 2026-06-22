@@ -5,15 +5,7 @@ import {
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, Users, UserCheck, UserX, MapPin, Battery, Clock,
-  Shield, ShieldAlert, Bell, CheckCircle, AlertTriangle, X,
-  ChevronRight, Activity, BarChart3, Eye,
-  Flag, Navigation, Target,
-  Radio, Wifi, TrendingUp, TrendingDown,
-  Search, Filter,
-  Smartphone, Zap, AlertOctagon,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -175,12 +167,12 @@ type WfTabType = 'overview' | 'members' | 'attendance' | 'safety' | 'patrols' | 
 
 interface TabDef { key: WfTabType; label: string; icon: any }
 const WF_TABS: TabDef[] = [
-  { key: 'overview', label: 'Overview', icon: Activity },
-  { key: 'members', label: 'Members', icon: Users },
-  { key: 'attendance', label: 'Attendance', icon: Clock },
-  { key: 'safety', label: 'Safety', icon: ShieldAlert },
-  { key: 'patrols', label: 'Patrols', icon: Target },
-  { key: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { key: 'overview', label: 'Overview', icon: Icons.activity },
+  { key: 'members', label: 'Members', icon: Icons.users },
+  { key: 'attendance', label: 'Attendance', icon: Icons.clock },
+  { key: 'safety', label: 'Safety', icon: Icons.shieldAlert },
+  { key: 'patrols', label: 'Patrols', icon: Icons.target },
+  { key: 'analytics', label: 'Analytics', icon: Icons.barChart3 },
 ]
 
 function WfTabs({ active, onChange }: { active: WfTabType; onChange: (t: WfTabType) => void }) {
@@ -251,12 +243,12 @@ function OverviewTab() {
   const attendanceRate = Math.round(WORKERS.reduce((s, w) => s + w.attendanceRate, 0) / WORKERS.length)
 
   const kpis = [
-    { label: 'Total Workers', value: WORKERS.length.toString(), icon: Users, color: '#00695C', trend: { dir: 'up' as const, pct: '+2' }, subtitle: '3 supervisors' },
-    { label: 'Present Today', value: present.toString(), icon: UserCheck, color: '#22C55E', trend: { dir: 'up' as const, pct: '+1' } },
-    { label: 'Absent', value: absent.toString(), icon: UserX, color: '#EF4444' },
-    { label: 'Active Alerts', value: activeAlerts.toString(), icon: Bell, color: '#F59E0B' },
-    { label: 'Safety Score', value: `${safetyScore}%`, icon: Shield, color: '#00695C', trend: { dir: 'up' as const, pct: '+3%' } },
-    { label: 'Attendance Rate', value: `${attendanceRate}%`, icon: CheckCircle, color: '#22C55E', trend: { dir: 'up' as const, pct: '+2%' } },
+    { label: 'Total Workers', value: WORKERS.length.toString(), icon: Icons.users, color: '#00695C', trend: { dir: 'up' as const, pct: '+2' }, subtitle: '3 supervisors' },
+    { label: 'Present Today', value: present.toString(), icon: Icons.userCheck, color: '#22C55E', trend: { dir: 'up' as const, pct: '+1' } },
+    { label: 'Absent', value: absent.toString(), icon: Icons.userX, color: '#EF4444' },
+    { label: 'Active Alerts', value: activeAlerts.toString(), icon: Icons.bell, color: '#F59E0B' },
+    { label: 'Safety Score', value: `${safetyScore}%`, icon: Icons.shield, color: '#00695C', trend: { dir: 'up' as const, pct: '+3%' } },
+    { label: 'Attendance Rate', value: `${attendanceRate}%`, icon: Icons.checkCircle, color: '#22C55E', trend: { dir: 'up' as const, pct: '+2%' } },
   ]
 
   return (
@@ -333,7 +325,7 @@ function WorkforceProfileModal({ worker, visible, onClose }: { worker: Worker | 
                 </View>
               </View>
               <TouchableOpacity onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
-                <GoonaIcon icon={X} size={18} color="#64748B" />
+                <GoonaIcon icon={Icons.x} size={18} color="#64748B" />
               </TouchableOpacity>
             </View>
 
@@ -342,14 +334,14 @@ function WorkforceProfileModal({ worker, visible, onClose }: { worker: Worker | 
               <Text style={{ fontSize: 12, fontWeight: '600', color: '#94A3B8', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Current Location</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(0,105,92,0.08)', alignItems: 'center', justifyContent: 'center' }}>
-                  <GoonaIcon icon={MapPin} size={18} color="#00695C" />
+                  <GoonaIcon icon={Icons.mapPin} size={18} color="#00695C" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '600', fontSize: 14, color: '#1B1B1B' }}>{worker.location}</Text>
                   <Text style={{ fontSize: 12, color: '#64748B' }}>Zone: {worker.zone}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: worker.battery > 20 ? '#22C55E15' : '#EF444415', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 50 }}>
-                  <GoonaIcon icon={Battery} size={12} color={worker.battery > 20 ? '#22C55E' : '#EF4444'} />
+                  <GoonaIcon icon={Icons.battery} size={12} color={worker.battery > 20 ? '#22C55E' : '#EF4444'} />
                   <Text style={{ fontSize: 11, fontWeight: '700', color: worker.battery > 20 ? '#22C55E' : '#EF4444' }}>{worker.battery}%</Text>
                 </View>
               </View>
@@ -471,12 +463,12 @@ function MembersTab({ onSelectWorker }: { onSelectWorker: (w: Worker) => void })
                   <Text style={{ fontSize: 12, color: '#64748B' }}>{w.role}</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 3 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                      <GoonaIcon icon={MapPin} size={10} color="#94A3B8" />
+                      <GoonaIcon icon={Icons.mapPin} size={10} color="#94A3B8" />
                       <Text style={{ fontSize: 10, color: '#94A3B8' }}>{w.location}</Text>
                     </View>
                     <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#D1D5DB' }} />
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                      <GoonaIcon icon={Battery} size={10} color={w.battery > 20 ? '#22C55E' : '#EF4444'} />
+                      <GoonaIcon icon={Icons.battery} size={10} color={w.battery > 20 ? '#22C55E' : '#EF4444'} />
                       <Text style={{ fontSize: 10, color: '#94A3B8' }}>{w.battery}%</Text>
                     </View>
                   </View>
@@ -489,7 +481,7 @@ function MembersTab({ onSelectWorker }: { onSelectWorker: (w: Worker) => void })
                     </View>
                   </View>
                 </View>
-                <ChevronRight size={14} color="#94A3B8" strokeWidth={2} />
+                <Icons.chevronRight size={14} color="#94A3B8" strokeWidth={2} />
               </Animated.View>
             </Pressable>
           </Animated.View>
@@ -508,10 +500,10 @@ function AttendanceTab() {
   const rate = Math.round((present / ATTENDANCE.length) * 100)
 
   const metrics = [
-    { label: 'Present', value: present.toString(), color: '#22C55E', icon: UserCheck },
-    { label: 'Absent', value: absent.toString(), color: '#EF4444', icon: UserX },
-    { label: 'Late', value: late.toString(), color: '#F59E0B', icon: Clock },
-    { label: 'Early Departure', value: early.toString(), color: '#6366F1', icon: Flag },
+    { label: 'Present', value: present.toString(), color: '#22C55E', icon: Icons.userCheck },
+    { label: 'Absent', value: absent.toString(), color: '#EF4444', icon: Icons.userX },
+    { label: 'Late', value: late.toString(), color: '#F59E0B', icon: Icons.clock },
+    { label: 'Early Departure', value: early.toString(), color: '#6366F1', icon: Icons.flag },
   ]
 
   return (
@@ -647,7 +639,7 @@ function LocationsTab() {
               backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)',
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <GoonaIcon icon={ShieldAlert} size={10} color="#EF4444" />
+                <GoonaIcon icon={Icons.shieldAlert} size={10} color="#EF4444" />
                 <Text style={{ fontSize: 10, fontWeight: '600', color: '#EF4444' }}>{z.name}</Text>
               </View>
             </View>
@@ -690,13 +682,13 @@ function LocationsTab() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '600', fontSize: 13, color: '#1B1B1B' }}>{w.name}</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                    <GoonaIcon icon={MapPin} size={10} color="#64748B" />
+                    <GoonaIcon icon={Icons.mapPin} size={10} color="#64748B" />
                     <Text style={{ fontSize: 11, color: '#64748B' }}>{w.location}</Text>
                   </View>
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 3 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <GoonaIcon icon={Battery} size={11} color={w.battery > 20 ? '#22C55E' : '#EF4444'} />
+                    <GoonaIcon icon={Icons.battery} size={11} color={w.battery > 20 ? '#22C55E' : '#EF4444'} />
                     <Text style={{ fontSize: 10, fontWeight: '600', color: '#64748B' }}>{w.battery}%</Text>
                   </View>
                   <PulseDot color={locColor} size={5} />
@@ -724,9 +716,9 @@ function SafetyTab() {
       {/* Summary */}
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
         {[
-          { label: 'Active SOS', value: activeSos.toString(), color: '#EF4444', icon: AlertTriangle },
-          { label: 'Restricted Entries', value: restricted.toString(), color: '#F59E0B', icon: ShieldAlert },
-          { label: 'Incidents', value: incidents.toString(), color: '#6366F1', icon: AlertOctagon },
+    { label: 'Active SOS', value: activeSos.toString(), color: '#EF4444', icon: Icons.alertTriangle },
+    { label: 'Restricted Entries', value: restricted.toString(), color: '#F59E0B', icon: Icons.shieldAlert },
+    { label: 'Incidents', value: incidents.toString(), color: '#6366F1', icon: Icons.alertOctagon },
         ].map((m, i) => (
           <Animated.View key={m.label} entering={FadeInUp.duration(400).delay(i * 60).springify()} style={{ flex: 1 }}>
             <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)' }}>
@@ -750,13 +742,13 @@ function SafetyTab() {
             borderLeftWidth: 3, borderLeftColor: '#EF4444',
           }}>
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(239,68,68,0.08)', alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-              <GoonaIcon icon={ShieldAlert} size={18} color="#EF4444" />
+              <GoonaIcon icon={Icons.shieldAlert} size={18} color="#EF4444" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '600', fontSize: 13, color: '#1B1B1B' }}>{z.name}</Text>
               <Text style={{ fontSize: 11, color: '#94A3B8' }}>Authorized personnel only</Text>
             </View>
-            <GoonaIcon icon={AlertTriangle} size={14} color="#EF4444" />
+            <GoonaIcon icon={Icons.alertTriangle} size={14} color="#EF4444" />
           </View>
         ))}
       </Animated.View>
@@ -873,9 +865,9 @@ function PatrolsTab() {
                   alignItems: 'center', justifyContent: 'center',
                 }}>
                   {isCompleted ? (
-                    <GoonaIcon icon={CheckCircle} size={14} color="#fff" />
+                    <GoonaIcon icon={Icons.checkCircle} size={14} color="#fff" />
                   ) : isMissed ? (
-                    <GoonaIcon icon={X} size={14} color="#fff" />
+                    <GoonaIcon icon={Icons.x} size={14} color="#fff" />
                   ) : (
                     <Text style={{ fontSize: 11, fontWeight: '700', color: '#94A3B8' }}>{i + 1}</Text>
                   )}
@@ -1059,7 +1051,7 @@ export default function WorkforceHubScreen() {
         {/* App Bar */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={s.topNav}>
           <TouchableOpacity style={s.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <View style={s.navLogo}>
             <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">

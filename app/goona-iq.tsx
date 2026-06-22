@@ -5,7 +5,7 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Sparkles, Sprout, Mic, Send, Package, Heart, MapPin, TrendingUp } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -250,11 +250,11 @@ export default function GOONAIQScreen() {
               style={styles.navBack}
               activeOpacity={0.7}
             >
-              <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
             </TouchableOpacity>
           </Animated.View>
           <View style={styles.navLogo}>
-            <GoonaIcon icon={Sprout} size={22} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sprout} size={22} color="#2E7D32" />
             <Text style={styles.navLogoText}>GOONA</Text>
           </View>
           <Text style={styles.navLabel}>IQ</Text>
@@ -321,7 +321,7 @@ export default function GOONAIQScreen() {
                 entering={FadeInUp.duration(500).delay(i * 80).springify()}
                 style={[styles.insightCard, i === visibleInsights.length - 1 && styles.insightCardLatest]}
               >
-                <GoonaIcon icon={Sparkles} size={16} color={i === visibleInsights.length - 1 ? '#AEEA00' : '#2E7D32'} />
+                <GoonaIcon icon={Icons.sparkles} size={16} color={i === visibleInsights.length - 1 ? '#AEEA00' : '#2E7D32'} />
                 <View style={{ flex: 1 }}>
                   <Text
                     style={[styles.insightText, i === visibleInsights.length - 1 && styles.insightTextLatest]}
@@ -377,7 +377,7 @@ export default function GOONAIQScreen() {
             <View style={styles.assistantGlow} pointerEvents="none" />
             <View style={styles.assistantHead}>
               <View style={styles.assistantIcon}>
-                <GoonaIcon icon={Sparkles} size={18} color="#AEEA00" />
+                <GoonaIcon icon={Icons.sparkles} size={18} color="#AEEA00" />
               </View>
               <Text style={styles.assistantLabel}>PROACTIVE RECOMMENDATION</Text>
             </View>
@@ -579,7 +579,7 @@ function AIInteractionBar({
                     end={{ x: 1, y: 1 }}
                     style={[StyleSheet.absoluteFill, { borderRadius: 10 }]}
                   />
-                  <GoonaIcon icon={Sparkles} size={12} color="rgba(174,234,0,0.5)" />
+                  <GoonaIcon icon={Icons.sparkles} size={12} color="rgba(174,234,0,0.5)" />
                 </View>
                 <Text style={aiBarStyles.responseLabel}>GOONA IQ</Text>
               </View>
@@ -627,7 +627,7 @@ function AIInteractionBar({
           activeOpacity={0.7}
         >
           <Animated.View style={[aiBarStyles.micInner, micStyle]}>
-            <GoonaIcon icon={Mic} size={18} color={micColor} />
+            <GoonaIcon icon={Icons.mic} size={18} color={micColor} />
           </Animated.View>
         </TouchableOpacity>
 
@@ -657,7 +657,7 @@ function AIInteractionBar({
             end={{ x: 1, y: 1 }}
             style={aiBarStyles.sendGrad}
           >
-            <GoonaIcon icon={Send} size={16} color="#FFFFFF" />
+            <GoonaIcon icon={Icons.send} size={16} color="#FFFFFF" />
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -697,7 +697,7 @@ const aiBarStyles = StyleSheet.create({
   thinkingContent: { flex: 1 },
   thinkingText: { fontSize: 13, fontWeight: '600', color: '#2E7D32', marginBottom: 8 },
   scanTrack: {
-    height: 4, backgroundColor: 'rgba(46,125,50,0.08)',
+    height: 4, backgroundColor: 'rgba(6,95,70,0.08)',
     borderRadius: 100, overflow: 'hidden',
   },
   scanFill: {
@@ -712,7 +712,7 @@ const aiBarStyles = StyleSheet.create({
   },
   responseLabel: { fontSize: 11, fontWeight: '700', color: '#2E7D32', letterSpacing: 0.4 },
   responseInsight: { fontSize: 13, lineHeight: 18, color: '#1F2937', fontWeight: '500' },
-  responseRec: { fontSize: 12, lineHeight: 17, color: '#475569' },
+  responseRec: { fontSize: 12, lineHeight: 17, color: '#64748B' },
   responseActions: { flexDirection: 'row', gap: 8, marginTop: 6 },
   respBtn: {
     paddingVertical: 8, paddingHorizontal: 16, borderRadius: 50,
@@ -721,7 +721,7 @@ const aiBarStyles = StyleSheet.create({
   respBtnText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   respBtnOutline: {
     paddingVertical: 8, paddingHorizontal: 16, borderRadius: 50,
-    borderWidth: 1, borderColor: 'rgba(46,125,50,0.15)',
+    borderWidth: 1, borderColor: 'rgba(6,95,70,0.15)',
   },
   respBtnOutlineText: { fontSize: 11, fontWeight: '600', color: '#64748B' },
   inputRow: {
@@ -801,7 +801,7 @@ const pgStyles = StyleSheet.create({
   gaugeInner: { position: 'absolute', alignItems: 'center' },
   gaugeVal: { fontSize: 22, fontWeight: '800' },
   gaugeUnit: { fontSize: 10, fontWeight: '500', color: '#94A3B8', marginTop: -2 },
-  gaugeLabel: { fontSize: 11, fontWeight: '600', color: '#475569', marginTop: 6, maxWidth: 100 },
+  gaugeLabel: { fontSize: 11, fontWeight: '600', color: '#64748B', marginTop: 6, maxWidth: 100 },
 })
 
 /* ─── Health Radar ─── */
@@ -884,7 +884,7 @@ const hrStyles = StyleSheet.create({
   radarWrap: { alignItems: 'center', justifyContent: 'center' },
   radarPulse: {
     position: 'absolute',
-    backgroundColor: 'rgba(46,125,50,0.04)',
+    backgroundColor: 'rgba(6,95,70,0.04)',
   },
   labels: {
     flex: 1, marginLeft: 16, gap: 8,
@@ -894,7 +894,7 @@ const hrStyles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
   },
   labelDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  labelText: { fontSize: 14, fontWeight: '500', color: '#475569', flex: 1 },
+  labelText: { fontSize: 14, fontWeight: '500', color: '#64748B', flex: 1 },
   labelVal: { fontSize: 14, fontWeight: '700', flexShrink: 0 },
 })
 
@@ -906,10 +906,10 @@ function RecommendationCard({
 }) {
   const { style, onPressIn, onPressOut } = usePressScale()
   const iconComp = icon === 'feed'
-    ? Package
+    ? Icons.package
     : icon === 'heart'
-      ? Heart
-      : MapPin
+      ? Icons.heart
+      : Icons.mapPin
 
   return (
     <Animated.View entering={FadeInUp.duration(500).delay(500 + index * 80).springify()} style={[style, { marginBottom: 10 }]}>
@@ -969,7 +969,7 @@ const riStyles = StyleSheet.create({
   wrap: { alignItems: 'center', width: (SCREEN_W - 72) / 5 },
   ring: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  label: { fontSize: 9, fontWeight: '600', color: '#475569', marginTop: 4, textAlign: 'center', maxWidth: (SCREEN_W - 72) / 5 - 4 },
+  label: { fontSize: 9, fontWeight: '600', color: '#64748B', marginTop: 4, textAlign: 'center', maxWidth: (SCREEN_W - 72) / 5 - 4 },
   level: { fontSize: 10, fontWeight: '700', marginTop: 1 },
 })
 
@@ -994,7 +994,7 @@ function FinancialMetric({
       <Text style={fmStyles.label} numberOfLines={1} ellipsizeMode="tail">{label}</Text>
       <View style={fmStyles.values}>
         <Text style={fmStyles.current}>{value}</Text>
-        <GoonaIcon icon={TrendingUp} size={14} color="#22C55E" />
+        <GoonaIcon icon={Icons.trendingUp} size={14} color="#22C55E" />
         <Text style={fmStyles.forecast}>{forecast}</Text>
       </View>
       <View style={fmStyles.track}>
@@ -1006,10 +1006,10 @@ function FinancialMetric({
 
 const fmStyles = StyleSheet.create({
   card: {
-    backgroundColor: 'white', borderRadius: 16, padding: 14,
+    backgroundColor: 'white', borderRadius: 18, padding: 14,
     borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 16, elevation: 1,
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
   },
   label: { fontSize: 11, fontWeight: '600', color: '#64748B', marginBottom: 4 },
   values: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
@@ -1021,17 +1021,17 @@ const fmStyles = StyleSheet.create({
 
 /* ─── Styles ─── */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9F5' },
+  container: { flex: 1, backgroundColor: '#F8FAF7' },
   kavContent: { flex: 1, zIndex: 1 },
 
   /* background */
   bgBlob: { position: 'absolute', top: -60, right: -60, width: 340, height: 340, zIndex: 0 },
-  bgBlobInner: { width: 340, height: 340, borderRadius: 170, backgroundColor: 'rgba(46,125,50,0.06)' },
-  bgGlow: { position: 'absolute', top: '30%', left: '50%', width: 200, height: 200, marginLeft: -100, marginTop: -100, borderRadius: 100, backgroundColor: 'rgba(46,125,50,0.04)', zIndex: 0 },
-  bgContour1: { position: 'absolute', top: '12%', right: '-20%', width: 400, height: 140, borderWidth: 1, borderColor: 'rgba(46,125,50,0.05)', borderTopLeftRadius: 200, borderTopRightRadius: 200, borderBottomWidth: 0, transform: [{ rotate: '8deg' }], zIndex: 0 },
-  bgContour2: { position: 'absolute', bottom: '15%', left: '-15%', width: 320, height: 110, borderWidth: 1, borderColor: 'rgba(46,125,50,0.05)', borderBottomLeftRadius: 160, borderBottomRightRadius: 160, borderTopWidth: 0, transform: [{ rotate: '-10deg' }], zIndex: 0 },
+  bgBlobInner: { width: 340, height: 340, borderRadius: 170, backgroundColor: 'rgba(6,95,70,0.06)' },
+  bgGlow: { position: 'absolute', top: '30%', left: '50%', width: 200, height: 200, marginLeft: -100, marginTop: -100, borderRadius: 100, backgroundColor: 'rgba(6,95,70,0.04)', zIndex: 0 },
+  bgContour1: { position: 'absolute', top: '12%', right: '-20%', width: 400, height: 140, borderWidth: 1, borderColor: 'rgba(6,95,70,0.05)', borderTopLeftRadius: 200, borderTopRightRadius: 200, borderBottomWidth: 0, transform: [{ rotate: '8deg' }], zIndex: 0 },
+  bgContour2: { position: 'absolute', bottom: '15%', left: '-15%', width: 320, height: 110, borderWidth: 1, borderColor: 'rgba(6,95,70,0.05)', borderBottomLeftRadius: 160, borderBottomRightRadius: 160, borderTopWidth: 0, transform: [{ rotate: '-10deg' }], zIndex: 0 },
   bgDotGrid: { position: 'absolute', inset: 0, zIndex: 0, opacity: 0.4 },
-  bgDot: { position: 'absolute', width: 2, height: 2, borderRadius: 1, backgroundColor: 'rgba(46,125,50,0.1)' },
+  bgDot: { position: 'absolute', width: 2, height: 2, borderRadius: 1, backgroundColor: 'rgba(6,95,70,0.1)' },
 
   /* scroll */
   scroll: { flex: 1, zIndex: 1 },
@@ -1042,7 +1042,7 @@ const styles = StyleSheet.create({
   navBack: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
   navLogo: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   navLogoText: { fontWeight: '700', fontSize: 14, color: '#1B1B1B' },
-  navLabel: { fontSize: 14, fontWeight: '500', color: '#616161' },
+  navLabel: { fontSize: 14, fontWeight: '500', color: '#64748B' },
 
   /* hero card */
   heroCard: {
@@ -1079,7 +1079,7 @@ const styles = StyleSheet.create({
 
   /* section header */
   sectionHdr: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 26, marginBottom: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#1B1B1B' },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: '#1B1B1B' },
   sectionSub: { fontSize: 12, fontWeight: '500', color: '#94A3B8', flexShrink: 1 },
   sectionBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(34,197,94,0.08)', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 50, flexShrink: 0 },
   sectionBadgeText: { fontSize: 9, fontWeight: '700', color: '#22C55E' },
@@ -1088,17 +1088,17 @@ const styles = StyleSheet.create({
   insightStream: { gap: 8 },
   insightCard: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    backgroundColor: 'white', borderRadius: 18, padding: 16,
+    backgroundColor: 'white', borderRadius: 20, padding: 16,
     borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02, shadowRadius: 16, elevation: 1,
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 1,
   },
   insightCardLatest: {
     borderColor: 'rgba(46,125,50,0.15)',
     backgroundColor: '#F5FBF5',
-    shadowColor: '#2E7D32', shadowOpacity: 0.04, shadowRadius: 20,
+    shadowColor: '#2E7D32', shadowOpacity: 0.06, shadowRadius: 20,
   },
-  insightText: { fontSize: 13, lineHeight: 18, color: '#475569', flex: 1 },
+  insightText: { fontSize: 13, lineHeight: 18, color: '#64748B', flex: 1 },
   insightTextLatest: { color: '#1B1B1B', fontWeight: '500' },
   insightLatestDot: {
     width: 6, height: 6, borderRadius: 3, backgroundColor: '#AEEA00',
@@ -1152,13 +1152,13 @@ const styles = StyleSheet.create({
   /* recommendations */
   recCard: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 14,
-    backgroundColor: 'white', borderRadius: 20, padding: 18,
+    backgroundColor: 'white', borderRadius: 22, padding: 18,
     borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 16, elevation: 1,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
   },
   recIcon: {
-    width: 40, height: 40, borderRadius: 14,
+    width: 44, height: 44, borderRadius: 14,
     backgroundColor: '#F0FDF4', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   recBody: { flex: 1 },
@@ -1168,7 +1168,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0FDF4', borderRadius: 50,
     paddingVertical: 2, paddingHorizontal: 8, flexShrink: 0,
   },
-  recBadgeText: { fontSize: 9, fontWeight: '700', color: '#16A34A' },
+  recBadgeText: { fontSize: 9, fontWeight: '700', color: '#2E7D32' },
   recDesc: { fontSize: 12, lineHeight: 16, color: '#64748B' },
 
   /* risk grid */

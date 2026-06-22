@@ -5,7 +5,7 @@ import {
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from './ui/GoonaIcon'
-import { Wallet, ArrowRight, X } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInUp, SlideInUp } from 'react-native-reanimated'
 
 interface Props {
@@ -20,11 +20,11 @@ export default function WalletRequiredModal({ visible, onClose }: Props) {
         <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
         <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={styles.sheet}>
           <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.7}>
-            <GoonaIcon icon={X} size={20} color="#94A3B8" />
+            <GoonaIcon icon={Icons.x} size={20} color="#94A3B8" />
           </TouchableOpacity>
 
           <View style={styles.iconWrap}>
-            <GoonaIcon icon={Wallet} size={36} color="#2E7D32" />
+            <GoonaIcon icon={Icons.wallet} size={36} color="#2E7D32" />
           </View>
 
           <Text style={styles.title}>Almost There</Text>
@@ -45,7 +45,7 @@ export default function WalletRequiredModal({ visible, onClose }: Props) {
               style={styles.btnGrad}
             >
               <Text style={styles.btnText}>Activate Wallet</Text>
-              <GoonaIcon icon={ArrowRight} size={18} color="#FFFFFF" />
+              <GoonaIcon icon={Icons.arrowRight} size={18} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
 

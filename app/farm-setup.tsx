@@ -7,7 +7,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Path, Circle, Ellipse, Rect, Line } from 'react-native-svg';
-import { ArrowLeft, Sprout } from 'lucide-react-native';
+import { Icons } from '../shared/icons';
 import GoonaIcon from '../components/ui/GoonaIcon';
 import CountryPicker from 'react-native-country-picker-modal';
 
@@ -230,10 +230,10 @@ export default function FarmSetupScreen() {
         >
           <View style={styles.topNav}>
             <TouchableOpacity style={styles.navBack} onPress={() => router.back()}>
-              <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <View style={styles.navLogo}>
-              <GoonaIcon icon={Sprout} size={18} color="#2E7D32" />
+              <GoonaIcon icon={Icons.sprout} size={18} color="#2E7D32" />
               <Text style={styles.navLogoText}>GOONA</Text>
             </View>
             <View style={styles.progressPill}>

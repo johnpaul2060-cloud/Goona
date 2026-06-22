@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet } from 'react-na
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
-import { ArrowLeft, ArrowRight } from 'lucide-react-native';
+import { Icons } from '../../shared/icons';
 import GoonaIcon from '../../components/ui/GoonaIcon';
 
 export default function FarmStructureScreen() {
@@ -17,7 +17,7 @@ export default function FarmStructureScreen() {
 
       <View style={styles.topNav}>
         <TouchableOpacity style={styles.navBack} onPress={() => router.back()}>
-          <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+          <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
         </TouchableOpacity>
         <View style={styles.navLogo}>
           <Svg width={18} height={18} viewBox="0 0 18 18">
@@ -57,7 +57,7 @@ export default function FarmStructureScreen() {
           onPress={() => router.push('/(tabs)')}
         >
           <Text style={styles.continueBtnText}>Go to Dashboard</Text>
-          <GoonaIcon icon={ArrowRight} size={18} color="white" />
+          <GoonaIcon icon={Icons.arrowRight} size={18} color="white" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>

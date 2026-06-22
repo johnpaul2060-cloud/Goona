@@ -9,10 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { formatNaira } from '../../../utils/format'
-import {
-  ArrowLeft, Clock, Target, CheckCircle, TrendingUp,
-  Calendar, Circle, Flag,
-} from 'lucide-react-native'
+import { Icons } from '../../../shared/icons'
 import { BlurView } from 'expo-blur'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { useRecoveryStore, fmtDateFromParts, computeStreak } from '../../../store/useRecoveryStore'
@@ -65,7 +62,7 @@ export default function ProjectTimelineScreen() {
       <BlurView intensity={55} tint="light" style={[styles.headerBlur, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.push('/recapitalization')}>
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Project Timeline</Text>
@@ -88,7 +85,7 @@ export default function ProjectTimelineScreen() {
                 <Text style={styles.streakValue}>{streak} days</Text>
               </View>
               <View style={styles.streakBadge}>
-                <GoonaIcon icon={TrendingUp} size={20} color="#AEEA00" />
+                <GoonaIcon icon={Icons.trendingUp} size={20} color="#AEEA00" />
               </View>
             </View>
             <Text style={styles.streakSub}>Keep up the momentum! {activity.filter(a => a.amount).length} contributions this period.</Text>
@@ -141,7 +138,7 @@ export default function ProjectTimelineScreen() {
             <View key={i} style={[styles.upcomingRow, i === UPCOMING.length - 1 && { borderBottomWidth: 0 }]}>
               <View style={styles.upcomingLeft}>
                 <View style={styles.upcomingIcon}>
-                  <GoonaIcon icon={Calendar} size={14} color="#2E7D32" />
+                  <GoonaIcon icon={Icons.calendar} size={14} color="#2E7D32" />
                 </View>
                 <View>
                   <Text style={styles.upcomingProject}>{item.project}</Text>
@@ -165,7 +162,7 @@ export default function ProjectTimelineScreen() {
               <View key={i} style={[styles.milestoneRow, i === MILESTONES.length - 1 && { borderBottomWidth: 0 }]}>
                 <View style={styles.milestoneHead}>
                   <View style={styles.milestoneTitleRow}>
-                    <GoonaIcon icon={Flag} size={16} color="#2E7D32" />
+                    <GoonaIcon icon={Icons.flag} size={16} color="#2E7D32" />
                     <Text style={styles.milestoneTitle}>{item.title}</Text>
                   </View>
                   <View style={[styles.milestoneBadge, { backgroundColor: statusColor + '15' }]}>

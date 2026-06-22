@@ -1,10 +1,10 @@
-import { useEffect, type ElementType } from 'react'
+import { useEffect } from 'react'
 import { View, type ViewStyle } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming } from 'react-native-reanimated'
-import type { LucideProps } from 'lucide-react-native'
+import type { IconComponent } from '../../shared/icons'
 
 interface GoonaIconProps {
-  icon: ElementType<LucideProps>
+  icon: IconComponent
   size?: number
   color?: string
   active?: boolean

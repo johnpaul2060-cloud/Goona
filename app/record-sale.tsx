@@ -6,7 +6,7 @@ import {
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ArrowLeft, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
   withSequence, withRepeat, FadeInUp, FadeIn, Easing,
@@ -382,7 +382,7 @@ export default function RecordSaleScreen() {
       {/* Optional Buyer Details */}
       <TouchableOpacity style={styles.buyerToggle} onPress={() => setShowBuyer(!showBuyer)}>
         <Text style={styles.buyerToggleText}>{showBuyer ? 'Hide' : '+ Add'} Buyer Details (Optional)</Text>
-        <GoonaIcon icon={showBuyer ? ChevronUp : ChevronDown} size={16} color="#2E7D32" />
+        <GoonaIcon icon={showBuyer ? Icons.chevronUp : Icons.chevronDown} size={16} color="#2E7D32" />
       </TouchableOpacity>
 
       {showBuyer && (
@@ -441,7 +441,7 @@ export default function RecordSaleScreen() {
             <Text style={styles.saveBtnText}>Recording...</Text>
           ) : (
             <>
-              <GoonaIcon icon={CheckCircle} size={22} color="#FFF" />
+              <GoonaIcon icon={Icons.checkCircle} size={22} color="#FFF" />
               <Text style={styles.saveBtnText}>Record Sale</Text>
             </>
           )}
@@ -477,7 +477,7 @@ export default function RecordSaleScreen() {
                 onPressIn={ps.onPressIn}
                 onPressOut={ps.onPressOut}
               >
-                <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+                <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
               </TouchableOpacity>
             </Animated.View>
             <View style={styles.navCenter}>
@@ -523,7 +523,7 @@ export default function RecordSaleScreen() {
         <View style={styles.modalOverlay}>
           <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.modalCard}>
             <View style={styles.modalSuccessIcon}>
-              <GoonaIcon icon={CheckCircle} size={48} color="#AEEA00" />
+              <GoonaIcon icon={Icons.checkCircle} size={48} color="#AEEA00" />
             </View>
             <Text style={styles.modalTitle}>Sale Recorded{'\n'}Successfully</Text>
             <Text style={styles.modalAmount}>&#x20A6;{total.toLocaleString('en-NG')}</Text>

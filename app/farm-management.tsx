@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, Users, Calendar, MapPin, ListChecks, Bell, BarChart3, Activity, ChevronRight, Clock, RefreshCw, UserMinus } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInUp } from 'react-native-reanimated'
@@ -14,20 +14,20 @@ function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 const MANAGEMENT_SECTIONS = [
-  { icon: Users, label: 'Workforce', color: '#2E7D32', desc: 'Manage team members' },
-  { icon: Calendar, label: 'Attendance', color: '#0F766E', desc: 'Daily roll call & logs' },
-  { icon: MapPin, label: 'Live Locations', color: '#1A56FF', desc: 'Real-time tracking' },
-  { icon: ListChecks, label: 'Tasks', color: '#7C3AED', desc: 'Assign & monitor' },
-  { icon: Bell, label: 'Alerts', color: '#DC2626', desc: 'Security & incidents' },
-  { icon: BarChart3, label: 'Reports', color: '#F59E0B', desc: 'Analytics & exports' },
-  { icon: Activity, label: 'Performance', color: '#0891B2', desc: 'Productivity metrics' },
+  { icon: Icons.users, label: 'Workforce', color: '#2E7D32', desc: 'Manage team members' },
+  { icon: Icons.calendar, label: 'Attendance', color: '#0F766E', desc: 'Daily roll call & logs' },
+  { icon: Icons.mapPin, label: 'Live Locations', color: '#1A56FF', desc: 'Real-time tracking' },
+  { icon: Icons.listChecks, label: 'Tasks', color: '#7C3AED', desc: 'Assign & monitor' },
+  { icon: Icons.bell, label: 'Alerts', color: '#DC2626', desc: 'Security & incidents' },
+  { icon: Icons.barChart3, label: 'Reports', color: '#F59E0B', desc: 'Analytics & exports' },
+  { icon: Icons.activity, label: 'Performance', color: '#0891B2', desc: 'Productivity metrics' },
 ]
 
 const QUICK_STATS = [
-  { label: 'Total Workers', value: '14', icon: Users, color: '#2E7D32', bg: '#F0FDF4' },
-  { label: 'On Duty', value: '8', icon: Clock, color: '#0F766E', bg: '#DDF5F0' },
-  { label: 'Suspended', value: '2', icon: UserMinus, color: '#DC2626', bg: '#FFF1F2' },
-  { label: 'Pending Review', value: '1', icon: RefreshCw, color: '#F59E0B', bg: '#FFFBEB' },
+  { label: 'Total Workers', value: '14', icon: Icons.users, color: '#2E7D32', bg: '#F0FDF4' },
+  { label: 'On Duty', value: '8', icon: Icons.clock, color: '#0F766E', bg: '#DDF5F0' },
+  { label: 'Suspended', value: '2', icon: Icons.userMinus, color: '#DC2626', bg: '#FFF1F2' },
+  { label: 'Pending Review', value: '1', icon: Icons.refreshCw, color: '#F59E0B', bg: '#FFFBEB' },
 ]
 
 export default function FarmManagementScreen() {
@@ -42,7 +42,7 @@ export default function FarmManagementScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
             <TouchableOpacity style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }} onPress={() => router.back()} activeOpacity={0.7}>
-              <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+              <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 18, fontWeight: '700', color: '#1F2937' }}>Adewale Farms</Text>
@@ -81,7 +81,7 @@ export default function FarmManagementScreen() {
                           <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 13, fontWeight: '600', color: '#1F2937' }}>{s.label}</Text>
                           <Text style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{s.desc}</Text>
                         </View>
-                        <ChevronRight size={14} color="#CBD5E1" />
+                        <Icons.chevronRight size={14} color="#CBD5E1" />
                       </View>
                     </TouchableOpacity>
                   </Animated.View>

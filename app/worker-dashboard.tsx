@@ -4,7 +4,7 @@ import {
   StyleSheet, Dimensions, Alert,
 } from 'react-native'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { Bell, ChevronRight, Package, RefreshCw, FileText, XCircle, Camera, ClipboardCheck, Clock, Cloud } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Svg, { Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -87,7 +87,7 @@ function WorkerAvatar({ initials, online }: { initials: string; online: boolean 
 function NotifIcon({ hasDot }: { hasDot?: boolean }) {
   return (
     <View>
-      <GoonaIcon icon={Bell} size={22} color="#1F2937" />
+      <GoonaIcon icon={Icons.bell} size={22} color="#1F2937" />
       {hasDot && <View style={{ position: 'absolute', top: 1, right: 1, width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A', borderWidth: 1.5, borderColor: 'white' }} />}
     </View>
   )
@@ -347,7 +347,7 @@ function BatchCard({ index }: { index: number }) {
         <View style={bcStyles.header}>
           <View style={bcStyles.headerLeft}>
             <View style={bcStyles.batchIcon}>
-              <GoonaIcon icon={Package} size={18} color="#2E7D32" />
+              <GoonaIcon icon={Icons.package} size={18} color="#2E7D32" />
             </View>
             <View>
               <Text style={bcStyles.batchName}>Broiler Batch A</Text>
@@ -374,7 +374,7 @@ function BatchCard({ index }: { index: number }) {
           onPress={() => router.push({ pathname: '/batch-details/[id]', params: { id: 'batch-a' } })}
         >
           <Text style={bcStyles.viewBtnText}>View Batch Details</Text>
-          <GoonaIcon icon={ChevronRight} size={14} color="#2E7D32" />
+          <GoonaIcon icon={Icons.chevronRight} size={14} color="#2E7D32" />
         </TouchableOpacity>
       </LinearGradient>
     </Animated.View>
@@ -486,7 +486,7 @@ function SyncBar() {
         <View style={sbStyles.content}>
           <View style={sbStyles.left}>
             <View style={sbStyles.iconWrap}>
-              <GoonaIcon icon={RefreshCw} size={18} color="#2E7D32" />
+              <GoonaIcon icon={Icons.refreshCw} size={18} color="#2E7D32" />
             </View>
             <View>
               <Text style={sbStyles.title}>Offline Sync Ready</Text>
@@ -628,7 +628,7 @@ export default function WorkerDashboardScreen() {
               desc="Record feed consumption"
               gradient={['#2E7D32', '#1B5E20']}
               icon={
-                <GoonaIcon icon={FileText} size={20} color="#FFFFFF" />
+                <GoonaIcon icon={Icons.fileText} size={20} color="#FFFFFF" />
               }
               onPress={() => Alert.alert('Feed Log', 'Feed consumption log opened')}
             />
@@ -638,7 +638,7 @@ export default function WorkerDashboardScreen() {
               desc="Log bird losses"
               gradient={['#DC2626', '#991B1B']}
               icon={
-                <GoonaIcon icon={XCircle} size={20} color="#FFFFFF" />
+                <GoonaIcon icon={Icons.xCircle} size={20} color="#FFFFFF" />
               }
               onPress={() => Alert.alert('Mortality', 'Mortality report form opened')}
             />
@@ -650,7 +650,7 @@ export default function WorkerDashboardScreen() {
               desc="Log batch weight data"
               gradient={['#1A56FF', '#1E3A8A']}
               icon={
-                <GoonaIcon icon={Package} size={20} color="#FFFFFF" />
+                <GoonaIcon icon={Icons.package} size={20} color="#FFFFFF" />
               }
               onPress={() => Alert.alert('Weight', 'Weight recording opened')}
             />
@@ -660,7 +660,7 @@ export default function WorkerDashboardScreen() {
               desc="Capture batch photos"
               gradient={['#7C3AED', '#4C1D95']}
               icon={
-                <GoonaIcon icon={Camera} size={20} color="#FFFFFF" />
+                <GoonaIcon icon={Icons.camera} size={20} color="#FFFFFF" />
               }
               onPress={() => Alert.alert('Camera', 'Camera will open for batch photos')}
             />
@@ -730,7 +730,7 @@ export default function WorkerDashboardScreen() {
           style={styles.feedCard}
         >
           <FeedItem
-            icon={<GoonaIcon icon={ClipboardCheck} size={16} color="#16A34A" />}
+            icon={<GoonaIcon icon={Icons.clipboardCheck} size={16} color="#16A34A" />}
             iconBg="#F0FDF4" iconColor="#16A34A"
             text="Feed log submitted \u2014 8 bags of grower feed for Pen A"
             time="2 min ago"
@@ -738,7 +738,7 @@ export default function WorkerDashboardScreen() {
             index={0}
           />
           <FeedItem
-            icon={<GoonaIcon icon={Clock} size={16} color="#1A56FF" />}
+            icon={<GoonaIcon icon={Icons.clock} size={16} color="#1A56FF" />}
             iconBg="#EEF3FF" iconColor="#1A56FF"
             text="Mortality report synced \u2014 2 birds recorded in Pen B"
             time="15 min ago"
@@ -746,7 +746,7 @@ export default function WorkerDashboardScreen() {
             index={1}
           />
           <FeedItem
-            icon={<GoonaIcon icon={Cloud} size={16} color="#F59E0B" />}
+            icon={<GoonaIcon icon={Icons.cloud} size={16} color="#F59E0B" />}
             iconBg="#FFFBEB" iconColor="#F59E0B"
             text="Supervisor commented on your feed efficiency report"
             time="1h ago"

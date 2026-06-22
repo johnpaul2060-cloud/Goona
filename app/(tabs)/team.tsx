@@ -6,7 +6,7 @@ import {
 import Svg, { Path } from 'react-native-svg'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import NotificationBadge from '../../components/NotificationBadge'
-import { ArrowLeft, Sparkles, Shield, RefreshCw, Check, Book, UserCheck, Settings, Users, UserPlus, ClipboardList, BarChart3, Clock, Bell, ChevronRight, ListChecks, Calendar, Activity, User, MapPin, Battery, Wallet } from 'lucide-react-native'
+import { Icons } from '../../shared/icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -150,10 +150,10 @@ const qaStyles = StyleSheet.create({
 type TeamTabType = 'workers' | 'supervisors' | 'tasks' | 'reports'
 
 const TABS: { key: TeamTabType; label: string; icon: any }[] = [
-  { key: 'workers', label: 'Workers', icon: Users },
-  { key: 'supervisors', label: 'Supervisors', icon: UserCheck },
-  { key: 'tasks', label: 'Tasks', icon: ListChecks },
-  { key: 'reports', label: 'Reports', icon: BarChart3 },
+  { key: 'workers', label: 'Workers', icon: Icons.users },
+  { key: 'supervisors', label: 'Supervisors', icon: Icons.userCheck },
+  { key: 'tasks', label: 'Tasks', icon: Icons.listChecks },
+  { key: 'reports', label: 'Reports', icon: Icons.barChart3 },
 ]
 
 function TeamTabs({ active, onChange }: { active: TeamTabType; onChange: (t: TeamTabType) => void }) {
@@ -251,11 +251,11 @@ function WorkerCard({
             </View>
             {location && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                <GoonaIcon icon={MapPin} size={10} color="#94A3B8" />
+                <GoonaIcon icon={Icons.mapPin} size={10} color="#94A3B8" />
                 <Text style={{ fontSize: 10, color: '#94A3B8', flex: 1 }}>{location}</Text>
                 {battery !== undefined && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                    <GoonaIcon icon={Battery} size={10} color={battery > 20 ? '#22C55E' : '#EF4444'} />
+                    <GoonaIcon icon={Icons.battery} size={10} color={battery > 20 ? '#22C55E' : '#EF4444'} />
                     <Text style={{ fontSize: 10, color: '#94A3B8' }}>{battery}%</Text>
                   </View>
                 )}
@@ -274,7 +274,7 @@ function WorkerCard({
               ))}
             </View>
           </View>
-          <ChevronRight size={16} color="#94A3B8" strokeWidth={2} />
+          <Icons.chevronRight size={16} color="#94A3B8" strokeWidth={2} />
         </Animated.View>
       </Pressable>
     </Animated.View>
@@ -336,7 +336,7 @@ function SupervisorCard({
               ))}
             </View>
           </View>
-          <ChevronRight size={16} color="#94A3B8" strokeWidth={2} />
+          <Icons.chevronRight size={16} color="#94A3B8" strokeWidth={2} />
         </Animated.View>
       </Pressable>
     </Animated.View>
@@ -396,7 +396,7 @@ function ReportCard({
   title: string; author: string; date: string; type: string; index: number
 }) {
   const { style, onPressIn, onPressOut } = usePressScale()
-  const typeIcon = type === 'operations' ? ClipboardList : type === 'feed' ? BarChart3 : Calendar
+  const typeIcon = type === 'operations' ? Icons.clipboardList : type === 'feed' ? Icons.barChart3 : Icons.calendar
 
   return (
     <Animated.View entering={FadeInUp.duration(500).delay(500 + index * 80).springify()}>
@@ -413,7 +413,7 @@ function ReportCard({
             <Text style={rpStyles.title}>{title}</Text>
             <Text style={rpStyles.meta}>{author} &bull; {date}</Text>
           </View>
-          <ChevronRight size={14} color="#94A3B8" strokeWidth={2} />
+          <Icons.chevronRight size={14} color="#94A3B8" strokeWidth={2} />
         </Animated.View>
       </Pressable>
     </Animated.View>
@@ -486,7 +486,7 @@ function InsightItem({ text, index, onPress }: { text: string; index: number; on
         onPressOut={onPressOut}
       >
         <Animated.View style={[style, isStyles.item]}>
-          <GoonaIcon icon={Sparkles} size={16} color="#00695C" style={{ marginTop: 1, flexShrink: 0 }} />
+          <GoonaIcon icon={Icons.sparkles} size={16} color="#00695C" style={{ marginTop: 1, flexShrink: 0 }} />
           <Text style={isStyles.text}>{text}</Text>
         </Animated.View>
       </Pressable>
@@ -506,14 +506,14 @@ const isStyles = StyleSheet.create({
 
 /* ─── Activity Feed ─── */
 const ACTIVITY_ITEMS = [
-  { icon: Clock, text: 'Chinedu checked in at Poultry House A.', color: '#00695C' },
-  { icon: ClipboardList, text: 'Aminat entered Feed Warehouse zone.', color: '#0F766E' },
-  { icon: User, text: 'Kola completed morning health check route.', color: '#22C55E' },
-  { icon: RefreshCw, text: 'Attendance synced — 9 present, 2 absent.', color: '#0891B2' },
-  { icon: Bell, text: 'SOS drill completed — all workers responded.', color: '#F59E0B' },
-  { icon: Check, text: 'Checkpoint 4 verified by security patrol.', color: '#16A34A' },
-  { icon: Users, text: 'Worker exited farm geofence — auto check-out.', color: '#6366F1' },
-  { icon: Shield, text: 'Restricted zone alert — no unauthorized entry.', color: '#2E7D32' },
+  { icon: Icons.clock, text: 'Chinedu checked in at Poultry House A.', color: '#00695C' },
+  { icon: Icons.clipboardList, text: 'Aminat entered Feed Warehouse zone.', color: '#0F766E' },
+  { icon: Icons.user, text: 'Kola completed morning health check route.', color: '#22C55E' },
+  { icon: Icons.refreshCw, text: 'Attendance synced — 9 present, 2 absent.', color: '#0891B2' },
+  { icon: Icons.bell, text: 'SOS drill completed — all workers responded.', color: '#F59E0B' },
+  { icon: Icons.check, text: 'Checkpoint 4 verified by security patrol.', color: '#16A34A' },
+  { icon: Icons.users, text: 'Worker exited farm geofence — auto check-out.', color: '#6366F1' },
+  { icon: Icons.shield, text: 'Restricted zone alert — no unauthorized entry.', color: '#2E7D32' },
 ]
 
 function ActivityFeed() {
@@ -598,7 +598,7 @@ function HeroCard() {
         <Text style={heroStyles.subtext}>Operational Command Center</Text>
 
         <View style={heroStyles.walletStrip}>
-          <GoonaIcon icon={Wallet} size={13} color="rgba(255,255,255,0.6)" />
+          <GoonaIcon icon={Icons.wallet} size={13} color="rgba(255,255,255,0.6)" />
           <Text style={heroStyles.walletLabel}>Wallet Balance</Text>
           <Text style={heroStyles.walletAmount}>₦1.25M</Text>
         </View>
@@ -715,9 +715,9 @@ const heroStyles = StyleSheet.create({
 /* ─── Floating trust chips ─── */
 function TrustChips() {
   const items: { label: string; style: Record<string, number>; icon: React.ReactNode }[] = [
-    { label: 'Workforce Live', style: { top: 160, right: 10 }, icon: <GoonaIcon icon={Shield} size={14} color="#00695C" /> },
-    { label: '9 Present', style: { bottom: 320, left: 8 }, icon: <GoonaIcon icon={RefreshCw} size={14} color="#00695C" /> },
-    { label: 'All Zones Safe', style: { bottom: 240, right: 12 }, icon: <GoonaIcon icon={Check} size={14} color="#00695C" /> },
+    { label: 'Workforce Live', style: { top: 160, right: 10 }, icon: <GoonaIcon icon={Icons.shield} size={14} color="#00695C" /> },
+    { label: '9 Present', style: { bottom: 320, left: 8 }, icon: <GoonaIcon icon={Icons.refreshCw} size={14} color="#00695C" /> },
+    { label: 'All Zones Safe', style: { bottom: 240, right: 12 }, icon: <GoonaIcon icon={Icons.check} size={14} color="#00695C" /> },
   ]
   return (
     <>
@@ -809,7 +809,7 @@ export default function TeamScreen() {
         {/* ─── TOP NAV ─── */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
           <TouchableOpacity style={styles.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <GoonaIcon icon={ArrowLeft} size={22} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <View style={styles.navLogo}>
             <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -824,7 +824,7 @@ export default function TeamScreen() {
               onPress={() => router.push('/notifications' as any)}
               style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, position: 'relative' })}
             >
-              <GoonaIcon icon={Bell} size={18} color="#1B1B1B" />
+              <GoonaIcon icon={Icons.bell} size={18} color="#1B1B1B" />
               <NotificationBadge size={16} />
             </Pressable>
           </View>
@@ -857,7 +857,7 @@ export default function TeamScreen() {
             <PulseDot />
             <Text style={wssStyles.workers}>7 Present</Text>
             <View style={wssStyles.divider} />
-            <GoonaIcon icon={MapPin} size={12} color="#64748B" />
+            <GoonaIcon icon={Icons.mapPin} size={12} color="#64748B" />
             <Text style={wssStyles.locations}>3 Active Locations</Text>
           </View>
         </Animated.View>
@@ -891,7 +891,7 @@ export default function TeamScreen() {
               desc="Train with realistic farm simulations."
               tags={['Simulations', 'Challenges', 'XP']}
               icon={
-                <GoonaIcon icon={Book} size={20} color="rgba(255,255,255,0.5)" />
+                <GoonaIcon icon={Icons.book} size={20} color="rgba(255,255,255,0.5)" />
               }
               onPress={() => router.push('/goona-academy')}
             />
@@ -904,7 +904,7 @@ export default function TeamScreen() {
               desc="Receive, save and pay for farm operations."
               tags={['Transfers', 'Pay Workers', 'Recapt']}
               icon={
-                <GoonaIcon icon={Wallet} size={20} color="#2E7D32" />
+                <GoonaIcon icon={Icons.wallet} size={20} color="#2E7D32" />
               }
               onPress={() => router.push('/wallet')}
             />
@@ -915,7 +915,7 @@ export default function TeamScreen() {
               desc="Live workers, geofencing, attendance, safety and alerts."
               tags={['Geofencing', 'Live Map', 'Safety']}
               icon={
-                <GoonaIcon icon={MapPin} size={20} color="#00695C" />
+                <GoonaIcon icon={Icons.mapPin} size={20} color="#00695C" />
               }
               onPress={() => router.push('/workforce-live')}
             />
@@ -928,7 +928,7 @@ export default function TeamScreen() {
               desc="Notifications, security, sync, and preferences."
               tags={['Security', 'Offline', 'AI Prefs']}
               icon={
-                <GoonaIcon icon={Settings} size={20} color="#00695C" />
+                <GoonaIcon icon={Icons.settings} size={20} color="#00695C" />
               }
               onPress={() => router.push('/settings' as any)}
             />

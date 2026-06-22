@@ -3,12 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import GoonaIcon from '../../components/ui/GoonaIcon';
 import NotificationBadge from '../../components/NotificationBadge';
-import {
-  Bell, BarChart3, ClipboardList, Sparkles, FileText, Award,
-  ShoppingCart, Banknote, BrainCircuit, CloudSun, TrendingUp,
-  Shield, CheckCircle, AlertCircle, Clock, Droplets, GraduationCap,
-  TrendingDown, Activity, CloudRain, Thermometer, ChevronRight,
-} from 'lucide-react-native';
+import { Icons } from '../../shared/icons';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import BottomDock from '../../components/navigation/BottomDock';
@@ -51,32 +46,32 @@ const PRIORITY_COLORS: Record<PrioritySeverity, { text: string; bg: string; bord
   urgent:    { text: '#DC2626', bg: '#FEF2F2', border: '#FECACA', dot: '#EF4444' },
 }
 const TODAY_PRIORITIES: { icon: any; label: string; desc: string; severity: PrioritySeverity }[] = [
-  { icon: Clock, label: 'Medication due today', desc: 'Newcastle vaccine scheduled for Batch A — 420 broilers', severity: 'urgent' },
-  { icon: AlertCircle, label: 'Feed stock running low', desc: 'Grower feed at 15% reserve — order within 48 hours', severity: 'attention' },
-  { icon: ClipboardList, label: 'Water log not submitted', desc: 'Yesterday\'s water consumption record is missing', severity: 'info' },
+  { icon: Icons.clock, label: 'Medication due today', desc: 'Newcastle vaccine scheduled for Batch A — 420 broilers', severity: 'urgent' },
+  { icon: Icons.alertCircle, label: 'Feed stock running low', desc: 'Grower feed at 15% reserve — order within 48 hours', severity: 'attention' },
+  { icon: Icons.clipboardList, label: 'Water log not submitted', desc: 'Yesterday\'s water consumption record is missing', severity: 'info' },
 ]
 
 type HealthStatus = 'ok' | 'warning' | 'info'
 const HEALTH_ITEMS: { icon: any; label: string; status: string; type: HealthStatus }[] = [
-  { icon: CheckCircle, label: 'Feed', status: 'Logged Today', type: 'ok' },
-  { icon: CheckCircle, label: 'Water', status: 'Logged Today', type: 'ok' },
-  { icon: AlertCircle, label: 'Medication', status: 'Due Today', type: 'warning' },
-  { icon: Shield, label: 'Mortality', status: '2 Birds Reported', type: 'info' },
+  { icon: Icons.checkCircle, label: 'Feed', status: 'Logged Today', type: 'ok' },
+  { icon: Icons.checkCircle, label: 'Water', status: 'Logged Today', type: 'ok' },
+  { icon: Icons.alertCircle, label: 'Medication', status: 'Due Today', type: 'warning' },
+  { icon: Icons.shield, label: 'Mortality', status: '2 Birds Reported', type: 'info' },
 ]
 
 const QUICK_ACTIONS = [
-  { label: 'Record Sale', icon: ShoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/record-sale' as const },
-  { label: 'Expenses', icon: Banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/expenses' as const },
-  { label: 'Daily Records', icon: ClipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' as const },
-  { label: 'Budget', icon: BarChart3, color: '#F59E0B', bg: '#FFFBEB', route: '/(tabs)/records/expenses/budget' as const },
-  { label: 'Reports', icon: FileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/expenses/reports' as const },
-  { label: 'Academy', icon: GraduationCap, color: '#F97316', bg: '#FFF7ED', route: '/goona-academy' as const },
+  { label: 'Record Sale', icon: Icons.shoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/record-sale' as const },
+  { label: 'Expenses', icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/expenses' as const },
+  { label: 'Daily Records', icon: Icons.clipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' as const },
+  { label: 'Budget', icon: Icons.barChart3, color: '#F59E0B', bg: '#FFFBEB', route: '/(tabs)/records/expenses/budget' as const },
+  { label: 'Reports', icon: Icons.fileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/expenses/reports' as const },
+  { label: 'Academy', icon: Icons.graduationCap, color: '#F97316', bg: '#FFF7ED', route: '/goona-academy' as const },
 ]
 
 const PULSES = [
-  { icon: TrendingUp, color: '#16A34A', bg: '#F0FDF4', label: 'Farm performing above target', badge: '+12%', badgeColor: '#16A34A' },
-  { icon: TrendingDown, color: '#F59E0B', bg: '#FFFBEB', label: 'Feed conversion declining', badge: '-8%', badgeColor: '#D97706' },
-  { icon: Activity, color: '#16A34A', bg: '#F0FDF4', label: 'Production efficiency improved', badge: '+8%', badgeColor: '#16A34A' },
+  { icon: Icons.trendingUp, color: '#16A34A', bg: '#F0FDF4', label: 'Farm performing above target', badge: '+12%', badgeColor: '#16A34A' },
+  { icon: Icons.trendingDown, color: '#F59E0B', bg: '#FFFBEB', label: 'Feed conversion declining', badge: '-8%', badgeColor: '#D97706' },
+  { icon: Icons.activity, color: '#16A34A', bg: '#F0FDF4', label: 'Production efficiency improved', badge: '+8%', badgeColor: '#16A34A' },
 ]
 
 const ROUTE_FALLBACKS: Record<string, string> = {
@@ -141,7 +136,7 @@ export default function DashboardScreen() {
             <Text style={styles.greetingStatus}>Your farm is performing well today.</Text>
           </View>
           <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/notifications')}>
-            <GoonaIcon icon={Bell} size={22} color="#1F2937" />
+            <GoonaIcon icon={Icons.bell} size={22} color="#1F2937" />
             <NotificationBadge />
           </TouchableOpacity>
         </View>
@@ -149,10 +144,10 @@ export default function DashboardScreen() {
         {/* ─── HERO FARM CARD ─── */}
         <Animated.View entering={FadeIn.duration(500)} style={styles.heroCard}>
           <LinearGradient
-            colors={['#2E7D32', '#1B5E20', '#0D3B0F']}
+            colors={['#065F46', '#047857']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[StyleSheet.absoluteFill, { borderRadius: 30, opacity: 0.3 }]}
+            style={[StyleSheet.absoluteFill, { borderRadius: 30 }]}
             pointerEvents="none"
           />
           <View style={styles.heroSparkle} pointerEvents="none" />
@@ -169,7 +164,7 @@ export default function DashboardScreen() {
               <Text style={styles.heroFarmName}>Green Valley Poultry</Text>
             </View>
             <TouchableOpacity style={styles.heroChartBtn}>
-              <GoonaIcon icon={BarChart3} size={22} color="#FFFFFF" />
+              <GoonaIcon icon={Icons.barChart3} size={22} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
@@ -263,7 +258,7 @@ export default function DashboardScreen() {
         <Animated.View entering={FadeIn.duration(400)} style={styles.iqCard}>
           <View style={styles.iqHead}>
             <View style={styles.iqBadgeRow}>
-              <GoonaIcon icon={Sparkles} size={14} color="#2E7D32" />
+              <GoonaIcon icon={Icons.sparkles} size={14} color="#2E7D32" />
               <Text style={styles.iqBadgeText}>GOONA IQ</Text>
             </View>
             <TouchableOpacity onPress={() => router.push('/goona-iq')}>
@@ -271,7 +266,7 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.iqRecommendation}>
-            <GoonaIcon icon={BrainCircuit} size={22} color="#2E7D32" />
+            <GoonaIcon icon={Icons.brainCircuit} size={22} color="#2E7D32" />
             <Text style={styles.iqRecText}>
               Save ₦85,000 this week to remain on track for your next production cycle.
             </Text>
@@ -282,33 +277,33 @@ export default function DashboardScreen() {
         <TouchableOpacity activeOpacity={0.8} onPress={navigateToWeather}>
           <Animated.View entering={FadeIn.duration(400)} style={styles.weatherCard}>
             <View style={styles.weatherHead}>
-              <GoonaIcon icon={CloudSun} size={18} color="#2E7D32" />
+              <GoonaIcon icon={Icons.cloudSun} size={18} color="#2E7D32" />
               <Text style={styles.weatherTitle}>Weather Intelligence</Text>
             </View>
             <View style={styles.weatherBody}>
               <View style={styles.weatherMain}>
                 <View style={styles.weatherRow}>
                   <View style={styles.weatherStat}>
-                    <GoonaIcon icon={Thermometer} size={14} color="#F59E0B" />
+                    <GoonaIcon icon={Icons.thermometer} size={14} color="#F59E0B" />
                     <Text style={styles.weatherVal}>{temp}°C</Text>
                     <Text style={styles.weatherLbl}>Temperature</Text>
                   </View>
                   <View style={styles.weatherDiv} />
                   <View style={styles.weatherStat}>
-                    <GoonaIcon icon={Droplets} size={14} color="#1A56FF" />
+                    <GoonaIcon icon={Icons.droplets} size={14} color="#1A56FF" />
                     <Text style={styles.weatherVal}>{humidity}%</Text>
                     <Text style={styles.weatherLbl}>Humidity</Text>
                   </View>
                   <View style={styles.weatherDiv} />
                   <View style={styles.weatherStat}>
-                    <GoonaIcon icon={CloudRain} size={14} color="#6366F1" />
+                    <GoonaIcon icon={Icons.cloudRain} size={14} color="#6366F1" />
                     <Text style={styles.weatherVal}>{rainProb}%</Text>
                     <Text style={styles.weatherLbl}>Rain</Text>
                   </View>
                 </View>
               </View>
               <View style={styles.weatherRec}>
-                <GoonaIcon icon={BrainCircuit} size={12} color="#2E7D32" />
+                <GoonaIcon icon={Icons.brainCircuit} size={12} color="#2E7D32" />
                 <Text style={styles.weatherRecText}>
                   {rainProb > 50 ? 'Prepare drainage before expected rainfall today.' : 'Reduce litter moisture monitoring today.'}
                 </Text>
@@ -367,10 +362,10 @@ export default function DashboardScreen() {
         {/* ─── DAILY CHALLENGE ─── */}
         <TouchableOpacity style={styles.challengeCard} activeOpacity={0.8} onPress={() => router.push('/academy/daily-challenge')}>
           <View style={styles.challengeIconWrap}>
-            <GoonaIcon icon={Award} size={18} color="#F97316" />
+            <GoonaIcon icon={Icons.award} size={18} color="#F97316" />
           </View>
           <Text style={styles.challengeText}>Daily Challenge</Text>
-          <GoonaIcon icon={ChevronRight} size={16} color="#94A3B8" />
+          <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
         </TouchableOpacity>
 
         <View style={{ height: 100 }} />
@@ -399,8 +394,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 14, elevation: 3,
   },
   heroCard: {
-    backgroundColor: '#2E7D32', borderRadius: 30, padding: 24, marginTop: 18, overflow: 'hidden',
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.25, shadowRadius: 40, elevation: 8,
+    backgroundColor: '#065F46', borderRadius: 30, padding: 24, marginTop: 18, overflow: 'hidden',
+    shadowColor: '#065F46', shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.25, shadowRadius: 40, elevation: 8,
   },
   heroHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1 },
   heroLabel: { fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.75)', letterSpacing: 1 },
@@ -431,7 +426,7 @@ const styles = StyleSheet.create({
   heroProgTrack: { height: 8, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 100, marginTop: 6, overflow: 'hidden' },
   heroProgFill: { height: '100%', width: '72%', borderRadius: 100, backgroundColor: '#AEEA00' },
   secHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 14, zIndex: 5 },
-  secTitle: { fontSize: 18, fontWeight: '700', color: '#1F2937' },
+  secTitle: { fontSize: 20, fontWeight: '800', color: '#1F2937' },
   secLink: { fontSize: 13, fontWeight: '500', color: '#2E7D32' },
 
   /* ─── TODAY'S PRIORITIES ─── */

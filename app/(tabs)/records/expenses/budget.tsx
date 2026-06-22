@@ -7,11 +7,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle as SvgCircle } from 'react-native-svg'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import {
-  ArrowLeft, TrendingUp, Sparkles, Target,
-  Package, Truck, Users, Wrench, Zap, Receipt,
-  FileText, Settings, ArrowUpRight, PiggyBank,
-} from 'lucide-react-native'
+import { Icons } from '../../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../../../../components/navigation/BottomDock'
 import { formatNaira } from '../../../../utils/format'
@@ -25,9 +21,9 @@ const PROJECTED = 945000
 const HEALTH_SCORE = 72
 
 const WATCHLIST = [
-  { label: 'Feed', status: 'over', spent: 185000, limit: 200000, color: '#EF4444', icon: Package },
-  { label: 'Salaries', status: 'at_risk', spent: 540000, limit: 600000, color: '#F59E0B', icon: Users },
-  { label: 'Medication', status: 'healthy', spent: 67000, limit: 80000, color: '#16A34A', icon: Receipt },
+  { label: 'Feed', status: 'over', spent: 185000, limit: 200000, color: '#EF4444', icon: Icons.package },
+  { label: 'Salaries', status: 'at_risk', spent: 540000, limit: 600000, color: '#F59E0B', icon: Icons.users },
+  { label: 'Receipts', status: 'at_risk', spent: 28000, limit: 35000, color: '#8B5CF6', icon: Icons.receipt },
 ]
 
 const WEEKLY_FORECAST = [
@@ -53,16 +49,15 @@ const CYCLE_SPENT = 1800000
 const CYCLE_PCT = (CYCLE_SPENT / CYCLE_BUDGET) * 100
 
 const INSIGHTS = [
-  { icon: TrendingUp, color: '#EF4444', bg: '#FEF2F2', title: 'Feed costs up 12%', desc: 'Prices increased this month. Consider bulk purchasing with other farmers.', impact: '-₦22,000' },
-  { icon: Sparkles, color: '#16A34A', bg: '#F0FDF4', title: 'Save ₦18,500', desc: 'Switch to Sunshine Feeds — same quality, 10% cheaper per bag.', impact: '+₦18,500' },
-  { icon: Target, color: '#1A56FF', bg: '#EEF3FF', title: '+₦42,000 profit impact', desc: 'Reallocating 15% of repairs budget could cover feed shortfall.', impact: '+₦42,000' },
+  { icon: Icons.trendingUp, color: '#EF4444', bg: '#FEF2F2', title: 'Feed costs up 12%', desc: 'Prices increased this month. Consider bulk purchasing with other farmers.', impact: '-₦22,000' },
+  { icon: Icons.sparkles, color: '#16A34A', bg: '#F0FDF4', title: 'Save ₦18,500', desc: 'Switch to Sunshine Feeds — same quality, 10% cheaper per bag.', impact: '+₦18,500' },
+  { icon: Icons.target, color: '#1A56FF', bg: '#EEF3FF', title: '+₦42,000 profit impact', desc: 'Reallocating 15% of repairs budget could cover feed shortfall.', impact: '+₦42,000' },
 ]
 
 const QUICK_ACTIONS = [
-  { icon: Receipt, label: 'Record Expense', route: '/records/expenses/create' as const, color: '#2E7D32', bg: '#F0FDF4' },
-  { icon: FileText, label: 'Spending Report', route: '/records/expenses/reports' as const, color: '#1A56FF', bg: '#EEF3FF' },
-  { icon: Settings, label: 'Set Budget', route: '/records/expenses/budget-setup' as const, color: '#F59E0B', bg: '#FFFBEB' },
-  { icon: ArrowUpRight, label: 'Export', route: '/records/expenses/budget-export' as const, color: '#8B5CF6', bg: '#F5F3FF' },
+  { icon: Icons.fileText, label: 'Spending Report', route: '/records/expenses/reports' as const, color: '#1A56FF', bg: '#EEF3FF' },
+  { icon: Icons.settings, label: 'Set Budget', route: '/records/expenses/budget-setup' as const, color: '#F59E0B', bg: '#FFFBEB' },
+  { icon: Icons.arrowUpRight, label: 'Export', route: '/records/expenses/budget-export' as const, color: '#8B5CF6', bg: '#F5F3FF' },
 ]
 
 function BudgetGauge({ score }: { score: number }) {
@@ -137,7 +132,7 @@ export default function BudgetScreen() {
             activeOpacity={0.7}
             onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses' as any) } }}
           >
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Budget</Text>
           <View style={{ width: 40 }} />
@@ -263,7 +258,7 @@ export default function BudgetScreen() {
         {/* ─── GOONA BUDGET INSIGHTS ─── */}
         <AnimatedCard delay={480}>
           <View style={styles.sectionHeader}>
-            <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
             <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>GOONA Budget Insights</Text>
           </View>
           {INSIGHTS.map((ins, i) => {
@@ -320,7 +315,7 @@ export default function BudgetScreen() {
           <View style={styles.dualGrid}>
             <TouchableOpacity style={styles.oppCard} activeOpacity={0.7}>
               <View style={styles.oppIconWrap}>
-                <GoonaIcon icon={PiggyBank} size={22} color="#2E7D32" />
+                <GoonaIcon icon={Icons.piggyBank} size={22} color="#2E7D32" />
               </View>
               <Text style={styles.oppLabel}>Savings Opportunity</Text>
               <Text style={styles.oppAmount}>₦18,500</Text>
@@ -328,7 +323,7 @@ export default function BudgetScreen() {
             </TouchableOpacity>
             <TouchableOpacity style={styles.oppCard} activeOpacity={0.7}>
               <View style={[styles.oppIconWrap, { backgroundColor: '#EEF3FF' }]}>
-                <GoonaIcon icon={TrendingUp} size={22} color="#1A56FF" />
+                <GoonaIcon icon={Icons.trendingUp} size={22} color="#1A56FF" />
               </View>
               <Text style={styles.oppLabel}>Profit Impact</Text>
               <Text style={[styles.oppAmount, { color: '#1A56FF' }]}>+₦42,000</Text>

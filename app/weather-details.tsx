@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { ArrowLeft, CloudSun, Droplets, Thermometer, Wind, Sun, Cloud, CloudRain, CloudLightning, AlertTriangle, Sprout, ShieldCheck, Eye, Sparkles, Volume2, MessageCircle } from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, withSpring, Easing } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
 import { generateForecastReport, generate3DayForecast, type ForecastReport, type ThreeDayForecast, type DayForecast } from '../utils/weatherIntelligence'
@@ -47,9 +47,9 @@ function getTempExplanation(temp: number) {
   const warm = temp > 30
   return {
     whatItMeans: hot ? 'Today will be very hot. Birds will feel the heat strongly.' : warm ? 'Today will be warm. Birds may start to feel uncomfortable.' : 'The temperature is mild. Birds will be comfortable.',
-    icon: Thermometer, iconColor: hot ? '#EF4444' : warm ? '#F59E0B' : '#16A34A',
+    icon: Icons.thermometer, iconColor: hot ? '#EF4444' : warm ? '#F59E0B' : '#2E7D32',
     severity: hot ? 'High Risk' as const : warm ? 'Moderate Risk' as const : 'Low Risk' as const,
-    severityColor: hot ? '#EF4444' : warm ? '#D97706' : '#16A34A',
+    severityColor: hot ? '#EF4444' : warm ? '#F59E0B' : '#2E7D32',
     impact: hot ? [
       'Birds will drink much more water than usual.',
       'Heat stress risk is high — birds may pant heavily.',
@@ -88,9 +88,9 @@ function getHumidityExplanation(humidity: number) {
   const medium = humidity > 60
   return {
     whatItMeans: high ? 'The air contains a lot of moisture. This can affect bird health and litter quality.' : medium ? 'The air is somewhat moist. Keep an eye on litter conditions.' : 'The air is dry enough. Conditions are good for bird health.',
-    icon: Droplets, iconColor: high ? '#0891B2' : medium ? '#0EA5E9' : '#16A34A',
+    icon: Icons.droplets, iconColor: high ? '#0891B2' : medium ? '#0EA5E9' : '#2E7D32',
     severity: high ? 'High Risk' as const : medium ? 'Moderate Risk' as const : 'Low Risk' as const,
-    severityColor: high ? '#EF4444' : medium ? '#D97706' : '#16A34A',
+    severityColor: high ? '#EF4444' : medium ? '#F59E0B' : '#2E7D32',
     impact: high ? [
       'Wet litter may develop faster than usual.',
       'Disease organisms may survive longer in damp conditions.',
@@ -128,9 +128,9 @@ function getRainExplanation(prob: number, timing: string) {
   const possible = prob > 30
   return {
     whatItMeans: likely ? 'Rain is likely. Prepare your farm for wet conditions.' : possible ? 'Rain is possible but not guaranteed. Stay prepared.' : 'Rain is unlikely. Conditions should stay dry.',
-    icon: CloudRain, iconColor: likely ? '#1A56FF' : possible ? '#6366F1' : '#94A3B8',
+    icon: Icons.cloudRain, iconColor: likely ? '#1A56FF' : possible ? '#6366F1' : '#94A3B8',
     severity: likely ? 'Moderate Risk' as const : 'Low Risk' as const,
-    severityColor: likely ? '#D97706' : '#16A34A',
+    severityColor: likely ? '#F59E0B' : '#2E7D32',
     impact: likely ? [
       'Outdoor activities may be affected.',
       'Feed storage must remain protected from moisture.',
@@ -166,9 +166,9 @@ function getWindExplanation(speed: string) {
   const moderate = num > 20
   return {
     whatItMeans: strong ? 'Strong wind expected. This can affect open-sided poultry houses.' : moderate ? 'Moderate wind. Loose materials may shift.' : 'Light wind. Conditions are calm.',
-    icon: Wind, iconColor: strong ? '#EF4444' : moderate ? '#6366F1' : '#16A34A',
+    icon: Icons.wind, iconColor: strong ? '#EF4444' : moderate ? '#6366F1' : '#2E7D32',
     severity: strong ? 'High Risk' as const : moderate ? 'Moderate Risk' as const : 'Low Risk' as const,
-    severityColor: strong ? '#EF4444' : moderate ? '#D97706' : '#16A34A',
+    severityColor: strong ? '#EF4444' : moderate ? '#F59E0B' : '#2E7D32',
     impact: strong ? [
       'Loose equipment and materials may be blown away.',
       'Open-sided poultry houses may experience drafts.',
@@ -232,11 +232,11 @@ function getGoonaAnswer(question: string, report: ForecastReport): string {
 
 function ConditionIcon({ condition, size = 18 }: { condition: DayForecast['condition']; size?: number }) {
   const map: Record<DayForecast['condition'], { icon: any; color: string }> = {
-    sunny: { icon: Sun, color: '#F59E0B' },
-    cloudy: { icon: CloudSun, color: '#94A3B8' },
-    rainy: { icon: CloudRain, color: '#1A56FF' },
-    stormy: { icon: CloudLightning, color: '#6366F1' },
-    humid: { icon: Droplets, color: '#0891B2' },
+    sunny: { icon: Icons.sun, color: '#F59E0B' },
+    cloudy: { icon: Icons.cloudSun, color: '#94A3B8' },
+    rainy: { icon: Icons.cloudRain, color: '#1A56FF' },
+    stormy: { icon: Icons.cloudLightning, color: '#6366F1' },
+    humid: { icon: Icons.droplets, color: '#0891B2' },
   }
   const m = map[condition]
   return <GoonaIcon icon={m.icon} size={size} color={m.color} />
@@ -279,7 +279,7 @@ export default function WeatherDetailsScreen() {
       const label = i === 0 ? 'Now' : `${hour.toString().padStart(2, '0')}:00`
       const variation = Math.round((Math.sin(i * 0.8) * 2) + (i === 3 ? -2 : i === 4 ? -3 : 0))
       const temp = base + variation
-      const icon = temp > 33 ? Sun : temp > 30 ? CloudSun : temp > 27 ? Cloud : CloudRain
+      const icon = temp > 33 ? Icons.sun : temp > 30 ? Icons.cloudSun : temp > 27 ? Icons.cloud : Icons.cloudRain
       const color = temp > 33 ? '#F59E0B' : temp > 30 ? '#94A3B8' : '#1A56FF'
       return { time: label, temp: `${temp}°`, icon, color }
     })
@@ -326,7 +326,7 @@ export default function WeatherDetailsScreen() {
         {/* HEADER */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/dashboard' as any)}>
-            <GoonaIcon icon={ArrowLeft} size={24} color="#1B1B1B" />
+            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Weather Center</Text>
           <View style={styles.headerRisk}>
@@ -359,12 +359,12 @@ export default function WeatherDetailsScreen() {
         {/* DETAILED METRICS */}
         <Animated.View entering={FadeInUp.duration(500).delay(200).springify()} style={styles.metricsGrid}>
           <WeatherMetricCard
-            icon={Thermometer}
+            icon={Icons.thermometer}
             label="Temperature"
             value={`${report.temperature.current}°C`}
             note={`H: ${Math.round(report.temperature.high)}° L: ${Math.round(report.temperature.low)}°`}
             color="#F59E0B"
-            riskColor={report.temperature.current > 34 ? '#EF4444' : report.temperature.current > 30 ? '#D97706' : '#16A34A'}
+            riskColor={report.temperature.current > 34 ? '#EF4444' : report.temperature.current > 30 ? '#F59E0B' : '#2E7D32'}
             riskLabel={report.temperature.current > 34 ? 'High' : report.temperature.current > 30 ? 'Moderate' : 'Low'}
             voiceText={`Today's temperature is ${Math.round(report.temperature.current)} degrees Celsius. ${report.temperature.current > 34 ? 'Conditions may be very hot. Ensure birds have sufficient drinking water and proper ventilation.' : report.temperature.current > 30 ? 'Conditions are warm. Monitor birds for heat stress.' : 'Temperatures are mild. No special precautions needed.'}`}
             onPress={() => handleMetricPress('temperature', getTempExplanation(report.temperature.current))}
@@ -372,12 +372,12 @@ export default function WeatherDetailsScreen() {
             voiceActive={voicePlaying === 'temp'}
           />
           <WeatherMetricCard
-            icon={Droplets}
+            icon={Icons.droplets}
             label="Humidity"
             value={`${report.humidity.current}%`}
             note={report.humidity.risk === 'high' ? 'High' : report.humidity.risk === 'medium' ? 'Moderate' : 'Normal'}
             color="#0891B2"
-            riskColor={report.humidity.risk === 'high' ? '#EF4444' : report.humidity.risk === 'medium' ? '#D97706' : '#16A34A'}
+            riskColor={report.humidity.risk === 'high' ? '#EF4444' : report.humidity.risk === 'medium' ? '#F59E0B' : '#2E7D32'}
             riskLabel={report.humidity.risk === 'high' ? 'High' : report.humidity.risk === 'medium' ? 'Moderate' : 'Low'}
             voiceText={`Humidity is at ${report.humidity.current} percent. ${report.humidity.risk === 'high' ? 'The air is very moist. This can lead to wet litter. Improve ventilation and check litter conditions.' : report.humidity.risk === 'medium' ? 'The air is slightly moist. Keep an eye on litter conditions.' : 'Humidity levels are good.'}`}
             onPress={() => handleMetricPress('humidity', getHumidityExplanation(report.humidity.current))}
@@ -385,12 +385,12 @@ export default function WeatherDetailsScreen() {
             voiceActive={voicePlaying === 'hum'}
           />
           <WeatherMetricCard
-            icon={CloudRain}
+            icon={Icons.cloudRain}
             label="Rainfall"
             value={`${report.rainfall.probability}%`}
             note={report.rainfall.expected ? report.rainfall.timing : 'Not expected'}
             color={report.rainfall.expected ? '#1A56FF' : '#94A3B8'}
-            riskColor={report.rainfall.probability > 60 ? '#D97706' : '#16A34A'}
+            riskColor={report.rainfall.probability > 60 ? '#F59E0B' : '#2E7D32'}
             riskLabel={report.rainfall.probability > 60 ? 'Moderate' : 'Low'}
             voiceText={`Rain chance is ${report.rainfall.probability} percent. ${report.rainfall.probability > 60 ? 'Rain is likely. Secure your feed storage and check drainage systems.' : report.rainfall.probability > 30 ? 'Rain is possible. Keep feed storage covered.' : 'Rain is unlikely. Outdoor activities can continue as normal.'}`}
             onPress={() => handleMetricPress('rainfall', getRainExplanation(report.rainfall.probability, report.rainfall.timing))}
@@ -398,12 +398,12 @@ export default function WeatherDetailsScreen() {
             voiceActive={voicePlaying === 'rain'}
           />
           <WeatherMetricCard
-            icon={Wind}
+            icon={Icons.wind}
             label="Wind Speed"
             value={report.wind.speed}
             note={report.wind.risk === 'high' ? 'Gusty' : report.wind.risk === 'medium' ? 'Moderate' : 'Light'}
-            color={report.wind.risk === 'high' ? '#EF4444' : report.wind.risk === 'medium' ? '#6366F1' : '#16A34A'}
-            riskColor={report.wind.risk === 'high' ? '#EF4444' : report.wind.risk === 'medium' ? '#D97706' : '#16A34A'}
+            color={report.wind.risk === 'high' ? '#EF4444' : report.wind.risk === 'medium' ? '#6366F1' : '#2E7D32'}
+            riskColor={report.wind.risk === 'high' ? '#EF4444' : report.wind.risk === 'medium' ? '#F59E0B' : '#2E7D32'}
             riskLabel={report.wind.risk === 'high' ? 'High' : report.wind.risk === 'medium' ? 'Moderate' : 'Low'}
             voiceText={`Wind speed is ${report.wind.speed}. ${report.wind.risk === 'high' ? 'Strong winds expected. Secure all loose equipment and check poultry house curtains.' : report.wind.risk === 'medium' ? 'Moderate wind conditions. Secure any loose items in outdoor areas.' : 'Light winds. Conditions are calm.'}`}
             onPress={() => handleMetricPress('wind', getWindExplanation(report.wind.speed))}
@@ -422,7 +422,7 @@ export default function WeatherDetailsScreen() {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={styles.forecastCardDay} numberOfLines={1}>{actualDayName(i)}</Text>
                     <TouchableOpacity onPress={() => { handleVoice(`forecast-${i}`, `fc-${i}`); setTimeout(() => setVoicePlaying(null), 1500) }} style={styles.forecastVoiceBtn}>
-                      <GoonaIcon icon={Volume2} size={14} color={voicePlaying === `fc-${i}` ? '#2E7D32' : '#94A3B8'} />
+                      <GoonaIcon icon={Icons.volume2} size={14} color={voicePlaying === `fc-${i}` ? '#2E7D32' : '#94A3B8'} />
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.forecastCardDate}>{d.date}</Text>
@@ -437,12 +437,12 @@ export default function WeatherDetailsScreen() {
                 </View>
                 <View style={styles.forecastCardMetrics}>
                   <View style={styles.forecastCardMetric}>
-                    <GoonaIcon icon={Droplets} size={14} color="#0891B2" />
+                    <GoonaIcon icon={Icons.droplets} size={14} color="#0891B2" />
                     <Text style={styles.forecastCardMetricText}>{d.humidity}%</Text>
                   </View>
                   <View style={styles.forecastCardMetricDiv} />
                   <View style={styles.forecastCardMetric}>
-                    <GoonaIcon icon={CloudRain} size={14} color="#1A56FF" />
+                    <GoonaIcon icon={Icons.cloudRain} size={14} color="#1A56FF" />
                     <Text style={styles.forecastCardMetricText}>{d.rainProb}%</Text>
                   </View>
                 </View>
@@ -457,7 +457,7 @@ export default function WeatherDetailsScreen() {
         {report.alerts.length > 0 && (
           <Animated.View entering={FadeInUp.duration(500).delay(320).springify()} style={styles.impactCard}>
             <View style={styles.impactHeader}>
-              <GoonaIcon icon={ShieldCheck} size={18} color="#2E7D32" />
+              <GoonaIcon icon={Icons.shieldCheck} size={18} color="#2E7D32" />
               <Text style={styles.impactTitle}>Farm Impact Analysis</Text>
             </View>
             {report.alerts.slice(0, 4).map((alert, i) => (
@@ -469,7 +469,7 @@ export default function WeatherDetailsScreen() {
                   <Text style={styles.impactText} numberOfLines={2}>{alert.message}</Text>
                   <View style={styles.impactMeta}>
                     <View style={[styles.severityBadge, { backgroundColor: alert.severity === 'high' ? '#FEF2F2' : alert.severity === 'medium' ? '#FFFBEB' : '#F0FDF4' }]}>
-                      <Text style={[styles.severityText, { color: alert.severity === 'high' ? '#EF4444' : alert.severity === 'medium' ? '#F59E0B' : '#16A34A' }]}>
+                      <Text style={[styles.severityText, { color: alert.severity === 'high' ? '#EF4444' : alert.severity === 'medium' ? '#F59E0B' : '#2E7D32' }]}>
                         {alert.severity === 'high' ? 'High' : alert.severity === 'medium' ? 'Moderate' : 'Low'}
                       </Text>
                     </View>
@@ -485,7 +485,7 @@ export default function WeatherDetailsScreen() {
         {report.alerts.filter(a => a.severity === 'high').length > 0 && (
           <Animated.View entering={FadeInUp.duration(500).delay(380).springify()} style={styles.alertsCard}>
             <View style={styles.alertsHeader}>
-              <GoonaIcon icon={AlertTriangle} size={18} color="#EF4444" />
+              <GoonaIcon icon={Icons.alertTriangle} size={18} color="#EF4444" />
               <Text style={styles.alertsTitle}>Active Weather Alerts</Text>
               <View style={styles.alertsCount}>
                 <Text style={styles.alertsCountText}>{report.alerts.filter(a => a.severity === 'high').length}</Text>
@@ -504,7 +504,7 @@ export default function WeatherDetailsScreen() {
         {report.recommendations.length > 0 && (
           <Animated.View entering={FadeInUp.duration(500).delay(440).springify()} style={styles.recsCard}>
             <View style={styles.recsHeader}>
-              <GoonaIcon icon={Sparkles} size={16} color="#2E7D32" />
+              <GoonaIcon icon={Icons.sparkles} size={16} color="#2E7D32" />
               <Text style={styles.recsTitle}>AI Recommendations</Text>
             </View>
             {report.recommendations.map((rec, i) => (
@@ -519,7 +519,7 @@ export default function WeatherDetailsScreen() {
         {/* FARM PRODUCTION IMPACT */}
         <Animated.View entering={FadeInUp.duration(500).delay(500).springify()} style={styles.productionCard}>
           <View style={styles.productionHeader}>
-            <GoonaIcon icon={Sprout} size={18} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sprout} size={18} color="#2E7D32" />
             <Text style={styles.productionTitle}>Production Impact</Text>
           </View>
           <View style={styles.productionGrid}>
@@ -528,28 +528,28 @@ export default function WeatherDetailsScreen() {
               <Text style={styles.productionImpact}>
                 {report.temperature.current > 32 ? 'May worsen 8-12%' : 'Normal'}
               </Text>
-              <View style={[styles.productionDot, { backgroundColor: report.temperature.current > 32 ? '#EF4444' : '#16A34A' }]} />
+              <View style={[styles.productionDot, { backgroundColor: report.temperature.current > 32 ? '#EF4444' : '#2E7D32' }]} />
             </View>
             <View style={styles.productionMetric}>
               <Text style={styles.productionLabel}>Water Intake</Text>
               <Text style={styles.productionImpact}>
                 {report.temperature.current > 30 ? 'Expected +18-25%' : 'Normal range'}
               </Text>
-              <View style={[styles.productionDot, { backgroundColor: report.temperature.current > 30 ? '#F59E0B' : '#16A34A' }]} />
+              <View style={[styles.productionDot, { backgroundColor: report.temperature.current > 30 ? '#F59E0B' : '#2E7D32' }]} />
             </View>
             <View style={styles.productionMetric}>
               <Text style={styles.productionLabel}>Ventilation</Text>
               <Text style={styles.productionImpact}>
                 {report.humidity.risk === 'high' ? 'Increase capacity' : report.temperature.current > 32 ? 'Monitor closely' : 'Standard'}
               </Text>
-              <View style={[styles.productionDot, { backgroundColor: report.humidity.risk === 'high' ? '#EF4444' : '#16A34A' }]} />
+              <View style={[styles.productionDot, { backgroundColor: report.humidity.risk === 'high' ? '#EF4444' : '#2E7D32' }]} />
             </View>
             <View style={styles.productionMetric}>
               <Text style={styles.productionLabel}>Stocking Density</Text>
               <Text style={styles.productionImpact}>
                 {report.temperature.current > 34 ? 'Reduce 15% advised' : report.operationalRisk.score > 50 ? 'Monitor stress' : 'Optimal'}
               </Text>
-              <View style={[styles.productionDot, { backgroundColor: report.temperature.current > 34 ? '#EF4444' : '#16A34A' }]} />
+              <View style={[styles.productionDot, { backgroundColor: report.temperature.current > 34 ? '#EF4444' : '#2E7D32' }]} />
             </View>
           </View>
         </Animated.View>
@@ -557,7 +557,7 @@ export default function WeatherDetailsScreen() {
         {/* GOONA AI WEATHER ADVISOR */}
         <Animated.View entering={FadeInUp.duration(500).delay(560).springify()} style={styles.advisorCard}>
           <View style={styles.advisorHeader}>
-            <GoonaIcon icon={Sparkles} size={18} color="#2E7D32" />
+            <GoonaIcon icon={Icons.sparkles} size={18} color="#2E7D32" />
             <Text style={styles.advisorTitle}>Ask GOONA About Today's Weather</Text>
           </View>
           <Text style={styles.advisorSub}>Get plain-language answers about how weather affects your farm today.</Text>
@@ -576,7 +576,7 @@ export default function WeatherDetailsScreen() {
           {advisorAnswer && (
             <Animated.View entering={FadeInUp.duration(400).springify()} style={styles.advisorAnswer}>
               <View style={styles.advisorAnswerHead}>
-                <GoonaIcon icon={MessageCircle} size={14} color="#2E7D32" />
+                <GoonaIcon icon={Icons.messageCircle} size={14} color="#2E7D32" />
                 <Text style={styles.advisorAnswerLabel}>GOONA Says:</Text>
               </View>
               <Text style={styles.advisorAnswerText}>{advisorAnswer}</Text>
@@ -598,14 +598,14 @@ export default function WeatherDetailsScreen() {
               style={StyleSheet.absoluteFill}
               borderRadius={20}
             />
-            <GoonaIcon icon={Eye} size={18} color="white" />
+            <GoonaIcon icon={Icons.eye} size={18} color="white" />
             <Text style={styles.ctaText}>View Full GOONA IQ Analysis</Text>
           </TouchableOpacity>
         </Animated.View>
 
         {/* OFFLINE BANNER */}
         <Animated.View entering={FadeInUp.duration(500).delay(680).springify()} style={styles.offlineBanner}>
-          <GoonaIcon icon={CloudSun} size={14} color="#64748B" />
+          <GoonaIcon icon={Icons.cloudSun} size={14} color="#64748B" />
           <Text style={styles.offlineBannerText}>Last updated just now. Weather data is cached for offline use.</Text>
         </Animated.View>
 
@@ -651,10 +651,10 @@ function PulseHero({ report }: { report: ForecastReport }) {
     transform: [{ scale: pulse.value }],
   }))
 
-  const conditionIcon = report.temperature.current > 34 ? Thermometer
-    : report.rainfall.expected ? CloudRain
-    : report.humidity.risk === 'high' ? Droplets
-    : Sun
+  const conditionIcon = report.temperature.current > 34 ? Icons.thermometer
+    : report.rainfall.expected ? Icons.cloudRain
+    : report.humidity.risk === 'high' ? Icons.droplets
+    : Icons.sun
 
   const conditionColor = report.temperature.current > 34 ? '#EF4444'
     : report.rainfall.expected ? '#1A56FF'
@@ -689,15 +689,15 @@ function PulseHero({ report }: { report: ForecastReport }) {
         <Text style={styles.heroCondition}>{conditionText} — Feels like {Math.round(report.temperature.current + 2)}°C</Text>
         <View style={styles.heroMetrics}>
           <View style={styles.heroMetric}>
-            <GoonaIcon icon={Thermometer} size={14} color="rgba(255,255,255,0.7)" />
+            <GoonaIcon icon={Icons.thermometer} size={14} color="rgba(255,255,255,0.7)" />
             <Text style={styles.heroMetricLbl}>H: {Math.round(report.temperature.high)}° L: {Math.round(report.temperature.low)}°</Text>
           </View>
           <View style={styles.heroMetric}>
-            <GoonaIcon icon={Droplets} size={14} color="rgba(255,255,255,0.7)" />
+            <GoonaIcon icon={Icons.droplets} size={14} color="rgba(255,255,255,0.7)" />
             <Text style={styles.heroMetricLbl}>Humidity {report.humidity.current}%</Text>
           </View>
           <View style={styles.heroMetric}>
-            <GoonaIcon icon={Wind} size={14} color="rgba(255,255,255,0.7)" />
+            <GoonaIcon icon={Icons.wind} size={14} color="rgba(255,255,255,0.7)" />
             <Text style={styles.heroMetricLbl}>Wind {report.wind.speed}</Text>
           </View>
         </View>
@@ -710,8 +710,8 @@ function ForecastRiskBadge({ level }: { level: 'low' | 'medium' | 'high' }) {
   const cfg = level === 'high'
     ? { bg: '#FEF2F2', text: '#EF4444', label: 'HIGH RISK' }
     : level === 'medium'
-      ? { bg: '#FFFBEB', text: '#D97706', label: 'MODERATE' }
-      : { bg: '#F0FDF4', text: '#16A34A', label: 'LOW RISK' }
+      ? { bg: '#FFFBEB', text: '#F59E0B', label: 'MODERATE' }
+      : { bg: '#F0FDF4', text: '#2E7D32', label: 'LOW RISK' }
   return (
     <View style={[fstyles.riskBadge, { backgroundColor: cfg.bg }]}>
       <View style={[fstyles.riskDot, { backgroundColor: cfg.text }]} />
@@ -729,7 +729,7 @@ function ForecastAlert({ days }: { days: DayForecast[] }) {
   return (
     <View style={fstyles.alertWrap}>
       <View style={fstyles.alertHeader}>
-        <GoonaIcon icon={AlertTriangle} size={20} color="#EF4444" />
+        <GoonaIcon icon={Icons.alertTriangle} size={20} color="#EF4444" />
         <Text style={fstyles.alertTitle}>Operational Alert</Text>
       </View>
       <Text style={fstyles.alertDesc}>{summary}</Text>
@@ -762,7 +762,7 @@ function WeatherMetricCard({
           <GoonaIcon icon={Icon} size={20} color={color} />
         </View>
         <TouchableOpacity onPress={onVoice} style={styles.metricVoiceBtn}>
-          <GoonaIcon icon={Volume2} size={16} color={voiceActive ? '#2E7D32' : '#94A3B8'} />
+          <GoonaIcon icon={Icons.volume2} size={16} color={voiceActive ? '#2E7D32' : '#94A3B8'} />
         </TouchableOpacity>
       </View>
       <Text style={styles.metricLabel}>{label}</Text>
@@ -795,7 +795,7 @@ function WeatherExplanationModal({ visible, data, onClose, voiceText, onVoice, v
                 <GoonaIcon icon={data.icon} size={24} color={data.iconColor} />
               </View>
               <TouchableOpacity onPress={() => onVoice(data.voiceText || '')} style={mstyles.voiceBtn}>
-                <GoonaIcon icon={Volume2} size={20} color={voicePlaying ? '#2E7D32' : '#1F2937'} />
+                <GoonaIcon icon={Icons.volume2} size={20} color={voicePlaying ? '#2E7D32' : '#1F2937'} />
               </TouchableOpacity>
             </View>
 
@@ -866,7 +866,7 @@ function ForecastDayModal({ visible, day, index, onClose, dayName }: {
                 <Text style={mstyles.fcDate}>{day.date}</Text>
               </View>
               <TouchableOpacity onPress={() => { setFcVoiceActive(true); setTimeout(() => setFcVoiceActive(false), 1500) }} style={mstyles.voiceBtn}>
-                <GoonaIcon icon={Volume2} size={20} color={fcVoiceActive ? '#2E7D32' : '#1F2937'} />
+                <GoonaIcon icon={Icons.volume2} size={20} color={fcVoiceActive ? '#2E7D32' : '#1F2937'} />
               </TouchableOpacity>
             </View>
 
@@ -882,17 +882,17 @@ function ForecastDayModal({ visible, day, index, onClose, dayName }: {
 
             <View style={mstyles.fcMetricsRow}>
               <View style={mstyles.fcMetric}>
-                <GoonaIcon icon={Droplets} size={16} color="#0891B2" />
+                <GoonaIcon icon={Icons.droplets} size={16} color="#0891B2" />
                 <Text style={mstyles.fcMetricLabel}>Humidity</Text>
                 <Text style={mstyles.fcMetricValue}>{day.humidity}%</Text>
               </View>
               <View style={mstyles.fcMetric}>
-                <GoonaIcon icon={CloudRain} size={16} color="#1A56FF" />
+                <GoonaIcon icon={Icons.cloudRain} size={16} color="#1A56FF" />
                 <Text style={mstyles.fcMetricLabel}>Rain</Text>
                 <Text style={mstyles.fcMetricValue}>{day.rainProb}%</Text>
               </View>
               <View style={mstyles.fcMetric}>
-                <GoonaIcon icon={Wind} size={16} color="#6366F1" />
+                <GoonaIcon icon={Icons.wind} size={16} color="#6366F1" />
                 <Text style={mstyles.fcMetricLabel}>Wind</Text>
                 <Text style={mstyles.fcMetricValue}>{day.windSpeed}</Text>
               </View>
@@ -903,10 +903,10 @@ function ForecastDayModal({ visible, day, index, onClose, dayName }: {
                 backgroundColor: day.risk === 'high' ? '#FEF2F2' : day.risk === 'medium' ? '#FFFBEB' : '#F0FDF4'
               }]}>
                 <View style={[mstyles.severityDot, {
-                  backgroundColor: day.risk === 'high' ? '#EF4444' : day.risk === 'medium' ? '#D97706' : '#16A34A'
+                  backgroundColor: day.risk === 'high' ? '#EF4444' : day.risk === 'medium' ? '#F59E0B' : '#2E7D32'
                 }]} />
                 <Text style={[mstyles.severityLabel, {
-                  color: day.risk === 'high' ? '#EF4444' : day.risk === 'medium' ? '#D97706' : '#16A34A'
+                  color: day.risk === 'high' ? '#EF4444' : day.risk === 'medium' ? '#F59E0B' : '#2E7D32'
                 }]}>
                   {day.risk === 'high' ? 'High Risk' : day.risk === 'medium' ? 'Moderate Risk' : 'Low Risk'}
                 </Text>
@@ -1010,7 +1010,7 @@ const styles = StyleSheet.create({
   forecastCardMetrics: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 14 },
   forecastCardMetric: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   forecastCardMetricDiv: { width: 1, height: 14, backgroundColor: '#E2E8F0', marginHorizontal: 8 },
-  forecastCardMetricText: { fontSize: 14, fontWeight: '600', color: '#475569' },
+  forecastCardMetricText: { fontSize: 14, fontWeight: '600', color: '#64748B' },
 
   /* farm impact */
   impactCard: { backgroundColor: '#F8FAF7', borderRadius: 24, padding: 20, marginTop: 16, borderWidth: 1, borderColor: 'rgba(46,125,50,0.08)' },
@@ -1019,7 +1019,7 @@ const styles = StyleSheet.create({
   impactRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   impactIconWrap: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 },
   impactContent: { flex: 1 },
-  impactText: { fontSize: 12, lineHeight: 17, color: '#374151', fontWeight: '500' },
+  impactText: { fontSize: 12, lineHeight: 17, color: '#64748B', fontWeight: '500' },
   impactMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   severityBadge: { paddingVertical: 2, paddingHorizontal: 6, borderRadius: 50 },
   severityText: { fontSize: 9, fontWeight: '700' },
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
   alertsCount: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center' },
   alertsCountText: { fontSize: 11, fontWeight: '700', color: '#EF4444' },
   alertRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'white', borderRadius: 12, marginBottom: 6, borderWidth: 1, borderColor: 'rgba(239,68,68,0.1)' },
-  alertText: { fontSize: 11, lineHeight: 16, color: '#374151', flex: 1 },
+  alertText: { fontSize: 11, lineHeight: 16, color: '#64748B', flex: 1 },
 
   /* recommendations */
   recsCard: { backgroundColor: '#F0FDF4', borderRadius: 24, padding: 20, marginTop: 16, borderWidth: 1, borderColor: 'rgba(46,125,50,0.12)' },
@@ -1040,7 +1040,7 @@ const styles = StyleSheet.create({
   recsTitle: { fontSize: 16, fontWeight: '700', color: '#1B5E20' },
   recRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 8 },
   recBullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#2E7D32', marginTop: 6, flexShrink: 0 },
-  recText: { fontSize: 12, color: '#374151', lineHeight: 17, flex: 1 },
+  recText: { fontSize: 12, color: '#64748B', lineHeight: 17, flex: 1 },
 
   /* production impact */
   productionCard: { backgroundColor: 'white', borderRadius: 24, padding: 20, marginTop: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 2 },
@@ -1049,7 +1049,7 @@ const styles = StyleSheet.create({
   productionGrid: { gap: 12 },
   productionMetric: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   productionLabel: { fontSize: 12, fontWeight: '600', color: '#64748B', width: 90 },
-  productionImpact: { fontSize: 12, fontWeight: '500', color: '#374151', flex: 1 },
+  productionImpact: { fontSize: 12, fontWeight: '500', color: '#64748B', flex: 1 },
   productionDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
 
   /* goona advisor */
@@ -1059,13 +1059,11 @@ const styles = StyleSheet.create({
   advisorSub: { fontSize: 12, fontWeight: '500', color: '#64748B', marginBottom: 14, lineHeight: 17 },
   advisorQuestions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   advisorQuestionChip: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 50, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: 'rgba(46,125,50,0.12)' },
-  advisorQuestionChipActive: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
-  advisorQuestionText: { fontSize: 13, fontWeight: '600', color: '#2E7D32' },
-  advisorQuestionTextActive: { color: 'white' },
+
   advisorAnswer: { marginTop: 16, backgroundColor: '#F0FDF4', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(46,125,50,0.12)' },
   advisorAnswerHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   advisorAnswerLabel: { fontSize: 12, fontWeight: '700', color: '#2E7D32' },
-  advisorAnswerText: { fontSize: 14, fontWeight: '500', color: '#374151', lineHeight: 21 },
+  advisorAnswerText: { fontSize: 14, fontWeight: '500', color: '#64748B', lineHeight: 21 },
 
   /* offline banner */
   offlineBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 16, marginTop: 16, borderRadius: 16, backgroundColor: '#F8FAF7' },
@@ -1104,7 +1102,7 @@ const fstyles = StyleSheet.create({
     width: 6, height: 6, borderRadius: 3,
     backgroundColor: '#EF4444', marginTop: 7, flexShrink: 0,
   },
-  alertActionText: { fontSize: 14, fontWeight: '500', color: '#374151', lineHeight: 20, flex: 1 },
+  alertActionText: { fontSize: 14, fontWeight: '500', color: '#64748B', lineHeight: 20, flex: 1 },
 })
 
 const mstyles = StyleSheet.create({
@@ -1141,17 +1139,17 @@ const mstyles = StyleSheet.create({
 
   /* sections */
   sectionLabel: { fontSize: 15, fontWeight: '700', color: '#1F2937', marginBottom: 8, marginTop: 4 },
-  sectionBody: { fontSize: 14, fontWeight: '500', color: '#475569', lineHeight: 21, marginBottom: 16 },
+  sectionBody: { fontSize: 14, fontWeight: '500', color: '#64748B', lineHeight: 21, marginBottom: 16 },
 
   /* bullet list */
   bulletRow: { flexDirection: 'row', gap: 8, marginBottom: 8, paddingLeft: 4 },
   bullet: { fontSize: 14, color: '#64748B', width: 12 },
-  bulletText: { fontSize: 14, fontWeight: '500', color: '#374151', lineHeight: 20, flex: 1 },
+  bulletText: { fontSize: 14, fontWeight: '500', color: '#64748B', lineHeight: 20, flex: 1 },
 
   /* action list */
   actionRow: { flexDirection: 'row', gap: 8, marginBottom: 10, paddingLeft: 4 },
-  actionCheck: { fontSize: 14, fontWeight: '700', color: '#16A34A', width: 16 },
-  actionText: { fontSize: 14, fontWeight: '500', color: '#374151', lineHeight: 20, flex: 1 },
+  actionCheck: { fontSize: 14, fontWeight: '700', color: '#2E7D32', width: 16 },
+  actionText: { fontSize: 14, fontWeight: '500', color: '#64748B', lineHeight: 20, flex: 1 },
 
   /* forecast day modal */
   fcDay: { fontSize: 22, fontWeight: '800', color: '#1F2937' },

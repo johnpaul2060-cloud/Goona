@@ -6,9 +6,7 @@ import {
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import {
-  ArrowLeft, Clock, Plus, Calendar, Wallet,
-} from 'lucide-react-native'
+import { Icons } from '../shared/icons'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 import BottomDock from '../components/navigation/BottomDock'
@@ -117,7 +115,7 @@ export default function FundRecaptScreen() {
             activeOpacity={0.7}
             onPress={() => router.push('/recapitalization')}
           >
-            <GoonaIcon icon={ArrowLeft} size={20} color="#1F2937" />
+            <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
 
           <Text style={styles.heroTitle}>Fund Recapt</Text>
@@ -187,7 +185,7 @@ export default function FundRecaptScreen() {
           <View style={styles.heroDivider} />
 
           <View style={styles.heroNextRow}>
-            <GoonaIcon icon={Clock} size={14} color="rgba(255,255,255,0.6)" />
+            <GoonaIcon icon={Icons.clock} size={14} color="rgba(255,255,255,0.6)" />
             <Text style={styles.heroNextText}>
               Next Contribution: <Text style={{ fontWeight: '800', color: '#FFFFFF' }}>Tomorrow</Text>
             </Text>
@@ -252,7 +250,7 @@ export default function FundRecaptScreen() {
                     activeOpacity={0.8}
                     onPress={() => handleFundProject(project.id)}
                   >
-                    <GoonaIcon icon={Wallet} size={16} color="#FFFFFF" />
+                    <GoonaIcon icon={Icons.wallet} size={16} color="#FFFFFF" />
                     <Text style={styles.fundBtnText}>Fund Project</Text>
                   </TouchableOpacity>
                 </Animated.View>
@@ -359,7 +357,7 @@ export default function FundRecaptScreen() {
                   <Text style={styles.upcomingProject}>{item.project}</Text>
                   <View style={styles.upcomingRight}>
                     <View style={styles.upcomingDue}>
-                      <GoonaIcon icon={Calendar} size={12} color="#94A3B8" />
+                      <GoonaIcon icon={Icons.calendar} size={12} color="#94A3B8" />
                       <Text style={styles.upcomingDueText}>{item.due}</Text>
                     </View>
                     <Text style={styles.upcomingAmount}>
