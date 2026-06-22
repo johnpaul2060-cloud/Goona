@@ -131,14 +131,6 @@ export default function FarmChatScreen() {
     router.push(`/(tabs)/chat/${convId}`)
   }, [])
 
-  const handleBack = useCallback(() => {
-    if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace('/(tabs)/dashboard')
-    }
-  }, [])
-
   const handleCommentSend = useCallback((text: string) => {
     if (!commentingPostId) return
     const newComment: Comment = { id: 'c' + Date.now(), username: 'Paul', text, timestamp: Date.now() }
@@ -198,9 +190,6 @@ export default function FarmChatScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerTop}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.7}>
-              <Icons.arrowLeft size={22} color="#0F172A" />
-            </TouchableOpacity>
             <View style={styles.wordmarkRow}>
               <Text style={styles.wordmarkFarm}>Farm</Text>
               <Text style={styles.wordmarkChat}>Chat</Text>
@@ -318,8 +307,7 @@ const styles = StyleSheet.create({
   /* Header */
   header: { paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#fff', zIndex: 10 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  backBtn: { padding: 4, marginLeft: -4 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center' },
   wordmarkRow: { flexDirection: 'row', alignItems: 'center' },
   wordmarkFarm: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
   wordmarkChat: { fontSize: 20, fontWeight: '800', color: '#16A34A' },
