@@ -1,9 +1,13 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, Dimensions, Keyboard, PanResponder, Modal, Platform,
+  StyleSheet, Dimensions, Keyboard, PanResponder, Modal, Platform, LayoutAnimation, UIManager,
   useWindowDimensions,
 } from 'react-native'
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true)
+}
 import { router } from 'expo-router'
 import Svg, { Circle, Text as SvgText } from 'react-native-svg'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
@@ -216,9 +220,10 @@ const ACTION_RAIL = [
   { emoji: '\uD83D\uDCC5', label: 'Plan', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
   { emoji: '\uD83D\uDCC8', label: 'Timeline', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/project-timeline' as const },
   { emoji: '\uD83D\uDCCA', label: 'Report', color: '#8B5CF6', bg: '#F5F3FF', route: '/recapitalization/readiness-report' as const },
+  { emoji: '\uD83D\uDCB0', label: 'Budget', color: '#0F766E', bg: '#DDF5F0', route: '#' },
 ]
 
-function ActionRail({ index }: { index: number }) {
+function ActionRail({ index, onBudgetPress }: { index: number; onBudgetPress?: () => void }) {
   const animStyle = useStaggerEntry(index, 60)
 
   return (
@@ -229,7 +234,10 @@ function ActionRail({ index }: { index: number }) {
             key={a.label}
             style={styles.actionRailCard}
             activeOpacity={0.7}
-            onPress={() => router.push(a.route as any)}
+            onPress={() => {
+              if (a.route) router.push(a.route as any)
+              else if (a.label === 'Budget' && onBudgetPress) onBudgetPress()
+            }}
           >
             <Text style={styles.actionRailEmoji}>{a.emoji}</Text>
             <Text style={styles.actionRailLabel}>{a.label}</Text>
@@ -240,7 +248,7 @@ function ActionRail({ index }: { index: number }) {
   )
 }
 
-/* ─── 4. FUNDING BREAKDOWN ─── */
+/* ─── 4. RECAP FUNDING BREAKDOWN ─── */
 const DRIVER_ITEMS = [
   { emoji: '\uD83D\uDC23', label: 'Restocking Fund', pct: 100, funded: 1200000, remaining: 0, target: 1200000, color: '#2E7D32', bg: '#F0FDF4' },
   { emoji: '\uD83C\uDF3D', label: 'Feed Reserve', pct: 82, funded: 820000, remaining: 180000, target: 1000000, color: '#F59E0B', bg: '#FFFBEB' },
@@ -274,6 +282,49 @@ function FundingBreakdown({ index }: { index: number }) {
             </View>
           </View>
         ))}
+      </View>
+    </Animated.View>
+  )
+}
+
+/* ─── 4b. BUDGET FUNDING BREAKDOWN ─── */
+const BUDGET_ITEMS = [
+  { emoji: '\uD83D\uDCBC', label: 'Salaries & Labour', pct: 74, allocated: 450000, spent: 333000, remaining: 117000, budget: 450000, color: '#7C3AED', bg: '#F3E8FF' },
+  { emoji: '\uD83C\uDF3D', label: 'Feed Purchases', pct: 92, allocated: 680000, spent: 625600, remaining: 54400, budget: 680000, color: '#16A34A', bg: '#F0FDF4' },
+  { emoji: '\uD83D\uDC8A', label: 'Medication', pct: 45, allocated: 200000, spent: 90000, remaining: 110000, budget: 200000, color: '#1A56FF', bg: '#EEF3FF' },
+  { emoji: '\uD83D\uDD27', label: 'Maintenance', pct: 30, allocated: 150000, spent: 45000, remaining: 105000, budget: 150000, color: '#F59E0B', bg: '#FFFBEB' },
+  { emoji: '\u26A1', label: 'Utilities / Logistics', pct: 58, allocated: 280000, spent: 162400, remaining: 117600, budget: 280000, color: '#EF4444', bg: '#FEF2F2' },
+]
+
+function BudgetBreakdown({ index }: { index: number }) {
+  const animStyle = useStaggerEntry(index, 90)
+
+  return (
+    <Animated.View style={[animStyle, styles.driversCard]}>
+      <View style={styles.driversList}>
+        {BUDGET_ITEMS.map((item) => {
+          const pct = Math.round((item.spent / item.budget) * 100)
+          return (
+            <View key={item.label} style={styles.driverRow}>
+              <View style={styles.driverTop}>
+                <View style={styles.driverLabelRow}>
+                  <Text style={styles.driverEmoji}>{item.emoji}</Text>
+                  <Text style={styles.driverLabel}>{item.label}</Text>
+                </View>
+                <Text style={[styles.driverPct, { color: pct > 90 ? '#EF4444' : item.color }]}>{pct}%</Text>
+              </View>
+              <View style={styles.driverBarBg}>
+                <View style={[styles.driverBarFill, { width: `${Math.min(pct, 100)}%`, backgroundColor: pct > 90 ? '#EF4444' : item.color }]} />
+              </View>
+              <View style={styles.driverAmounts}>
+                <Text style={styles.driverFunded}>{'\u20A6'}{item.spent.toLocaleString('en-NG')} used of {'\u20A6'}{item.budget.toLocaleString('en-NG')}</Text>
+                {item.remaining > 0 && (
+                  <Text style={styles.driverRemaining}>{'\u20A6'}{item.remaining.toLocaleString('en-NG')} left</Text>
+                )}
+              </View>
+            </View>
+          )
+        })}
       </View>
     </Animated.View>
   )
@@ -874,6 +925,36 @@ export default function RecapitalizationDashboardScreen() {
   const toggleChecklist = (key: ChecklistKey) => setChecklist(prev => ({ ...prev, [key]: !prev[key] }))
   const opsCompleted = CHECKLIST_DEFS.filter(d => checklist[d.key]).length
 
+  /* ─── Collapsible Sections ─── */
+  const [recapFundingOpen, setRecapFundingOpen] = useState(true)
+  const [budgetFundingOpen, setBudgetFundingOpen] = useState(true)
+  const toggleRecapFunding = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setRecapFundingOpen(prev => !prev)
+  }
+  const toggleBudgetFunding = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setBudgetFundingOpen(prev => !prev)
+  }
+
+  /* ─── Scroll refs ─── */
+  const scrollRef = useRef<ScrollView>(null)
+  const budgetSectionY = useRef(0)
+
+  const handleBudgetPress = useCallback(() => {
+    if (!recapFundingOpen) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      setRecapFundingOpen(true)
+    }
+    if (!budgetFundingOpen) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+      setBudgetFundingOpen(true)
+    }
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: budgetSectionY.current - 100, animated: true })
+    }, 350)
+  }, [recapFundingOpen, budgetFundingOpen])
+
   return (
     <View style={styles.container}>
       <BlurView
@@ -893,6 +974,7 @@ export default function RecapitalizationDashboardScreen() {
       </BlurView>
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollInner,
@@ -908,7 +990,7 @@ export default function RecapitalizationDashboardScreen() {
         <View style={[styles.sectionHead, { marginTop: S.pad(14) }]}>
           <Text style={styles.secTitle}>Quick Actions</Text>
         </View>
-        <ActionRail index={1} />
+        <ActionRail index={1} onBudgetPress={handleBudgetPress} />
 
         {/* ─── CONTRIBUTION CALENDAR ─── */}
         <View style={styles.sectionHead}>
@@ -916,20 +998,38 @@ export default function RecapitalizationDashboardScreen() {
         </View>
         <RecoveryTrackerCalendar index={2} onDayPress={handleDayPress} />
 
-        {/* ─── FUNDING BREAKDOWN ─── */}
+        {/* ─── RECAP FUNDING BREAKDOWN ─── */}
         <View style={styles.sectionHead}>
-          <Text style={styles.secTitle}>Funding Breakdown</Text>
+          <TouchableOpacity style={styles.sectionHeadToggle} onPress={toggleRecapFunding} activeOpacity={0.7}>
+            <Text style={styles.secTitle}>Recap Funding Breakdown</Text>
+            <GoonaIcon icon={Icons.chevronDown} size={16} color="#94A3B8" style={{ transform: recapFundingOpen ? [{ rotate: '0deg' }] : [{ rotate: '-90deg' }] }} />
+          </TouchableOpacity>
         </View>
-        <FundingBreakdown index={3} />
+        {recapFundingOpen && <FundingBreakdown index={3} />}
+
+        {/* ─── BUDGET FUNDING BREAKDOWN ─── */}
+        <View
+          style={styles.sectionHead}
+          onLayout={(e) => { budgetSectionY.current = e.nativeEvent.layout.y }}
+        >
+          <TouchableOpacity style={styles.sectionHeadToggle} onPress={toggleBudgetFunding} activeOpacity={0.7}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.secTitle}>Budget Funding Breakdown</Text>
+              <Text style={styles.secSub}>Short-term operational planning for current cycle</Text>
+            </View>
+            <GoonaIcon icon={Icons.chevronDown} size={16} color="#94A3B8" style={{ transform: budgetFundingOpen ? [{ rotate: '0deg' }] : [{ rotate: '-90deg' }] }} />
+          </TouchableOpacity>
+        </View>
+        {budgetFundingOpen && <BudgetBreakdown index={4} />}
 
         {/* ─── READY FOR NEXT CYCLE ─── */}
         <View style={styles.sectionHead}>
           <Text style={styles.secTitle}>Ready for Next Cycle?</Text>
         </View>
-        <ReadyForNextCycleChecklist index={4} items={checklist} onToggle={toggleChecklist} />
+        <ReadyForNextCycleChecklist index={5} items={checklist} onToggle={toggleChecklist} />
 
         {/* ─── GOONA IQ INSIGHTS ─── */}
-        <GoonaIqInsights index={5} opsCompleted={opsCompleted} />
+        <GoonaIqInsights index={6} opsCompleted={opsCompleted} />
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -969,8 +1069,10 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollInner: { paddingHorizontal: S.pad(20) },
   sectionHead: { marginTop: S.pad(S.isSmall ? 16 : 22), marginBottom: S.pad(S.isSmall ? 8 : 12) },
+  sectionHeadToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 
   secTitle: { fontSize: S.font(S.isSmall ? 18 : 20), fontWeight: '800', color: '#1F2937' },
+  secSub: { fontSize: S.font(12), color: '#94A3B8', marginTop: 2 },
 
   /* ─── HERO ─── */
   heroCard: {
