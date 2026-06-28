@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GOONA — Workforce Live</title>
+<style>
+/* ═══════════════════════ RESET & ROOT ═══════════════════════ */
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --green-d:#1E7A3D;--green:#2E7D32;--green-l:#43A047;
+  --lime:#AEEA00;--lime-l:#D4FF4D;
+  --ink:#15291A;--ink-2:#2A3D2E;
+  --mut:#5C6B5E;--mut-2:#8A988C;
+  --line:#E5ECE0;--line-2:#EEF3EA;
+  --card:#FFFFFF;--bg:#F6F9F4;
+  --red:#EF4444;--red-bg:#FCEAE7;
+  --amber:#F59E0B;--amber-bg:#FBF1DE;
+  --blue:#2C82C9;--blue-bg:#E7F0FA;
+  --green-bg:#E6F4E9;--slate:#94A3B8;--slate-bg:#F1F5F9;
+  --on-site:#16A34A;--off-site:#94A3B8;--restricted:#EF4444;--idle:#F59E0B;--lost:#64748B;
+  --sh-sm:0 1px 2px rgba(20,40,25,.05),0 4px 12px rgba(20,40,25,.05);
+  --sh-md:0 2px 6px rgba(20,40,25,.06),0 12px 28px rgba(20,40,25,.09);
+  --sh-lg:0 10px 40px rgba(16,60,30,.22);
+  --disp:'Poppins',ui-rounded,'SF Pro Rounded',system-ui,sans-serif;
+  --body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+}
+html,body{margin:0;height:100%;font-family:var(--body);color:var(--ink);
+  background:radial-gradient(130% 90% at 50% 0%,#E3EBDC 0%,#D2DCCA 60%,#C4D0BB 100%);
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+html{font-size:16px}
+body{min-height:100vh}
+
+/* ═══════════════════════ DEVICE FRAME ═══════════════════════ */
+.stage{transform-origin:center center}
+.device{position:relative;width:390px;height:844px;border-radius:48px;padding:0;
+  background:linear-gradient(155deg,#232323 0%,#0c0c0c 55%,#1c1c1c 100%);
+  box-shadow:0 0 0 2px #2c2c2c,0 30px 70px rgba(0,0,0,.45),0 8px 22px rgba(0,0,0,.35)}
+.screen{position:relative;width:390px;height:844px;border-radius:48px;overflow:hidden;
+  background:var(--bg);display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:164px;height:32px;
+  background:#000;border-radius:0 0 20px 20px;z-index:60}
+.notch::after{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);
+  width:42px;height:5px;border-radius:5px;background:#161616;box-shadow:34px 0 0 -1px #1d1d1d}
+.statusbar{height:47px;flex:0 0 47px;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 26px 7px;z-index:50;position:relative;font-weight:600;font-size:15px;color:var(--ink)}
+.statusbar .time{font-variant-numeric:tabular-nums;font-weight:700}
+.sb-right{display:flex;align-items:center;gap:6px}
+.sig{display:flex;align-items:flex-end;gap:2px;height:11px}
+.sig i{width:3px;background:var(--ink);border-radius:1px;display:block}
+.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6px}.sig i:nth-child(3){height:8px}.sig i:nth-child(4){height:11px}
+.net{font-size:13px;font-weight:700}
+.batt{width:25px;height:12px;border:1.5px solid rgba(21,41,26,.5);border-radius:3px;position:relative;padding:1.5px}
+.batt::after{content:"";position:absolute;right:-3px;top:3.5px;width:2px;height:5px;background:rgba(21,41,26,.5);border-radius:0 2px 2px 0}
+.batt i{display:block;height:100%;width:78%;background:var(--ink);border-radius:1px}
+
+/* ═══════════════════════ COMMON COMPONENTS ═══════════════════════ */
+.top-bar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:4px 16px 8px;z-index:40}
+.icon-btn{width:38px;height:38px;border-radius:13px;background:var(--card);border:1px solid var(--line);
+  display:grid;place-items:center;box-shadow:var(--sh-sm);cursor:pointer;flex:0 0 auto;transition:transform .12s}
+.icon-btn:active{transform:scale(.92)}
+.top-title{flex:1;text-align:center;line-height:1.15}
+.top-title b{font-family:var(--disp);font-size:16px;font-weight:700;letter-spacing:-.2px;display:block}
+.top-title small{font-size:10px;color:var(--mut);font-weight:600;letter-spacing:.3px}
+.live-badge{display:flex;align-items:center;gap:5px;color:var(--red);font-size:10px;font-weight:800;letter-spacing:.2px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse-dot 1.6s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.85)}}
+.offline-badge{display:flex;align-items:center;gap:4px;background:var(--green-bg);border:1px solid #CFE6D4;
+  color:var(--green-d);font-size:9px;font-weight:800;letter-spacing:.2px;padding:4px 8px;border-radius:20px;white-space:nowrap}
+.offline-badge svg{width:12px;height:12px;stroke:var(--green-d);fill:none}
+
+.scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:2px 16px 80px}
+.scroll::-webkit-scrollbar{display:none}
+
+.seclabel{display:flex;align-items:center;gap:8px;margin:16px 2px 10px}
+.seclabel h3{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);margin:0}
+.seclabel .sl-line{flex:1;height:1px;background:var(--line)}
+.seclabel .sl-tag{font-size:9px;font-weight:800;color:var(--green-d);background:var(--green-bg);padding:2px 8px;border-radius:8px}
+
+/* Privacy banner */
+.privacy-banner{display:flex;align-items:center;gap:8px;background:rgba(46,125,50,.08);border:1px solid rgba(46,125,50,.18);
+  border-radius:14px;padding:8px 12px;margin:2px 0 8px}
+.privacy-banner svg{width:16px;height:16px;stroke:var(--green);fill:none;flex:0 0 auto}
+.privacy-banner span{font-size:11px;font-weight:600;color:var(--green-d);line-height:1.3}
+.privacy-banner .learn-more{margin-left:auto;font-size:10px;font-weight:700;color:var(--green);text-decoration:underline;cursor:pointer;white-space:nowrap}
+
+/* ═══════════════════════ GLASS CARD ═══════════════════════ */
+.glass{background:rgba(255,255,255,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.5);border-radius:20px;box-shadow:var(--sh-sm)}
+
+/* ═══════════════════════ PRESENCE HERO ═══════════════════════ */
+.presence-hero{position:relative;border-radius:28px;padding:18px;overflow:hidden;color:#fff;
+  background:linear-gradient(155deg,#249049 0%,#1E7A3D 46%,#155C2E 100%);
+  box-shadow:0 14px 34px rgba(20,90,46,.34)}
+.presence-hero::before{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-80px;top:-90px;
+  background:radial-gradient(circle,rgba(174,234,0,.32),transparent 66%)}
+.presence-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;margin-top:8px}
+.presence-stat{background:rgba(255,255,255,.12);backdrop-filter:blur(4px);border-radius:16px;
+  padding:12px;text-align:center;border:1px solid rgba(255,255,255,.1)}
+.presence-stat .num{font-family:var(--disp);font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.presence-stat .label{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:rgba(255,255,255,.75);margin-top:4px}
+.presence-stat .label .ct{color:var(--lime-l);font-weight:800}
+.presence-hero .live-ts{display:flex;align-items:center;gap:5px;margin-top:10px;position:relative}
+.presence-hero .live-ts .ts{font-size:10px;color:rgba(255,255,255,.65);font-weight:600}
+.presence-hero .live-ts .ts b{color:rgba(255,255,255,.9)}
+
+/* ═══════════════════════ LIVE MAP ═══════════════════════ */
+.map-card{position:relative;border-radius:22px;overflow:hidden;margin-top:12px;background:#EAF3E2;
+  box-shadow:var(--sh-sm);border:1px solid var(--line);height:240px}
+.map-card canvas{display:block;width:100%;height:100%}
+.map-overlay{position:absolute;bottom:10px;left:10px;right:10px;display:flex;gap:4px;pointer-events:none}
+.map-overlay>*{pointer-events:auto}
+.map-btn{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.9);backdrop-filter:blur(4px);
+  border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;transition:transform .12s;box-shadow:var(--sh-sm)}
+.map-btn:active{transform:scale(.9)}
+.map-btn svg{width:14px;height:14px;stroke:var(--ink);fill:none}
+.map-controls{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:4px}
+.map-legend{position:absolute;bottom:10px;right:10px;display:flex;gap:6px;background:rgba(255,255,255,.85);
+  backdrop-filter:blur(4px);border-radius:10px;padding:5px 9px;border:1px solid var(--line)}
+.map-legend span{display:flex;align-items:center;gap:3px;font-size:8px;font-weight:700;color:var(--mut)}
+.map-legend .dot{width:7px;height:7px;border-radius:50%}
+
+/* ═══════════════════════ ALERT TICKER ═══════════════════════ */
+.alert-ticker{display:flex;align-items:center;gap:9px;background:var(--red-bg);border:1px solid #F4CFC6;
+  border-radius:14px;padding:10px 13px;margin-top:10px;cursor:pointer;transition:transform .12s}
+.alert-ticker:active{transform:scale(.98)}
+.alert-ticker svg{width:16px;height:16px;stroke:var(--red);fill:none;flex:0 0 auto}
+.alert-ticker .atx{font-size:11.5px;font-weight:600;line-height:1.3;flex:1}
+.alert-ticker .atx b{color:var(--red);font-weight:700}
+.alert-ticker .ats{font-size:9.5px;color:var(--mut);font-weight:700;white-space:nowrap}
+.alert-ticker .ats svg{width:13px;height:13px;stroke:var(--mut);fill:none;margin-left:2px}
+
+/* ═══════════════════════ ZONE CHIPS ═══════════════════════ */
+.zone-strip{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;margin-top:8px}
+.zone-strip::-webkit-scrollbar{display:none}
+.zone-chip{display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:14px;border:1px solid var(--line);
+  background:var(--card);cursor:pointer;white-space:nowrap;font-size:11px;font-weight:600;color:var(--ink);
+  transition:all .15s;box-shadow:var(--sh-sm);flex-shrink:0}
+.zone-chip.active{border-color:var(--green);background:var(--green-bg);color:var(--green-d)}
+.zone-chip.restricted.active{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.zone-chip .zcount{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--mut-2);background:var(--line-2);
+  padding:1px 6px;border-radius:7px;min-width:18px;text-align:center}
+.zone-chip.active .zcount{background:rgba(46,125,50,.15);color:var(--green-d)}
+.zone-chip.restricted.active .zcount{background:rgba(239,68,68,.15);color:var(--red)}
+
+/* ═══════════════════════ EVENT LIST ═══════════════════════ */
+.event-item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:16px;
+  background:var(--card);border:1px solid var(--line);margin-bottom:8px;box-shadow:var(--sh-sm);transition:transform .12s}
+.event-item:active{transform:scale(.99)}
+.event-item .ev-icon{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto}
+.event-item .ev-meta{flex:1}
+.event-item .ev-meta .ev-line{font-size:13px;font-weight:600;color:var(--ink);line-height:1.25}
+.event-item .ev-meta .ev-line b{font-weight:700}
+.event-item .ev-meta .ev-ts{font-size:10px;color:var(--mut);font-weight:600;margin-top:2px}
+.event-item .ev-badge{font-size:9px;font-weight:800;padding:3px 7px;border-radius:7px;
+  text-transform:uppercase;letter-spacing:.3px}
+.event-item .ev-badge.entry{background:var(--green-bg);color:var(--green-d)}
+.event-item .ev-badge.exit{background:var(--red-bg);color:var(--red)}
+.event-item .ev-badge.breach{background:var(--red-bg);color:var(--red)}
+
+/* ═══════════════════════ WORKER ROW ═══════════════════════ */
+.worker-row{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:16px;
+  background:var(--card);border:1px solid var(--line);margin-bottom:6px;box-shadow:var(--sh-sm);cursor:pointer;transition:transform .12s}
+.worker-row:active{transform:scale(.99)}
+.worker-row .av{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:14px;color:#fff;flex:0 0 auto;position:relative}
+.worker-row .av .status-ring{position:absolute;top:-2px;left:-2px;width:44px;height:44px;border-radius:15px;
+  border:2px solid;pointer-events:none}
+.worker-row .av .status-ring.on-site{border-color:var(--on-site)}
+.worker-row .av .status-ring.off-site{border-color:var(--off-site)}
+.worker-row .av .status-ring.idle{border-color:var(--idle)}
+.worker-row .av .status-ring.lost{border-color:var(--lost)}
+.worker-row .av .pulse{position:absolute;top:-3px;left:-3px;width:48px;height:48px;border-radius:16px;
+  border:2px solid var(--on-site);opacity:0;pointer-events:none;animation:worker-pulse 2s ease-in-out infinite}
+@keyframes worker-pulse{0%,100%{opacity:0;transform:scale(1)}50%{opacity:.5;transform:scale(1.08)}}
+.worker-row .wr-meta{flex:1}
+.worker-row .wr-meta .wr-name{font-size:13.5px;font-weight:700;color:var(--ink)}
+.worker-row .wr-meta .wr-zone{font-size:11px;color:var(--mut);font-weight:600;margin-top:1px}
+.worker-row .wr-meta .wr-zone.off{color:var(--mut-2)}
+.worker-row .wr-right{text-align:right}
+.worker-row .wr-right .presence-pill{display:inline-block;font-size:9px;font-weight:800;padding:3px 8px;
+  border-radius:8px;letter-spacing:.2px;text-transform:uppercase}
+.presence-pill.on-site{background:var(--green-bg);color:var(--green-d)}
+.presence-pill.off-site{background:var(--slate-bg);color:var(--slate)}
+.presence-pill.idle{background:var(--amber-bg);color:var(--amber)}
+.presence-pill.lost{background:var(--red-bg);color:var(--red)}
+.worker-row .wr-right .wr-time{font-size:10px;color:var(--mut);font-weight:600;margin-top:2px}
+.worker-row .wr-right .wr-battery{font-size:9px;font-weight:700;display:flex;align-items:center;gap:2px;justify-content:flex-end;margin-top:1px}
+.worker-row .wr-right .wr-battery.low{color:var(--red)}
+
+/* ═══════════════════════ SCREENS (views) ═══════════════════════ */
+.screen-view{display:none;flex-direction:column;height:100%;width:100%;position:absolute;top:0;left:0;background:var(--bg)}
+.screen-view.active{display:flex}
+
+/* ═══════════════════════ WORKER DETAIL ═══════════════════════ */
+.detail-header{background:linear-gradient(155deg,#249049,#1E7A3D,#155C2E);padding:54px 16px 20px;color:#fff;position:relative;overflow:hidden}
+.detail-header::before{content:"";position:absolute;width:200px;height:200px;border-radius:50%;right:-60px;top:-70px;
+  background:radial-gradient(circle,rgba(174,234,0,.25),transparent 66%)}
+.detail-header .back-row{display:flex;align-items:center;gap:10px;position:relative;margin-bottom:12px}
+.detail-header .back-row .back-btn{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
+.detail-header .back-row .back-btn svg{width:16px;height:16px;stroke:#fff;fill:none}
+.detail-header .back-row span{font-size:14px;font-weight:600;color:rgba(255,255,255,.85)}
+.detail-header .dp{display:flex;align-items:center;gap:14px;position:relative}
+.detail-header .dp .av{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:22px;color:#fff;flex:0 0 auto}
+.detail-header .dp .meta{flex:1}
+.detail-header .dp .meta .nm{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.detail-header .dp .meta .role{font-size:12px;color:rgba(255,255,255,.78);font-weight:600;margin-top:1px}
+.detail-header .dp .meta .arrival{font-size:11px;color:rgba(255,255,255,.65);font-weight:600;margin-top:4px}
+.detail-header .presence-pill{display:inline-block;font-size:10px;font-weight:800;padding:4px 10px;
+  border-radius:9px;letter-spacing:.2px;text-transform:uppercase;margin-top:6px}
+.detail-body{padding:16px;flex:1;overflow-y:auto}
+
+.shift-status{display:flex;gap:8px;margin-bottom:14px}
+.shift-card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.shift-card .shift-label{font-size:9.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.2px}
+.shift-card .shift-val{font-family:var(--disp);font-size:17px;font-weight:700;margin-top:3px}
+.shift-card .shift-val.on-time{color:var(--on-site)}
+
+/* Timeline */
+.timeline{position:relative;padding-left:24px;margin:6px 0 14px}
+.timeline::before{content:"";position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:var(--line);
+  border-radius:2px}
+.tl-item{position:relative;padding:0 0 14px 14px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:-18px;top:6px;width:10px;height:10px;border-radius:50%;
+  background:var(--line);border:2px solid var(--card)}
+.tl-item.entry::before{background:var(--on-site);border-color:var(--green-bg)}
+.tl-item.breach::before{background:var(--red);border-color:var(--red-bg)}
+.tl-item .tl-time{font-size:10px;font-weight:700;color:var(--mut);font-family:var(--mono)}
+.tl-item .tl-zone{font-size:13px;font-weight:600;color:var(--ink);margin-top:1px}
+.tl-item .tl-dwell{font-size:10px;color:var(--mut-2);font-weight:600;margin-top:1px}
+.tl-item .tl-breach{font-size:10px;font-weight:700;color:var(--red);margin-top:1px}
+
+/* Mini breadcrumb map */
+.mini-map{height:100px;background:#EAF3E2;border-radius:16px;border:1px solid var(--line);
+  margin:10px 0 14px;position:relative;overflow:hidden}
+.mini-map canvas{width:100%;height:100%}
+
+/* Quick actions */
+.quick-actions{display:flex;gap:9px;margin-top:14px}
+.qa-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;
+  border-radius:14px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:transform .12s}
+.qa-btn:active{transform:scale(.97)}
+.qa-btn svg{width:16px;height:16px;fill:none;stroke:currentColor}
+.qa-btn.call{background:var(--green-bg);color:var(--green-d)}
+.qa-btn.msg{background:var(--blue-bg);color:var(--blue)}
+.qa-btn.week{background:var(--card);border:1px solid var(--line);color:var(--ink)}
+
+/* Weekly summary */
+.week-summary{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
+.week-summary .ws-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.week-summary .ws-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.week-summary .ws-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line-2);font-size:12px;font-weight:600}
+.week-summary .ws-item .ws-day{color:var(--mut)}
+.week-summary .ws-item .ws-hrs{color:var(--ink);font-weight:700}
+
+/* ═══════════════════════ ALERTS SCREEN ═══════════════════════ */
+.alerts-top{padding:48px 16px 8px}
+.alerts-top h2{font-family:var(--disp);font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}
+.alerts-top .alerts-sub{font-size:12px;color:var(--mut);font-weight:600;margin-top:2px}
+.alert-group{margin-bottom:12px}
+.alert-group .ag-label{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--mut-2);margin-bottom:6px;padding-left:2px;display:flex;align-items:center;gap:6px}
+.alert-group .ag-label .ag-count{font-family:var(--mono);font-size:9px;background:var(--line-2);padding:1px 6px;border-radius:6px}
+.alert-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:6px;
+  box-shadow:var(--sh-sm);border-left:3px solid}
+.alert-card.critical{border-left-color:var(--red)}
+.alert-card.warning{border-left-color:var(--amber)}
+.alert-card.info{border-left-color:var(--blue)}
+.alert-card .ac-top{display:flex;align-items:center;gap:9px}
+.alert-card .ac-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto}
+.alert-card .ac-meta{flex:1}
+.alert-card .ac-meta .ac-line{font-size:12.5px;font-weight:600;line-height:1.3}
+.alert-card .ac-meta .ac-line b{font-weight:700}
+.alert-card .ac-meta .ac-ts{font-size:9.5px;color:var(--mut);font-weight:600;margin-top:2px}
+.alert-card .ac-acts{display:flex;gap:6px;margin-top:9px;margin-left:39px}
+.alert-card .ac-acts button{padding:6px 11px;border-radius:9px;font-size:10px;font-weight:700;cursor:pointer;border:none;transition:transform .12s}
+.alert-card .ac-acts button:active{transform:scale(.96)}
+.alert-card .ac-acts .ack{background:var(--green-bg);color:var(--green-d)}
+.alert-card .ac-acts .view{background:var(--blue-bg);color:var(--blue)}
+.alert-card .ac-acts .resolve{background:var(--red-bg);color:var(--red)}
+
+/* ═══════════════════════ BOUNDARIES SCREEN ═══════════════════════ */
+.bound-hero{background:linear-gradient(155deg,#249049,#1E7A3D,#155C2E);padding:48px 16px 18px;color:#fff;position:relative;overflow:hidden}
+.bound-hero::before{content:"";position:absolute;width:200px;height:200px;border-radius:50%;right:-60px;top:-60px;
+  background:radial-gradient(circle,rgba(174,234,0,.2),transparent 66%)}
+.bound-hero .back-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.bound-hero .back-row .back-btn{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;cursor:pointer}
+.bound-hero .back-row .back-btn svg{width:16px;height:16px;stroke:#fff;fill:none}
+.bound-hero .bh-title{font-family:var(--disp);font-size:22px;font-weight:700;letter-spacing:-.3px}
+.bound-hero .bh-meta{font-size:12px;color:rgba(255,255,255,.78);font-weight:600;margin-top:2px}
+.bound-hero .bh-actions{display:flex;gap:8px;margin-top:12px}
+.bound-hero .bh-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:13px;
+  padding:10px 16px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform .12s}
+.bound-hero .bh-btn:active{transform:scale(.97)}
+.bound-hero .bh-btn svg{width:14px;height:14px;stroke:#fff;fill:none}
+.bound-body{padding:16px;flex:1;overflow-y:auto}
+.filter-pills{display:flex;gap:6px;margin-bottom:12px;padding-bottom:4px}
+.filter-pill{padding:7px 14px;border-radius:12px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--line);
+  background:var(--card);color:var(--mut);transition:all .15s}
+.filter-pill.active{background:var(--green-d);border-color:var(--green-d);color:#fff}
+
+.zone-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:8px;box-shadow:var(--sh-sm)}
+.zone-card .zc-top{display:flex;align-items:center;gap:10px}
+.zone-card .zc-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto}
+.zone-card .zc-meta{flex:1}
+.zone-card .zc-meta .zc-name{font-size:14px;font-weight:700}
+.zone-card .zc-meta .zc-type{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;margin-top:1px}
+.zone-card .zc-meta .zc-type.operational{color:var(--green)}
+.zone-card .zc-meta .zc-type.restricted{color:var(--red)}
+.zone-card .zc-meta .zc-coords{font-size:9px;color:var(--mut-2);font-family:var(--mono);margin-top:3px}
+.zone-card .zc-btm{display:flex;align-items:center;gap:12px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line-2)}
+.zone-card .zc-btm .zc-stat{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--mut)}
+.zone-card .zc-btm .zc-stat .dot{width:6px;height:6px;border-radius:50%}
+.zone-card .zc-acts{display:flex;gap:6px;margin-left:auto}
+.zone-card .zc-acts button{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);
+  background:var(--card);display:grid;place-items:center;cursor:pointer;transition:transform .12s}
+.zone-card .zc-acts button:active{transform:scale(.9)}
+.zone-card .zc-acts button svg{width:13px;height:13px;stroke:var(--mut);fill:none}
+
+/* Zone editor */
+.zone-editor-body{padding:16px;flex:1;overflow-y:auto}
+.ze-field{margin-bottom:14px}
+.ze-field label{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
+.ze-field input,.ze-field select{width:100%;padding:11px 14px;border-radius:13px;border:1.5px solid var(--line);
+  font-size:14px;font-weight:600;color:var(--ink);background:var(--card);font-family:var(--body);outline:none;transition:border-color .15s}
+.ze-field input:focus,.ze-field select:focus{border-color:var(--green)}
+.ze-suggestions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.ze-suggestions span{padding:6px 11px;border-radius:9px;font-size:11px;font-weight:600;background:var(--line-2);
+  color:var(--mut);cursor:pointer;transition:all .12s}
+.ze-suggestions span:active{background:var(--green-bg);color:var(--green-d)}
+.ze-map{height:200px;background:#EAF3E2;border-radius:16px;border:1px solid var(--line);position:relative;overflow:hidden;cursor:crosshair}
+.ze-map canvas{width:100%;height:100%}
+.ze-map .hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:var(--mut-2);
+  background:rgba(255,255,255,.85);padding:4px 10px;border-radius:8px;pointer-events:none;white-space:nowrap}
+.ze-rules{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:10px}
+.ze-rules .rule-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:12px;font-weight:600}
+.ze-rules .rule-row:last-child{border-bottom:none}
+.ze-rules .rule-row .toggle{width:36px;height:20px;border-radius:10px;background:var(--line-2);cursor:pointer;position:relative;transition:background .2s;flex:0 0 auto}
+.ze-rules .rule-row .toggle.on{background:var(--green)}
+.ze-rules .rule-row .toggle::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.ze-rules .rule-row .toggle.on::after{transform:translateX(16px)}
+.ze-actions{display:flex;gap:9px;margin-top:16px}
+.ze-actions button{flex:1;padding:13px;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:transform .12s}
+.ze-actions button:active{transform:scale(.97)}
+.ze-actions .save{background:var(--green-d);color:#fff;box-shadow:0 6px 14px rgba(30,122,61,.25)}
+.ze-actions .cancel{background:var(--card);border:1px solid var(--line);color:var(--mut)}
+
+/* ═══════════════════════ HISTORY SCREEN ═══════════════════════ */
+.history-top{padding:48px 16px 8px}
+.history-top h2{font-family:var(--disp);font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}
+.history-top .hist-sub{font-size:12px;color:var(--mut);font-weight:600;margin-top:2px}
+.date-picker{display:flex;align-items:center;gap:8px;margin:10px 0}
+.date-picker input{flex:1;padding:9px 12px;border-radius:11px;border:1.5px solid var(--line);font-size:13px;font-weight:600;color:var(--ink);background:var(--card);font-family:var(--disp);outline:none}
+.date-picker .today-btn{padding:9px 14px;border-radius:11px;border:none;background:var(--green-bg);color:var(--green-d);font-size:12px;font-weight:700;cursor:pointer}
+.playback-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:10px 14px;margin-bottom:10px}
+.playback-bar button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);
+  display:grid;place-items:center;cursor:pointer;transition:transform .12s}
+.playback-bar button:active{transform:scale(.9)}
+.playback-bar button svg{width:16px;height:16px;stroke:var(--ink);fill:none}
+.playback-bar .pb-track{flex:1;height:5px;border-radius:4px;background:var(--line-2);position:relative;overflow:hidden;cursor:pointer}
+.playback-bar .pb-track .pb-fill{height:100%;border-radius:4px;background:var(--green-l);width:0%;transition:width .1s}
+.playback-bar .pb-track .pb-thumb{position:absolute;top:-4px;width:13px;height:13px;border-radius:50%;
+  background:var(--green-d);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.playback-bar .pb-speed{font-size:10px;font-weight:700;color:var(--mut-2);font-family:var(--mono)}
+.hist-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.hist-stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.hist-stat .hs-num{font-family:var(--disp);font-size:20px;font-weight:700}
+.hist-stat .hs-label{font-size:9px;color:var(--mut);font-weight:700;letter-spacing:.2px;text-transform:uppercase;margin-top:2px}
+
+/* ═══════════════════════ MINI WORKER CARD (pin popover) ═══════════════════════ */
+.pin-popup{position:absolute;z-index:50;background:var(--card);border-radius:16px;padding:12px;
+  box-shadow:0 8px 30px rgba(0,0,0,.2);border:1px solid var(--line);width:200px;display:none}
+.pin-popup.show{display:block}
+.pin-popup .pp-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pin-popup .pp-top .pp-av{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:12px;color:#fff}
+.pin-popup .pp-top .pp-name{font-size:13px;font-weight:700;flex:1}
+.pin-popup .pp-meta{font-size:11px;color:var(--mut);font-weight:600}
+.pin-popup .pp-acts{display:flex;gap:6px;margin-top:8px}
+.pin-popup .pp-acts button{flex:1;padding:7px;border-radius:9px;font-size:10px;font-weight:700;border:none;cursor:pointer}
+
+/* ═══════════════════════ BOTTOM NAV ═══════════════════════ */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;z-index:55;background:rgba(255,255,255,.88);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  display:flex;padding:5px 8px calc(8px + env(safe-area-inset-bottom,0));
+  justify-content:space-around}
+.bottom-nav .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;
+  padding:4px 10px;transition:transform .12s;border:none;background:none;font-family:var(--body)}
+.bottom-nav .nav-item:active{transform:scale(.92)}
+.bottom-nav .nav-item svg{width:22px;height:22px;stroke:var(--mut-2);fill:none}
+.bottom-nav .nav-item.active svg{stroke:var(--green-d)}
+.bottom-nav .nav-item span{font-size:9px;font-weight:700;color:var(--mut-2);letter-spacing:.1px}
+.bottom-nav .nav-item.active span{color:var(--green-d)}
+
+/* ═══════════════════════ TOAST ═══════════════════════ */
+.toast{position:absolute;left:50%;bottom:80px;transform:translateX(-50%) translateY(14px);z-index:120;
+  background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:10px 16px;border-radius:14px;
+  box-shadow:var(--sh-lg);opacity:0;pointer-events:none;transition:.25s;display:flex;align-items:center;gap:7px;max-width:300px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast svg{width:15px;height:15px;stroke:var(--lime-l);fill:none;flex:0 0 auto}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+<div class="device">
+<div class="notch"></div>
+<div class="screen" id="screen">
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <span class="time">9:41</span>
+  <span class="sb-right">
+    <span class="sig"><i></i><i></i><i></i><i></i></span>
+    <span class="net">5G</span>
+    <span class="batt"><i></i></span>
+  </span>
+</div>
+
+<!-- ════════════════ SCREEN: LIVE ════════════════ -->
+<div class="screen-view active" id="view-live">
+
+<div class="top-bar" style="padding-top:6px">
+  <button class="icon-btn" id="liveBack" aria-label="Back"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <div class="top-title"><b>Workforce Live</b><small>Goona Poultry Farm</small></div>
+  <button class="icon-btn" aria-label="Layers"><svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>
+</div>
+
+<div class="scroll">
+
+  <!-- Privacy banner -->
+  <div class="privacy-banner">
+    <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+    <span>Location tracking active during work hours only</span>
+    <span class="learn-more" onclick="toast('Tracked: zone entry/exit, duration per zone, movement patterns between zones. Never outside work hours.')">What's tracked?</span>
+  </div>
+
+  <!-- Presence Hero -->
+  <div class="presence-hero">
+    <div class="presence-grid" id="presenceGrid">
+      <div class="presence-stat"><div class="num" style="color:var(--lime-l)" id="pOnSite">7</div><div class="label">On Site</div></div>
+      <div class="presence-stat"><div class="num" style="color:var(--off-site)" id="pOffSite">2</div><div class="label">Off Site</div></div>
+      <div class="presence-stat"><div class="num" style="color:var(--red)" id="pRestricted">1</div><div class="label">In Restricted</div></div>
+      <div class="presence-stat"><div class="num" style="color:var(--lost)" id="pLost">0</div><div class="label">Signal Lost</div></div>
+    </div>
+    <div class="live-ts">
+      <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+      <span class="ts"><span id="rosterText">7 of 9</span> expected present · updated <b id="liveTimestamp">just now</b></span>
+    </div>
+  </div>
+
+  <!-- Live Map Card -->
+  <div class="map-card" id="liveMapCard">
+    <canvas id="liveMapCanvas" width="358" height="240"></canvas>
+    <div class="map-overlay">
+      <button class="map-btn" onclick="recenterMap()" title="Recenter"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+      <button class="map-btn" onclick="toggleTrails()" title="Toggle trails"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>
+      <button class="map-btn" onclick="toggleRestricted()" title="Toggle restricted zones"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11 12 14 22 4"/></svg></button>
+    </div>
+  </div>
+
+  <!-- Alert Ticker -->
+  <div class="alert-ticker" onclick="switchView('alerts')" id="alertTicker">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+    <span class="atx" id="alertTickerText"><b>Kola</b> entered Chemical Storage (restricted) — 2 min ago</span>
+    <span class="ats">View all <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+  </div>
+
+  <!-- Zone Chips -->
+  <div class="zone-strip" id="zoneStrip"></div>
+
+  <!-- Attendance Events -->
+  <div class="seclabel"><h3>Attendance Events</h3><span class="sl-line"></span><span class="sl-tag">Live</span></div>
+  <div id="eventList"></div>
+
+  <!-- Worker Roster (compact) -->
+  <div class="seclabel"><h3>On Farm Now</h3><span class="sl-line"></span><span class="sl-tag" id="rosterCount">7 workers</span></div>
+  <div id="workerRoster"></div>
+
+  <div style="height:10px"></div>
+</div>
+</div>
+
+<!-- ════════════════ SCREEN: WORKERS ════════════════ -->
+<div class="screen-view" id="view-workers">
+<div class="top-bar" style="padding-top:6px">
+  <button class="icon-btn" onclick="switchView('live')" aria-label="Back"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <div class="top-title"><b>Workers</b><small><span id="workersFilterLabel">All · 9 workers</span></small></div>
+  <button class="icon-btn" onclick="switchView('live')" aria-label="Close"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+</div>
+<div class="scroll">
+  <div class="filter-pills" id="workerFilters">
+    <span class="filter-pill active" data-filter="all">All</span>
+    <span class="filter-pill" data-filter="on-site">On site</span>
+    <span class="filter-pill" data-filter="off-site">Off site</span>
+    <span class="filter-pill" data-filter="idle">Idle</span>
+    <span class="filter-pill" data-filter="lost">Alerts</span>
+  </div>
+  <div id="workerList"></div>
+  <div style="height:10px"></div>
+</div>
+</div>
+
+<!-- ════════════════ SCREEN: WORKER DETAIL ════════════════ -->
+<div class="screen-view" id="view-detail">
+<div class="detail-header">
+  <div class="back-row">
+    <button class="back-btn" onclick="switchView('workers')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span>Worker Profile</span>
+  </div>
+  <div class="dp" id="detailProfile">
+    <div class="av" id="detailAv" style="background:linear-gradient(150deg,#43A047,#1E7A3D)">CO</div>
+    <div class="meta">
+      <div class="nm" id="detailName">Chinedu Okoro</div>
+      <div class="role" id="detailRole">Poultry Attendant</div>
+      <div class="arrival" id="detailArrival">On site 6h 12m today · arrived 06:58</div>
+      <span class="presence-pill on-site" id="detailPill">On site</span>
+    </div>
+  </div>
+</div>
+<div class="detail-body" id="detailBody">
+  <div class="shift-status" id="shiftStatus">
+    <div class="shift-card"><div class="shift-label">Status</div><div class="shift-val on-time" id="schedStatus">On time</div></div>
+    <div class="shift-card"><div class="shift-label">Scheduled</div><div class="shift-val" id="schedTime">06:00–14:00</div></div>
+    <div class="shift-card"><div class="shift-label">Actual</div><div class="shift-val" id="actualTime">06:58–14:12</div></div>
+  </div>
+  <div class="timeline" id="detailTimeline"></div>
+  <div class="mini-map" id="miniBreadcrumb"><canvas id="miniMapCanvas" width="358" height="100"></canvas></div>
+  <div class="quick-actions">
+    <button class="qa-btn call"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</button>
+    <button class="qa-btn msg"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Message</button>
+    <button class="qa-btn week"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Week</button>
+  </div>
+  <div class="week-summary" id="weeklySummary">
+    <div class="ws-title">This Week</div>
+    <div class="ws-grid" id="wsGrid"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════ SCREEN: ALERTS ════════════════ -->
+<div class="screen-view" id="view-alerts">
+<div class="alerts-top">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+    <button class="icon-btn" onclick="switchView('live')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h2>Alerts</h2>
+  </div>
+  <div class="alerts-sub" id="alertsSub">3 unresolved · tap to acknowledge</div>
+</div>
+<div class="scroll" id="alertList"></div>
+</div>
+
+<!-- ════════════════ SCREEN: BOUNDARIES ════════════════ -->
+<div class="screen-view" id="view-boundaries">
+<div class="bound-hero">
+  <div class="back-row">
+    <button class="back-btn" onclick="switchView('live')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  </div>
+  <div class="bh-title">Olohi Poultry Farm</div>
+  <div class="bh-meta">12.4 ha · Geofence active</div>
+  <div class="bh-actions">
+    <button class="bh-btn" onclick="openZoneEditor()"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit Boundary</button>
+    <button class="bh-btn" onclick="openZoneEditor()"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Add Zone</button>
+  </div>
+</div>
+<div class="bound-body">
+  <div class="filter-pills" id="zoneFilters">
+    <span class="filter-pill active" data-filter="all">All</span>
+    <span class="filter-pill" data-filter="operational">Operational</span>
+    <span class="filter-pill" data-filter="restricted">Restricted</span>
+  </div>
+  <div id="zoneList"></div>
+</div>
+</div>
+
+<!-- ════════════════ SCREEN: ZONE EDITOR ════════════════ -->
+<div class="screen-view" id="view-zoneeditor">
+<div class="bound-hero" style="padding-bottom:12px">
+  <div class="back-row">
+    <button class="back-btn" onclick="switchView('boundaries')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span style="font-size:16px;font-weight:700;color:#fff" id="zeTitle">New Zone</span>
+  </div>
+</div>
+<div class="zone-editor-body">
+  <div class="ze-field">
+    <label>Zone Name</label>
+    <input type="text" id="zeName" placeholder="e.g. Poultry House C" value="">
+    <div class="ze-suggestions">
+      <span onclick="setZeName(this)">Poultry House C</span>
+      <span onclick="setZeName(this)">Quarantine Shed</span>
+      <span onclick="setZeName(this)">Egg Store</span>
+      <span onclick="setZeName(this)">Incinerator</span>
+    </div>
+  </div>
+  <div class="ze-field">
+    <label>Type</label>
+    <select id="zeType">
+      <option value="operational">Operational — worker-accessible w/ tracking</option>
+      <option value="restricted">Restricted — entry alerts</option>
+    </select>
+  </div>
+  <div class="ze-field">
+    <label>Draw Zone — Tap to add vertices</label>
+    <div class="ze-map" id="zeMapContainer">
+      <canvas id="zeCanvas" width="358" height="200"></canvas>
+      <span class="hint">Tap to draw · close shape to finish</span>
+    </div>
+  </div>
+  <div class="ze-rules">
+    <div class="rule-row"><span>Alert on entry</span><span class="toggle" id="ruleAlertEntry" onclick="this.classList.toggle('on')"></span></div>
+    <div class="rule-row"><span>Alert on exit</span><span class="toggle" id="ruleAlertExit" onclick="this.classList.toggle('on')"></span></div>
+    <div class="rule-row"><span>Allowed hours only</span><span class="toggle on" id="ruleHours" onclick="this.classList.toggle('on')"></span></div>
+  </div>
+  <div class="ze-actions">
+    <button class="save" onclick="saveZone()">Save Zone</button>
+    <button class="cancel" onclick="switchView('boundaries')">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════ SCREEN: HISTORY ════════════════ -->
+<div class="screen-view" id="view-history">
+<div class="history-top">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+    <button class="icon-btn" onclick="switchView('live')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h2>History</h2>
+  </div>
+  <div class="hist-sub">Replay yesterday's movements</div>
+</div>
+<div class="scroll">
+  <div class="date-picker">
+    <input type="date" id="histDate" value="2026-06-27">
+    <button class="today-btn" onclick="document.getElementById('histDate').value='2026-06-28'">Today</button>
+  </div>
+  <div class="map-card" style="height:180px">
+    <canvas id="histMapCanvas" width="358" height="180"></canvas>
+  </div>
+  <div class="playback-bar">
+    <button id="playPauseBtn" onclick="togglePlayback()"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+    <button onclick="skipPlayback(-0.1)"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+    <div class="pb-track" id="pbTrack" onclick="seekPlayback(event)">
+      <div class="pb-fill" id="pbFill"></div>
+      <div class="pb-thumb" id="pbThumb" style="left:0%"></div>
+    </div>
+    <button onclick="skipPlayback(0.1)"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+    <span class="pb-speed" id="pbSpeed">1×</span>
+  </div>
+  <div class="hist-stats">
+    <div class="hist-stat"><div class="hs-num">9</div><div class="hs-label">Workers</div></div>
+    <div class="hist-stat"><div class="hs-num">06:12</div><div class="hs-label">First In</div></div>
+    <div class="hist-stat"><div class="hs-num">18:44</div><div class="hs-label">Last Out</div></div>
+  </div>
+  <div id="histWorkerList"></div>
+  <div style="height:10px"></div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg">Saved</span></div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-item" onclick="switchView('live')" data-view="live">
+    <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="nav-item" onclick="switchView('live')" data-view="live">
+    <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>FarmChat</span>
+  </button>
+  <button class="nav-item" onclick="switchView('live')" data-view="live">
+    <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <span>Records</span>
+  </button>
+  <button class="nav-item" onclick="switchView('live')" data-view="live">
+    <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.25 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12.25"/></svg>
+    <span>Recapt</span>
+  </button>
+  <button class="nav-item active" onclick="switchView('live')" data-view="live">
+    <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Teams</span>
+  </button>
+</nav>
+
+</div><!-- /screen -->
+</div><!-- /device -->
+</div><!-- /stage -->
+
+<script>
+(function(){
+"use strict";
+
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ═══════════════════ SCALE ═══════════════════ */
+const stage = $('#stage');
+function fit(){
+  const s = Math.min((window.innerWidth - 24) / 390, (window.innerHeight - 24) / 844, 1);
+  stage.style.transform = 'scale(' + s + ')';
+}
+window.addEventListener('resize', fit); fit();
+
+/* ═══════════════════ DATA ═══════════════════ */
+const ZONES = [
+  { id:'z1', name:'Poultry House A', type:'operational', color:'#22C55E', workers:['CO','AF'] },
+  { id:'z2', name:'Poultry House B', type:'operational', color:'#22C55E', workers:['FO'] },
+  { id:'z3', name:'Hatchery', type:'operational', color:'#22C55E', workers:[] },
+  { id:'z4', name:'Feed Warehouse', type:'operational', color:'#22C55E', workers:['KO'] },
+  { id:'z5', name:'Fish Pond', type:'operational', color:'#22C55E', workers:['TA'] },
+  { id:'z6', name:'Storage Facility', type:'operational', color:'#22C55E', workers:[] },
+  { id:'z7', name:'Chemical Storage', type:'restricted', color:'#EF4444', workers:['KO'] },
+  { id:'z8', name:'Generator Room', type:'restricted', color:'#EF4444', workers:[] },
+  { id:'z9', name:'Medicine Storage', type:'restricted', color:'#EF4444', workers:[] },
+];
+
+const WORKERS = [
+  { id:'CO', name:'Chinedu Okoro', role:'Poultry Attendant', status:'on-site', zone:'Poultry House A', zoneId:'z1',
+    battery:82, timeOnSite:'6h 12m', arrived:'06:58', avatar:'CO', bg:'linear-gradient(150deg,#43A047,#1E7A3D)',
+    scheduled:'06:00–14:00', actual:'06:58–14:12', schedStatus:'On time', lastSeen:'now',
+    trail:[{x:160,y:110,t:6.0},{x:165,y:115,t:7.1},{x:170,y:112,t:8.2},{x:168,y:108,t:9.3},{x:172,y:110,t:10.5}] },
+  { id:'AF', name:'Aminat Fashola', role:'Farm Assistant', status:'on-site', zone:'Poultry House A', zoneId:'z1',
+    battery:67, timeOnSite:'5h 48m', arrived:'07:10', avatar:'AF', bg:'linear-gradient(150deg,#4FB0C8,#1E6E8C)',
+    scheduled:'06:00–14:00', actual:'07:10–', schedStatus:'Late', lastSeen:'now',
+    trail:[{x:155,y:118,t:7.2},{x:158,y:122,t:8.5},{x:162,y:120,t:9.8},{x:160,y:125,t:11.0}] },
+  { id:'KO', name:'Kola Ogunleye', role:'Security Guard', status:'on-site', zone:'Chemical Storage', zoneId:'z7',
+    battery:33, timeOnSite:'5h 02m', arrived:'07:56', avatar:'KO', bg:'linear-gradient(150deg,#F0B43C,#E07A12)',
+    scheduled:'06:00–14:00', actual:'07:56–', schedStatus:'Late', lastSeen:'now',
+    trail:[{x:200,y:75,t:8.0},{x:205,y:72,t:9.2},{x:210,y:70,t:10.5},{x:218,y:68,t:11.8}] },
+  { id:'FO', name:'Funmi Ojo', role:'Vet Technician', status:'on-site', zone:'Poultry House B', zoneId:'z2',
+    battery:91, timeOnSite:'5h 22m', arrived:'07:36', avatar:'FO', bg:'linear-gradient(150deg,#E8A0B8,#C2456E)',
+    scheduled:'07:00–15:00', actual:'07:36–', schedStatus:'On time', lastSeen:'now',
+    trail:[{x:140,y:140,t:7.6},{x:138,y:136,t:9.0},{x:142,y:138,t:10.2},{x:136,y:142,t:11.5}] },
+  { id:'TA', name:'Tunde Adebayo', role:'Catfish Attendant', status:'on-site', zone:'Fish Pond', zoneId:'z5',
+    battery:54, timeOnSite:'4h 36m', arrived:'08:22', avatar:'TA', bg:'linear-gradient(150deg,#4FB0C8,#1E6E8C)',
+    scheduled:'07:00–15:00', actual:'08:22–', schedStatus:'Late', lastSeen:'now',
+    trail:[{x:120,y:170,t:8.4},{x:118,y:168,t:9.6},{x:122,y:172,t:11.0},{x:120,y:170,t:12.2}] },
+  { id:'SE', name:'Segun Eze', role:'General Hand', status:'off-site', zone:null, zoneId:null,
+    battery:12, timeOnSite:'4h 10m', arrived:'06:50', avatar:'SE', bg:'linear-gradient(150deg,#43A047,#1E7A3D)',
+    scheduled:'06:00–14:00', actual:'06:50–11:00', schedStatus:'Left early', lastSeen:'11:00',
+    trail:[{x:160,y:115,t:6.8},{x:165,y:118,t:8.0},{x:170,y:120,t:9.5},{x:175,y:122,t:11.0}] },
+  { id:'DA', name:'Dele Akin', role:'Store Keeper', status:'off-site', zone:null, zoneId:null,
+    battery:8, timeOnSite:'3h 22m', arrived:'07:38', avatar:'DA', bg:'linear-gradient(150deg,#5C6B5E,#3A463C)',
+    scheduled:'07:00–15:00', actual:'07:38–11:00', schedStatus:'Left early', lastSeen:'11:00',
+    trail:[{x:145,y:130,t:7.6},{x:148,y:126,t:9.0},{x:150,y:128,t:10.5}] },
+  { id:'IF', name:'Ifeanyi Folarin', role:'Driver', status:'on-site', zone:'Feed Warehouse', zoneId:'z4',
+    battery:76, timeOnSite:'4h 56m', arrived:'08:02', avatar:'IF', bg:'linear-gradient(150deg,#43A047,#1E7A3D)',
+    scheduled:'07:00–15:00', actual:'08:02–', schedStatus:'On time', lastSeen:'now',
+    trail:[{x:180,y:130,t:8.0},{x:178,y:126,t:9.5},{x:182,y:128,t:11.0},{x:180,y:132,t:12.5}] },
+  { id:'NO', name:'Ngozi Okafor', role:'Supervisor', status:'idle', zone:'Break Room', zoneId:null,
+    battery:44, timeOnSite:'5h 44m', arrived:'07:14', avatar:'NO', bg:'linear-gradient(150deg,#F0B43C,#E07A12)',
+    scheduled:'06:00–14:00', actual:'07:14–', schedStatus:'Late', lastSeen:'10 min ago',
+    trail:[{x:170,y:120,t:7.2},{x:172,y:124,t:8.6},{x:168,y:122,t:10.0},{x:100,y:50,t:11.5}] },
+];
+
+const EVENTS = [
+  { type:'entry', worker:'Chinedu Okoro', zone:'Poultry House A', time:'06:58', details:'Clocked in', icon:'check' },
+  { type:'entry', worker:'Aminat Fashola', zone:'Poultry House A', time:'07:10', details:'Clocked in', icon:'check' },
+  { type:'entry', worker:'Kola Ogunleye', zone:'Chemical Storage', time:'07:56', details:'Entered restricted zone', icon:'alert' },
+  { type:'exit', worker:'Segun Eze', zone:'Farm Boundary', time:'11:00', details:'Clocked out', icon:'x' },
+  { type:'entry', worker:'Ngozi Okafor', zone:'Break Room', time:'11:30', details:'On break >30m', icon:'alert' },
+  { type:'entry', worker:'Tunde Adebayo', zone:'Fish Pond', time:'08:22', details:'Clocked in', icon:'check' },
+  { type:'exit', worker:'Dele Akin', zone:'Farm Boundary', time:'11:00', details:'Clocked out', icon:'x' },
+  { type:'entry', worker:'Funmi Ojo', zone:'Poultry House B', time:'07:36', details:'Clocked in', icon:'check' },
+  { type:'breach', worker:'Kola Ogunleye', zone:'Chemical Storage', time:'07:58', details:'Restricted zone breach', icon:'alert' },
+  { type:'entry', worker:'Ifeanyi Folarin', zone:'Feed Warehouse', time:'08:02', details:'Clocked in', icon:'check' },
+];
+
+const ALERTS = [
+  { severity:'critical', worker:'Kola Ogunleye', zone:'Chemical Storage', time:'07:58', msg:'Entered restricted zone',
+    icon:'alert', resolved:false },
+  { severity:'critical', worker:'Segun Eze', zone:'—', time:'11:00', msg:'Left farm during shift',
+    icon:'log-out', resolved:false },
+  { severity:'warning', worker:'Ngozi Okafor', zone:'Break Room', time:'11:30', msg:'No movement for 30+ min',
+    icon:'clock', resolved:false },
+  { severity:'warning', worker:'Dele Akin', zone:'—', time:'11:00', msg:'Off-site during work hours',
+    icon:'map-pin', resolved:true },
+  { severity:'info', worker:'Kola Ogunleye', zone:'Chemical Storage', time:'07:56', msg:'Low battery (33%) — tracking at risk',
+    icon:'battery', resolved:false },
+  { severity:'info', worker:'Segun Eze', zone:'Feed Warehouse', time:'07:10', msg:'GPS signal lost for 4m',
+    icon:'wifi', resolved:true },
+];
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state = {
+  currentView: 'live',
+  workerFilter: 'all',
+  zoneFilter: 'all',
+  showTrails: true,
+  showRestricted: true,
+  playbackPlaying: false,
+  playbackPos: 0,
+  playbackSpeed: 1,
+  alerts: JSON.parse(JSON.stringify(ALERTS)),
+  events: JSON.parse(JSON.stringify(EVENTS)),
+  zones: JSON.parse(JSON.stringify(ZONES)),
+  workers: JSON.parse(JSON.stringify(WORKERS)),
+  zeVertices: [],
+  alertCounts: { critical: 2, warning: 1, info: 1 },
+};
+
+/* ═══════════════════ VIEW SWITCHING ═══════════════════ */
+function switchView(view){
+  state.currentView = view;
+  $$('.screen-view').forEach(el => el.classList.remove('active'));
+  const target = $('#view-' + view);
+  if(target) target.classList.add('active');
+  if(view === 'live'){ renderLive(); }
+  if(view === 'workers'){ renderWorkers(); }
+  if(view === 'alerts'){ renderAlerts(); }
+  if(view === 'boundaries'){ renderZones(); }
+  if(view === 'history'){ renderHistory(); }
+  if(view === 'zoneeditor'){ initZoneEditor(); }
+  $('.bottom-nav .nav-item.active')?.classList.remove('active');
+  // Keep Teams highlighted
+}
+window.switchView = switchView;
+
+/* ═══════════════════ TOAST ═══════════════════ */
+let tTimer;
+function toast(m){
+  $('#toastMsg').textContent = m;
+  $('#toast').classList.add('show');
+  clearTimeout(tTimer);
+  tTimer = setTimeout(() => $('#toast').classList.remove('show'), 1900);
+}
+window.toast = toast;
+
+/* ═══════════════════ CANVAS DRAWING HELPERS ═══════════════════ */
+const FARM_BOUNDARY = [
+  {x:80,y:40},{x:280,y:40},{x:300,y:100},{x:310,y:160},{x:280,y:210},{x:80,y:210},{x:50,y:160},{x:40,y:100}
+];
+const ZONE_POLYGONS = {
+  z1:[{x:90,y:55},{x:170,y:55},{x:170,y:110},{x:90,y:110}],  // Poultry House A
+  z2:[{x:180,y:55},{x:260,y:55},{x:260,y:100},{x:180,y:100}], // Poultry House B
+  z3:[{x:100,y:120},{x:150,y:120},{x:150,y:155},{x:100,y:155}], // Hatchery
+  z4:[{x:240,y:140},{x:285,y:140},{x:285,y:190},{x:240,y:190}], // Feed Warehouse
+  z5:[{x:100,y:165},{x:170,y:165},{x:170,y:205},{x:100,y:205}], // Fish Pond (extends beyond boundary)
+  z6:[{x:230,y:110},{x:270,y:110},{x:270,y:135},{x:230,y:135}], // Storage
+  z7:[{x:200,y:60},{x:230,y:60},{x:230,y:90},{x:200,y:90}],   // Chemical Storage (restricted)
+  z8:[{x:200,y:92},{x:230,y:92},{x:230,y:108},{x:200,y:108}], // Generator Room (restricted)
+  z9:[{x:200,y:110},{x:225,y:110},{x:225,y:138},{x:200,y:138}], // Medicine Storage (restricted)
+};
+
+function drawMap(canvas, opts = {}){
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+  bgGrad.addColorStop(0, '#EAF3E2');
+  bgGrad.addColorStop(1, '#D5E4CC');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<w; x+=20){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0; y<h; y+=20){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+
+  // Zones
+  const zonesToDraw = opts.zones || state.zones;
+  zonesToDraw.forEach(z => {
+    const poly = ZONE_POLYGONS[z.id];
+    if(!poly) return;
+    if(!state.showRestricted && z.type === 'restricted') return;
+    ctx.beginPath();
+    ctx.moveTo(poly[0].x, poly[0].y);
+    for(let i=1; i<poly.length; i++) ctx.lineTo(poly[i].x, poly[i].y);
+    ctx.closePath();
+    ctx.fillStyle = z.type === 'restricted' ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)';
+    ctx.fill();
+    ctx.strokeStyle = z.type === 'restricted' ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4,4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Zone label
+    const cx = poly.reduce((s,p) => s + p.x, 0) / poly.length;
+    const cy = poly.reduce((s,p) => s + p.y, 0) / poly.length;
+    ctx.fillStyle = z.type === 'restricted' ? '#EF4444' : '#16A34A';
+    ctx.font = 'bold 7px "Inter",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(z.name.replace('Poultry ','P.').replace('House ','H.'), cx, cy);
+  });
+
+  // Farm boundary
+  ctx.beginPath();
+  ctx.moveTo(FARM_BOUNDARY[0].x, FARM_BOUNDARY[0].y);
+  for(let i=1; i<FARM_BOUNDARY.length; i++) ctx.lineTo(FARM_BOUNDARY[i].x, FARM_BOUNDARY[i].y);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(30,122,61,0.06)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(30,122,61,0.35)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Workers / pins
+  const workersToDraw = opts.workers || state.workers;
+  const now = opts.time || Date.now();
+  workersToDraw.forEach(w => {
+    if(w.status === 'off-site'){
+      // Show greyed at boundary edge
+      drawWorkerPin(ctx, 35, 50, w, '#94A3B8', false);
+      return;
+    }
+    if(w.id === 'NO' && state.currentView === 'live'){
+      // Ngozi in break room - use her last trail point
+      const last = w.trail[w.trail.length-1];
+      drawWorkerPin(ctx, last.x, last.y, w, w.status === 'idle' ? '#F59E0B' : '#16A34A', true);
+      return;
+    }
+    // Find which zone they should be in
+    let px = 100, py = 100;
+    if(w.zoneId && ZONE_POLYGONS[w.zoneId]){
+      const poly = ZONE_POLYGONS[w.zoneId];
+      px = poly.reduce((s,p) => s + p.x, 0) / poly.length;
+      py = poly.reduce((s,p) => s + p.y, 0) / poly.length;
+    } else if(w.trail && w.trail.length){
+      const last = w.trail[w.trail.length-1];
+      px = last.x; py = last.y;
+    }
+    const color = w.status === 'on-site' ? '#16A34A' : w.status === 'idle' ? '#F59E0B' : '#94A3B8';
+    drawWorkerPin(ctx, px, py, w, color, true);
+  });
+}
+
+function drawWorkerPin(ctx, x, y, worker, color, live){
+  // Accuracy halo
+  if(live && !reduceMotion){
+    const t = Date.now() / 1000;
+    const halo = 12 + 4 * Math.sin(t * 2);
+    ctx.beginPath();
+    ctx.arc(x, y, halo, 0, Math.PI * 2);
+    ctx.fillStyle = color.replace(')', ',0.15)').replace('rgb', 'rgba');
+    ctx.fill();
+  }
+  // Ring
+  ctx.beginPath();
+  ctx.arc(x, y, 9, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Initials
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 7px "Inter",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(worker.avatar, x, y + 0.5);
+  // Pin dot (pulse)
+  if(live && !reduceMotion){
+    ctx.beginPath();
+    ctx.arc(x, y + 11, 2, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+}
+
+/* ═══════════════════ RENDER LIVE ═══════════════════ */
+function renderLive(){
+  updatePresenceCounts();
+  renderZoneChips();
+  renderEvents();
+  renderWorkerRoster();
+  drawLiveMap();
+  updateAlertTicker();
+}
+
+function updatePresenceCounts(){
+  const onSite = state.workers.filter(w => w.status === 'on-site' || w.status === 'idle').length;
+  const offSite = state.workers.filter(w => w.status === 'off-site').length;
+  const restricted = state.workers.filter(w => w.zoneId && state.zones.find(z => z.id === w.zoneId && z.type === 'restricted')).length;
+  const lost = state.workers.filter(w => w.status === 'lost').length;
+  document.getElementById('pOnSite').textContent = onSite;
+  document.getElementById('pOffSite').textContent = offSite;
+  document.getElementById('pRestricted').textContent = restricted;
+  document.getElementById('pLost').textContent = lost;
+  document.getElementById('rosterText').textContent = `${onSite} of ${state.workers.length}`;
+  document.getElementById('rosterCount').textContent = `${onSite} workers`;
+}
+
+function renderZoneChips(){
+  const strip = document.getElementById('zoneStrip');
+  strip.innerHTML = '<div class="zone-chip active" onclick="filterZone(this)"><span>All zones</span><span class="zcount">' + state.workers.length + '</span></div>';
+  state.zones.forEach(z => {
+    const cnt = state.workers.filter(w => w.zoneId === z.id).length;
+    strip.innerHTML += '<div class="zone-chip' + (z.type === 'restricted' ? ' restricted' : '') + '" onclick="filterZone(this)"><span>' + z.name + '</span><span class="zcount">' + cnt + '</span></div>';
+  });
+}
+
+function renderEvents(){
+  const list = document.getElementById('eventList');
+  list.innerHTML = state.events.slice(0, 6).map(e => {
+    const iconBg = e.type === 'entry' ? '#E6F4E9' : e.type === 'exit' ? '#FCEAE7' : '#FBF1DE';
+    const iconColor = e.type === 'entry' ? '#16A34A' : e.type === 'exit' ? '#EF4444' : '#F59E0B';
+    const badge = e.type === 'entry' ? 'entry' : e.type === 'exit' ? 'exit' : 'breach';
+    return '<div class="event-item">'
+      + '<div class="ev-icon" style="background:' + iconBg + '">'
+      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + iconColor + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">'
+      + (e.type === 'entry' ? '<path d="M12 5v14M5 12l7-7 7 7"/>' : e.type === 'exit' ? '<path d="M19 12H5M12 19l-7-7 7-7"/>' : '<path d="M12 9v4M12 17h.01"/>')
+      + '</svg></div>'
+      + '<div class="ev-meta"><div class="ev-line"><b>' + e.worker + '</b> ' + e.zone + ' · ' + e.details + '</div><div class="ev-ts">' + e.time + '</div></div>'
+      + '<div class="ev-badge ' + badge + '">' + badge + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderWorkerRoster(){
+  const list = document.getElementById('workerRoster');
+  list.innerHTML = state.workers.filter(w => w.status === 'on-site' || w.status === 'idle').map(w => workerRowHtml(w)).join('');
+}
+
+function workerRowHtml(w){
+  const statusColor = w.status === 'on-site' ? '#16A34A' : w.status === 'idle' ? '#F59E0B' : w.status === 'off-site' ? '#94A3B8' : '#64748B';
+  const pillClass = w.status === 'on-site' ? 'on-site' : w.status === 'idle' ? 'idle' : w.status === 'off-site' ? 'off-site' : 'lost';
+  const lowBatt = w.battery <= 20;
+  return '<div class="worker-row" onclick="openDetail(\'' + w.id + '\')">'
+    + '<div class="av" style="background:' + w.bg + '">' + w.avatar
+    + '<div class="status-ring ' + w.status + '"></div>'
+    + (w.status === 'on-site' && !reduceMotion ? '<div class="pulse"></div>' : '')
+    + '</div>'
+    + '<div class="wr-meta"><div class="wr-name">' + w.name + '</div>'
+    + '<div class="wr-zone' + (w.zone ? '' : ' off') + '">' + (w.zone || (w.status === 'off-site' ? 'Off farm · last seen ' + w.lastSeen : 'Signal lost')) + '</div></div>'
+    + '<div class="wr-right">'
+    + '<div class="presence-pill ' + pillClass + '">' + w.status.replace('-',' ').replace('off','off-').replace('lost','signal lost') + '</div>'
+    + '<div class="wr-time">' + (w.status !== 'off-site' ? w.timeOnSite + ' today' : '') + '</div>'
+    + '<div class="wr-battery' + (lowBatt ? ' low' : '') + '">'
+    + (lowBatt ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/></svg>' : '')
+    + w.battery + '%</div></div></div>';
+}
+
+function drawLiveMap(){
+  const canvas = document.getElementById('liveMapCanvas');
+  if(!canvas) return;
+  drawMap(canvas, { workers: state.workers.filter(w => w.status !== 'off-site') });
+}
+
+/* ═══════════════════ WORKERS SCREEN ═══════════════════ */
+function renderWorkers(){
+  const all = state.workers;
+  const filtered = state.workerFilter === 'all' ? all : all.filter(w => w.status === state.workerFilter);
+  document.getElementById('workersFilterLabel').textContent = 'All · ' + filtered.length + ' workers';
+  const list = document.getElementById('workerList');
+  list.innerHTML = filtered.map(w => workerRowHtml(w)).join('');
+}
+
+/* Worker filters */
+document.getElementById('workerFilters')?.addEventListener('click', function(e){
+  const pill = e.target.closest('.filter-pill');
+  if(!pill) return;
+  $$('.filter-pill', this).forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  state.workerFilter = pill.dataset.filter;
+  renderWorkers();
+});
+
+/* ═══════════════════ WORKER DETAIL ═══════════════════ */
+function openDetail(id){
+  const w = state.workers.find(x => x.id === id);
+  if(!w) return;
+  document.getElementById('detailAv').textContent = w.avatar;
+  document.getElementById('detailAv').style.background = w.bg;
+  document.getElementById('detailName').textContent = w.name;
+  document.getElementById('detailRole').textContent = w.role;
+  document.getElementById('detailArrival').textContent = (w.status !== 'off-site' ? 'On site ' + w.timeOnSite + ' today · arrived ' + w.arrived : 'Off site · last seen ' + w.lastSeen);
+  const pill = document.getElementById('detailPill');
+  pill.textContent = w.status === 'on-site' ? 'On site' : w.status === 'idle' ? 'Idle' : w.status === 'off-site' ? 'Off site' : 'Signal lost';
+  pill.className = 'presence-pill ' + (w.status === 'on-site' ? 'on-site' : w.status === 'idle' ? 'idle' : w.status === 'off-site' ? 'off-site' : 'lost');
+
+  document.getElementById('schedStatus').textContent = w.schedStatus;
+  document.getElementById('schedTime').textContent = w.scheduled;
+  document.getElementById('actualTime').textContent = w.actual;
+  document.getElementById('schedStatus').className = 'shift-val ' + (w.schedStatus === 'On time' ? 'on-time' : w.schedStatus === 'Late' ? '' : '');
+
+  // Timeline
+  const tl = document.getElementById('detailTimeline');
+  const tlItems = w.trail.map((t, i) => {
+    const cls = i === 0 ? 'entry' : '';
+    const time = String(Math.floor(t.t)).padStart(2,'0') + ':' + String(Math.round((t.t % 1)*60)).padStart(2,'0');
+    const next = w.trail[i+1];
+    const dwell = next ? ((next.t - t.t) * 60).toFixed(0) + 'm' : '';
+    const isBreach = w.zoneId && state.zones.find(z => z.id === w.zoneId)?.type === 'restricted';
+    return '<div class="tl-item' + (isBreach && i === w.trail.length-1 ? ' breach' : '') + (i === 0 ? ' entry' : '') + '">'
+      + '<div class="tl-time">' + time + '</div>'
+      + '<div class="tl-zone">' + (w.zone || 'Farm') + (i === 0 ? ' · Arrived' : '') + '</div>'
+      + (dwell ? '<div class="tl-dwell">Dwell: ' + dwell + '</div>' : '')
+      + (isBreach && i === w.trail.length-1 ? '<div class="tl-breach">⚠ Restricted area — flagged</div>' : '')
+      + '</div>';
+  }).join('');
+  tl.innerHTML = tlItems;
+
+  // Mini breadcrumb
+  drawMiniBreadcrumb(w);
+
+  // Weekly summary
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const hrs = [6.0, 6.5, 7.2, 5.8, 6.2, 0, 0];
+  document.getElementById('wsGrid').innerHTML = days.map((d,i) =>
+    '<div class="ws-item"><span class="ws-day">' + d + '</span><span class="ws-hrs">' + hrs[i].toFixed(1) + 'h</span></div>'
+  ).join('');
+
+  switchView('detail');
+  const body = document.getElementById('detailBody');
+  if(body) body.scrollTop = 0;
+}
+window.openDetail = openDetail;
+
+function drawMiniBreadcrumb(w){
+  const canvas = document.getElementById('miniMapCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const wd = canvas.width, ht = canvas.height;
+  ctx.clearRect(0, 0, wd, ht);
+  ctx.fillStyle = '#EAF3E2';
+  ctx.fillRect(0, 0, wd, ht);
+
+  // Scale trail to fit
+  const trail = w.trail;
+  if(trail.length < 2) return;
+  const xs = trail.map(p => p.x), ys = trail.map(p => p.y);
+  const minX = Math.min(...xs) - 20, maxX = Math.max(...xs) + 20;
+  const minY = Math.min(...ys) - 20, maxY = Math.max(...ys) + 20;
+  const scaleX = (wd - 20) / (maxX - minX);
+  const scaleY = (ht - 20) / (maxY - minY);
+  const sc = Math.min(scaleX, scaleY);
+
+  // Draw path
+  ctx.beginPath();
+  trail.forEach((p, i) => {
+    const x = 10 + (p.x - minX) * sc;
+    const y = 10 + (p.y - minY) * sc;
+    if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#16A34A';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Draw points
+  trail.forEach((p, i) => {
+    const x = 10 + (p.x - minX) * sc;
+    const y = 10 + (p.y - minY) * sc;
+    ctx.beginPath();
+    ctx.arc(x, y, i === trail.length-1 ? 5 : 3, 0, Math.PI * 2);
+    ctx.fillStyle = i === 0 ? '#16A34A' : i === trail.length-1 ? '#1E7A3D' : '#94A3B8';
+    ctx.fill();
+  });
+}
+
+/* ═══════════════════ ALERTS SCREEN ═══════════════════ */
+function renderAlerts(){
+  const unresolved = state.alerts.filter(a => !a.resolved).length;
+  document.getElementById('alertsSub').textContent = unresolved + ' unresolved · tap to acknowledge';
+  const list = document.getElementById('alertList');
+  const groups = [
+    { label:'Critical', sev:'critical', alerts: state.alerts.filter(a => a.severity === 'critical') },
+    { label:'Warnings', sev:'warning', alerts: state.alerts.filter(a => a.severity === 'warning') },
+    { label:'Info', sev:'info', alerts: state.alerts.filter(a => a.severity === 'info') },
+  ];
+  list.innerHTML = groups.map(g => {
+    if(!g.alerts.length) return '';
+    return '<div class="alert-group">'
+      + '<div class="ag-label">' + g.label + ' <span class="ag-count">' + g.alerts.length + '</span></div>'
+      + g.alerts.map(a => {
+        const iconBg = a.severity === 'critical' ? '#FCEAE7' : a.severity === 'warning' ? '#FBF1DE' : '#E7F0FA';
+        const iconColor = a.severity === 'critical' ? '#EF4444' : a.severity === 'warning' ? '#F59E0B' : '#2C82C9';
+        return '<div class="alert-card ' + a.severity + '">'
+          + '<div class="ac-top">'
+          + '<div class="ac-icon" style="background:' + iconBg + '">'
+          + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + iconColor + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+          + (a.severity === 'critical' ? '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 9v4"/><path d="M12 17h.01"/>' : a.severity === 'warning' ? '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>' : '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>')
+          + '</svg></div>'
+          + '<div class="ac-meta"><div class="ac-line"><b>' + a.worker + '</b> ' + a.msg + '</div><div class="ac-ts">' + a.time + (a.resolved ? ' · resolved' : '') + '</div></div>'
+          + '</div>'
+          + (!a.resolved ? '<div class="ac-acts"><button class="ack" onclick="acknowledgeAlert(\'' + a.worker + '\',' + state.alerts.indexOf(a) + ')">Acknowledge</button><button class="view" onclick="toast(\'Opening map view for ' + a.worker + '\')">View on map</button></div>' : '')
+          + '</div>';
+      }).join('')
+      + '</div>';
+  }).join('');
+}
+
+function acknowledgeAlert(worker, idx){
+  if(state.alerts[idx]) state.alerts[idx].resolved = true;
+  toast('Alert acknowledged — ' + worker);
+  renderAlerts();
+  updateAlertTicker();
+}
+window.acknowledgeAlert = acknowledgeAlert;
+
+function updateAlertTicker(){
+  const critical = state.alerts.filter(a => a.severity === 'critical' && !a.resolved);
+  if(critical.length){
+    const a = critical[0];
+    document.getElementById('alertTickerText').innerHTML = '<b>' + a.worker + '</b> ' + a.msg + ' — ' + a.time;
+    document.getElementById('alertTicker').style.display = 'flex';
+  } else {
+    const unresolved = state.alerts.filter(a => !a.resolved);
+    if(unresolved.length){
+      const a = unresolved[0];
+      document.getElementById('alertTickerText').innerHTML = '<b>' + a.worker + '</b> ' + a.msg;
+      document.getElementById('alertTicker').style.display = 'flex';
+    } else {
+      document.getElementById('alertTicker').style.display = 'none';
+    }
+  }
+}
+
+/* ═══════════════════ BOUNDARIES & ZONES ═══════════════════ */
+function renderZones(){
+  const list = document.getElementById('zoneList');
+  list.innerHTML = state.zones.map(z => {
+    const cnt = state.workers.filter(w => w.zoneId === z.id).length;
+    return '<div class="zone-card">'
+      + '<div class="zc-top">'
+      + '<div class="zc-icon" style="background:' + (z.type === 'restricted' ? '#FCEAE7' : '#E6F4E9') + '">'
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + z.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + (z.type === 'restricted' ? '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 9v4"/><path d="M12 17h.01"/>' : '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>')
+      + '</svg></div>'
+      + '<div class="zc-meta"><div class="zc-name">' + z.name + '</div>'
+      + '<div class="zc-type ' + z.type + '">' + z.type + '</div>'
+      + '<div class="zc-coords">8.6425°N, 4.5812°E</div></div>'
+      + '</div>'
+      + '<div class="zc-btm">'
+      + '<div class="zc-stat"><span class="dot" style="background:' + (z.type === 'restricted' ? '#EF4444' : '#16A34A') + '"></span>' + cnt + ' worker' + (cnt !== 1 ? 's' : '') + ' inside</div>'
+      + '<div class="zc-stat">' + (z.type === 'restricted' ? 'Alert on entry' : 'Active') + '</div>'
+      + '<div class="zc-acts">'
+      + '<button onclick="toast(\'Edit ' + z.name + '\')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+      + '<button onclick="toast(\'Delete ' + z.name + '\')"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+      + '</div></div></div>';
+  }).join('');
+}
+
+/* Zone filters */
+document.getElementById('zoneFilters')?.addEventListener('click', function(e){
+  const pill = e.target.closest('.filter-pill');
+  if(!pill) return;
+  $$('.filter-pill', this).forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  state.zoneFilter = pill.dataset.filter;
+  // Filter zones: just show/hide
+  $$('#zoneList .zone-card').forEach((card, i) => {
+    const z = state.zones[i];
+    if(!z) return;
+    const match = state.zoneFilter === 'all' || z.type === state.zoneFilter;
+    card.style.display = match ? '' : 'none';
+  });
+});
+
+function openZoneEditor(){
+  state.zeVertices = [];
+  switchView('zoneeditor');
+}
+window.openZoneEditor = openZoneEditor;
+
+function setZeName(el){
+  document.getElementById('zeName').value = el.textContent;
+}
+window.setZeName = setZeName;
+
+/* Zone Editor Canvas */
+function initZoneEditor(){
+  document.getElementById('zeName').value = '';
+  document.getElementById('zeType').value = 'operational';
+  document.querySelectorAll('.toggle').forEach(t => {
+    if(t.id === 'ruleHours') t.classList.add('on');
+    else t.classList.remove('on');
+  });
+
+  const canvas = document.getElementById('zeCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  state.zeVertices = [];
+
+  function redraw(){
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#EAF3E2';
+    ctx.fillRect(0, 0, w, h);
+    // Grid
+    ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+    ctx.lineWidth = 1;
+    for(let x=0; x<w; x+=20){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+    for(let y=0; y<h; y+=20){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+
+    if(state.zeVertices.length > 0){
+      // Draw polygon
+      ctx.beginPath();
+      ctx.moveTo(state.zeVertices[0].x, state.zeVertices[0].y);
+      for(let i=1; i<state.zeVertices.length; i++) ctx.lineTo(state.zeVertices[i].x, state.zeVertices[i].y);
+      if(state.zeVertices.length >= 3){
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(34,197,94,0.2)';
+        ctx.fill();
+        ctx.strokeStyle = '#22C55E';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = '#22C55E';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4,4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      // Draw vertices
+      state.zeVertices.forEach((v, i) => {
+        ctx.beginPath();
+        ctx.arc(v.x, v.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = i === 0 ? '#16A34A' : '#22C55E';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // Vertex number
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 6px "Inter",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(i + 1, v.x, v.y + 0.5);
+      });
+    }
+    // Show hint
+    document.querySelector('.ze-map .hint').style.display = state.zeVertices.length >= 3 ? 'none' : '';
+  }
+
+  redraw();
+
+  canvas.onclick = function(e){
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (w / rect.width);
+    const y = (e.clientY - rect.top) * (h / rect.height);
+    // If clicked near first vertex and have 3+, close shape
+    if(state.zeVertices.length >= 3){
+      const first = state.zeVertices[0];
+      const dist = Math.sqrt((x - first.x)**2 + (y - first.y)**2);
+      if(dist < 12){
+        toast('Zone shape closed! Ready to save.');
+        redraw();
+        return;
+      }
+    }
+    state.zeVertices.push({x, y});
+    redraw();
+  };
+}
+
+function saveZone(){
+  const name = document.getElementById('zeName').value.trim();
+  if(!name){ toast('Enter a zone name'); return; }
+  if(state.zeVertices.length < 3){ toast('Draw at least 3 points to define the zone'); return; }
+  const type = document.getElementById('zeType').value;
+  const newId = 'z' + (state.zones.length + 1);
+  state.zones.push({
+    id: newId, name, type,
+    color: type === 'restricted' ? '#EF4444' : '#22C55E',
+    workers: []
+  });
+  toast('Zone "' + name + '" saved!');
+  switchView('boundaries');
+  renderZones();
+}
+window.saveZone = saveZone;
+
+/* ═══════════════════ HISTORY ═══════════════════ */
+function renderHistory(){
+  document.getElementById('pbFill').style.width = '0%';
+  document.getElementById('pbThumb').style.left = '0%';
+  state.playbackPos = 0;
+
+  // Draw history map
+  const canvas = document.getElementById('histMapCanvas');
+  if(canvas) drawMap(canvas, { workers: state.workers });
+
+  // Worker list
+  const list = document.getElementById('histWorkerList');
+  list.innerHTML = '<div class="seclabel"><h3>Worker Hours</h3><span class="sl-line"></span></div>';
+  list.innerHTML += state.workers.map(w => {
+    const h = (5 + Math.random() * 3).toFixed(1);
+    return '<div class="worker-row" style="cursor:default">'
+      + '<div class="av" style="background:' + w.bg + '">' + w.avatar + '</div>'
+      + '<div class="wr-meta"><div class="wr-name">' + w.name + '</div><div class="wr-zone">' + h + 'h today</div></div>'
+      + '<div class="wr-right"><div class="wr-time">' + w.scheduled + '</div></div></div>';
+  }).join('');
+}
+
+function togglePlayback(){
+  state.playbackPlaying = !state.playbackPlaying;
+  const btn = document.getElementById('playPauseBtn');
+  btn.innerHTML = state.playbackPlaying
+    ? '<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+    : '<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  if(state.playbackPlaying) playbackLoop();
+}
+window.togglePlayback = togglePlayback;
+
+function playbackLoop(){
+  if(!state.playbackPlaying) return;
+  state.playbackPos = Math.min(1, state.playbackPos + 0.005 * state.playbackSpeed);
+  document.getElementById('pbFill').style.width = (state.playbackPos * 100) + '%';
+  document.getElementById('pbThumb').style.left = (state.playbackPos * 100) + '%';
+
+  // Update map with progress
+  const canvas = document.getElementById('histMapCanvas');
+  if(canvas){
+    const visibleWorkers = state.workers.map(w => ({
+      ...w,
+      trail: w.trail.filter(t => t.t / 12 <= state.playbackPos)
+    }));
+    drawMap(canvas, { workers: visibleWorkers });
+  }
+
+  if(state.playbackPos < 1){
+    requestAnimationFrame(playbackLoop);
+  } else {
+    state.playbackPlaying = false;
+    document.getElementById('playPauseBtn').innerHTML = '<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  }
+}
+
+function seekPlayback(e){
+  const track = document.getElementById('pbTrack');
+  const rect = track.getBoundingClientRect();
+  state.playbackPos = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+  document.getElementById('pbFill').style.width = (state.playbackPos * 100) + '%';
+  document.getElementById('pbThumb').style.left = (state.playbackPos * 100) + '%';
+}
+window.seekPlayback = seekPlayback;
+
+function skipPlayback(delta){
+  state.playbackPos = clamp(state.playbackPos + delta, 0, 1);
+  document.getElementById('pbFill').style.width = (state.playbackPos * 100) + '%';
+  document.getElementById('pbThumb').style.left = (state.playbackPos * 100) + '%';
+}
+window.skipPlayback = skipPlayback;
+
+/* ═══════════════════ MAP CONTROLS ═══════════════════ */
+function recenterMap(){ drawLiveMap(); toast('Map centered'); }
+window.recenterMap = recenterMap;
+
+function toggleTrails(){
+  state.showTrails = !state.showTrails;
+  drawLiveMap();
+  toast(state.showTrails ? 'Trails on' : 'Trails off');
+}
+window.toggleTrails = toggleTrails;
+
+function toggleRestricted(){
+  state.showRestricted = !state.showRestricted;
+  drawLiveMap();
+  toast(state.showRestricted ? 'Restricted zones shown' : 'Restricted zones hidden');
+}
+window.toggleRestricted = toggleRestricted;
+
+/* Zone chip filter */
+function filterZone(el){
+  el.classList.toggle('active');
+  toast('Filter: ' + el.querySelector('span:first-child').textContent);
+}
+window.filterZone = filterZone;
+
+/* ═══════════════════ SIMULATED WORKER MOVEMENT ═══════════════════ */
+function simulateMovement(){
+  state.workers.forEach(w => {
+    if(w.status === 'off-site') return;
+    if(w.zoneId && ZONE_POLYGONS[w.zoneId]){
+      const poly = ZONE_POLYGONS[w.zoneId];
+      const cx = poly.reduce((s,p) => s + p.x, 0) / poly.length;
+      const cy = poly.reduce((s,p) => s + p.y, 0) / poly.length;
+      // Small random wander
+      const dx = (Math.random() - 0.5) * 6;
+      const dy = (Math.random() - 0.5) * 6;
+      const last = w.trail[w.trail.length-1] || { x: cx, y: cy };
+      const newX = clamp(last.x + dx, poly[0].x - 5, poly[2].x + 5);
+      const newY = clamp(last.y + dy, poly[0].y - 5, poly[2].y + 5);
+      w.trail.push({ x: newX, y: newY, t: last.t + 0.1 });
+      if(w.trail.length > 20) w.trail.shift();
+    }
+  });
+  drawLiveMap();
+}
+
+// Move workers every 4 seconds
+setInterval(simulateMovement, 4000);
+
+/* ═══════════════════ INIT ═══════════════════ */
+renderLive();
+
+// Update timestamp every 10s
+setInterval(() => {
+  const now = new Date();
+  document.getElementById('liveTimestamp').textContent = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+}, 10000);
+
+// Back button on live screen
+document.getElementById('liveBack')?.addEventListener('click', () => toast('Back to Team Hub'));
+
+})();
+</script>
+</body>
+</html>
