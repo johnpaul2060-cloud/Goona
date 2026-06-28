@@ -925,6 +925,17 @@ export default function TeamScreen() {
           <View style={styles.qaRow}>
             <QACard
               variant="light"
+              title="Reminders & Tasks"
+              desc="Create tasks, set reminders, and assign team members."
+              tags={['Tasks', 'Reminders']}
+              icon={
+                <GoonaIcon icon={Icons.bell} size={20} color="#00695C" />
+              }
+              onPress={() => router.push('/reminder-tasks' as any)}
+            />
+            <View style={{ width: 14 }} />
+            <QACard
+              variant="light"
               title="Settings"
               desc="Notifications, security, sync, and preferences."
               tags={['Security', 'Offline', 'AI Prefs']}

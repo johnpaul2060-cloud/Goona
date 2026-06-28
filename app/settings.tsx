@@ -235,6 +235,10 @@ export default function SettingsScreen() {
     { key: 'theme', icon: icBg('#F1F5F9', <GoonaIcon icon={Icons.moon} size={16} color="#64748B" />), title: 'Theme Settings', desc: `Animation: ${store.theme.animationIntensity}/5 · Density: ${store.theme.uiDensity}`, right: <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }} onPress={() => open('theme')}>Configure</Text>, onPress: () => open('theme') },
   ]
 
+  const reminderRows = [
+    { key: 'reminders', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.bell} size={16} color="#00695C" />), title: 'Reminders & Tasks', desc: 'Track tasks, reminders, and auto-detected milestones', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/reminder-tasks' as any) },
+  ]
+
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
@@ -294,17 +298,18 @@ export default function SettingsScreen() {
         </BlurView>
 
         <SettingsSection title="Notifications" rows={notifRows} index={0} />
-        <SettingsSection title="Recapt & Readiness" rows={recaptRows} index={1} />
-        <SettingsSection title="Workforce & Permissions" rows={workerRows} index={2} />
-        <SettingsSection title="Data & Sync" rows={dataRows} index={3} />
-        <SettingsSection title="Security & Access" rows={secRows} index={4} />
-        <SettingsSection title="GOONA Wallet" rows={walletRows} index={5} />
+        <SettingsSection title="Reminders & Tasks" rows={reminderRows} index={1} />
+        <SettingsSection title="Recapt & Readiness" rows={recaptRows} index={2} />
+        <SettingsSection title="Workforce & Permissions" rows={workerRows} index={3} />
+        <SettingsSection title="Data & Sync" rows={dataRows} index={4} />
+        <SettingsSection title="Security & Access" rows={secRows} index={5} />
+        <SettingsSection title="GOONA Wallet" rows={walletRows} index={6} />
         <SettingsSection title="Farm Boundaries" rows={[
           { key: 'boundaries', icon: icBg('rgba(0,105,92,0.06)', <GoonaIcon icon={Icons.mapPin} size={16} color="#00695C" />), title: 'Farm Boundaries', desc: 'Manage geofences, zones, and restricted areas', right: <GoonaIcon icon={Icons.chevronRight} size={14} color="#CBD5E1" />, onPress: () => router.push('/farm-boundaries' as any) },
-        ]} index={6} />
-        <SettingsSection title="GOONA IQ" rows={iqRows} index={7} />
-        <SettingsSection title="Theme & Experience" rows={themeRows} index={8} />
-        <SettingsSection title="Help & Support" rows={helpRows} index={9} />
+        ]} index={7} />
+        <SettingsSection title="GOONA IQ" rows={iqRows} index={8} />
+        <SettingsSection title="Theme & Experience" rows={themeRows} index={9} />
+        <SettingsSection title="Help & Support" rows={helpRows} index={10} />
 
         {/* DANGER ZONE */}
         <Animated.View entering={FadeInUp.duration(500).delay(900).springify()} style={{ borderRadius: 24, backgroundColor: 'rgba(254,202,202,0.15)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.06)', padding: 16, marginTop: 22 }}>
