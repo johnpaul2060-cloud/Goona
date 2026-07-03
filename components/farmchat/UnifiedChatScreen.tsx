@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, PanResponder, Animated } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, PanResponder, Animated, Alert, ToastAndroid } from 'react-native'
+import * as Clipboard from 'expo-clipboard'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Icons } from '../../shared/icons'
 import { FarmChatConversation, FarmChatMessage, MessageReplyTo } from '../../store/useFarmChatStore'
@@ -13,6 +14,17 @@ function formatTime(t: number) {
   return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0')
 }
 
+function formatCopyTime(t: number) {
+  const d = new Date(t)
+  return d.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 function bubblePreviewText(msg: FarmChatMessage): string {
   if (msg.type === 'image') return '📷 Photo'
   if (msg.type === 'video') return '🎥 Video'
@@ -21,11 +33,32 @@ function bubblePreviewText(msg: FarmChatMessage): string {
   return msg.text
 }
 
-function SwipeableBubble({ msg, isOwn, showSender, onSwipeReply }: {
+function copyTextForMessage(msg: FarmChatMessage): string {
+  const parts = [
+    `Sender: ${msg.senderName || 'Unknown'}`,
+    `Time: ${formatCopyTime(msg.timestamp)}`,
+    `Message: ${bubblePreviewText(msg)}`,
+  ]
+  if (msg.replyTo) {
+    parts.splice(2, 0, `Replying to ${msg.replyTo.senderName}: ${msg.replyTo.text}`)
+  }
+  return parts.join('\n')
+}
+
+function notifyCopied() {
+  if (Platform.OS === 'android') {
+    ToastAndroid.show('Message copied', ToastAndroid.SHORT)
+    return
+  }
+  Alert.alert('Copied', 'Message copied to clipboard.')
+}
+
+function SwipeableBubble({ msg, isOwn, showSender, onSwipeReply, onCopy }: {
   msg: FarmChatMessage
   isOwn: boolean
   showSender: boolean
   onSwipeReply: (msg: FarmChatMessage) => void
+  onCopy: (msg: FarmChatMessage) => void
 }) {
   const translateX = useRef(new Animated.Value(0)).current
   const msgRef = useRef(msg)
@@ -62,7 +95,7 @@ function SwipeableBubble({ msg, isOwn, showSender, onSwipeReply }: {
 
   const msgType = msg.type || 'text'
 
-  const content = (
+  const bubbleContent = (
     <View style={[bubbleStyles.container, isOwn ? bubbleStyles.own : bubbleStyles.other]}>
       {showSender && !isOwn && msgType !== 'system' && (
         <Text style={bubbleStyles.sender}>{msg.senderName}</Text>
@@ -138,6 +171,17 @@ function SwipeableBubble({ msg, isOwn, showSender, onSwipeReply }: {
         </View>
       )}
     </View>
+  )
+
+  const content = msgType === 'system' ? bubbleContent : (
+    <TouchableOpacity
+      activeOpacity={0.88}
+      delayLongPress={250}
+      onLongPress={() => onCopy(msg)}
+      onPress={() => onCopy(msg)}
+    >
+      {bubbleContent}
+    </TouchableOpacity>
   )
 
   if (msgType === 'system') return content
@@ -343,6 +387,12 @@ export default function UnifiedChatScreen({ conv, messages, onSend, onBack }: {
     }
   }, [replyingTo])
 
+  const handleCopyMessage = useCallback(async (msg: FarmChatMessage) => {
+    if (msg.type === 'system') return
+    await Clipboard.setStringAsync(copyTextForMessage(msg))
+    notifyCopied()
+  }, [])
+
   const cancelReply = useCallback(() => {
     setReplyingTo(null)
   }, [])
@@ -371,16 +421,17 @@ export default function UnifiedChatScreen({ conv, messages, onSend, onBack }: {
         isOwn={isOwn(item.senderId)}
         showSender={isGroup && !isOwn(item.senderId) && !prevSenderMap[item.id]}
         onSwipeReply={handleSwipeReply}
+        onCopy={handleCopyMessage}
       />
     )
-  }, [isGroup, prevSenderMap, handleSwipeReply])
+  }, [isGroup, prevSenderMap, handleSwipeReply, handleCopyMessage])
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
+          <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7} hitSlop={8}>
             <Icons.arrowLeft size={20} color="#0F172A" />
           </TouchableOpacity>
           <View style={[styles.avatar, { backgroundColor: (isGroup ? '#7C3AED' : '#2563EB') + '20' }]}>

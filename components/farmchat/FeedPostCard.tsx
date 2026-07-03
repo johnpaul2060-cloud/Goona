@@ -104,8 +104,8 @@ function AIInsightCard({ post }: { post: FeedPost }) {
 
         {post.tags && (
           <View style={styles.aiTagRow}>
-            {post.tags.map((t, i) => (
-              <View key={i} style={styles.aiTag}>
+            {post.tags.map((t) => (
+              <View key={t} style={styles.aiTag}>
                 <Text style={styles.aiTagText}>{t}</Text>
               </View>
             ))}
@@ -139,8 +139,8 @@ function AlertCard({ post }: { post: FeedPost }) {
       </View>
       {post.tags && (
         <View style={styles.tagRow}>
-          {post.tags.map((t, i) => (
-            <View key={i} style={styles.tagPill}><Text style={styles.tagPillText}>{t}</Text></View>
+          {post.tags.map((t) => (
+            <View key={t} style={styles.tagPill}><Text style={styles.tagPillText}>{t}</Text></View>
           ))}
         </View>
       )}
@@ -231,8 +231,8 @@ export default function FeedPostCard({ post, onLike, onSave, onComment }: { post
             {post.highlight && <Text style={styles.highlight}>{post.highlight}</Text>}
             {post.tags && (
               <View style={styles.tagRow}>
-                {post.tags.map((t, i) => (
-                  <View key={i} style={styles.tagPill}><Text style={styles.tagPillText}>{t}</Text></View>
+                {post.tags.map((t) => (
+                  <View key={t} style={styles.tagPill}><Text style={styles.tagPillText}>{t}</Text></View>
                 ))}
               </View>
             )}

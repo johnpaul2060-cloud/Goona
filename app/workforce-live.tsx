@@ -1,509 +1,107 @@
-import React, { useState, useEffect, useRef } from 'react'
-import {
-  View, Text, TouchableOpacity, Pressable, ScrollView,
-  StyleSheet, Dimensions, Alert,
-} from 'react-native'
-import GoonaIcon from '../components/ui/GoonaIcon'
-import { Icons } from '../shared/icons'
+import React, { useMemo, useRef, useState } from 'react'
+import { Alert, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import { router } from 'expo-router'
-import Animated, {
-  useSharedValue, useAnimatedStyle, withRepeat, withSequence,
-  withTiming, withSpring, FadeInUp,
-} from 'react-native-reanimated'
-import MapView, { Marker, Polygon, Circle } from 'react-native-maps'
+import { router, useFocusEffect } from 'expo-router'
+import { LinearGradient } from 'expo-linear-gradient'
+import MapView, { Marker, Polygon } from 'react-native-maps'
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import GoonaIcon from '../components/ui/GoonaIcon'
 import BottomDock from '../components/navigation/BottomDock'
 import { FARM_NAME } from '../constants/farm'
+import { Icons } from '../shared/icons'
+import { useFarmChatStore } from '../store/useFarmChatStore'
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
+type Tab = 'live' | 'workers' | 'alerts' | 'boundaries' | 'history'
+type WStatus = 'onsite' | 'offsite' | 'idle' | 'restricted' | 'signal'
+type Worker = { id: string; initials: string; name: string; role: string; status: WStatus; location: string; zone?: string; battery: number; lastSeen: string; coordinate: { latitude: number; longitude: number }; tags: string[] }
+type Zone = { id: string; name: string; type: 'operational' | 'restricted'; color: string; area: string; rule: string; coordinates: { latitude: number; longitude: number }[] }
 
-/* ─── Error boundary wrapper ─── */
-class MapErrorBoundary extends React.Component<
-  { fallback: React.ReactNode; children: React.ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false }
-  static getDerivedStateFromError() { return { hasError: true } }
-  render() { return this.state.hasError ? this.props.fallback : this.props.children }
-}
-
-function usePressScale() {
-  const scale = useSharedValue(1); const opacity = useSharedValue(1)
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: opacity.value }))
-  return { style, onPressIn: () => { scale.value = withSpring(0.96); opacity.value = withTiming(0.85) }, onPressOut: () => { scale.value = withSpring(1); opacity.value = withTiming(1) } }
-}
-
-function PulseDot({ color = '#22C55E', size = 5 }: { color?: string; size?: number }) {
-  const opacity = useSharedValue(1)
-  useEffect(() => { opacity.value = withRepeat(withSequence(withTiming(0.3, { duration: 1800 }), withTiming(1, { duration: 1800 })), -1, true) }, [])
-  const style = useAnimatedStyle(() => ({ opacity: opacity.value }))
-  return <Animated.View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]} />
-}
-
-/* ─── Coordinates (simulated for Oyo State, Nigeria) ─── */
-const FARM_CENTER = { latitude: 7.5, longitude: 3.9 }
-
-const WORKER_POSITIONS = [
-  { id: 'w1', initials: 'CO', name: 'Chinedu Okoro', role: 'Senior Farmhand', status: 'active' as const, location: 'Poultry House A', battery: 87, lastSeen: '2 min ago', coordinate: { latitude: 7.502, longitude: 3.902 } },
-  { id: 'w2', initials: 'AF', name: 'Aminat Fashola', role: 'Feed Specialist', status: 'active' as const, location: 'Feed Warehouse', battery: 72, lastSeen: '1 min ago', coordinate: { latitude: 7.498, longitude: 3.905 } },
-  { id: 'w3', initials: 'KO', name: 'Kola Ogunleye', role: 'Veterinary Assistant', status: 'idle' as const, location: 'Hatchery', battery: 34, lastSeen: '4h ago', coordinate: { latitude: 7.505, longitude: 3.895 } },
-  { id: 'w4', initials: 'FO', name: 'Funmi Ojo', role: 'Farmhand', status: 'active' as const, location: 'Fish Pond', battery: 91, lastSeen: 'just now', coordinate: { latitude: 7.495, longitude: 3.898 } },
-  { id: 'w5', initials: 'TA', name: 'Tunde Adebayo', role: 'Security', status: 'active' as const, location: 'Main Gate', battery: 66, lastSeen: '5 min ago', coordinate: { latitude: 7.500, longitude: 3.892 } },
-  { id: 'w7', initials: 'SE', name: 'Segun Eze', role: 'Vet Assistant', status: 'active' as const, location: 'Poultry House B', battery: 78, lastSeen: '3 min ago', coordinate: { latitude: 7.503, longitude: 3.906 } },
-  { id: 'w9', initials: 'DE', name: 'Dele Akin', role: 'Farmhand', status: 'active' as const, location: 'Storage Facility', battery: 55, lastSeen: '8 min ago', coordinate: { latitude: 7.497, longitude: 3.893 } },
-  { id: 'w10', initials: 'IF', name: 'Ifeanyi Folarin', role: 'Supervisor', status: 'active' as const, location: 'Admin Block', battery: 94, lastSeen: 'just now', coordinate: { latitude: 7.501, longitude: 3.896 } },
-  { id: 'w11', initials: 'NO', name: 'Ngozi Okafor', role: 'Farmhand', status: 'idle' as const, location: 'Break Room', battery: 45, lastSeen: '15 min ago', coordinate: { latitude: 7.499, longitude: 3.897 } },
+const C = { bg: '#F6F9F4', card: '#fff', ink: '#15291A', mut: '#5C6B5E', mut2: '#8A988C', line: '#E5ECE0', green: '#1E7A3D', green2: '#43A047', lime: '#AEEA00', red: '#E23B2E', amber: '#E08A12', blue: '#2C82C9' }
+const CENTER = { latitude: 7.5, longitude: 3.9 }
+const BOUNDARY = [{ latitude: 7.510, longitude: 3.885 }, { latitude: 7.510, longitude: 3.912 }, { latitude: 7.485, longitude: 3.912 }, { latitude: 7.485, longitude: 3.885 }]
+const ZONES: Zone[] = [
+  ['z1', 'Poultry House A', 'operational', C.green2, '1.8 ha', 'Entry logged automatically', [[7.504, 3.900], [7.504, 3.904], [7.500, 3.904], [7.500, 3.900]]],
+  ['z2', 'Poultry House B', 'operational', C.green2, '1.5 ha', 'Supervisor review after 7 PM', [[7.505, 3.905], [7.505, 3.909], [7.501, 3.909], [7.501, 3.905]]],
+  ['z3', 'Feed Warehouse', 'operational', C.blue, '0.9 ha', 'Inventory zone', [[7.496, 3.904], [7.496, 3.908], [7.492, 3.908], [7.492, 3.904]]],
+  ['z4', 'Fish Pond', 'operational', C.green2, '2.4 ha', 'Water checks expected', [[7.493, 3.896], [7.493, 3.900], [7.489, 3.900], [7.489, 3.896]]],
+  ['z5', 'Chemical Storage', 'restricted', C.red, '0.3 ha', 'Manager approval required', [[7.499, 3.888], [7.499, 3.892], [7.495, 3.892], [7.495, 3.888]]],
+  ['z6', 'Generator Room', 'restricted', C.red, '0.2 ha', 'Security only', [[7.503, 3.889], [7.503, 3.893], [7.499, 3.893], [7.499, 3.889]]],
+].map(([id, name, type, color, area, rule, pts]: any) => ({ id, name, type, color, area, rule, coordinates: pts.map(([latitude, longitude]: number[]) => ({ latitude, longitude })) }))
+const WORKERS: Worker[] = [
+  ['w1', 'CO', 'Chinedu Okoro', 'Senior Farmhand', 'onsite', 'Poultry House A', 'z1', 87, '2 min ago', 7.502, 3.902, ['Feed', 'Records']],
+  ['w2', 'AF', 'Aminat Fashola', 'Feed Specialist', 'onsite', 'Feed Warehouse', 'z3', 72, '1 min ago', 7.498, 3.905, ['Feed', 'Inventory']],
+  ['w3', 'KO', 'Kola Ogunleye', 'Vet Assistant', 'idle', 'Hatchery', undefined, 34, '4h ago', 7.505, 3.895, ['Health']],
+  ['w4', 'FO', 'Funmi Ojo', 'Farmhand', 'onsite', 'Fish Pond', 'z4', 91, 'just now', 7.495, 3.898, ['Water']],
+  ['w5', 'TA', 'Tunde Adebayo', 'Security', 'onsite', 'Main Gate', undefined, 66, '5 min ago', 7.500, 3.892, ['Security']],
+  ['w6', 'BN', 'Blessing Nwosu', 'Farmhand', 'offsite', 'Off farm route', undefined, 52, '18 min ago', 7.512, 3.913, ['Supply Run']],
+  ['w7', 'SE', 'Segun Eze', 'Vet Assistant', 'onsite', 'Poultry House B', 'z2', 78, '3 min ago', 7.503, 3.906, ['Health']],
+  ['w8', 'MJ', 'Mary James', 'Store Clerk', 'signal', 'Storage Facility', undefined, 11, 'signal lost', 7.497, 3.893, ['Inventory']],
+  ['w9', 'DE', 'Dele Akin', 'Farmhand', 'restricted', 'Chemical Storage', 'z5', 55, '8 min ago', 7.497, 3.890, ['Flagged']],
+  ['w10', 'IF', 'Ifeanyi Folarin', 'Supervisor', 'onsite', 'Admin Block', undefined, 94, 'just now', 7.501, 3.896, ['Supervisor']],
+].map(([id, initials, name, role, status, location, zone, battery, lastSeen, latitude, longitude, tags]: any) => ({ id, initials, name, role, status, location, zone, battery, lastSeen, coordinate: { latitude, longitude }, tags }))
+const ALERTS = [
+  { id: 'a1', level: 'high', title: 'Restricted zone entry', detail: 'Dele entered Chemical Storage without manager approval.', time: '8 min ago', icon: Icons.shieldAlert },
+  { id: 'a2', level: 'medium', title: 'Low device battery', detail: 'Mary James device is at 11%. Location may stop updating.', time: '12 min ago', icon: Icons.battery },
+  { id: 'a3', level: 'medium', title: 'Long idle window', detail: 'Kola has been idle near Hatchery for 4 hours.', time: '4h ago', icon: Icons.clock },
+  { id: 'a4', level: 'resolved', title: 'Perimeter check completed', detail: 'Tunde completed the west gate checkpoint.', time: '22 min ago', icon: Icons.checkCircle },
 ]
-
-/* ─── Zones as map polygons ─── */
-const ZONE_POLYGONS = [
-  { id: 'zp1', name: 'Poultry House A', color: '#22C55E', coordinates: [{ latitude: 7.504, longitude: 3.900 }, { latitude: 7.504, longitude: 3.904 }, { latitude: 7.500, longitude: 3.904 }, { latitude: 7.500, longitude: 3.900 }] },
-  { id: 'zp2', name: 'Poultry House B', color: '#22C55E', coordinates: [{ latitude: 7.505, longitude: 3.905 }, { latitude: 7.505, longitude: 3.909 }, { latitude: 7.501, longitude: 3.909 }, { latitude: 7.501, longitude: 3.905 }] },
-  { id: 'zp3', name: 'Feed Warehouse', color: '#22C55E', coordinates: [{ latitude: 7.496, longitude: 3.904 }, { latitude: 7.496, longitude: 3.908 }, { latitude: 7.492, longitude: 3.908 }, { latitude: 7.492, longitude: 3.904 }] },
-  { id: 'zp4', name: 'Fish Pond', color: '#22C55E', coordinates: [{ latitude: 7.493, longitude: 3.896 }, { latitude: 7.493, longitude: 3.900 }, { latitude: 7.489, longitude: 3.900 }, { latitude: 7.489, longitude: 3.896 }] },
-  { id: 'zp5', name: 'Hatchery', color: '#22C55E', coordinates: [{ latitude: 7.507, longitude: 3.893 }, { latitude: 7.507, longitude: 3.897 }, { latitude: 7.503, longitude: 3.897 }, { latitude: 7.503, longitude: 3.893 }] },
-  { id: 'zp6', name: 'Storage Facility', color: '#22C55E', coordinates: [{ latitude: 7.495, longitude: 3.891 }, { latitude: 7.495, longitude: 3.895 }, { latitude: 7.491, longitude: 3.895 }, { latitude: 7.491, longitude: 3.891 }] },
-  { id: 'zp7', name: 'Chemical Storage', color: '#EF4444', coordinates: [{ latitude: 7.499, longitude: 3.888 }, { latitude: 7.499, longitude: 3.892 }, { latitude: 7.495, longitude: 3.892 }, { latitude: 7.495, longitude: 3.888 }] },
-  { id: 'zp8', name: 'Generator Room', color: '#EF4444', coordinates: [{ latitude: 7.503, longitude: 3.889 }, { latitude: 7.503, longitude: 3.893 }, { latitude: 7.499, longitude: 3.893 }, { latitude: 7.499, longitude: 3.889 }] },
-  { id: 'zp9', name: 'Medicine Storage', color: '#EF4444', coordinates: [{ latitude: 7.491, longitude: 3.889 }, { latitude: 7.491, longitude: 3.893 }, { latitude: 7.487, longitude: 3.893 }, { latitude: 7.487, longitude: 3.889 }] },
-]
-
-/* ─── Farm boundary (outer perimeter) ─── */
-const FARM_BOUNDARY = [
-  { latitude: 7.510, longitude: 3.885 },
-  { latitude: 7.510, longitude: 3.912 },
-  { latitude: 7.485, longitude: 3.912 },
-  { latitude: 7.485, longitude: 3.885 },
-]
-
-/* ─── Status helpers ─── */
-const statusColor = (status: string) => status === 'active' ? '#22C55E' : status === 'idle' ? '#F59E0B' : status === 'emergency' ? '#EF4444' : '#94A3B8'
-
-/* ─── Worker Pin ─── */
-function WorkerPin({ worker, onPress }: { worker: typeof WORKER_POSITIONS[0]; onPress: () => void }) {
-  const { style, onPressIn, onPressOut } = usePressScale()
-  const color = statusColor(worker.status)
-  return (
-    <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
-      <Animated.View style={[style, { alignItems: 'center', width: 50 }]}>
-        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: color }}>
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 10 }}>{worker.initials}</Text>
-        </View>
-        <PulseDot color={color} size={5} />
-      </Animated.View>
-    </Pressable>
-  )
-}
-
-/* ─── MapFallback (card-based map replacement) ─── */
-function MapFallback({ selectedWorker, onSelectWorker }: {
-  selectedWorker: typeof WORKER_POSITIONS[0] | null
-  onSelectWorker: (w: typeof WORKER_POSITIONS[0] | null) => void
-}) {
-  return (
-    <View style={s.fallbackContainer}>
-      {/* Map header bar */}
-      <View style={s.fallbackHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Icons.mapPin size={14} color="#00695C" strokeWidth={2.5} />
-          <Text style={{ fontSize: 12, fontWeight: '600', color: '#334155' }}>Farm Layout</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22C55E' }} />
-          <Text style={{ fontSize: 9, color: '#64748B' }}>Operational</Text>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#EF4444', marginLeft: 8 }} />
-          <Text style={{ fontSize: 9, color: '#64748B' }}>Restricted</Text>
-        </View>
-      </View>
-
-      {/* Grid: zone cards as a 'map' */}
-      <View style={s.fallbackGrid}>
-        {ZONE_POLYGONS.map(zone => {
-          const zoneWorkers = WORKER_POSITIONS.filter(w => zone.name.toLowerCase().includes(w.location.toLowerCase().split(' ').slice(0,2).join(' ')))
-          const isSelected = selectedWorker && zoneWorkers.some(w => w.id === selectedWorker.id)
-          return (
-            <TouchableOpacity
-              key={zone.id}
-              activeOpacity={0.7}
-              onPress={() => {
-                if (zoneWorkers.length > 0) onSelectWorker(zoneWorkers[0])
-                else Alert.alert(zone.name, `${zone.color === '#EF4444' ? 'Restricted Area' : 'Operational Zone'}`)
-              }}
-              style={[
-                s.fallbackZoneCard,
-                {
-                  borderColor: zone.color,
-                  backgroundColor: zone.color === '#EF4444' ? 'rgba(239,68,68,0.04)' : 'rgba(34,197,94,0.04)',
-                },
-                isSelected && { borderWidth: 2.5, shadowColor: zone.color, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
-              ]}
-            >
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: zone.color }} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: '#1B1B1B' }} numberOfLines={1}>{zone.name}</Text>
-                <Text style={{ fontSize: 8, color: zone.color === '#EF4444' ? '#EF4444' : '#22C55E', fontWeight: '500' }}>
-                  {zone.color === '#EF4444' ? 'Restricted' : 'Operational'}
-                </Text>
-              </View>
-              {zoneWorkers.length > 0 && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                  {zoneWorkers.slice(0, 2).map(w => (
-                    <View key={w.id} style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: statusColor(w.status), alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: '#fff', fontSize: 7, fontWeight: '800' }}>{w.initials}</Text>
-                    </View>
-                  ))}
-                  {zoneWorkers.length > 2 && (
-                    <Text style={{ fontSize: 8, color: '#94A3B8' }}>+{zoneWorkers.length - 2}</Text>
-                  )}
-                </View>
-              )}
-            </TouchableOpacity>
-          )
-        })}
-      </View>
-
-      {/* Worker dots row */}
-      <View style={s.fallbackWorkerRow}>
-        {WORKER_POSITIONS.map(w => (
-          <TouchableOpacity key={w.id} onPress={() => onSelectWorker(selectedWorker?.id === w.id ? null : w)} activeOpacity={0.7}>
-            <View style={[s.fallbackDot, { borderColor: statusColor(w.status), backgroundColor: selectedWorker?.id === w.id ? statusColor(w.status) : '#0F172A' }]}>
-              <Text style={{ color: '#fff', fontSize: 7, fontWeight: '800' }}>{w.initials}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Fallback footer */}
-      <View style={s.fallbackFooter}>
-        <Icons.radio size={12} color="#22C55E" strokeWidth={2} />
-        <Text style={{ fontSize: 10, color: '#64748B' }}>Map unavailable — showing farm layout</Text>
-        <View style={{ flex: 1 }} />
-        <Text style={{ fontSize: 9, color: '#94A3B8' }}>{present} workers</Text>
-      </View>
-    </View>
-  )
-}
-
-const activeWorkers = WORKER_POSITIONS.filter(w => w.status === 'active')
-const present = WORKER_POSITIONS.length
-const activeLocations = [...new Set(WORKER_POSITIONS.filter(w => w.status === 'active').map(w => w.location))].length
-
-const GEOFENCE_EVENTS = [
-  { text: 'Chinedu entered Poultry House A', time: '2 min ago', icon: Icons.navigation, color: '#22C55E' },
-  { text: 'Aminat exited Feed Warehouse', time: '8 min ago', icon: Icons.mapPin, color: '#F59E0B' },
-  { text: 'Funmi entered Fish Pond zone', time: '15 min ago', icon: Icons.navigation, color: '#22C55E' },
-  { text: 'Tunde completed perimeter checkpoint', time: '22 min ago', icon: Icons.target, color: '#6366F1' },
-  { text: 'Segun moved to Poultry House B', time: '30 min ago', icon: Icons.radio, color: '#00695C' },
-]
+const EVENTS = ['Chinedu entered Poultry House A', 'Aminat exited Feed Warehouse', 'Funmi entered Fish Pond zone', 'Tunde completed perimeter checkpoint', 'Segun moved to Poultry House B']
+const WORKER_CHAT_USER_IDS: Record<string, string> = { w1: 'chinedu', w2: 'aminat', w3: 'kola', w4: 'funmi', w5: 'tunde-worker', w6: 'blessing', w7: 'segun', w8: 'mary-workforce', w9: 'dele', w10: 'ifeanyi' }
+const WORKER_PHONE_NUMBERS: Record<string, string> = { w1: '+2348010000001', w2: '+2348010000002', w3: '+2348010000003', w4: '+2348010000004', w5: '+2348010000005', w6: '+2348010000006', w7: '+2348010000007', w8: '+2348010000008', w9: '+2348010000009', w10: '+2348010000010' }
+function col(s: WStatus) { return s === 'restricted' ? C.red : s === 'signal' ? C.amber : s === 'offsite' ? C.blue : s === 'idle' ? '#94A3B8' : C.green2 }
+function label(s: WStatus) { return s === 'onsite' ? 'On site' : s === 'offsite' ? 'Off site' : s === 'signal' ? 'Signal lost' : s === 'restricted' ? 'Restricted' : 'Idle' }
+function usePressScale() { const scale = useSharedValue(1); const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] })); return { style, onPressIn: () => { scale.value = withSpring(.97); }, onPressOut: () => { scale.value = withTiming(1); } } }
+function Section({ title, tag }: { title: string; tag?: string }) { return <View style={s.sec}><Text style={s.secT}>{title}</Text><View style={s.secL} />{tag ? <Text style={s.secTag}>{tag}</Text> : null}</View> }
+function IconBtn({ icon, onPress }: { icon: any; onPress: () => void }) { return <TouchableOpacity style={s.iconBtn} onPress={onPress} activeOpacity={.75} hitSlop={8}><GoonaIcon icon={icon} size={19} color={C.ink} /></TouchableOpacity> }
+function Pill<T extends string>({ items, value, onChange }: { items: { key: T; label: string }[]; value: T; onChange: (v: T) => void }) { return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.pills}>{items.map(i => <TouchableOpacity key={i.key} onPress={() => onChange(i.key)} style={[s.pill, value === i.key && s.pillOn]}><Text style={[s.pillT, value === i.key && s.pillTOn]}>{i.label}</Text></TouchableOpacity>)}</ScrollView> }
+function Stat({ n, t, tone }: { n: number; t: string; tone?: 'ok' | 'bad' | 'warn' }) { const color = tone === 'bad' ? C.red : tone === 'warn' ? C.amber : tone === 'ok' ? C.green : '#fff'; return <View style={[s.stat, tone === 'ok' && s.statOk]}><Text style={[s.statN, { color }]}>{n}</Text><Text style={s.statT}>{t}</Text></View> }
+function WorkerCard({ w, onPress }: { w: Worker; onPress: () => void }) { const p = usePressScale(); return <Animated.View style={p.style}><Pressable onPress={onPress} onPressIn={p.onPressIn} onPressOut={p.onPressOut} style={s.worker}><View style={[s.av, { borderColor: col(w.status) }]}><Text style={s.avT}>{w.initials}</Text></View><View style={{ flex: 1, minWidth: 0 }}><Text style={s.wName}>{w.name}</Text><Text style={s.wRole}>{w.role}</Text><Text style={s.wMeta} numberOfLines={1}>{w.location} � {w.battery}% � {w.lastSeen}</Text></View><View style={[s.badge, { backgroundColor: col(w.status) + '22' }]}><Text style={[s.badgeT, { color: col(w.status) }]}>{label(w.status)}</Text></View></Pressable></Animated.View> }
+function AlertCard({ a }: { a: typeof ALERTS[number] }) { const color = a.level === 'high' ? C.red : a.level === 'medium' ? C.amber : C.green; return <TouchableOpacity style={s.alert} onPress={() => Alert.alert(a.title, a.detail)}><View style={[s.alertI, { backgroundColor: color + '18' }]}><GoonaIcon icon={a.icon} size={17} color={color} /></View><View style={{ flex: 1 }}><Text style={s.alertT}>{a.title}</Text><Text style={s.alertD}>{a.detail}</Text><Text style={s.alertM}>{a.time}</Text></View><GoonaIcon icon={Icons.chevronRight} size={15} color={C.mut2} /></TouchableOpacity> }
+function ZoneCard({ z, onEdit }: { z: Zone; onEdit: () => void }) { return <TouchableOpacity style={s.zoneCard} onPress={() => Alert.alert(z.name, z.rule)}><View style={[s.zoneSw, { backgroundColor: z.color + '18' }]}><GoonaIcon icon={z.type === 'restricted' ? Icons.shieldAlert : Icons.mapPin} size={20} color={z.color} /></View><View style={{ flex: 1 }}><Text style={s.zoneT}>{z.name} <Text style={[s.zoneK, { color: z.color }]}>{z.type}</Text></Text><Text style={s.zoneD}>{z.area} � {z.rule}</Text></View><TouchableOpacity style={s.zAct} onPress={onEdit}><GoonaIcon icon={Icons.pencil} size={14} color={C.mut} /></TouchableOpacity></TouchableOpacity> }
 
 export default function WorkforceLiveScreen() {
-  const [selectedWorker, setSelectedWorker] = useState<typeof WORKER_POSITIONS[0] | null>(null)
-  const mapRef = useRef<MapView>(null)
-
-  const fitToMarkers = () => {
-    if (mapRef.current) {
-      mapRef.current.fitToCoordinates(WORKER_POSITIONS.map(w => w.coordinate), { edgePadding: { top: 60, right: 60, bottom: 60, left: 60 }, animated: true })
-    }
-  }
-
-  return (
-    <View style={s.container}>
-      <StatusBar style="dark" />
-
-      <ScrollView style={s.scroll} contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false} bounces={false}>
-        {/* App Bar */}
-        <Animated.View entering={FadeInUp.duration(500).springify()} style={s.topNav}>
-          <TouchableOpacity style={s.navBack} onPress={() => router.back()} activeOpacity={0.7}>
-            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
-          </TouchableOpacity>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <PulseDot color="#22C55E" size={5} />
-            <Text style={s.navLabel}>Workforce Live</Text>
-          </View>
-          <TouchableOpacity style={s.navBack} onPress={fitToMarkers}>
-            <GoonaIcon icon={Icons.target} size={18} color="#00695C" />
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* Header */}
-        <Animated.View entering={FadeInUp.duration(500).delay(60).springify()} style={{ paddingHorizontal: 24 }}>
-          <Text style={s.headerTitle}>Workforce Live</Text>
-          <Text style={s.headerSub}>Real-time worker locations, geofence zones, and attendance.</Text>
-        </Animated.View>
-
-        {/* ─── INTERACTIVE MAP (with fallback) ─── */}
-        <Animated.View entering={FadeInUp.duration(600).delay(100).springify()} style={s.mapWrapper}>
-          <MapErrorBoundary fallback={<MapFallback selectedWorker={selectedWorker} onSelectWorker={setSelectedWorker} />}>
-            <MapView
-              ref={mapRef}
-              style={s.map}
-              initialRegion={{
-                latitude: FARM_CENTER.latitude,
-                longitude: FARM_CENTER.longitude,
-                latitudeDelta: 0.025,
-                longitudeDelta: 0.025,
-              }}
-              showsUserLocation={false}
-              showsCompass={true}
-              showsScale={true}
-              rotateEnabled={true}
-              zoomEnabled={true}
-              scrollEnabled={true}
-              mapType="satellite"
-            >
-              {/* Farm boundary */}
-              <Polygon
-                coordinates={FARM_BOUNDARY}
-                strokeColor="#AEEA00"
-                strokeWidth={2}
-                fillColor="rgba(174,234,0,0.04)"
-              />
-
-              {/* Zone polygons */}
-              {ZONE_POLYGONS.map(zone => (
-                <Polygon
-                  key={zone.id}
-                  coordinates={zone.coordinates}
-                  strokeColor={zone.color}
-                  strokeWidth={2}
-                  fillColor={zone.color === '#EF4444' ? 'rgba(239,68,68,0.08)' : 'rgba(34,197,94,0.06)'}
-                  tappable={true}
-                  onPress={() => Alert.alert(zone.name, `${zone.color === '#EF4444' ? 'Restricted Area' : 'Operational Zone'}\n\nTap a worker pin for details.`)}
-                />
-              ))}
-
-              {/* Worker markers */}
-              {WORKER_POSITIONS.map(worker => (
-                <Marker
-                  key={worker.id}
-                  coordinate={worker.coordinate}
-                  onPress={() => setSelectedWorker(selectedWorker?.id === worker.id ? null : worker)}
-                  tracksViewChanges={false}
-                >
-                  <WorkerPin worker={worker} onPress={() => setSelectedWorker(selectedWorker?.id === worker.id ? null : worker)} />
-                </Marker>
-              ))}
-
-              {/* Farm center circle */}
-              <Circle
-                center={FARM_CENTER}
-                radius={1200}
-                strokeColor="rgba(174,234,0,0.3)"
-                fillColor="rgba(174,234,0,0.02)"
-                strokeWidth={1}
-              />
-            </MapView>
-
-            {/* Callout overlay */}
-            {selectedWorker && (
-              <Animated.View entering={FadeInUp.duration(200).springify()} style={s.callout}>
-                <View style={s.calloutContent}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={[s.calloutAvatar, { borderColor: statusColor(selectedWorker.status) }]}>
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>{selectedWorker.initials}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: '700', fontSize: 14, color: '#1B1B1B' }}>{selectedWorker.name}</Text>
-                      <Text style={{ fontSize: 11, color: '#64748B' }}>{selectedWorker.role}</Text>
-                    </View>
-                    <TouchableOpacity onPress={() => setSelectedWorker(null)} style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 12, color: '#94A3B8', fontWeight: '600' }}>X</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={s.calloutDetails}>
-                    <View style={s.calloutRow}>
-                      <GoonaIcon icon={Icons.mapPin} size={12} color="#64748B" />
-                      <Text style={s.calloutText}>{selectedWorker.location} — {selectedWorker.lastSeen}</Text>
-                    </View>
-                    <View style={s.calloutRow}>
-                      <Icons.battery size={12} color={selectedWorker.battery > 20 ? '#22C55E' : '#EF4444'} strokeWidth={2} />
-                      <Text style={s.calloutText}>Battery: {selectedWorker.battery}%</Text>
-                    </View>
-                    <View style={s.calloutRow}>
-                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: statusColor(selectedWorker.status) }} />
-                      <Text style={{ fontSize: 11, color: '#64748B', textTransform: 'capitalize' }}>{selectedWorker.status}</Text>
-                    </View>
-                  </View>
-                </View>
-              </Animated.View>
-            )}
-
-            {/* Map overlay buttons */}
-            <View style={s.mapOverlayBtn}>
-              <TouchableOpacity style={s.mapBtn} onPress={fitToMarkers}>
-                <Icons.target size={16} color="#00695C" strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
-          </MapErrorBoundary>
-        </Animated.View>
-
-        {/* ─── LIVE STATUS STRIP ─── */}
-        <View style={{ paddingHorizontal: 24 }}>
-          <Animated.View entering={FadeInUp.duration(500).delay(200).springify()} style={s.statusStrip}>
-            <View style={s.statusItem}>
-              <PulseDot color="#22C55E" size={6} />
-              <Text style={s.statusValue}>{present}</Text>
-              <Text style={s.statusLabel}>Present</Text>
-            </View>
-            <View style={s.statusDiv} />
-            <View style={s.statusItem}>
-              <GoonaIcon icon={Icons.mapPin} size={14} color="#00695C" />
-              <Text style={s.statusValue}>{ZONE_POLYGONS.length}</Text>
-              <Text style={s.statusLabel}>Zones</Text>
-            </View>
-            <View style={s.statusDiv} />
-            <View style={s.statusItem}>
-              <GoonaIcon icon={Icons.bell} size={14} color="#EF4444" />
-              <Text style={s.statusValue}>1</Text>
-              <Text style={s.statusLabel}>Alert</Text>
-            </View>
-            <View style={s.statusDiv} />
-            <View style={s.statusItem}>
-              <Icons.radio size={14} color="#22C55E" strokeWidth={2} />
-              <Text style={[s.statusLabel, { color: '#22C55E', fontWeight: '600' }]}>Active</Text>
-            </View>
-          </Animated.View>
-
-          {/* ─── ZONE SUMMARY ─── */}
-          <Animated.View entering={FadeInUp.duration(500).delay(240).springify()} style={{ marginTop: 16 }}>
-            <Text style={s.sectionTitle}>Zones</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
-              {ZONE_POLYGONS.map(zone => (
-                <TouchableOpacity
-                  key={zone.id}
-                  onPress={() => Alert.alert(zone.name, `${zone.color === '#EF4444' ? 'Restricted' : 'Operational'} zone.\n\nPart of the ${FARM_NAME} geofence.`)}
-                  style={[s.zoneChip, { borderColor: zone.color, backgroundColor: `${zone.color}10` }]}
-                >
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: zone.color }} />
-                  <Text style={[s.zoneChipText, { color: zone.color }]}>{zone.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </Animated.View>
-
-          {/* ─── GEOFENCE EVENTS ─── */}
-          <Animated.View entering={FadeInUp.duration(500).delay(280).springify()} style={{ marginTop: 20 }}>
-            <Text style={s.sectionTitle}>Attendance Events</Text>
-            {GEOFENCE_EVENTS.map((evt, i) => (
-              <Animated.View key={i} entering={FadeInUp.duration(300).delay(300 + i * 50).springify()} style={s.eventItem}>
-                <View style={[s.eventIcon, { backgroundColor: `${evt.color}12` }]}>
-                  <GoonaIcon icon={evt.icon} size={12} color={evt.color} />
-                </View>
-                <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={s.eventText}>{evt.text}</Text>
-                  <Text style={s.eventTime}>{evt.time}</Text>
-                </View>
-              </Animated.View>
-            ))}
-          </Animated.View>
-
-          {/* ─── WORKER ACTIVITY ─── */}
-          <Animated.View entering={FadeInUp.duration(500).delay(500).springify()} style={{ marginTop: 20 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <Text style={s.sectionTitle}>Worker Activity</Text>
-              <Text style={{ fontSize: 11, color: '#22C55E', fontWeight: '600' }}>{activeWorkers.length} active</Text>
-            </View>
-            {WORKER_POSITIONS.map((w, i) => {
-              const { style, onPressIn, onPressOut } = usePressScale()
-              const color = statusColor(w.status)
-              return (
-                <Animated.View key={w.id} entering={FadeInUp.duration(300).delay(530 + i * 40).springify()}>
-                  <Pressable onPressIn={onPressIn} onPressOut={onPressOut}
-                    onPress={() => setSelectedWorker(selectedWorker?.id === w.id ? null : w)}
-                  >
-                    <Animated.View style={[style, s.workerCard]}>
-                      <View style={{ alignItems: 'center', marginRight: 10 }}>
-                        <View style={[s.workerAvatar, { borderColor: color }]}>
-                          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>{w.initials}</Text>
-                        </View>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: '600', fontSize: 13, color: '#1B1B1B' }}>{w.name}</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                          <GoonaIcon icon={Icons.mapPin} size={10} color="#64748B" />
-                          <Text style={{ fontSize: 10, color: '#64748B' }}>{w.location}</Text>
-                          <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#D1D5DB', marginHorizontal: 4 }} />
-                          <Icons.battery size={10} color={w.battery > 20 ? '#22C55E' : '#EF4444'} strokeWidth={2} />
-                          <Text style={{ fontSize: 10, color: '#94A3B8' }}>{w.battery}%</Text>
-                        </View>
-                      </View>
-                      <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                        <View style={[s.workerBadge, { backgroundColor: `${color}15` }]}>
-                          <Text style={[s.workerBadgeText, { color }]}>{w.status}</Text>
-                        </View>
-                        <Text style={{ fontSize: 9, color: '#94A3B8' }}>{w.lastSeen}</Text>
-                      </View>
-                    </Animated.View>
-                  </Pressable>
-                </Animated.View>
-              )
-            })}
-          </Animated.View>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
-
-      <BottomDock hidden={false} />
-    </View>
-  )
+  const insets = useSafeAreaInsets(); const mapRef = useRef<MapView>(null)
+  const seedDemoData = useFarmChatStore((state) => state.seedDemoData)
+  const createConversation = useFarmChatStore((state) => state.createConversation)
+  const conversations = useFarmChatStore((state) => state.conversations)
+  const [tab, setTab] = useState<Tab>('live'), [filter, setFilter] = useState<'all' | 'onsite' | 'offsite' | 'idle' | 'alerts'>('all'), [zf, setZf] = useState<'all' | 'operational' | 'restricted'>('all')
+  const [search, setSearch] = useState(''), [selZone, setSelZone] = useState<string | null>(null), [worker, setWorker] = useState<Worker | null>(null), [zone, setZone] = useState<Zone | null>(null), [hist, setHist] = useState(18), [play, setPlay] = useState(false), [hideWorkerDetailForChat, setHideWorkerDetailForChat] = useState(false)
+  React.useEffect(() => { seedDemoData() }, [seedDemoData])
+  useFocusEffect(React.useCallback(() => { setHideWorkerDetailForChat(false) }, []))
+  const openWorkerDm = React.useCallback((target: Worker) => {
+    seedDemoData()
+    const userId = WORKER_CHAT_USER_IDS[target.id]
+    const existing = conversations.find((conv) => conv.type === 'direct' && conv.participants.some((p) => p.id === userId))
+    const convId = existing?.id || createConversation(userId)
+    if (!convId) { Alert.alert('FarmChat unavailable', 'No FarmChat contact found for ' + target.name + '.'); return }
+    setHideWorkerDetailForChat(true)
+    router.push(('/(tabs)/chat/' + convId) as any)
+  }, [conversations, createConversation, seedDemoData])
+  const callWorker = React.useCallback(async (target: Worker) => {
+    seedDemoData()
+    const convId = createConversation(WORKER_CHAT_USER_IDS[target.id])
+    const phone = WORKER_PHONE_NUMBERS[target.id]
+    const url = 'tel:' + phone
+    const canOpen = await Linking.canOpenURL(url)
+    if (canOpen) await Linking.openURL(url)
+    if (convId) { setHideWorkerDetailForChat(true); router.push(('/(tabs)/chat/' + convId) as any) }
+    else Alert.alert('FarmChat unavailable', 'No FarmChat contact found for ' + target.name + '.')
+  }, [createConversation, seedDemoData])
+  const unreadForWorker = React.useCallback((target: Worker | null) => {
+    if (!target) return 0
+    const userId = WORKER_CHAT_USER_IDS[target.id]
+    return conversations.find((conv) => conv.type === 'direct' && conv.participants.some((p) => p.id === userId))?.unreadCount || 0
+  }, [conversations])
+  const counts = useMemo(() => ({ cntOnsite: WORKERS.filter(w => w.status === 'onsite' || w.status === 'idle').length, cntOffsite: WORKERS.filter(w => w.status === 'offsite').length, cntRestricted: WORKERS.filter(w => w.status === 'restricted').length, cntSignal: WORKERS.filter(w => w.status === 'signal').length, presentCount: WORKERS.filter(w => w.status !== 'offsite').length, expectedCount: WORKERS.length }), [])
+  const zones = ZONES.filter(z => zf === 'all' || z.type === zf), mapWorkers = selZone ? WORKERS.filter(w => w.zone === selZone) : WORKERS
+  const workers = WORKERS.filter(w => (filter === 'all' || (filter === 'onsite' && ['onsite', 'idle'].includes(w.status)) || (filter === 'offsite' && w.status === 'offsite') || (filter === 'idle' && w.status === 'idle') || (filter === 'alerts' && ['restricted', 'signal'].includes(w.status))) && (!search || `${w.name} ${w.role} ${w.location}`.toLowerCase().includes(search.toLowerCase())))
+  const recenter = () => mapRef.current?.fitToCoordinates(mapWorkers.map(w => w.coordinate), { edgePadding: { top: 70, right: 70, bottom: 70, left: 70 }, animated: true })
+  const map = <View style={s.mapCard}><View style={s.map}><MapView ref={mapRef} style={StyleSheet.absoluteFill} initialRegion={{ ...CENTER, latitudeDelta: .026, longitudeDelta: .026 }} mapType="satellite" showsCompass showsScale><Polygon coordinates={BOUNDARY} strokeColor={C.lime} strokeWidth={2} fillColor="rgba(174,234,0,.05)" />{zones.map(z => <Polygon key={z.id} coordinates={z.coordinates} strokeColor={z.color} strokeWidth={selZone === z.id ? 4 : 2} fillColor={z.type === 'restricted' ? 'rgba(226,59,46,.10)' : 'rgba(67,160,71,.08)'} tappable onPress={() => { setSelZone(selZone === z.id ? null : z.id); Alert.alert(z.name, z.rule) }} />)}{mapWorkers.map(w => <Marker key={w.id} coordinate={w.coordinate} onPress={() => setWorker(w)}><View style={s.pin}><Text style={s.pinT}>{w.initials}</Text></View><View style={[s.pinD, { backgroundColor: col(w.status) }]} /></Marker>)}</MapView><View style={s.mapTools}><IconBtn icon={Icons.target} onPress={recenter} /><IconBtn icon={Icons.refreshCw} onPress={() => setSelZone(null)} /></View></View></View>
+  return <View style={s.wrap}><StatusBar style="dark" /><View style={[s.top, { paddingTop: insets.top + 8 }]}><IconBtn icon={Icons.arrowLeft} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/team' as any)} /><Text style={s.title}>Workforce Live <Text style={s.live}>Live</Text></Text><IconBtn icon={Icons.target} onPress={recenter} /></View><View style={s.tabs}>{(['live', 'workers', 'alerts', 'boundaries', 'history'] as Tab[]).map(t => { const I = t === 'live' ? Icons.mapPin : t === 'workers' ? Icons.users : t === 'alerts' ? Icons.alertTriangle : t === 'boundaries' ? Icons.mapPin : Icons.clock; return <TouchableOpacity key={t} style={[s.tab, tab === t && s.tabOn]} onPress={() => setTab(t)}><GoonaIcon icon={I} size={14} color={tab === t ? '#fff' : C.mut2} /><Text style={[s.tabT, tab === t && s.tabTOn]}>{t[0].toUpperCase() + t.slice(1)}</Text>{t === 'alerts' ? <Text style={s.bub}>3</Text> : null}</TouchableOpacity> })}</View><ScrollView contentContainerStyle={[s.content, { paddingBottom: 118 + insets.bottom }]} showsVerticalScrollIndicator={false}>{tab === 'live' && <Animated.View entering={FadeIn.duration(160)}><View style={s.privacy}><GoonaIcon icon={Icons.lock} size={17} color={C.green} /><Text style={s.privacyT}>Location tracking active <Text style={{ fontWeight: '900', color: C.green }}>during work hours only</Text>. All workers have consented.</Text><TouchableOpacity onPress={() => Alert.alert('Location tracking', 'Presence, zone entry, signal health and attendance events are tracked during work hours.')}><Text style={s.link}>What is tracked?</Text></TouchableOpacity></View><LinearGradient colors={['#249049', '#1E7A3D', '#155C2E']} style={s.hero}><View style={s.heroTop}><Text style={s.roster}><Text style={s.rosterB}>{counts.presentCount}</Text> of <Text style={s.rosterB}>{counts.expectedCount}</Text> expected present</Text><Text style={s.ts}>updated just now</Text></View><View style={s.grid}><Stat n={counts.cntOnsite} t="On site" tone="ok" /><Stat n={counts.cntOffsite} t="Off site" /><Stat n={counts.cntRestricted} t="Restricted" tone="bad" /><Stat n={counts.cntSignal} t="Signal lost" tone="warn" /></View></LinearGradient>{map}<View style={s.ticker}><GoonaIcon icon={Icons.radio} size={16} color={C.lime} /><Text style={s.tickerT}>Restricted zone entry: Dele entered Chemical Storage without approval.</Text></View><Section title="Zones" /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}><TouchableOpacity style={[s.chip, !selZone && s.chipOn]} onPress={() => setSelZone(null)}><Text style={[s.chipT, !selZone && s.chipTOn]}>All zones</Text></TouchableOpacity>{ZONES.map(z => <TouchableOpacity key={z.id} style={[s.chip, selZone === z.id && s.chipOn]} onPress={() => setSelZone(selZone === z.id ? null : z.id)}><View style={[s.dot, { backgroundColor: z.color }]} /><Text style={[s.chipT, selZone === z.id && s.chipTOn]}>{z.name}</Text></TouchableOpacity>)}</ScrollView><Section title="Attendance Events" tag="Live" />{EVENTS.map((e, i) => <View key={e} style={s.event}><GoonaIcon icon={i % 2 ? Icons.mapPin : Icons.navigation} size={13} color={i % 2 ? C.amber : C.green} /><Text style={s.eventT}>{e}</Text><Text style={s.eventM}>{i * 7 + 2}m</Text></View>)}</Animated.View>}{tab === 'workers' && <Animated.View entering={FadeIn.duration(160)}><View style={s.search}><GoonaIcon icon={Icons.search} size={16} color={C.mut2} /><TextInput value={search} onChangeText={setSearch} placeholder="Search workers, roles or zones" placeholderTextColor={C.mut2} style={s.searchI} /></View><Pill value={filter} onChange={setFilter} items={[{ key: 'all', label: 'All' }, { key: 'onsite', label: 'On site' }, { key: 'offsite', label: 'Off site' }, { key: 'idle', label: 'Idle' }, { key: 'alerts', label: 'Flagged' }]} />{workers.map(w => <WorkerCard key={w.id} w={w} onPress={() => setWorker(w)} />)}</Animated.View>}{tab === 'alerts' && <Animated.View entering={FadeIn.duration(160)}><Section title="High priority" />{ALERTS.filter(a => a.level === 'high').map(a => <AlertCard key={a.id} a={a} />)}<Section title="Needs review" />{ALERTS.filter(a => a.level === 'medium').map(a => <AlertCard key={a.id} a={a} />)}<Section title="Resolved today" tag="Rules configurable" />{ALERTS.filter(a => a.level === 'resolved').map(a => <AlertCard key={a.id} a={a} />)}</Animated.View>}{tab === 'boundaries' && <Animated.View entering={FadeIn.duration(160)}><LinearGradient colors={['#1E7A3D', '#155C2E']} style={s.farmHero}><Text style={s.farmTitle}>{FARM_NAME}</Text><Text style={s.farmSub}>12.4 ha � Geofence active</Text><View style={s.farmActs}><TouchableOpacity style={s.farmP} onPress={() => Alert.alert('Boundary editor', 'Farm perimeter editor is ready.')}><Text style={s.farmPT}>Edit Boundary</Text></TouchableOpacity><TouchableOpacity style={s.farmG} onPress={() => setZone(ZONES[0])}><Text style={s.farmGT}>+ Add Zone</Text></TouchableOpacity></View></LinearGradient><Pill value={zf} onChange={setZf} items={[{ key: 'all', label: 'All' }, { key: 'operational', label: 'Operational' }, { key: 'restricted', label: 'Restricted' }]} />{zones.map(z => <ZoneCard key={z.id} z={z} onEdit={() => setZone(z)} />)}</Animated.View>}{tab === 'history' && <Animated.View entering={FadeIn.duration(160)}><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.dates}>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((d, i) => <TouchableOpacity key={d} style={[s.date, i === 4 && s.dateOn]}><Text style={[s.dateT, i === 4 && s.dateTOn]}>{d}</Text><Text style={[s.dateN, i === 4 && s.dateTOn]}>{12 + i}</Text></TouchableOpacity>)}</ScrollView><View style={s.scrub}><Text style={s.scrubTime}>{String(6 + Math.floor(hist / 8)).padStart(2, '0')}:00</Text><View style={s.track}><View style={[s.fill, { width: `${hist}%` }]} /><View style={[s.thumb, { left: `${hist}%` }]} /></View><View style={s.scrubHits}>{[0, 20, 40, 60, 80, 100].map(v => <Pressable key={v} style={{ flex: 1 }} onPress={() => setHist(v)} />)}</View><View style={s.scrubCtr}><TouchableOpacity style={s.play} onPress={() => setPlay(!play)}><GoonaIcon icon={play ? Icons.pause : Icons.play} size={19} color="#fff" /></TouchableOpacity>{[1, 2, 4].map(v => <TouchableOpacity key={v} style={s.speed}><Text style={s.speedT}>{v}x</Text></TouchableOpacity>)}</View></View>{map}<View style={s.histStats}><Stat n={counts.presentCount} t="Present" tone="ok" /><Stat n={counts.cntRestricted} t="Breaches" tone="bad" /><Stat n={counts.cntSignal} t="Signal" tone="warn" /></View><Section title="Today's breaches" />{ALERTS.filter(a => a.level !== 'resolved').map(a => <AlertCard key={a.id} a={a} />)}</Animated.View>}</ScrollView><WorkerSheet w={hideWorkerDetailForChat ? null : worker} unreadCount={unreadForWorker(worker)} onCall={callWorker} onMessage={openWorkerDm} onClose={() => setWorker(null)} /><ZoneSheet z={zone} onClose={() => setZone(null)} /><BottomDock hidden={false} /></View>
 }
-
-const mapHeight = SCREEN_H * 0.42
-
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9F5' },
-  scroll: { flex: 1, zIndex: 1 },
-  topNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 54, paddingHorizontal: 24 },
-  navBack: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-  navLabel: { fontSize: 13, fontWeight: '500', color: '#616161' },
-  headerTitle: { fontWeight: '800', fontSize: 30, lineHeight: 34, color: '#1B1B1B' },
-  headerSub: { fontSize: 13, color: '#64748B', marginTop: 1 },
-
-  /* ─── Map ─── */
-  mapWrapper: { height: mapHeight, marginHorizontal: 16, marginTop: 12, borderRadius: 24, overflow: 'hidden', position: 'relative', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 6 },
-  map: { width: '100%', height: '100%' },
-  callout: { position: 'absolute', bottom: 10, left: 10, right: 10 },
-  calloutContent: { backgroundColor: 'white', borderRadius: 18, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 16, elevation: 6 },
-  calloutAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
-  calloutDetails: { marginTop: 8, gap: 4 },
-  calloutRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  calloutText: { fontSize: 11, color: '#64748B' },
-  mapOverlayBtn: { position: 'absolute', top: 12, right: 12 },
-  mapBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
-
-  /* ─── Status ─── */
-  statusStrip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderRadius: 18, paddingVertical: 14, paddingHorizontal: 16, marginTop: 14, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 12, elevation: 2 },
-  statusItem: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
-  statusValue: { fontSize: 15, fontWeight: '800', color: '#1B1B1B' },
-  statusLabel: { fontSize: 10, color: '#94A3B8' },
-  statusDiv: { width: 1, height: 22, backgroundColor: '#F1F5F9' },
-
-  /* ─── Section ─── */
-  sectionTitle: { fontWeight: '800', fontSize: 17, color: '#1B1B1B' },
-
-  /* ─── Zones ─── */
-  zoneChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 50, borderWidth: 1, marginRight: 8 },
-  zoneChipText: { fontSize: 12, fontWeight: '600' },
-
-  /* ─── Events ─── */
-  eventItem: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'white', borderRadius: 14, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)' },
-  eventIcon: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  eventText: { fontSize: 12, color: '#1B1B1B', flex: 1 },
-  eventTime: { fontSize: 10, color: '#94A3B8', marginLeft: 8 },
-
-  /* ─── Workers ─── */
-  workerCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderRadius: 16, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)' },
-  workerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
-  workerBadge: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 50 },
-  workerBadgeText: { fontSize: 9, fontWeight: '700', textTransform: 'capitalize' },
-
-  /* ─── Fallback ─── */
-  fallbackContainer: { height: mapHeight, backgroundColor: '#F1F5F9', borderRadius: 24, overflow: 'hidden' },
-  fallbackHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.85)', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.04)' },
-  fallbackGrid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 6, alignContent: 'flex-start' },
-  fallbackZoneCard: { width: '31%', flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 12, borderWidth: 1.5 },
-  fallbackWorkerRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.85)' },
-  fallbackDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
-  fallbackFooter: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.9)', borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.04)' },
-})
+function WorkerSheet({ w, unreadCount, onCall, onMessage, onClose }: { w: Worker | null; unreadCount: number; onCall: (w: Worker) => void; onMessage: (w: Worker) => void; onClose: () => void }) {
+  return <Modal visible={!!w} transparent={false} animationType="slide" onRequestClose={onClose}>{w ? <View style={s.detailScreen}><View style={s.detailTop}><IconBtn icon={Icons.chevronLeft} onPress={onClose} /><Text style={s.detailTitle}>Worker Detail</Text><View style={{ width: 38 }} /></View><ScrollView contentContainerStyle={s.detailContent} showsVerticalScrollIndicator={false}><View style={s.profileRow}><View style={s.profileAvatar}><Text style={s.profileInitials}>{w.initials}</Text></View><View style={{ flex: 1 }}><Text style={s.profileName}>{w.name}</Text><Text style={s.profileRole}>{w.role}</Text><View style={s.signalPill}><GoonaIcon icon={Icons.wifi} size={10} color={C.mut2} /><Text style={s.signalText}>Signal last</Text></View></View></View><View style={s.summaryGrid}><View style={s.summaryCard}><Text style={s.summaryLabel}>ON SITE TODAY</Text><Text style={s.summaryValue}>6h 12m</Text></View><View style={s.summaryCard}><Text style={s.summaryLabel}>ARRIVED</Text><Text style={s.summaryValue}>06:55</Text></View></View><View style={s.shiftPill}><View style={s.shiftLeft}><GoonaIcon icon={Icons.clock} size={13} color={C.green} /><Text style={s.shiftText}>Scheduled 07:00-16:00</Text></View><Text style={s.onTime}>On time</Text></View><Section title="Today's timeline" /><View style={s.timelineCard}>{['Entered farm boundary', `Entered ${w.location}`, 'GPS signal lost'].map((x, i) => <View key={x} style={s.timelineRow}><View style={s.timelineRail}><View style={[s.timelineDot, i === 2 && { backgroundColor: C.red }]} />{i < 2 ? <View style={s.timelineLine} /> : null}</View><View style={{ flex: 1 }}><Text style={[s.timelineTitle, i === 2 && { color: C.red }]}>{x}</Text>{i > 0 ? <Text style={s.timelineSub}>{w.location}</Text> : null}</View><Text style={s.timelineTime}>{i === 0 ? '06:55' : i === 1 ? '07:08' : '13:20'}</Text></View>)}</View><Section title="Breadcrumb map" /><View style={s.breadcrumbMap}><View style={s.boundaryDash} /><View style={[s.mapBlock, { left: '12%', top: '14%', width: '31%', height: '28%' }]} /><View style={[s.mapBlock, { left: '49%', top: '12%', width: '29%', height: '31%' }]} /><View style={[s.mapBlock, { left: '17%', top: '62%', width: '22%', height: '22%' }]} /><View style={[s.mapBlock, { left: '45%', top: '60%', width: '29%', height: '24%' }]} /><View style={s.restrictedBlock} /><View style={s.pathLine} /><View style={s.pathStart} /><View style={s.pathMid} /><View style={s.pathEnd} /></View><View style={s.lastKnown}><GoonaIcon icon={Icons.cloudOff} size={15} color={C.mut} /><Text style={s.lastKnownText}>Last known: {w.location} � {w.lastSeen}</Text></View><View style={s.detailActions}><TouchableOpacity activeOpacity={0.75} style={s.detailAction} onPress={() => onCall(w)}><GoonaIcon icon={Icons.phone} size={15} color={C.green} /><Text style={s.detailActionText}>Call</Text></TouchableOpacity><TouchableOpacity activeOpacity={0.75} style={s.detailAction} onPress={() => onMessage(w)}><View><GoonaIcon icon={Icons.messageCircle} size={15} color={C.green} />{unreadCount > 0 ? <Text style={s.msgBadge}>{unreadCount}</Text> : null}</View><Text style={s.detailActionText}>Message</Text></TouchableOpacity><TouchableOpacity style={s.detailAction}><GoonaIcon icon={Icons.calendar} size={15} color={C.green} /><Text style={s.detailActionText}>View week</Text></TouchableOpacity></View><Section title="This week" tag="38.0h total" /><View style={s.weekGrid}>{[['MON','7.8h'],['TUE','7.9h'],['WED','8.1h'],['THU','7.5h'],['FRI','6.7h']].map(([d,h]) => <View key={d} style={s.weekCard}><Text style={s.weekDay}>{d}</Text><Text style={s.weekHours}>{h}</Text></View>)}</View></ScrollView></View> : null}</Modal>
+}
+function ZoneSheet({ z, onClose }: { z: Zone | null; onClose: () => void }) { return <Modal visible={!!z} transparent animationType="slide" onRequestClose={onClose}><View style={s.modal}><Pressable style={s.backdrop} onPress={onClose} />{z ? <View style={s.sheet}><View style={s.sheetTop}><IconBtn icon={Icons.x} onPress={onClose} /><Text style={s.sheetTitle}>Zone Editor</Text><View style={{ width: 38 }} /></View><View style={s.sheetBody}><Text style={s.field}>Zone name</Text><TextInput value={z.name} editable={false} style={s.input} /><Text style={s.field}>Rule</Text><TextInput value={z.rule} editable={false} style={s.input} /><View style={s.canvas}><Text style={s.canvasT}>Boundary preview</Text><Text style={s.canvasD}>4 points � {z.area}</Text></View><TouchableOpacity style={s.save} onPress={onClose}><Text style={s.saveT}>Save Zone</Text></TouchableOpacity></View></View> : null}</View></Modal> }
+const s = StyleSheet.create({ wrap: { flex: 1, backgroundColor: C.bg }, top: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 8 }, iconBtn: { width: 38, height: 38, borderRadius: 13, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center', shadowColor: '#142819', shadowOpacity: .05, shadowRadius: 8, elevation: 2 }, title: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '900', color: C.ink }, live: { fontSize: 10, color: C.green }, tabs: { flexDirection: 'row', backgroundColor: C.bg, paddingHorizontal: 16, paddingVertical: 8, gap: 7 }, tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 10, height: 34, borderRadius: 17, backgroundColor: C.card, borderWidth: 1, borderColor: C.line }, tabOn: { backgroundColor: C.ink, borderColor: C.ink }, tabT: { fontSize: 9.8, fontWeight: '900', color: C.mut2 }, tabTOn: { color: '#fff' }, bub: { position: 'absolute', top: 4, right: 2, backgroundColor: C.red, color: '#fff', fontSize: 9, fontWeight: '900', minWidth: 16, height: 16, borderRadius: 8, textAlign: 'center' }, content: { padding: 16, paddingBottom: 120 }, privacy: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: '#E6F4E9', borderWidth: 1, borderColor: '#CFE6D4', borderRadius: 16, padding: 12, marginBottom: 12 }, privacyT: { flex: 1, fontSize: 12, lineHeight: 17, color: C.mut, fontWeight: '600' }, link: { fontSize: 11, fontWeight: '900', color: C.green }, hero: { borderRadius: 24, padding: 14, shadowColor: C.green, shadowOpacity: .25, shadowRadius: 24, elevation: 6 }, heroTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }, roster: { color: 'rgba(255,255,255,.82)', fontSize: 12, fontWeight: '700' }, rosterB: { color: '#fff', fontSize: 16, fontWeight: '900' }, ts: { color: 'rgba(255,255,255,.68)', fontSize: 10, fontWeight: '700' }, grid: { flexDirection: 'row', gap: 8 }, stat: { flex: 1, minHeight: 76, borderRadius: 16, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }, statOk: { backgroundColor: C.lime }, statN: { fontSize: 24, fontWeight: '900' }, statT: { fontSize: 10, color: C.mut, fontWeight: '900', textAlign: 'center' }, mapCard: { marginTop: 14, borderRadius: 24, padding: 3, backgroundColor: C.card, shadowColor: '#142819', shadowOpacity: .08, shadowRadius: 18, elevation: 4 }, map: { height: 250, borderRadius: 21, overflow: 'hidden', backgroundColor: '#EAF1E3' }, mapTools: { position: 'absolute', right: 12, top: 12, gap: 8 }, pin: { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: C.green2, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }, pinT: { color: '#fff', fontSize: 10, fontWeight: '900' }, pinD: { width: 7, height: 7, borderRadius: 4, alignSelf: 'center', marginTop: 2 }, ticker: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, backgroundColor: '#E6F4E9', borderWidth: 1, borderColor: '#CFE6D4', borderRadius: 16, padding: 13 }, tickerT: { flex: 1, color: C.green, fontSize: 12, fontWeight: '800' }, sec: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, marginBottom: 10 }, secT: { fontSize: 12, fontWeight: '900', letterSpacing: .7, textTransform: 'uppercase', color: C.mut }, secL: { flex: 1, height: 1, backgroundColor: C.line }, secTag: { fontSize: 10, fontWeight: '900', color: C.green, backgroundColor: '#E6F4E9', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }, chips: { gap: 8 }, chip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: C.line, borderRadius: 15, backgroundColor: C.card, paddingHorizontal: 12, paddingVertical: 9 }, chipOn: { backgroundColor: C.ink, borderColor: C.ink }, chipT: { fontSize: 12, color: C.mut, fontWeight: '800' }, chipTOn: { color: '#fff' }, dot: { width: 8, height: 8, borderRadius: 4 }, event: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 12, marginBottom: 8 }, eventT: { flex: 1, fontSize: 12.5, color: C.ink, fontWeight: '700' }, eventM: { fontSize: 10, color: C.mut2, fontWeight: '700' }, search: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, paddingHorizontal: 12, marginBottom: 10 }, searchI: { flex: 1, minHeight: 44, color: C.ink, fontSize: 14 }, pills: { gap: 8, paddingBottom: 12 }, pill: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 14, backgroundColor: C.card, borderWidth: 1, borderColor: C.line }, pillOn: { backgroundColor: C.ink, borderColor: C.ink }, pillT: { fontSize: 12, fontWeight: '800', color: C.mut }, pillTOn: { color: '#fff' }, worker: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 12, marginBottom: 9 }, av: { width: 42, height: 42, borderRadius: 14, backgroundColor: C.ink, borderWidth: 2, alignItems: 'center', justifyContent: 'center' }, avT: { color: '#fff', fontWeight: '900', fontSize: 12 }, wName: { fontSize: 14, color: C.ink, fontWeight: '900' }, wRole: { fontSize: 11, color: C.mut, fontWeight: '700' }, wMeta: { fontSize: 10.5, color: C.mut2, fontWeight: '700', marginTop: 4 }, badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }, badgeT: { fontSize: 9, fontWeight: '900' }, alert: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 13, marginBottom: 9 }, alertI: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, alertT: { fontSize: 14, color: C.ink, fontWeight: '900' }, alertD: { fontSize: 12, color: C.mut, lineHeight: 17, marginTop: 2 }, alertM: { fontSize: 10, color: C.mut2, fontWeight: '800', marginTop: 4 }, farmHero: { borderRadius: 22, padding: 18, marginBottom: 14 }, farmTitle: { fontSize: 18, color: '#fff', fontWeight: '900' }, farmSub: { color: 'rgba(255,255,255,.76)', fontSize: 12, fontWeight: '700', marginTop: 5 }, farmActs: { flexDirection: 'row', gap: 9, marginTop: 14 }, farmP: { flex: 1, backgroundColor: C.lime, borderRadius: 13, alignItems: 'center', paddingVertical: 11 }, farmPT: { color: C.ink, fontSize: 12.5, fontWeight: '900' }, farmG: { flex: 1, backgroundColor: 'rgba(255,255,255,.13)', borderWidth: 1, borderColor: 'rgba(255,255,255,.22)', borderRadius: 13, alignItems: 'center', paddingVertical: 11 }, farmGT: { color: '#fff', fontSize: 12.5, fontWeight: '900' }, zoneCard: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 12, marginBottom: 9 }, zoneSw: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, zoneT: { fontSize: 14, color: C.ink, fontWeight: '900' }, zoneK: { fontSize: 9, fontWeight: '900' }, zoneD: { fontSize: 11, color: C.mut, fontWeight: '700', marginTop: 3 }, zAct: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }, dates: { gap: 8, paddingBottom: 12 }, date: { minWidth: 58, alignItems: 'center', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingVertical: 9 }, dateOn: { backgroundColor: C.ink, borderColor: C.ink }, dateT: { fontSize: 11, color: C.mut, fontWeight: '800' }, dateN: { fontSize: 15, color: C.ink, fontWeight: '900', marginTop: 2 }, dateTOn: { color: '#fff' }, scrub: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 14 }, scrubTime: { textAlign: 'center', color: C.ink, fontSize: 26, fontWeight: '900' }, track: { height: 8, borderRadius: 5, backgroundColor: C.line, marginTop: 18 }, fill: { height: 8, borderRadius: 5, backgroundColor: C.green2 }, thumb: { position: 'absolute', top: 62, width: 26, height: 26, marginLeft: -13, borderRadius: 13, backgroundColor: '#fff', borderWidth: 3, borderColor: C.green }, scrubHits: { position: 'absolute', left: 14, right: 14, top: 50, height: 44, flexDirection: 'row' }, scrubCtr: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 18 }, play: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center' }, speed: { flex: 1, borderRadius: 10, backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, alignItems: 'center', paddingVertical: 9 }, speedT: { fontSize: 11.5, color: C.mut, fontWeight: '900' }, histStats: { flexDirection: 'row', gap: 9, marginTop: 12 }, modal: { flex: 1, justifyContent: 'flex-end' }, backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(12,28,16,.48)' }, sheet: { maxHeight: '88%', backgroundColor: C.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden' }, sheetTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 }, sheetTitle: { fontSize: 16, color: C.ink, fontWeight: '900' }, sheetBody: { padding: 16, alignItems: 'center' }, avLg: { width: 64, height: 64, borderRadius: 22, backgroundColor: C.ink, borderWidth: 3, alignItems: 'center', justifyContent: 'center' }, avLgT: { color: '#fff', fontWeight: '900', fontSize: 20 }, detailName: { fontSize: 18, color: C.ink, fontWeight: '900', marginTop: 10 }, detailMeta: { fontSize: 13, color: C.mut, fontWeight: '700', marginBottom: 12 }, detailRow: { alignSelf: 'stretch', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 13, marginBottom: 8, color: C.ink, fontWeight: '700' }, field: { alignSelf: 'stretch', color: C.mut, fontSize: 11, fontWeight: '900', marginTop: 8, marginBottom: 6, textTransform: 'uppercase' }, input: { alignSelf: 'stretch', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 13, padding: 12, color: C.ink }, canvas: { alignSelf: 'stretch', height: 140, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.line, backgroundColor: '#EAF1E3', marginTop: 14, alignItems: 'center', justifyContent: 'center' }, canvasT: { color: C.ink, fontWeight: '900' }, canvasD: { color: C.mut, marginTop: 4 }, save: { alignSelf: 'stretch', marginTop: 16, backgroundColor: C.green, borderRadius: 16, paddingVertical: 15, alignItems: 'center' }, saveT: { color: '#fff', fontWeight: '900' }, detailScreen: { flex: 1, backgroundColor: C.bg }, detailTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, paddingTop: 46, paddingBottom: 8 }, detailTitle: { fontSize: 14, fontWeight: '900', color: '#000' }, detailContent: { paddingHorizontal: 22, paddingBottom: 28 }, profileRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 }, profileAvatar: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#35A66F', alignItems: 'center', justifyContent: 'center' }, profileInitials: { color: '#fff', fontSize: 16, fontWeight: '900' }, profileName: { fontSize: 18, fontWeight: '900', color: '#07180C' }, profileRole: { fontSize: 11, color: C.mut, fontWeight: '700' }, signalPill: { marginTop: 5, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EEF3EA', borderRadius: 9, paddingHorizontal: 8, paddingVertical: 3 }, signalText: { fontSize: 8, color: C.mut, fontWeight: '900' }, summaryGrid: { flexDirection: 'row', gap: 9, marginTop: 16 }, summaryCard: { flex: 1, backgroundColor: C.card, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: C.line, shadowColor: '#142819', shadowOpacity: .08, shadowRadius: 10, elevation: 2 }, summaryLabel: { fontSize: 8, color: C.ink, fontWeight: '900' }, summaryValue: { marginTop: 4, fontSize: 17, color: C.ink, fontWeight: '900' }, shiftPill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, backgroundColor: C.card, borderRadius: 12, padding: 11, borderWidth: 1, borderColor: C.line, shadowColor: '#142819', shadowOpacity: .05, shadowRadius: 8, elevation: 1 }, shiftLeft: { flexDirection: 'row', alignItems: 'center', gap: 7 }, shiftText: { fontSize: 11, color: C.ink, fontWeight: '800' }, onTime: { fontSize: 9, color: C.green, fontWeight: '900', backgroundColor: '#E6F4E9', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }, timelineCard: { backgroundColor: C.card, borderRadius: 13, padding: 13, borderWidth: 1, borderColor: C.line, shadowColor: '#142819', shadowOpacity: .08, shadowRadius: 12, elevation: 2 }, timelineRow: { flexDirection: 'row', minHeight: 40 }, timelineRail: { width: 16, alignItems: 'center' }, timelineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#9BB5AF', borderWidth: 2, borderColor: '#EEF7EF' }, timelineLine: { flex: 1, width: 2, backgroundColor: '#CAD8CE', marginTop: 2 }, timelineTitle: { fontSize: 11, color: C.ink, fontWeight: '900' }, timelineSub: { fontSize: 9, color: C.mut, marginTop: 2 }, timelineTime: { fontSize: 8, color: C.mut, fontWeight: '800' }, breadcrumbMap: { height: 165, borderRadius: 14, backgroundColor: '#E4F0DD', overflow: 'hidden', marginBottom: 10, position: 'relative' }, boundaryDash: { position: 'absolute', left: 12, right: 12, top: 12, bottom: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.green, borderRadius: 8 }, mapBlock: { position: 'absolute', backgroundColor: '#CFE5C9', borderWidth: 1, borderColor: '#B9DAB6', transform: [{ rotate: '-4deg' }] }, restrictedBlock: { position: 'absolute', right: 52, top: 72, width: 35, height: 35, backgroundColor: '#EBD9C8', borderWidth: 1, borderColor: '#E6B59D' }, pathLine: { position: 'absolute', left: 43, top: 93, width: 46, height: 2, backgroundColor: '#35A66F' }, pathStart: { position: 'absolute', left: 39, top: 89, width: 7, height: 7, borderRadius: 4, borderWidth: 1, borderColor: '#1B8F58', backgroundColor: '#fff' }, pathMid: { position: 'absolute', left: 64, top: 91, width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff', borderWidth: 1, borderColor: '#1B8F58' }, pathEnd: { position: 'absolute', left: 82, top: 86, width: 12, height: 12, borderRadius: 6, backgroundColor: '#35A66F' }, lastKnown: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.card, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: C.line, marginBottom: 10 }, lastKnownText: { fontSize: 11, color: '#00150A', fontWeight: '800' }, detailActions: { flexDirection: 'row', gap: 9, marginBottom: 10 }, detailAction: { flex: 1, alignItems: 'center', gap: 5, backgroundColor: C.card, borderRadius: 12, paddingVertical: 12, borderWidth: 1, borderColor: C.line, shadowColor: '#142819', shadowOpacity: .06, shadowRadius: 8, elevation: 1 }, detailActionText: { fontSize: 10, color: C.ink, fontWeight: '900' }, weekGrid: { flexDirection: 'row', gap: 8 }, weekCard: { flex: 1, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line, alignItems: 'center', paddingVertical: 11 }, weekDay: { fontSize: 8, color: C.mut, fontWeight: '900' }, weekHours: { fontSize: 12, color: C.ink, fontWeight: '900', marginTop: 5 }, msgBadge: { position: 'absolute', right: -9, top: -8, minWidth: 15, height: 15, borderRadius: 8, backgroundColor: C.red, color: '#fff', fontSize: 8, fontWeight: '900', textAlign: 'center', overflow: 'hidden' } })

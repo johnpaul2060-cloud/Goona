@@ -303,7 +303,7 @@ export default function FarmChatScreen() {
         />
       )}
 
-      <BottomDock />
+      <BottomDock hidden={showCreateGroup} />
 
       {/* Comment Sheet */}
       {commentingPostId && (

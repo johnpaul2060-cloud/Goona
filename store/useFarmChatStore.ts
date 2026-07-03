@@ -102,6 +102,16 @@ const DEMO_USERS: FarmChatUser[] = [
   { id: 'tunde', name: 'Tunde M.', role: 'Farm Manager', online: true },
   { id: 'chioma', name: 'Chioma', role: 'Accountant', online: false, lastSeen: minsAgo(45) },
   { id: 'emeka', name: 'Emeka', role: 'Security Guard', online: true },
+  { id: 'chinedu', name: 'Chinedu Okoro', role: 'Senior Farmhand', online: true },
+  { id: 'aminat', name: 'Aminat Fashola', role: 'Feed Specialist', online: true },
+  { id: 'kola', name: 'Kola Ogunleye', role: 'Veterinary Assistant', online: false, lastSeen: hrsAgo(4) },
+  { id: 'funmi', name: 'Funmi Ojo', role: 'Farmhand', online: true },
+  { id: 'tunde-worker', name: 'Tunde Adebayo', role: 'Security', online: true },
+  { id: 'blessing', name: 'Blessing Nwosu', role: 'Farmhand', online: false, lastSeen: minsAgo(18) },
+  { id: 'segun', name: 'Segun Eze', role: 'Vet Assistant', online: true },
+  { id: 'mary-workforce', name: 'Mary James', role: 'Store Clerk', online: false, lastSeen: minsAgo(12) },
+  { id: 'dele', name: 'Dele Akin', role: 'Farmhand', online: true },
+  { id: 'ifeanyi', name: 'Ifeanyi Folarin', role: 'Supervisor', online: true },
 ]
 
 const DEMO_CONVERSATIONS: FarmChatConversation[] = [

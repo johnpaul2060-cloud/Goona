@@ -19,10 +19,8 @@ export default function ChatDetailScreen() {
   }, [id])
 
   useEffect(() => {
-    if (!conv && router.canGoBack()) {
-      router.back()
-    } else if (!conv) {
-      router.navigate('/(tabs)/farmchat')
+    if (!conv) {
+      router.replace('/(tabs)/farmchat')
     }
   }, [conv])
 
@@ -41,7 +39,7 @@ export default function ChatDetailScreen() {
   }, [id, sendMessage])
 
   const handleBack = useCallback(() => {
-    router.navigate('/(tabs)/farmchat')
+    router.replace('/(tabs)/farmchat')
   }, [])
 
   if (!conv) return <View style={styles.container} />
