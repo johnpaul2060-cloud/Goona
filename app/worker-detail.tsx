@@ -1,13 +1,16 @@
 import React from 'react'
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { AccessibilityInfo, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
+import Animated, { Easing, FadeInUp, interpolate, useAnimatedProps, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming } from 'react-native-reanimated'
+import Svg, { Circle, Defs, G, Line, LinearGradient as SvgLinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg'
 import GoonaIcon from '../components/ui/GoonaIcon'
 import BottomDock from '../components/navigation/BottomDock'
 import { Icons } from '../shared/icons'
 import { useFarmChatStore } from '../store/useFarmChatStore'
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 type WorkerStatus = 'onsite' | 'offsite' | 'idle' | 'restricted' | 'signal'
 type WorkerDetail = {
@@ -158,6 +161,93 @@ function ActionButton({ icon, label, onPress, badge }: { icon: any; label: strin
   const p = usePressScale()
   return <Animated.View style={[p.style, { flex: 1 }]}><TouchableOpacity activeOpacity={0.78} onPress={onPress} onPressIn={p.onPressIn} onPressOut={p.onPressOut} style={s.actionBtn}><View><GoonaIcon icon={icon} size={16} color={C.green} />{badge ? <Text style={s.badge}>{badge}</Text> : null}</View><Text style={s.actionText}>{label}</Text></TouchableOpacity></Animated.View>
 }
+function useReduceMotionPreference() {
+  const [reduced, setReduced] = React.useState(false)
+  React.useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduced)
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced)
+    return () => sub.remove()
+  }, [])
+  return reduced
+}
+function PremiumRouteMap({ worker, onRecenter }: { worker: WorkerDetail; onRecenter: () => void }) {
+  const reducedMotion = useReduceMotionPreference()
+  const pulse = useSharedValue(0)
+  const move = useSharedValue(0)
+  const zone = worker.location
+  React.useEffect(() => {
+    if (reducedMotion) {
+      pulse.value = 0
+      move.value = 0
+      return
+    }
+    pulse.value = withRepeat(withTiming(1, { duration: 1800, easing: Easing.out(Easing.quad) }), -1, false)
+    move.value = withRepeat(withTiming(1, { duration: 2600, easing: Easing.inOut(Easing.ease) }), -1, true)
+  }, [move, pulse, reducedMotion])
+  const pinProps = useAnimatedProps(() => ({ cx: interpolate(move.value, [0, 1], [294, 306]), cy: interpolate(move.value, [0, 1], [135, 127]) }))
+  const ringA = useAnimatedProps(() => ({ cx: interpolate(move.value, [0, 1], [294, 306]), cy: interpolate(move.value, [0, 1], [135, 127]), r: interpolate(pulse.value, [0, 1], [7, 27]), opacity: interpolate(pulse.value, [0, 1], [.34, 0]) }))
+  const ringB = useAnimatedProps(() => ({ cx: interpolate(move.value, [0, 1], [294, 306]), cy: interpolate(move.value, [0, 1], [135, 127]), r: interpolate(pulse.value, [0, 1], [14, 38]), opacity: interpolate(pulse.value, [0, 1], [.2, 0]) }))
+  const isCurrent = (name: string) => zone.toLowerCase().includes(name.toLowerCase())
+  return (
+    <View style={s.liveMap}>
+      <Svg width="100%" height="100%" viewBox="0 0 400 250" preserveAspectRatio="xMidYMid meet">
+        <Defs>
+          <SvgLinearGradient id="routeGrad" x1="58" y1="170" x2="306" y2="127" gradientUnits="userSpaceOnUse">
+            <Stop offset="0" stopColor={C.green2} />
+            <Stop offset=".55" stopColor={C.green} />
+            <Stop offset="1" stopColor={C.blue} />
+          </SvgLinearGradient>
+          <SvgLinearGradient id="fieldBg" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#EEF6E8" />
+            <Stop offset="1" stopColor="#DCECD4" />
+          </SvgLinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="400" height="250" rx="18" fill="url(#fieldBg)" />
+        {[50, 100, 150, 200, 250, 300, 350].map((x) => <Line key={'vx' + x} x1={x} y1="0" x2={x} y2="250" stroke="#CFE2C8" strokeWidth="1" opacity=".42" />)}
+        {[42, 84, 126, 168, 210].map((y) => <Line key={'hy' + y} x1="0" y1={y} x2="400" y2={y} stroke="#CFE2C8" strokeWidth="1" opacity=".38" />)}
+        <Polygon points="35,24 362,18 374,106 338,226 73,229 20,116" fill="rgba(67,160,71,.045)" stroke={C.green} strokeWidth="2.6" strokeDasharray="8 7" strokeLinecap="round" strokeLinejoin="round" />
+        <G opacity=".18"><Path d="M60 80h285M44 160h288" stroke="#fff" strokeWidth="16" strokeLinecap="round" /></G>
+        <G>
+          <Rect x="72" y="54" width="105" height="62" rx="8" fill={isCurrent('Poultry House A') ? '#D9F0D1' : '#CFE5C9'} stroke={isCurrent('Poultry House A') ? C.green : '#B5D7AE'} strokeWidth={isCurrent('Poultry House A') ? 2.8 : 1.4} />
+          <SvgText x="84" y="84" fontSize="12" fontWeight="700" fill={C.green}>Poultry House A</SvgText>
+          <Rect x="196" y="48" width="100" height="68" rx="8" fill={isCurrent('Poultry House B') ? '#D9F0D1' : '#CFE5C9'} stroke={isCurrent('Poultry House B') ? C.green : '#B5D7AE'} strokeWidth={isCurrent('Poultry House B') ? 2.8 : 1.4} />
+          <SvgText x="207" y="82" fontSize="12" fontWeight="700" fill={C.green}>Poultry House B</SvgText>
+          <Rect x="76" y="154" width="86" height="44" rx="8" fill={isCurrent('Hatchery') ? '#D9F0D1' : '#CFE5C9'} stroke={isCurrent('Hatchery') ? C.green : '#B5D7AE'} strokeWidth={isCurrent('Hatchery') ? 2.8 : 1.4} />
+          <SvgText x="94" y="181" fontSize="12" fontWeight="700" fill={C.green}>Hatchery</SvgText>
+          <Rect x="190" y="147" width="108" height="58" rx="8" fill={isCurrent('Feed Warehouse') ? '#DDEDF8' : '#D8E8F4'} stroke={isCurrent('Feed Warehouse') ? C.blue : '#B8D3E6'} strokeWidth={isCurrent('Feed Warehouse') ? 2.8 : 1.4} />
+          <SvgText x="205" y="179" fontSize="12" fontWeight="700" fill={C.blue}>Feed Warehouse</SvgText>
+          <Rect x="302" y="158" width="54" height="38" rx="8" fill={isCurrent('Fish Pond') ? '#D9F0D1' : '#CFE5C9'} stroke={isCurrent('Fish Pond') ? C.green : '#B5D7AE'} strokeWidth={isCurrent('Fish Pond') ? 2.8 : 1.4} />
+          <SvgText x="310" y="182" fontSize="11" fontWeight="700" fill={C.green}>Fish Pond</SvgText>
+          <Rect x="304" y="91" width="50" height="49" rx="7" fill={isCurrent('Chemical Storage') ? '#F6D5D1' : '#EBD9C8'} stroke={isCurrent('Chemical Storage') ? C.red : '#E7B2A4'} strokeWidth={isCurrent('Chemical Storage') ? 2.8 : 1.4} />
+          <SvgText x="309" y="116" fontSize="10.5" fontWeight="700" fill={C.red}>Medicine</SvgText>
+        </G>
+        <Path d="M58 174 C95 174, 118 170, 148 168 S203 158, 226 151 S270 146, 306 127" stroke={C.green} strokeWidth="10" opacity=".12" fill="none" strokeLinecap="round" />
+        <Path d="M58 174 C95 174, 118 170, 148 168 S203 158, 226 151 S270 146, 306 127" stroke="url(#routeGrad)" strokeWidth="4" fill="none" strokeLinecap="round" />
+        {[
+          [58, 174, .42],
+          [92, 173, .52],
+          [128, 169, .64],
+          [168, 164, .75],
+          [226, 151, .88],
+          [274, 142, 1],
+        ].map(([x, y, opacity], i) => <Circle key={'crumb' + i} cx={x} cy={y} r="4.5" fill="#fff" stroke={i > 3 ? C.blue : C.green} strokeWidth="2" opacity={opacity} />)}
+        {!reducedMotion ? <><AnimatedCircle animatedProps={ringB} fill="none" stroke={C.green2} strokeWidth="2" /><AnimatedCircle animatedProps={ringA} fill="none" stroke={C.green} strokeWidth="2.5" /></> : null}
+        <AnimatedCircle animatedProps={pinProps} r="8" fill={statusColor(worker.status)} stroke="#fff" strokeWidth="3" />
+        <Rect x="318" y="105" width="46" height="23" rx="11.5" fill="rgba(255,255,255,.92)" stroke="#DCE8D8" />
+        <Circle cx="330" cy="116.5" r="3.5" fill={statusColor(worker.status)} />
+        <SvgText x="338" y="120" fontSize="10" fontWeight="800" fill={C.green}>Live</SvgText>
+      </Svg>
+      <TouchableOpacity activeOpacity={0.75} onPress={onRecenter} style={s.mapRecenter} accessibilityRole="button" accessibilityLabel="Open live map">
+        <GoonaIcon icon={Icons.target} size={15} color={C.ink} />
+      </TouchableOpacity>
+      <View style={s.mapLegend}>
+        <View style={[s.legendDot, { backgroundColor: C.green2 }]} /><Text style={s.legendText}>Operational</Text>
+        <View style={[s.legendDot, { backgroundColor: C.red }]} /><Text style={s.legendText}>Restricted</Text>
+        <View style={[s.legendDot, { backgroundColor: C.blue }]} /><Text style={s.legendText}>Route</Text>
+      </View>
+    </View>
+  )
+}
 
 export default function WorkerDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>()
@@ -226,23 +316,7 @@ export default function WorkerDetailScreen() {
         <Section title="Communication" tag={conv?.unreadCount ? String(conv.unreadCount) + ' unread' : undefined} />
         <View style={s.actions}><ActionButton icon={Icons.phone} label="Call" onPress={callWorker} /><ActionButton icon={Icons.messageCircle} label="Message" onPress={openDm} badge={conv?.unreadCount} /><ActionButton icon={Icons.mapPin} label="Live map" onPress={viewLiveMap} /></View>
         <Section title="Today's activity" tag={worker.checkedOut === '--' ? 'Live route' : 'Complete'} />
-        <View style={s.liveMap}>
-          <View style={s.boundaryDash} />
-          <View style={[s.mapBlock, { left: '12%', top: '14%', width: '31%', height: '28%' }]} />
-          <View style={[s.mapBlock, { left: '49%', top: '12%', width: '29%', height: '31%' }]} />
-          <View style={[s.mapBlock, { left: '17%', top: '62%', width: '22%', height: '22%' }]} />
-          <View style={[s.mapBlock, { left: '45%', top: '60%', width: '29%', height: '24%' }]} />
-          <View style={s.restrictedBlock} />
-          <View style={s.liveRoute} />
-          <View style={[s.routeDot, { left: '17%', top: '57%' }]} />
-          <View style={[s.routeDot, { left: '27%', top: '57%' }]} />
-          <View style={[s.routeDot, { left: '36%', top: '57%' }]} />
-          <View style={[s.routeDot, { left: '56%', top: '51%' }]} />
-          <View style={[s.routeDot, { left: '70%', top: '45%' }]} />
-          <View style={[s.livePulse, { borderColor: statusColor(worker.status) }]} />
-          <View style={[s.livePin, { backgroundColor: statusColor(worker.status) }]} />
-          <View style={s.liveLabel}><Text style={s.liveLabelText}>Live</Text></View>
-        </View>
+        <PremiumRouteMap worker={worker} onRecenter={viewLiveMap} />
         <View style={s.timelineCard}>{activityRows.map((log, i) => <View key={log.title + log.time} style={s.timelineRow}><View style={s.timelineRail}><View style={[s.timelineDot, log.kind === 'Work' && { backgroundColor: C.blue }, log.kind === 'Live' && { backgroundColor: C.green2 }, log.tone === 'bad' && { backgroundColor: C.red }, log.tone === 'warn' && { backgroundColor: C.amber }]} />{i < activityRows.length - 1 ? <View style={s.timelineLine} /> : null}</View><View style={{ flex: 1 }}><View style={s.activityTitleRow}><Text style={[s.timelineTitle, log.tone === 'bad' && { color: C.red }]}>{log.title}</Text><Text style={[s.activityKind, log.kind === 'Work' && s.activityKindWork, log.kind === 'Live' && s.activityKindLive]}>{log.kind}</Text></View>{log.detail ? <Text style={s.timelineSub}>{log.detail}</Text> : null}</View><Text style={s.timelineTime}>{log.time}</Text></View>)}</View>
         <View style={s.lastKnown}><GoonaIcon icon={Icons.cloudOff} size={15} color={C.mut} /><Text style={s.lastKnownText}>Last known: {worker.location} - {worker.lastLog}</Text></View>
         <Section title="Task assignments" tag={String(worker.tasks.length)} />
@@ -307,6 +381,10 @@ const s = StyleSheet.create({
   timelineSub: { fontSize: 9, color: C.mut, marginTop: 2 },
   timelineTime: { fontSize: 8, color: C.mut, fontWeight: '800' },
   liveMap: { width: '100%', aspectRatio: 1.6, borderRadius: 14, backgroundColor: '#E4F0DD', overflow: 'hidden', marginBottom: 10, position: 'relative' },
+  mapRecenter: { position: 'absolute', right: 10, top: 10, width: 34, height: 34, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.92)', borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center', shadowColor: '#142819', shadowOpacity: .08, shadowRadius: 8, elevation: 2 },
+  mapLegend: { position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,.9)', borderRadius: 12, borderWidth: 1, borderColor: C.line, paddingHorizontal: 8, paddingVertical: 6 },
+  legendDot: { width: 7, height: 7, borderRadius: 4 },
+  legendText: { fontSize: 8.5, color: C.mut, fontWeight: '800' },
   breadcrumbMap: { height: 170, borderRadius: 14, backgroundColor: '#E4F0DD', overflow: 'hidden', marginBottom: 10, position: 'relative' },
   boundaryDash: { position: 'absolute', left: '4%', right: '4%', top: '7%', bottom: '7%', borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.green, borderRadius: 8 },
   mapBlock: { position: 'absolute', backgroundColor: '#CFE5C9', borderWidth: 1, borderColor: '#B9DAB6', transform: [{ rotate: '-4deg' }] },

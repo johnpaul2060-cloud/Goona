@@ -1,20 +1,20 @@
 import { Stack } from 'expo-router'
+import { gestureDisabledOptions, stackGestureDefaults } from '../../../../utils/navigationGestures'
 
 export default function ExpensesLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
+        ...stackGestureDefaults,
         animation: 'slide_from_right',
-        gestureEnabled: true,
       }}
     >
-      <Stack.Screen name="index" />
-      <Stack.Screen name="create" />
+      <Stack.Screen name="index" options={gestureDisabledOptions} />
+      <Stack.Screen name="create" options={gestureDisabledOptions} />
       <Stack.Screen name="categories" />
       <Stack.Screen name="reports" />
       <Stack.Screen name="budget" />
-      <Stack.Screen name="budget-setup" />
+      <Stack.Screen name="budget-setup" options={gestureDisabledOptions} />
       <Stack.Screen name="budget-export" />
     </Stack>
   )

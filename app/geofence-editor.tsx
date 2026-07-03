@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
-  StyleSheet, Dimensions, Alert, KeyboardAvoidingView, Platform,
+  StyleSheet, Dimensions, Alert, KeyboardAvoidingView, Platform, BackHandler,
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInUp } from 'react-native-reanimated'
@@ -23,6 +23,29 @@ export default function GeofenceEditorScreen() {
   const [zoneName, setZoneName] = useState('')
   const [zoneType, setZoneType] = useState<'operational' | 'restricted'>('operational')
   const [showPresets, setShowPresets] = useState(true)
+  const hasUnsavedChanges = zoneName.trim().length > 0 || zoneType !== 'operational'
+
+  const requestLeave = useCallback(() => {
+    if (!hasUnsavedChanges) {
+      router.back()
+      return
+    }
+
+    Alert.alert('Discard changes?', 'Your zone changes have not been saved.', [
+      { text: 'Keep Editing', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: () => router.back() },
+    ])
+  }, [hasUnsavedChanges])
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        requestLeave()
+        return true
+      })
+      return () => sub.remove()
+    }, [requestLeave])
+  )
 
   const handleSave = () => {
     if (!zoneName.trim()) {
@@ -42,7 +65,7 @@ export default function GeofenceEditorScreen() {
       <ScrollView style={{ flex: 1, zIndex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         {/* App Bar */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 54 }}>
-          <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}>
+          <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={requestLeave}>
             <GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={{ fontWeight: '700', fontSize: 16, color: '#1B1B1B' }}>Geofence Editor</Text>
