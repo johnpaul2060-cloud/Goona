@@ -16,7 +16,6 @@ import Animated, {
   withTiming, withSpring, withDelay, FadeInUp, FadeIn,
 } from 'react-native-reanimated'
 import BottomDock from '../../components/navigation/BottomDock'
-import { useAuthStore } from '../../store/useAuthStore'
 import { FARM_NAME } from '../../constants/farm'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -219,68 +218,6 @@ const REPORT_DATA = [
   { title: 'Worker Attendance Summary', author: 'System', date: 'Today 6AM', type: 'attendance' as const },
 ]
 
-function WorkerCard({
-  initials, name, role, online, lastSeen, tags, index, id, location, battery, checkIn, checkOut,
-}: {
-  initials: string; name: string; role: string; online: boolean
-  lastSeen: string; tags: string[]; index: number; id: string
-  location?: string; battery?: number; checkIn?: string; checkOut?: string
-}) {
-  const { style, onPressIn, onPressOut } = usePressScale()
-
-  const handlePress = () => {
-    router.push('/farm-profile' as any)
-  }
-
-  return (
-    <Animated.View entering={FadeInUp.duration(500).delay(500 + index * 80).springify()}>
-      <Pressable
-        onPress={handlePress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-      >
-        <Animated.View style={[style, wcStyles.card]}>
-          <WorkerAvatar initials={initials} online={online} />
-          <View style={wcStyles.info}>
-            <Text style={wcStyles.name}>{name}</Text>
-            <Text style={wcStyles.role}>{role}</Text>
-            <View style={wcStyles.statusRow}>
-              <View style={[wcStyles.statusDot, { backgroundColor: online ? '#22C55E' : '#94A3B8' }]} />
-              <Text style={[wcStyles.status, { color: online ? '#22C55E' : '#94A3B8' }]}>
-                {online ? 'Online' : 'Offline'} &bull; {lastSeen}
-              </Text>
-            </View>
-            {location && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                <GoonaIcon icon={Icons.mapPin} size={10} color="#94A3B8" />
-                <Text style={{ fontSize: 10, color: '#94A3B8', flex: 1 }}>{location}</Text>
-                {battery !== undefined && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                    <GoonaIcon icon={Icons.battery} size={10} color={battery > 20 ? '#22C55E' : '#EF4444'} />
-                    <Text style={{ fontSize: 10, color: '#94A3B8' }}>{battery}%</Text>
-                  </View>
-                )}
-              </View>
-            )}
-            {checkIn && (
-              <Text style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
-                In: {checkIn}{checkOut && checkOut !== '--' ? `  Out: ${checkOut}` : ''}
-              </Text>
-            )}
-            <View style={wcStyles.tags}>
-              {tags.map((t) => (
-                <View key={t} style={wcStyles.tag}>
-                  <Text style={wcStyles.tagText}>{t}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-          <Icons.chevronRight size={16} color="#94A3B8" strokeWidth={2} />
-        </Animated.View>
-      </Pressable>
-    </Animated.View>
-  )
-}
 const wcStyles = StyleSheet.create({
   card: {
     flexDirection: 'row', alignItems: 'center',
@@ -439,16 +376,78 @@ const rpStyles = StyleSheet.create({
 })
 
 /* ─── Tab Content ─── */
+function WorkerGateway() {
+  const present = WORKER_DATA.filter((w) => w.online).length
+  const locations = new Set(WORKER_DATA.map((w) => w.location).filter(Boolean)).size
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(120).springify()}>
+      <View style={wgStyles.card}>
+        <View style={wgStyles.icon}>
+          <GoonaIcon icon={Icons.users} size={21} color="#00695C" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={wgStyles.title}>Personnel</Text>
+          <Text style={wgStyles.body}>All worker activity, tasks, attendance and messages live in Worker Detail.</Text>
+          <View style={wgStyles.stats}>
+            <Text style={wgStyles.stat}>{present} present</Text>
+            <Text style={wgStyles.dot}>-</Text>
+            <Text style={wgStyles.stat}>{locations} active locations</Text>
+            <Text style={wgStyles.dot}>-</Text>
+            <Text style={wgStyles.stat}>1 alert</Text>
+          </View>
+        </View>
+      </View>
+      {WORKER_DATA.map((w, i) => (
+        <Pressable
+          key={w.id}
+          onPress={() => router.push({ pathname: '/worker-detail', params: { id: w.id } } as any)}
+          style={({ pressed }) => [wgStyles.workerRow, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
+        >
+          <WorkerAvatar initials={w.initials} online={w.online} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={wgStyles.workerName}>{w.name}</Text>
+            <Text style={wgStyles.workerMeta} numberOfLines={1}>{w.role} - {w.location} - {w.lastSeen}</Text>
+          </View>
+          <Text style={[wgStyles.workerState, { color: w.online ? '#22C55E' : '#94A3B8' }]}>{w.online ? 'On site' : 'Off site'}</Text>
+          <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
+        </Pressable>
+      ))}
+    </Animated.View>
+  )
+}
+
+const wgStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row', alignItems: 'center', gap: 13,
+    backgroundColor: 'white', borderRadius: 18, padding: 16,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.03, shadowRadius: 24, elevation: 2,
+  },
+  icon: {
+    width: 44, height: 44, borderRadius: 14,
+    backgroundColor: 'rgba(0,105,92,0.08)', alignItems: 'center', justifyContent: 'center',
+  },
+  title: { fontSize: 14, fontWeight: '800', color: '#1B1B1B' },
+  body: { fontSize: 11.5, lineHeight: 16, color: '#64748B', marginTop: 3 },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 5, marginTop: 8 },
+  stat: { fontSize: 10, fontWeight: '800', color: '#00695C' },
+  dot: { fontSize: 10, color: '#CBD5E1' },
+  workerRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: 'white', borderRadius: 16, padding: 12,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)',
+    marginTop: 9,
+  },
+  workerName: { fontSize: 13, fontWeight: '800', color: '#1B1B1B' },
+  workerMeta: { fontSize: 10.5, color: '#64748B', marginTop: 2, fontWeight: '600' },
+  workerState: { fontSize: 9.5, fontWeight: '900' },
+})
+
 function TabContent({ tab }: { tab: TeamTabType }) {
   switch (tab) {
     case 'workers':
-      return (
-        <>
-          {WORKER_DATA.map((w, i) => (
-            <WorkerCard key={w.id} {...w} index={i} />
-          ))}
-        </>
-      )
+      return <WorkerGateway />
     case 'supervisors':
       return (
         <>
@@ -570,13 +569,11 @@ const afStyles = StyleSheet.create({
 /* ─── Hero Card ─── */
 function HeroCard() {
   const { style: farmPress, onPressIn: farmIn, onPressOut: farmOut } = usePressScale()
-  const role = useAuthStore((s) => s.role)
-  const isOwnerOrManager = role === 'Owner' || role === 'Manager'
 
   return (
     <Animated.View entering={FadeInUp.duration(600).delay(250).springify()}>
       <Pressable
-        onPress={() => router.push(isOwnerOrManager ? '/farm-management' : '/worker-dashboard')}
+        onPress={() => router.push('/workforce-live' as any)}
         onPressIn={farmIn}
         onPressOut={farmOut}
       >
@@ -595,50 +592,19 @@ function HeroCard() {
           <Text style={heroStyles.labelText}>WORKFORCE OPERATIONS ACTIVE</Text>
         </View>
 
-        <Text style={heroStyles.farmName}>{FARM_NAME}</Text>
-        <Text style={heroStyles.subtext}>Operational Command Center</Text>
+        <Text style={heroStyles.farmName}>Operational Summary</Text>
+        <Text style={heroStyles.subtext}>{FARM_NAME} - live presence and operations summary</Text>
 
         <View style={heroStyles.walletStrip}>
-          <GoonaIcon icon={Icons.wallet} size={13} color="rgba(255,255,255,0.6)" />
-          <Text style={heroStyles.walletLabel}>Wallet Balance</Text>
-          <Text style={heroStyles.walletAmount}>₦1.25M</Text>
-        </View>
-
-        <View style={heroStyles.nodes}>
-          {[
-            { label: 'CO', glow: true },
-            null,
-            { label: 'AF', glow: true },
-            null,
-            { label: 'KO', glow: false },
-          ].map((n, i) =>
-            n === null ? (
-              <View key={`l${i}`} style={heroStyles.nodeLine} />
-            ) : (
-              <HeroNode key={n.label} label={n.label} glow={n.glow} />
-            )
-          )}
+          <GoonaIcon icon={Icons.users} size={13} color="rgba(255,255,255,0.6)" />
+          <Text style={heroStyles.walletLabel}>Present 7</Text>
+          <Text style={heroStyles.walletAmount}>Breaches 1</Text>
+          <Text style={heroStyles.walletAmount}>Signals 1</Text>
         </View>
       </LinearGradient>
       </Animated.View>
       </Pressable>
     </Animated.View>
-  )
-}
-
-function HeroNode({ label, glow }: { label: string; glow: boolean }) {
-  const { style, onPressIn, onPressOut } = usePressScale()
-  return (
-    <Pressable
-      onPress={() => Alert.alert('Worker Quick View', `${label}\n\nTap worker card below for full profile.`)}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-    >
-      <Animated.View style={[style, heroStyles.node]}>
-        <Text style={heroStyles.nodeText}>{label}</Text>
-        {glow && <View style={heroStyles.nodeGlow} />}
-      </Animated.View>
-    </Pressable>
   )
 }
 

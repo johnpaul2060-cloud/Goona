@@ -221,7 +221,7 @@ function KpiCard({ label, value, icon, color, trend, subtitle }: {
           </View>
           {trend && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 'auto', backgroundColor: trend.dir === 'up' ? '#22C55E15' : '#EF444415', paddingVertical: 2, paddingHorizontal: 6, borderRadius: 50 }}>
-              <GoonaIcon icon={trend.dir === 'up' ? TrendingUp : TrendingDown} size={10} color={trend.dir === 'up' ? '#22C55E' : '#EF4444'} />
+              <GoonaIcon icon={trend.dir === 'up' ? Icons.trendingUp : Icons.trendingDown} size={10} color={trend.dir === 'up' ? '#22C55E' : '#EF4444'} />
               <Text style={{ fontSize: 9, fontWeight: '700', color: trend.dir === 'up' ? '#22C55E' : '#EF4444' }}>{trend.pct}</Text>
             </View>
           )}
@@ -407,7 +407,7 @@ function WorkforceProfileModal({ worker, visible, onClose }: { worker: Worker | 
                 shadowOpacity: 0.2, shadowRadius: 20, elevation: 4,
               }, pressed && { opacity: 0.9 }]}
             >
-              <GoonaIcon icon={Navigation} size={18} color="#fff" />
+              <GoonaIcon icon={Icons.navigation} size={18} color="#fff" />
               <Text style={{ fontWeight: '700', fontSize: 14, color: '#fff' }}>View Live Location</Text>
             </Pressable>
           </ScrollView>
@@ -426,10 +426,10 @@ function MembersTab({ onSelectWorker }: { onSelectWorker: (w: Worker) => void })
     <View>
       {/* Search */}
       <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)' }}>
-        <GoonaIcon icon={Search} size={16} color="#94A3B8" />
+        <GoonaIcon icon={Icons.search} size={16} color="#94A3B8" />
         <Text style={{ flex: 1, marginLeft: 8, fontSize: 13, color: '#1B1B1B' }} onPress={() => Alert.alert('Search Workers', 'Search by name or role.')}>{search || 'Search workers...'}</Text>
         <Pressable onPress={() => Alert.alert('Filter', 'Filter by status, zone, or role.')}>
-          <GoonaIcon icon={Filter} size={16} color="#94A3B8" />
+          <GoonaIcon icon={Icons.filter} size={16} color="#94A3B8" />
         </Pressable>
       </View>
 
@@ -550,7 +550,7 @@ function AttendanceTab() {
         <LinearGradient colors={['#E8F5E9', '#F0FDF4']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={{ borderRadius: 18, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(46,125,50,0.06)' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <GoonaIcon icon={Radio} size={18} color="#2E7D32" />
+            <GoonaIcon icon={Icons.radio} size={18} color="#2E7D32" />
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '600', fontSize: 12, color: '#1F2937' }}>Auto Attendance Active</Text>
               <Text style={{ fontSize: 11, color: '#64748B' }}>Check-in/out is automatic based on geofence entry and exit.</Text>
@@ -773,7 +773,7 @@ function SafetyTab() {
             style={{ backgroundColor: 'white', borderRadius: 16, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)', borderLeftWidth: 3, borderLeftColor: statusColor }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${statusColor}12`, alignItems: 'center', justifyContent: 'center' }}>
-                <GoonaIcon icon={alert.type === 'SOS' ? Bell : alert.type === 'restricted_entry' ? ShieldAlert : AlertTriangle} size={16} color={statusColor} />
+                <GoonaIcon icon={alert.type === 'SOS' ? Icons.bell : alert.type === 'restricted_entry' ? Icons.shieldAlert : Icons.alertTriangle} size={16} color={statusColor} />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -789,7 +789,7 @@ function SafetyTab() {
                 alert.type === 'SOS' ? 'Emergency Alert' : 'Safety Alert',
                 `Worker: ${alert.workerName}\nTime: ${alert.timestamp}\nLocation: ${alert.location}\nZone: ${alert.zone}\nType: ${alert.type}\nStatus: ${alert.status}\n\nPush notification sent to farm owner.`
               )}>
-                <GoonaIcon icon={Eye} size={16} color="#94A3B8" />
+                <GoonaIcon icon={Icons.eye} size={16} color="#94A3B8" />
               </Pressable>
             </View>
           </Animated.View>
@@ -890,7 +890,7 @@ function PatrolsTab() {
                   Alert.alert('Checkpoint Details', `${cp.name}\nZone: ${cp.zone}\nStatus: ${cp.status}\n${cp.time ? `Time: ${cp.time}\nVerified by: ${cp.verifiedBy}` : ''}`)
                 }
               }}>
-                <GoonaIcon icon={isMissed ? AlertTriangle : isCompleted ? CheckCircle : Smartphone} size={16} color={isCompleted ? '#22C55E' : isMissed ? '#EF4444' : '#94A3B8'} />
+                <GoonaIcon icon={isMissed ? Icons.alertTriangle : isCompleted ? Icons.checkCircle : Icons.smartphone} size={16} color={isCompleted ? '#22C55E' : isMissed ? '#EF4444' : '#94A3B8'} />
               </Pressable>
             </Animated.View>
           )
@@ -905,7 +905,7 @@ function PatrolsTab() {
           backgroundColor: '#00695C', borderRadius: 16, paddingVertical: 14, marginTop: 20,
         }, pressed && { opacity: 0.9 }]}
       >
-        <GoonaIcon icon={BarChart3} size={16} color="#fff" />
+        <GoonaIcon icon={Icons.barChart3} size={16} color="#fff" />
         <Text style={{ fontWeight: '700', fontSize: 14, color: '#fff' }}>Generate Patrol Report</Text>
       </Pressable>
     </View>
@@ -942,7 +942,7 @@ function AnalyticsTab() {
               <Text style={{ fontSize: 20, fontWeight: '800', color: m.color }}>{m.value}</Text>
               <Text style={{ fontSize: 9, color: '#94A3B8', marginTop: 1 }}>{m.label}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 }}>
-                <GoonaIcon icon={TrendingUp} size={10} color="#22C55E" />
+                <GoonaIcon icon={Icons.trendingUp} size={10} color="#22C55E" />
                 <Text style={{ fontSize: 9, fontWeight: '700', color: '#22C55E' }}>{m.trend}</Text>
               </View>
             </View>
@@ -962,7 +962,7 @@ function AnalyticsTab() {
               <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{present} of {WORKERS.length} workers active</Text>
             </View>
             <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(174,234,0,0.1)', alignItems: 'center', justifyContent: 'center' }}>
-              <GoonaIcon icon={Activity} size={30} color="#AEEA00" />
+              <GoonaIcon icon={Icons.activity} size={30} color="#AEEA00" />
             </View>
           </View>
         </LinearGradient>
@@ -970,7 +970,7 @@ function AnalyticsTab() {
 
       {/* GOONA IQ Insights */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-        <GoonaIcon icon={Zap} size={16} color="#00695C" />
+        <GoonaIcon icon={Icons.zap} size={16} color="#00695C" />
         <Text style={{ fontWeight: '700', fontSize: 15, color: '#1B1B1B' }}>GOONA IQ Recommendations</Text>
       </View>
 
@@ -981,7 +981,7 @@ function AnalyticsTab() {
             style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: 'white', borderRadius: 16, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)' }}
           >
             <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: insight.type === 'positive' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <GoonaIcon icon={insight.type === 'positive' ? TrendingUp : Zap} size={14} color={insight.type === 'positive' ? '#22C55E' : '#F59E0B'} />
+              <GoonaIcon icon={insight.type === 'positive' ? Icons.trendingUp : Icons.zap} size={14} color={insight.type === 'positive' ? '#22C55E' : '#F59E0B'} />
             </View>
             <Text style={{ fontSize: 13, lineHeight: 18, color: '#1B1B1B', flex: 1 }}>{insight.text}</Text>
           </Pressable>
@@ -1094,7 +1094,7 @@ export default function WorkforceHubScreen() {
 
         {/* Offline indicator */}
         <Animated.View entering={FadeInUp.duration(500).delay(800).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 24, paddingVertical: 8, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: 50 }}>
-          <GoonaIcon icon={Wifi} size={12} color="#22C55E" />
+          <GoonaIcon icon={Icons.wifi} size={12} color="#22C55E" />
           <Text style={{ fontSize: 10, color: '#94A3B8' }}>Online &bull; Auto-sync active &bull; Geofence monitoring</Text>
         </Animated.View>
 
