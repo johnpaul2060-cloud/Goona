@@ -9,6 +9,7 @@ import { usePrioritizedChat, PRIORITY_COLORS } from '../../store/farmPriorityEng
 import { FARM_NAME } from '../../constants/farm'
 import FeedPostCard from '../../components/farmchat/FeedPostCard'
 import ConversationListItem from '../../components/farmchat/ConversationListItem'
+import CreateGroupModal from '../../components/farmchat/CreateGroupModal'
 import BottomDock from '../../components/navigation/BottomDock'
 
 type InternalTab = 'feed' | 'messages' | 'groups'
@@ -114,6 +115,7 @@ export default function FarmChatScreen() {
   const [postText, setPostText] = useState('')
   const [commentingPostId, setCommentingPostId] = useState<string | null>(null)
   const [localComments, setLocalComments] = useState<Record<string, Comment[]>>(MOCK_COMMENTS)
+  const [showCreateGroup, setShowCreateGroup] = useState(false)
 
   const feedPosts = useFarmChatStore((s) => s.feedPosts)
   const conversations = useFarmChatStore((s) => s.conversations)
@@ -291,7 +293,7 @@ export default function FarmChatScreen() {
             <ConversationListItem conv={item} isGroup onPress={() => openConversation(item.id)} />
           )}
           ListHeaderComponent={() => (
-            <TouchableOpacity style={styles.createGroupBtn}>
+            <TouchableOpacity style={styles.createGroupBtn} activeOpacity={0.85} onPress={() => setShowCreateGroup(true)}>
               <Icons.plus size={18} color="#fff" />
               <Text style={styles.createGroupText}>Create New Group</Text>
             </TouchableOpacity>
@@ -312,6 +314,8 @@ export default function FarmChatScreen() {
           onSend={handleCommentSend}
         />
       )}
+
+      <CreateGroupModal visible={showCreateGroup} onClose={() => setShowCreateGroup(false)} />
     </View>
   )
 }

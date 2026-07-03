@@ -88,6 +88,7 @@ interface FarmChatState {
   sendMessage: (convId: string, msg: FarmChatMessage) => void
   markAsRead: (convId: string) => void
   createConversation: (userId: string) => string | null
+  createGroup: (name: string, description: string, memberIds: string[]) => string
 }
 
 function generateId() { return Math.random().toString(36).substring(2, 11) }
@@ -199,6 +200,43 @@ const useFarmChatStore = create<FarmChatState>((set, get) => ({
     const id = 'conv-' + generateId()
     set((s) => ({
       conversations: [...s.conversations, { id, type: 'direct' as const, name: user.name, participants: [s.allUsers[0], user], unreadCount: 0 }],
+    }))
+    return id
+  },
+
+  createGroup: (name, description, memberIds) => {
+    const state = get()
+    const owner = state.allUsers.find((u) => u.id === 'owner')!
+    const members = memberIds
+      .map((id) => state.allUsers.find((u) => u.id === id))
+      .filter(Boolean) as FarmChatUser[]
+    const allParticipants = [owner, ...members]
+    const id = 'group-' + generateId()
+    const now = Date.now()
+    const systemMsg: FarmChatMessage = {
+      id: 'sys-' + generateId(),
+      senderId: 'system',
+      senderName: 'System',
+      text: `Group "${name}" created with ${allParticipants.length} members`,
+      timestamp: now,
+      type: 'system',
+    }
+    set((s) => ({
+      conversations: [
+        ...s.conversations,
+        {
+          id,
+          type: 'group',
+          name,
+          participants: allParticipants,
+          unreadCount: 0,
+          groupDescription: description,
+          memberCount: allParticipants.length,
+          isAdmin: true,
+          lastMessage: systemMsg,
+        },
+      ],
+      messages: { ...s.messages, [id]: [systemMsg] },
     }))
     return id
   },

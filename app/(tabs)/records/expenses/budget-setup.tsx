@@ -514,7 +514,15 @@ export default function BudgetSetupScreen() {
           <TouchableOpacity
             style={styles.navBack}
             activeOpacity={0.7}
-            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses/budget' as any) } }}
+            onPress={() => {
+              if (step > 1) {
+                setStep(step - 1)
+              } else if (router.canGoBack()) {
+                router.back()
+              } else {
+                router.replace('/records/expenses/budget' as any)
+              }
+            }}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>

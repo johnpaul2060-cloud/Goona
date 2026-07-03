@@ -421,7 +421,10 @@ export default function LiveSimulationScreen() {
     if (!ev || ev.type !== 'event' || ev.resolved || !ev.def) return
     const def = ev.def
     const choice = def.choices[i]
-    const result = choice.apply({ ...S })
+    if (!choice) return
+    const { apply } = choice
+    if (typeof apply !== 'function') return
+    const result = apply({ ...S })
     const next = { ...S }
     if (result.dSurv) next.survival = clamp(next.survival + result.dSurv, 0, 100)
     if (result.dWeight) next.weight = Math.max(sp.wStart, next.weight + result.dWeight)

@@ -584,16 +584,11 @@ export class FarmPriorityEngine {
       { label: 'Record Sale', priority: 30, highlight: false },
       { label: 'Expenses', priority: 35, highlight: false },
       { label: 'Daily Records', priority: 40, highlight: false },
-      { label: 'Budget', priority: 30, highlight: false },
       { label: 'Reports', priority: 25, highlight: false },
       { label: 'Academy', priority: 10, highlight: false },
     ]
 
-    const fin = domains.find(d => d.domain === 'financial')!
-
     if (rule === 'financial_crisis') {
-      actions.find(a => a.label === 'Budget')!.priority = 100
-      actions.find(a => a.label === 'Budget')!.highlight = true
       actions.find(a => a.label === 'Expenses')!.priority = 85
       actions.find(a => a.label === 'Reports')!.priority = 70
     } else if (rule === 'health_crisis') {
@@ -601,19 +596,10 @@ export class FarmPriorityEngine {
       actions.find(a => a.label === 'Daily Records')!.highlight = true
       actions.find(a => a.label === 'Expenses')!.priority = 50
     } else if (rule === 'cycle_ending') {
-      actions.find(a => a.label === 'Budget')!.priority = 90
-      actions.find(a => a.label === 'Budget')!.highlight = true
       actions.find(a => a.label === 'Reports')!.priority = 80
     } else {
       actions.find(a => a.label === 'Daily Records')!.priority = 60
       actions.find(a => a.label === 'Record Sale')!.priority = 55
-    }
-
-    if (fin.averageScore >= 51) {
-      actions.find(a => a.label === 'Budget')!.priority = Math.max(
-        actions.find(a => a.label === 'Budget')!.priority,
-        80,
-      )
     }
 
     actions.sort((a, b) => b.priority - a.priority)

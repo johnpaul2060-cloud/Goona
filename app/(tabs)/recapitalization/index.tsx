@@ -221,12 +221,12 @@ colors={['#065F46', '#047857']}
 const ACTION_RAIL = [
   { emoji: '\u2795', label: 'Fund', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
   { emoji: '\uD83D\uDCC5', label: 'Plan', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
+  { emoji: '\uD83D\uDCB0', label: 'Budget', color: '#0F766E', bg: '#DDF5F0', route: '/records/expenses/budget' as const },
   { emoji: '\uD83D\uDCC8', label: 'Timeline', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/project-timeline' as const },
   { emoji: '\uD83D\uDCCA', label: 'Report', color: '#8B5CF6', bg: '#F5F3FF', route: '/recapitalization/readiness-report' as const },
-  { emoji: '\uD83D\uDCB0', label: 'Budget', color: '#0F766E', bg: '#DDF5F0', route: '#' },
 ]
 
-function ActionRail({ index, onBudgetPress }: { index: number; onBudgetPress?: () => void }) {
+function ActionRail({ index }: { index: number }) {
   const animStyle = useStaggerEntry(index, 60)
 
   return (
@@ -237,10 +237,7 @@ function ActionRail({ index, onBudgetPress }: { index: number; onBudgetPress?: (
             key={a.label}
             style={styles.actionRailCard}
             activeOpacity={0.7}
-            onPress={() => {
-              if (a.route) router.push(a.route as any)
-              else if (a.label === 'Budget' && onBudgetPress) onBudgetPress()
-            }}
+            onPress={() => router.push(a.route)}
           >
             <Text style={styles.actionRailEmoji}>{a.emoji}</Text>
             <Text style={styles.actionRailLabel}>{a.label}</Text>
@@ -904,23 +901,7 @@ export default function RecapitalizationDashboardScreen() {
     setNextCycleOpen(prev => !prev)
   }
 
-  /* ─── Scroll refs ─── */
   const scrollRef = useRef<ScrollView>(null)
-  const budgetSectionY = useRef(0)
-
-  const handleBudgetPress = useCallback(() => {
-    if (!recapFundingOpen) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-      setRecapFundingOpen(true)
-    }
-    if (!budgetFundingOpen) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-      setBudgetFundingOpen(true)
-    }
-    setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: budgetSectionY.current - 100, animated: true })
-    }, 350)
-  }, [recapFundingOpen, budgetFundingOpen])
 
   return (
     <View style={styles.container}>
@@ -964,7 +945,7 @@ export default function RecapitalizationDashboardScreen() {
         <View style={[styles.sectionHead, { marginTop: S.pad(14) }]}>
           <Text style={styles.secTitle}>Quick Actions</Text>
         </View>
-        <ActionRail index={1} onBudgetPress={handleBudgetPress} />
+        <ActionRail index={1} />
 
         {/* ─── CONTRIBUTION CALENDAR ─── */}
         <View style={styles.sectionHead}>
@@ -982,10 +963,7 @@ export default function RecapitalizationDashboardScreen() {
         <FundingBreakdown index={3} expanded={recapFundingOpen} />
 
         {/* ─── BUDGET FUNDING BREAKDOWN ─── */}
-        <View
-          style={styles.sectionHead}
-          onLayout={(e) => { budgetSectionY.current = e.nativeEvent.layout.y }}
-        >
+        <View style={styles.sectionHead}>
           <TouchableOpacity style={styles.sectionHeadToggle} onPress={toggleBudgetFunding} activeOpacity={0.7}>
             <View style={{ flex: 1 }}>
               <Text style={styles.secTitle}>Budget Funding</Text>

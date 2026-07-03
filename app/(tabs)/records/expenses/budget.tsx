@@ -130,7 +130,7 @@ export default function BudgetScreen() {
           <TouchableOpacity
             style={styles.navBack}
             activeOpacity={0.7}
-            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses' as any) } }}
+            onPress={() => router.push('/recapitalization' as any)}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
@@ -184,8 +184,28 @@ export default function BudgetScreen() {
           </View>
         </AnimatedCard>
 
+        {/* ─── QUICK ACTIONS ─── */}
+        <AnimatedCard delay={120}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+          </View>
+          <View style={styles.actionsGrid}>
+            {QUICK_ACTIONS.map((a) => (
+              <TouchableOpacity
+                key={a.label}
+                style={[styles.actionCard, { backgroundColor: a.bg }]}
+                activeOpacity={0.7}
+                onPress={() => router.push(a.route as any)}
+              >
+                <GoonaIcon icon={a.icon} size={20} color={a.color} />
+                <Text style={[styles.actionLabel, { color: a.color }]}>{a.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </AnimatedCard>
+
         {/* ─── EXPENSE WATCHLIST ─── */}
-        <AnimatedCard delay={160}>
+        <AnimatedCard delay={200}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Expense Watchlist</Text>
           </View>
@@ -329,26 +349,6 @@ export default function BudgetScreen() {
               <Text style={[styles.oppAmount, { color: '#1A56FF' }]}>+₦42,000</Text>
               <Text style={styles.oppDesc}>Budget optimization</Text>
             </TouchableOpacity>
-          </View>
-        </AnimatedCard>
-
-        {/* ─── QUICK ACTIONS ─── */}
-        <AnimatedCard delay={780}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-          </View>
-          <View style={styles.actionsGrid}>
-            {QUICK_ACTIONS.map((a) => (
-              <TouchableOpacity
-                key={a.label}
-                style={[styles.actionCard, { backgroundColor: a.bg }]}
-                activeOpacity={0.7}
-                onPress={() => router.push(a.route as any)}
-              >
-                <GoonaIcon icon={a.icon} size={20} color={a.color} />
-                <Text style={[styles.actionLabel, { color: a.color }]}>{a.label}</Text>
-              </TouchableOpacity>
-            ))}
           </View>
         </AnimatedCard>
 
