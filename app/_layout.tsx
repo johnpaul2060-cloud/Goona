@@ -227,7 +227,7 @@ export default function RootLayout() {
                 <Stack.Screen name="farm-setup" options={gestureDisabledOptions} />
                 <Stack.Screen name="farm-structure" options={gestureDisabledOptions} />
                 <Stack.Screen name="create-batch" options={gestureDisabledOptions} />
-                <Stack.Screen name="daily-records" options={gestureDisabledOptions} />
+                <Stack.Screen name="daily-records" options={edgeGestureOptions} />
                 <Stack.Screen name="record-sale" options={gestureDisabledOptions} />
                 <Stack.Screen name="kyc-step-1" options={gestureDisabledOptions} />
                 <Stack.Screen name="kyc-step-2" options={gestureDisabledOptions} />

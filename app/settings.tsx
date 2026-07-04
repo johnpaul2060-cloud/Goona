@@ -16,7 +16,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import { BlurView } from 'expo-blur'
 import { LinearGradient } from 'expo-linear-gradient'
-import BottomDock from '../components/navigation/BottomDock'
 import { useSettingsStore } from '../store/useSettingsStore'
 import { useAuthStore } from '../store/useAuthStore'
 import { useWalletStore } from '../store/useWalletStore'
@@ -260,7 +259,7 @@ export default function SettingsScreen() {
         <View style={{ width: 320, height: 320, borderRadius: 160, backgroundColor: 'rgba(0,105,92,0.08)' }} />
       </View>
 
-      <ScrollView style={{ flex: 1, zIndex: 1 }} contentContainerStyle={{ paddingHorizontal: IS_SMALL ? 16 : 24, paddingTop: 0, paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1, zIndex: 1 }} contentContainerStyle={{ paddingHorizontal: IS_SMALL ? 16 : 24, paddingTop: 0, paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false}>
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: IS_SMALL ? 44 : 54 }}>
           <TouchableOpacity style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} activeOpacity={0.7} onPress={() => router.back()}><GoonaIcon icon={Icons.arrowLeft} size={22} color="#1B1B1B" /></TouchableOpacity>
@@ -329,8 +328,6 @@ export default function SettingsScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-
-      <BottomDock />
 
       {/* ─── PROFILE EDIT MODAL ─── */}
       <ModalShell visible={modals.profile} onClose={() => close('profile')} title="Edit Profile">

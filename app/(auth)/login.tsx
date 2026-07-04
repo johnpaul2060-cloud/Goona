@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Alert,
   Keyboard,
@@ -23,6 +23,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useAuthStore, type RegisteredDevice } from '../../store/useAuthStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useBiometricAuth } from '../../hooks/useBiometricAuth';
+import { createBiometricToken, getBiometricCredential, saveBiometricCredential } from '../../utils/biometricCredentials';
 import * as Haptics from 'expo-haptics';
 import Animated, { SlideInUp } from 'react-native-reanimated';
 import * as Device from 'expo-device';
@@ -37,53 +38,106 @@ export default function LoginScreen() {
   const [bioLoginFailed, setBioLoginFailed] = useState(false);
   const [bioLoginAttempts, setBioLoginAttempts] = useState(0);
   const [bioErrorCode, setBioErrorCode] = useState<string | null>(null);
+  const [bioAuthenticating, setBioAuthenticating] = useState(false);
+  const bioLoginInFlightRef = useRef(false);
+  const bioAutoPromptedRef = useRef(false);
 
   const authStore = useAuthStore()
   const settingsStore = useSettingsStore()
-  const { isAvailable, isEnrolled, biometricType, authenticate, checkBiometrics, getBiometricLabel } = useBiometricAuth()
+  const { isAvailable, biometricType, authenticate, checkBiometrics, getBiometricLabel } = useBiometricAuth()
 
   const handleLogin = useCallback(() => {
     try {
+      authStore.login(authStore.userName || 'Adewale Johnson', email.trim() || authStore.email || 'adewale@example.com', authStore.role)
       router.replace('/(tabs)/dashboard');
       if (isAvailable && !authStore.biometricEnrolled) {
         setTimeout(() => setShowEnrollModal(true), 600)
       }
     } catch {}
-  }, [isAvailable, authStore.biometricEnrolled])
+  }, [isAvailable, email, authStore])
 
   const handleBioLogin = useCallback(async () => {
+    if (bioLoginInFlightRef.current) return
+    bioLoginInFlightRef.current = true
+    setBioAuthenticating(true)
     Keyboard.dismiss()
     setBioLoginFailed(false)
     setBioErrorCode(null)
-    const bioState = await checkBiometrics()
-    console.log('[FaceID] Pre-auth check:', { hardwareAvailable: bioState.hardwareAvailable, isEnrolled: bioState.isEnrolled, biometricType: bioState.biometricType })
-    if (!bioState.isEnrolled) {
-      setBioErrorCode('not_enrolled')
-      setBioLoginFailed(true)
-      setBioLoginAttempts((p) => p + 1)
-      return
-    }
-    const result = await authenticate({ promptMessage: 'Login with biometrics', fallbackLabel: 'Use Password' })
-    console.log('[FaceID] Auth result:', { success: result.success, error: result.error })
-    if (result.success) {
+    try {
+      const bioState = await checkBiometrics()
+      console.log('[FaceID] Pre-auth check:', { hardwareAvailable: bioState.hardwareAvailable, isEnrolled: bioState.isEnrolled, biometricType: bioState.biometricType })
+      if (!bioState.hardwareAvailable) {
+        setBioErrorCode('not_available')
+        setBioLoginFailed(true)
+        setBioLoginAttempts((p) => p + 1)
+        return
+      }
+      if (!bioState.isEnrolled) {
+        setBioErrorCode('not_enrolled')
+        setBioLoginFailed(true)
+        setBioLoginAttempts((p) => p + 1)
+        return
+      }
+      if (!authStore.biometricEnrolled || !settingsStore.security.biometric) {
+        setBioErrorCode('no_credential')
+        setBioLoginFailed(true)
+        setBioLoginAttempts((p) => p + 1)
+        return
+      }
+
+      const credential = await getBiometricCredential()
+      console.log('[FaceID] Secure credential:', { found: Boolean(credential) })
+      if (!credential?.token) {
+        setBioErrorCode('no_credential')
+        setBioLoginFailed(true)
+        setBioLoginAttempts((p) => p + 1)
+        return
+      }
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      authStore.login(credential.userName, credential.email, credential.role)
       authStore.setAuthenticatedSession(true)
       setShowBioLoginModal(false)
       router.replace('/(tabs)/dashboard')
-    } else if (result.error === 'user_fallback') {
+    } catch (e: any) {
+      const err = String(e?.message ?? e ?? '')
+      console.log('[FaceID] Secure credential read failed:', err)
+      if (err.toLowerCase().includes('cancel')) {
+        setBioLoginFailed(false)
+        setBioErrorCode(null)
+        return
+      }
+      setBioErrorCode('credential_unavailable')
+      setBioLoginFailed(true)
+      setBioLoginAttempts((p) => p + 1)
+    } finally {
+      bioLoginInFlightRef.current = false
+      setBioAuthenticating(false)
+    }
+  }, [checkBiometrics, authStore, settingsStore.security.biometric])
+
+  const handleBioFallback = useCallback(() => {
       setShowBioLoginModal(false)
       setBioLoginFailed(false)
       setBioLoginAttempts(0)
       setBioErrorCode(null)
-    } else if (result.error === 'user_cancel') {
-      setBioLoginFailed(false)
-      setBioErrorCode(null)
-    } else {
-      setBioErrorCode(result.error ?? 'authentication_failed')
-      setBioLoginFailed(true)
-      setBioLoginAttempts((p) => p + 1)
+      setBioAuthenticating(false)
+      bioLoginInFlightRef.current = false
+  }, [])
+
+  useEffect(() => {
+    if (!showBioLoginModal) {
+      bioAutoPromptedRef.current = false
+      return
     }
-  }, [checkBiometrics, authenticate, router, authStore])
+    if (bioAutoPromptedRef.current) return
+
+    bioAutoPromptedRef.current = true
+    const timer = setTimeout(() => {
+      handleBioLogin()
+    }, 450)
+    return () => clearTimeout(timer)
+  }, [showBioLoginModal, handleBioLogin])
 
   const getBioErrorMessage = () => {
     switch (bioErrorCode) {
@@ -95,6 +149,10 @@ export default function LoginScreen() {
         return 'Set a device passcode in iOS Settings to enable Face ID authentication.'
       case 'not_available':
         return 'Face ID is not available on this device right now.'
+      case 'no_credential':
+        return 'Use your password once to enable Face ID login on this device.'
+      case 'credential_unavailable':
+        return 'Your secure Face ID login token is unavailable or was invalidated. Use your password to sign in again.'
       case 'system_cancel':
         return 'Authentication was interrupted. Please try again.'
       case 'user_cancel':
@@ -114,6 +172,14 @@ export default function LoginScreen() {
     }
     const result = await authenticate({ promptMessage: 'Enroll biometric login', fallbackLabel: 'Not Now' })
     if (result.success) {
+      const token = createBiometricToken()
+      await saveBiometricCredential({
+        token,
+        email: email.trim() || authStore.email || 'adewale@example.com',
+        userName: authStore.userName || 'Adewale Johnson',
+        role: authStore.role,
+        createdAt: new Date().toISOString(),
+      })
       const deviceName = Device.deviceName ?? (Platform.OS === 'ios' ? 'iPhone' : 'Android Device')
       const device: RegisteredDevice = {
         id: `dev-${Date.now()}`,
@@ -121,16 +187,18 @@ export default function LoginScreen() {
         lastLogin: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
         biometricStatus: 'Active',
       }
-      authStore.setBiometricEnrolled(true, `bio-token-${Date.now()}`)
+      authStore.setBiometricEnrolled(true, 'secure-store')
       authStore.addDevice(device)
-      settingsStore.toggleSecurity('biometric')
+      if (!settingsStore.security.biometric) settingsStore.toggleSecurity('biometric')
       settingsStore.setSecurityPref('requireBiometricAtLaunch', true)
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      setShowEnrollModal(false)
+    } else if (result.error === 'user_cancel') {
       setShowEnrollModal(false)
     } else if (result.error === 'user_fallback') {
       setShowEnrollModal(false)
     }
-  }, [checkBiometrics, authenticate, authStore, settingsStore])
+  }, [checkBiometrics, authenticate, email, authStore, settingsStore])
 
   const bioLabel = getBiometricLabel()
   const isFaceId = biometricType === 'FaceID'
@@ -298,7 +366,7 @@ export default function LoginScreen() {
 
           <View style={styles.bottomRow}>
             <Text style={styles.bottomText}>
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
             </Text>
             <TouchableOpacity onPress={() => { try { router.push('/(auth)/create-account') } catch {} }}>
               <Text style={styles.bottomLink}>Create Account</Text>
@@ -308,12 +376,12 @@ export default function LoginScreen() {
       </KeyboardAvoidingView>
 
       {/* BIOMETRIC LOGIN MODAL */}
-      <Modal visible={showBioLoginModal} transparent animationType="slide" onRequestClose={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }}>
+      <Modal visible={showBioLoginModal} transparent animationType="slide" onRequestClose={handleBioFallback}>
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.3)' }}>
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} />
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handleBioFallback} />
           <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, alignItems: 'center' }}>
             <View style={{ alignItems: 'center', marginBottom: 8 }}><View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB' }} /></View>
-            <TouchableOpacity onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={Icons.x} size={18} color="#94A3B8" /></TouchableOpacity>
+            <TouchableOpacity onPress={handleBioFallback} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}><GoonaIcon icon={Icons.x} size={18} color="#94A3B8" /></TouchableOpacity>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(99,102,241,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <GoonaIcon icon={isFaceId ? Icons.scanFace : Icons.fingerprintPattern} size={32} color="#6366F1" />
             </View>
@@ -331,10 +399,10 @@ export default function LoginScreen() {
                 )}
               </View>
             ) : null}
-            <TouchableOpacity activeOpacity={0.85} onPress={handleBioLogin} style={{ width: '100%', paddingVertical: 16, borderRadius: 18, backgroundColor: '#2E7D32', alignItems: 'center', marginTop: 20, shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 4 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: 'white' }}>Authenticate</Text>
+            <TouchableOpacity activeOpacity={0.85} onPress={handleBioLogin} disabled={bioAuthenticating} style={{ width: '100%', paddingVertical: 16, borderRadius: 18, backgroundColor: '#2E7D32', alignItems: 'center', marginTop: 20, shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 4, opacity: bioAuthenticating ? 0.72 : 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: 'white' }}>{bioAuthenticating ? 'Authenticating...' : 'Authenticate'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.7} onPress={() => { setShowBioLoginModal(false); setBioLoginFailed(false); setBioLoginAttempts(0); setBioErrorCode(null) }} style={{ paddingVertical: 14, marginTop: 8 }}>
+            <TouchableOpacity activeOpacity={0.7} onPress={handleBioFallback} style={{ paddingVertical: 14, marginTop: 8 }}>
               <Text style={{ fontSize: 14, fontWeight: '500', color: '#64748B' }}>Use Password Instead</Text>
             </TouchableOpacity>
           </Animated.View>

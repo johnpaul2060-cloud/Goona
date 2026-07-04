@@ -12,7 +12,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import GoonaIcon from '../components/ui/GoonaIcon'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
-import BottomDock from '../components/navigation/BottomDock'
 import BatchPickerModal from '../components/BatchPickerModal'
 
 const RECORD_TYPES = [
@@ -255,7 +254,7 @@ export default function DailyRecordsScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.scrollInner, { paddingBottom: 140 }]}
+          contentContainerStyle={[styles.scrollInner, { paddingBottom: 32 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -348,7 +347,7 @@ export default function DailyRecordsScreen() {
           {/* ─── 4. TODAY'S SNAPSHOT ─── */}
           <AnimatedCard delay={280}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Today's Snapshot</Text>
+              <Text style={styles.sectionTitle}>{"Today's Snapshot"}</Text>
             </View>
           </AnimatedCard>
           <View style={styles.snapshotGrid}>
@@ -485,8 +484,6 @@ export default function DailyRecordsScreen() {
         onSelect={setSelectedBatch}
         onClose={() => setShowBatchPicker(false)}
       />
-
-      <BottomDock />
     </View>
   )
 }

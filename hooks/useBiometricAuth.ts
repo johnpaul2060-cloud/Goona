@@ -63,12 +63,12 @@ export function useBiometricAuth() {
     }
   }
 
-  const authenticate = useCallback(async (options?: { promptMessage?: string; fallbackLabel?: string }): Promise<AuthResult> => {
+  const authenticate = useCallback(async (options?: { promptMessage?: string; fallbackLabel?: string; disableDeviceFallback?: boolean }): Promise<AuthResult> => {
     try {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: options?.promptMessage ?? 'Authenticate to continue',
         fallbackLabel: options?.fallbackLabel ?? 'Use Password Instead',
-        disableDeviceFallback: true,
+        disableDeviceFallback: options?.disableDeviceFallback ?? false,
         cancelLabel: 'Cancel',
       })
       if (result.success) {

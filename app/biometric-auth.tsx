@@ -15,6 +15,7 @@ import BottomDock from '../components/navigation/BottomDock'
 import { useAuthStore, type RegisteredDevice } from '../store/useAuthStore'
 import { useSettingsStore } from '../store/useSettingsStore'
 import { useBiometricAuth } from '../hooks/useBiometricAuth'
+import { clearBiometricCredential, createBiometricToken, saveBiometricCredential } from '../utils/biometricCredentials'
 import BiometricGate from '../components/Biometric/BiometricGate'
 
 const { width: SW } = Dimensions.get('window')
@@ -74,17 +75,25 @@ export default function BiometricAuthScreen() {
       }
       const result = await authenticate({ promptMessage: 'Enable biometric login', fallbackLabel: 'Cancel' })
       if (result.success) {
-        authStore.setBiometricEnrolled(true, `bio-token-${Date.now()}`)
+        await saveBiometricCredential({
+          token: createBiometricToken(),
+          email: authStore.email || 'adewale@example.com',
+          userName: authStore.userName || 'Adewale Johnson',
+          role: authStore.role,
+          createdAt: new Date().toISOString(),
+        })
+        authStore.setBiometricEnrolled(true, 'secure-store')
         authStore.setAuthenticatedSession(true)
-        settingsStore.toggleSecurity('biometric')
+        if (!settingsStore.security.biometric) settingsStore.toggleSecurity('biometric')
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       }
     }
   }, [isEnabled, checkBiometrics, authenticate, authStore, settingsStore])
 
-  const confirmDisable = useCallback(() => {
+  const confirmDisable = useCallback(async () => {
+    await clearBiometricCredential()
     authStore.setBiometricEnrolled(false)
-    settingsStore.toggleSecurity('biometric')
+    if (settingsStore.security.biometric) settingsStore.toggleSecurity('biometric')
     settingsStore.setSecurityPref('requireBiometricAtLaunch', false)
     settingsStore.setSecurityPref('requireBiometricAfterInactivity', false)
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)

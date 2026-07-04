@@ -15,7 +15,6 @@ import Animated, {
   withTiming, withSpring, withDelay, FadeInUp, FadeOut,
   Easing, interpolate, Extrapolation,
 } from 'react-native-reanimated'
-import BottomDock from '../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -236,7 +235,7 @@ export default function GOONAIQScreen() {
       >
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollInner, { paddingBottom: 180 }]}
+        contentContainerStyle={[styles.scrollInner, { paddingBottom: 40 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -450,7 +449,6 @@ export default function GOONAIQScreen() {
 
       </KeyboardAvoidingView>
 
-      <BottomDock />
     </View>
   )
 }

@@ -10,10 +10,7 @@ import { Icons } from '../../shared/icons'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, {
-  useSharedValue, useAnimatedStyle, withSpring,
-  FadeInUp,
-} from 'react-native-reanimated'
+import Animated, { FadeInUp } from 'react-native-reanimated'
 import BottomDock from '../../components/navigation/BottomDock'
 import { useBatchStore } from '../../store/useBatchStore'
 
@@ -43,9 +40,9 @@ function getBadge(progress: number): { text: string; bg: string; color: string }
 }
 
 function formatNaira(amount: number): string {
-  if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1000) return `₦${(amount / 1000).toFixed(0)}k`
-  return `₦${amount.toLocaleString('en-NG')}`
+  if (amount >= 1_000_000) return `Ã¢â€šÂ¦${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1000) return `Ã¢â€šÂ¦${(amount / 1000).toFixed(0)}k`
+  return `Ã¢â€šÂ¦${amount.toLocaleString('en-NG')}`
 }
 
 function estimateFeedKgStr(quantity: number, livestockType: string, weeks: number): string {
@@ -101,25 +98,25 @@ const BATCH_DETAILS: Record<string, {
     progress: 68,
     mortality: '1.8%',
     feedUsed: '1,240kg',
-    revenue: '₦2.4M',
+    revenue: 'Ã¢â€šÂ¦2.4M',
     birdCount: '420',
     badge: 'Healthy',
     badgeBg: '#F0FDF4',
     badgeColor: '#16A34A',
     timeline: [
-      { title: 'Batch Created', desc: 'Broiler Batch A — 500 day-old chicks', time: '4 weeks ago' },
+      { title: 'Batch Created', desc: 'Broiler Batch A Ã¢â‚¬â€ 500 day-old chicks', time: '4 weeks ago' },
       { title: 'Vaccination Completed', desc: 'Newcastle + Gumboro vaccines administered', time: '2 weeks ago' },
       { title: 'Feed Restocked', desc: '15 bags of grower feed (675kg) delivered', time: '1 week ago' },
-      { title: 'Mortality Alert Resolved', desc: 'Heat stress spike addressed — 8 birds lost', time: '4 days ago', warn: true },
-      { title: 'Sales Recorded', desc: '12 crates of eggs — ₦54,000 revenue', time: '2 days ago' },
+      { title: 'Mortality Alert Resolved', desc: 'Heat stress spike addressed Ã¢â‚¬â€ 8 birds lost', time: '4 days ago', warn: true },
+      { title: 'Sales Recorded', desc: '12 crates of eggs Ã¢â‚¬â€ Ã¢â€šÂ¦54,000 revenue', time: '2 days ago' },
     ],
     analytics: [
-      { metric: '84%', label: 'Feed Efficiency', trend: '↑ +12%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 85], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
-      { metric: '98.2%', label: 'Survival Rate', trend: '↑ +1.4%', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
+      { metric: '84%', label: 'Feed Efficiency', trend: 'Ã¢â€ â€˜ +12%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 85], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
+      { metric: '98.2%', label: 'Survival Rate', trend: 'Ã¢â€ â€˜ +1.4%', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
       { metric: '+18%', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
-      { metric: '₦820k', label: 'Est. Profit', trend: '↑ +24%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
+      { metric: 'Ã¢â€šÂ¦820k', label: 'Est. Profit', trend: 'Ã¢â€ â€˜ +24%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
-    reinvest: { pct: 72, goal: '₦350,000', saved: '₦252,000', weekly: '₦18,000', readiness: '3 weeks' },
+    reinvest: { pct: 72, goal: 'Ã¢â€šÂ¦350,000', saved: 'Ã¢â€šÂ¦252,000', weekly: 'Ã¢â€šÂ¦18,000', readiness: '3 weeks' },
     insights: [
       { bg: '#E8F5E9', iconColor: '#F9A825', text: 'Feed consistency has improved production efficiency by 14%.' },
       { bg: '#E3F2FD', iconColor: '#1A56FF', text: 'This batch is projected to exceed last cycle profitability by 24%.' },
@@ -135,25 +132,25 @@ const BATCH_DETAILS: Record<string, {
     progress: 92,
     mortality: '2.4%',
     feedUsed: '2,180kg',
-    revenue: '₦3.1M',
+    revenue: 'Ã¢â€šÂ¦3.1M',
     birdCount: '310',
     badge: 'Near Harvest',
     badgeBg: '#FFFBEB',
     badgeColor: '#F59E0B',
     timeline: [
-      { title: 'Batch Created', desc: 'Layer Batch B — 350 pullets', time: '8 weeks ago' },
+      { title: 'Batch Created', desc: 'Layer Batch B Ã¢â‚¬â€ 350 pullets', time: '8 weeks ago' },
       { title: 'Vaccination Completed', desc: 'All standard vaccines administered', time: '6 weeks ago' },
       { title: 'Egg Production Started', desc: 'First eggs collected at week 18', time: '3 weeks ago' },
       { title: 'Feed Restocked', desc: '25 bags of layer feed (1,125kg)', time: '1 week ago' },
-      { title: 'Bulk Egg Sale', desc: '48 crates — ₦216,000 revenue', time: '3 days ago' },
+      { title: 'Bulk Egg Sale', desc: '48 crates Ã¢â‚¬â€ Ã¢â€šÂ¦216,000 revenue', time: '3 days ago' },
     ],
     analytics: [
-      { metric: '91%', label: 'Feed Efficiency', trend: '↑ +8%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [50, 65, 75, 85, 91], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
-      { metric: '97.6%', label: 'Survival Rate', trend: '↑ +0.8%', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [70, 75, 85, 90, 97.6], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
+      { metric: '91%', label: 'Feed Efficiency', trend: 'Ã¢â€ â€˜ +8%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [50, 65, 75, 85, 91], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
+      { metric: '97.6%', label: 'Survival Rate', trend: 'Ã¢â€ â€˜ +0.8%', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [70, 75, 85, 90, 97.6], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
       { metric: '+22%', label: 'Egg Production', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.egg} size={16} color={c} /> },
-      { metric: '₦1.2M', label: 'Est. Profit', trend: '↑ +18%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
+      { metric: 'Ã¢â€šÂ¦1.2M', label: 'Est. Profit', trend: 'Ã¢â€ â€˜ +18%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
-    reinvest: { pct: 85, goal: '₦420,000', saved: '₦357,000', weekly: '₦22,000', readiness: '2 weeks' },
+    reinvest: { pct: 85, goal: 'Ã¢â€šÂ¦420,000', saved: 'Ã¢â€šÂ¦357,000', weekly: 'Ã¢â€šÂ¦22,000', readiness: '2 weeks' },
     insights: [
       { bg: '#E8F5E9', iconColor: '#F9A825', text: 'Egg production exceeded targets by 12% this cycle.' },
       { bg: '#E3F2FD', iconColor: '#1A56FF', text: 'Feed-to-egg conversion ratio is at optimal levels.' },
@@ -169,25 +166,25 @@ const BATCH_DETAILS: Record<string, {
     progress: 44,
     mortality: '4.2%',
     feedUsed: '890kg',
-    revenue: '₦1.1M',
+    revenue: 'Ã¢â€šÂ¦1.1M',
     birdCount: '280',
     badge: 'Warning',
     badgeBg: '#FFF1F2',
     badgeColor: '#EF4444',
     timeline: [
-      { title: 'Batch Created', desc: 'Broiler Batch C — 350 day-old chicks', time: '3 weeks ago' },
+      { title: 'Batch Created', desc: 'Broiler Batch C Ã¢â‚¬â€ 350 day-old chicks', time: '3 weeks ago' },
       { title: 'Vaccination Completed', desc: 'Newcastle vaccine administered', time: '2 weeks ago' },
-      { title: 'Heat Stress Incident', desc: 'Temperature spike — 15 birds lost', time: '1 week ago', warn: true },
+      { title: 'Heat Stress Incident', desc: 'Temperature spike Ã¢â‚¬â€ 15 birds lost', time: '1 week ago', warn: true },
       { title: 'Feed Adjusted', desc: 'Increased feed formulation density', time: '5 days ago' },
       { title: 'Mortality Monitoring', desc: 'Increased monitoring schedule implemented', time: '2 days ago' },
     ],
     analytics: [
-      { metric: '62%', label: 'Feed Efficiency', trend: '↓ -4%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [55, 60, 62, 58, 55], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
-      { metric: '95.8%', label: 'Survival Rate', trend: '↓ -1.2%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [85, 88, 92, 95.8, 94], activeBars: [3], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
+      { metric: '62%', label: 'Feed Efficiency', trend: 'Ã¢â€ â€œ -4%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [55, 60, 62, 58, 55], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
+      { metric: '95.8%', label: 'Survival Rate', trend: 'Ã¢â€ â€œ -1.2%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [85, 88, 92, 95.8, 94], activeBars: [3], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
       { metric: '+8%', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [25, 35, 50, 60, 70], activeBars: [3, 4], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
-      { metric: '₦380k', label: 'Est. Profit', trend: '↓ -6%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [30, 45, 55, 50, 45], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
+      { metric: 'Ã¢â€šÂ¦380k', label: 'Est. Profit', trend: 'Ã¢â€ â€œ -6%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [30, 45, 55, 50, 45], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
-    reinvest: { pct: 45, goal: '₦280,000', saved: '₦126,000', weekly: '₦14,000', readiness: '6 weeks' },
+    reinvest: { pct: 45, goal: 'Ã¢â€šÂ¦280,000', saved: 'Ã¢â€šÂ¦126,000', weekly: 'Ã¢â€šÂ¦14,000', readiness: '6 weeks' },
     insights: [
       { bg: '#FFFBEB', iconColor: '#F59E0B', text: 'Mortality risk elevated. Temperature monitoring recommended.' },
       { bg: '#E3F2FD', iconColor: '#1A56FF', text: 'Feed adjustment showing early signs of recovery.' },
@@ -220,7 +217,7 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
     week: `Week ${Math.min(weeks + 1, totalWeeks)} of ${totalWeeks}`,
     totalWeeks,
     progress: prog,
-    mortality: '—',
+    mortality: 'Ã¢â‚¬â€',
     feedUsed,
     revenue: formatNaira(estRevenue),
     birdCount: `${batch.quantity}`,
@@ -228,14 +225,14 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
     badgeBg: badge.bg,
     badgeColor: badge.color,
     timeline: [
-      { title: 'Batch Created', desc: `${batch.batchName} — ${batch.quantity} ${batch.livestockType.toLowerCase()}`, time: `${weeks} week${weeks === 1 ? '' : 's'} ago`, warn: false },
+      { title: 'Batch Created', desc: `${batch.batchName} Ã¢â‚¬â€ ${batch.quantity} ${batch.livestockType.toLowerCase()}`, time: `${weeks} week${weeks === 1 ? '' : 's'} ago`, warn: false },
       { title: 'Production In Progress', desc: 'Batch is being monitored and tracked', time: `${Math.max(1, weeks - 1)} week${weeks - 1 === 1 ? '' : 's'} ago`, warn: false },
       { title: 'Performance Tracking Active', desc: 'Feed, medication, and growth data being recorded', time: `${Math.max(0, weeks - 2)} week${weeks - 2 === 1 ? '' : 's'} ago`, warn: false },
     ],
     analytics: [
-      { metric: '—', label: 'Feed Efficiency', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 50], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
-      { metric: '—', label: 'Survival Rate', trend: '', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
-      { metric: '—', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
+      { metric: 'Ã¢â‚¬â€', label: 'Feed Efficiency', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 50], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Icons.wheat} size={16} color={c} /> },
+      { metric: 'Ã¢â‚¬â€', label: 'Survival Rate', trend: '', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3], icon: (c: string) => <GoonaIcon icon={Icons.shieldCheck} size={16} color={c} /> },
+      { metric: 'Ã¢â‚¬â€', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
       { metric: formatNaira(estRevenue), label: 'Est. Revenue', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
     reinvest: {
@@ -283,7 +280,7 @@ export default function BatchDetailsScreen() {
       >
         {/* TOP NAV */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
-          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.canGoBack() ? router.back() : router.replace('/batches' as any)}>
+          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/records/batch-management' as any)}>
             <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
           <Text style={styles.topTitle}>{batch.name}</Text>

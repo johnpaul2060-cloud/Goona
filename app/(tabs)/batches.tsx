@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from 'react'
+import React, { useCallback, useState, useMemo } from 'react'
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
-  StyleSheet, Dimensions, Modal,
+  StyleSheet, Dimensions, Modal, BackHandler,
 } from 'react-native'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import { Icons } from '../../shared/icons'
 import { StatusBar } from 'expo-status-bar'
-import { router } from 'expo-router'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, {
@@ -93,6 +93,7 @@ const FAB_ACTIONS = [
 
 export default function BatchesScreen() {
   const insets = useSafeAreaInsets()
+  const { from } = useLocalSearchParams<{ from?: string }>()
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [fabOpen, setFabOpen] = useState(false)
@@ -153,6 +154,28 @@ export default function BatchesScreen() {
     return list
   }, [batches, searchQuery, activeFilter])
 
+  const handleBack = useCallback(() => {
+    if (from === 'batch-management') {
+      if (router.canGoBack()) router.back()
+      else router.replace('/records/batch-management' as any)
+      return
+    }
+
+    if (router.canGoBack()) router.back()
+    else router.replace('/(tabs)/dashboard' as any)
+  }, [from])
+
+  useFocusEffect(
+    useCallback(() => {
+      if (from !== 'batch-management') return undefined
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleBack()
+        return true
+      })
+      return () => sub.remove()
+    }, [from, handleBack])
+  )
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -169,7 +192,7 @@ export default function BatchesScreen() {
         {/* HEADER */}
         <Animated.View entering={FadeInUp.duration(500).springify()}>
           <View style={styles.topNav}>
-            <TouchableOpacity style={styles.navBack} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/dashboard' as any)}>
+            <TouchableOpacity style={styles.navBack} onPress={handleBack}>
               <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <Text style={styles.topTitle}>Active Batches</Text>

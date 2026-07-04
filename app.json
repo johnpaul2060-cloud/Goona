@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "goona",
-    "slug": "goona",
+    "name": "Goona",
+    "slug": "Goona",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "goona",
+    "scheme": "Goona",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -43,6 +43,13 @@
         }
       ],
       "expo-font",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": "GOONA uses Face ID to securely access your farm dashboard, livestock records, and team operations."
+        }
+      ],
       [
         "expo-local-authentication",
         {

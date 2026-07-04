@@ -9,7 +9,6 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle as SvgCircle } from 'react-native-svg'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import BottomDock from '../../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -330,10 +329,8 @@ export default function SalesRevenueScreen() {
           </TouchableOpacity>
         </AnimatedCard>
 
-        <View style={{ height: 120 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
-
-      <BottomDock />
     </View>
   )
 }

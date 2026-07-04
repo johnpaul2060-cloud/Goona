@@ -11,7 +11,6 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
-import BottomDock from '../components/navigation/BottomDock'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
 import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
@@ -172,7 +171,7 @@ export default function PlanRecaptScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollInner,
-          { paddingBottom: insets.bottom + 140 },
+          { paddingBottom: insets.bottom + 32 },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -185,7 +184,7 @@ export default function PlanRecaptScreen() {
           <TouchableOpacity
             style={styles.backBtn}
             activeOpacity={0.7}
-            onPress={() => router.push('/recapitalization')}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/recapitalization' as any)}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
@@ -566,8 +565,6 @@ export default function PlanRecaptScreen() {
           </>
         )}
       </ScrollView>
-
-      <BottomDock />
     </View>
   )
 }

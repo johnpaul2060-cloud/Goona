@@ -9,7 +9,6 @@ import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { Icons } from '../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { Pressable } from 'react-native'
-import BottomDock from '../../../components/navigation/BottomDock'
 import { useBatchStore } from '../../../store/useBatchStore'
 
 function weeksSince(dateStr: string): number {
@@ -202,8 +201,6 @@ export default function BatchManagementScreen() {
           </Text>
         </Animated.View>
       </ScrollView>
-
-      <BottomDock />
     </View>
   )
 }

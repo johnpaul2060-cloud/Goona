@@ -9,7 +9,6 @@ import Svg, { Circle as SvgCircle } from 'react-native-svg'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
 import { Icons } from '../../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import BottomDock from '../../../../components/navigation/BottomDock'
 import { formatNaira } from '../../../../utils/format'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -130,7 +129,7 @@ export default function BudgetScreen() {
           <TouchableOpacity
             style={styles.navBack}
             activeOpacity={0.7}
-            onPress={() => router.push('/recapitalization' as any)}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/recapitalization' as any)}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
@@ -355,7 +354,6 @@ export default function BudgetScreen() {
         <View style={{ height: 32 }} />
       </ScrollView>
 
-      <BottomDock />
     </View>
   )
 }
@@ -389,7 +387,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollInner: {
-    paddingBottom: 160,
+    paddingBottom: 40,
   },
   topNav: {
     flexDirection: 'row',

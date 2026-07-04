@@ -9,7 +9,6 @@ import GoonaIcon from '../components/ui/GoonaIcon'
 import { Icons } from '../shared/icons'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
-import BottomDock from '../components/navigation/BottomDock'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
 import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
@@ -100,7 +99,7 @@ export default function FundRecaptScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollInner,
-          { paddingBottom: Platform.OS === 'ios' ? 190 : 160 },
+          { paddingBottom: 40 },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -113,7 +112,7 @@ export default function FundRecaptScreen() {
           <TouchableOpacity
             style={styles.backBtn}
             activeOpacity={0.7}
-            onPress={() => router.push('/recapitalization')}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/recapitalization' as any)}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
@@ -370,8 +369,6 @@ export default function FundRecaptScreen() {
           </View>
         </Animated.View>
       </ScrollView>
-
-      <BottomDock />
     </View>
   )
 }

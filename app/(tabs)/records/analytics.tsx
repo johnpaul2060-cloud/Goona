@@ -9,7 +9,6 @@ import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { Icons } from '../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import { Pressable } from 'react-native'
-import BottomDock from '../../../components/navigation/BottomDock'
 
 const METRICS = [
   { label: 'Avg Mortality Rate', value: '2.1%', trend: '-0.3%', up: true, icon: Icons.skull, color: '#EF4444', bg: '#FFF1F2' },
@@ -130,8 +129,6 @@ export default function AnalyticsScreen() {
           </Pressable>
         </Animated.View>
       </ScrollView>
-
-      <BottomDock />
     </View>
   )
 }
@@ -145,7 +142,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollInner: {
-    paddingBottom: 160,
+    paddingBottom: 40,
   },
   topNav: {
     flexDirection: 'row',

@@ -176,7 +176,7 @@ export default function FundProjectScreen() {
             style={styles.scroll}
             contentContainerStyle={[
               styles.scrollInner,
-              { paddingBottom: insets.bottom + 140 },
+              { paddingBottom: insets.bottom + 32 },
             ]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
