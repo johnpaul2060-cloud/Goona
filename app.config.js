@@ -1,0 +1,76 @@
+export default {
+    name: "Goona",
+    slug: "goona",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/images/icon.png",
+    scheme: "Goona",
+    userInterfaceStyle: "automatic",
+    newArchEnabled: true,
+    ios: {
+      supportsTablet: true,
+      infoPlist: {
+        NSFaceIDUsageDescription: "GOONA uses Face ID to securely access your farm dashboard, livestock records, and team operations."
+      }
+    },
+    android: {
+      adaptiveIcon: {
+        backgroundColor: "#E6F4FE",
+        foregroundImage: "./assets/images/android-icon-foreground.png",
+        backgroundImage: "./assets/images/android-icon-background.png",
+        monochromeImage: "./assets/images/android-icon-monochrome.png"
+      },
+      edgeToEdgeEnabled: true,
+      predictiveBackGestureEnabled: false,
+      package: "com.goona.goona",
+      permissions: [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
+    },
+    web: {
+      output: "static",
+      favicon: "./assets/images/favicon.png"
+    },
+    plugins: [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/images/splash-icon.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: "#ffffff",
+          dark: {
+            backgroundColor: "#000000"
+          }
+        }
+      ],
+      "expo-font",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": "GOONA uses Face ID to securely access your farm dashboard, livestock records, and team operations."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "GOONA uses Face ID to securely access your farm dashboard, livestock records, and team operations."
+        }
+      ]
+    ],
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true
+    },
+    extra: {
+      router: {},
+      eas: {
+        projectId: "dda2fc0c-0348-40c2-ad14-9baf899d121a"
+      }
+    },
+    owner: "johnpaul2060"
+}
+

@@ -1,5 +1,5 @@
 import React from 'react'
-import { AccessibilityInfo, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { AccessibilityInfo, Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -112,6 +112,116 @@ const WORKERS: WorkerDetail[] = [
     week: [{ day: 'MON', hours: '7.1h' }, { day: 'TUE', hours: '7.4h' }, { day: 'WED', hours: '6.8h' }, { day: 'THU', hours: '7.0h' }, { day: 'FRI', hours: '3.8h' }],
   },
   {
+    id: 'w4', initials: 'FO', name: 'Funmi Ojo', role: 'Farmhand', status: 'onsite', online: true,
+    lastLog: 'Last log 2 mins ago', location: 'Fish Pond', zone: 'Fish Pond', battery: 91,
+    phone: '+2348010000004', chatUserId: 'funmi', arrived: '06:50', checkedOut: '--', onsiteToday: '6h 05m',
+    schedule: '07:00-16:00', attendanceRate: 97, punctuality: 92, safetyScore: 95, tasksCompleted: 76,
+    tasks: [
+      { title: 'Check pond water level', due: '08:00', status: 'done', metric: 'Water' },
+      { title: 'Fish feed observation', due: '13:00', status: 'active', metric: 'Feed' },
+    ],
+    performance: [
+      { label: 'Water checks', value: '6', delta: 'today', icon: 'droplets', color: C.blue },
+      { label: 'Feed logs', value: '4', delta: 'synced', icon: 'wheat', color: C.green },
+      { label: 'Safety', value: '95%', delta: 'stable', icon: 'shieldCheck', color: C.green2 },
+      { label: 'Attendance', value: '97%', delta: '+2%', icon: 'clock', color: C.amber },
+    ],
+    logs: [
+      { title: 'Entered farm boundary', time: '06:50' },
+      { title: 'Entered Fish Pond', time: '07:04', detail: 'Geofence check-in' },
+      { title: 'Water condition submitted', time: '10:18', detail: 'Pond A: normal' },
+    ],
+    week: [{ day: 'MON', hours: '7.6h' }, { day: 'TUE', hours: '8.0h' }, { day: 'WED', hours: '7.8h' }, { day: 'THU', hours: '7.4h' }, { day: 'FRI', hours: '6.5h' }],
+  },
+  {
+    id: 'w5', initials: 'TA', name: 'Tunde Adebayo', role: 'Security', status: 'onsite', online: true,
+    lastLog: 'Last log 5 mins ago', location: 'Main Gate', zone: 'Main Gate', battery: 66,
+    phone: '+2348010000005', chatUserId: 'tunde-worker', arrived: '06:30', checkedOut: '--', onsiteToday: '6h 45m',
+    schedule: '06:30-18:00', attendanceRate: 99, punctuality: 96, safetyScore: 98, tasksCompleted: 52,
+    tasks: [
+      { title: 'Perimeter checkpoint', due: '09:00', status: 'done', metric: 'Security' },
+      { title: 'Visitor log review', due: '15:00', status: 'active', metric: 'Records' },
+    ],
+    performance: [
+      { label: 'Patrols', value: '5', delta: 'today', icon: 'shield', color: C.green },
+      { label: 'Incidents', value: '0', delta: 'clean', icon: 'shieldCheck', color: C.green2 },
+      { label: 'Response', value: '98%', delta: '+1%', icon: 'radio', color: C.blue },
+      { label: 'Attendance', value: '99%', delta: 'steady', icon: 'clock', color: C.amber },
+    ],
+    logs: [
+      { title: 'Entered farm boundary', time: '06:30' },
+      { title: 'Entered Main Gate', time: '06:36' },
+      { title: 'Perimeter checkpoint completed', time: '12:38', detail: 'West gate verified', tone: 'ok' },
+    ],
+    week: [{ day: 'MON', hours: '8.4h' }, { day: 'TUE', hours: '8.5h' }, { day: 'WED', hours: '8.2h' }, { day: 'THU', hours: '8.6h' }, { day: 'FRI', hours: '6.9h' }],
+  },
+  {
+    id: 'w6', initials: 'BN', name: 'Blessing Nwosu', role: 'Farmhand', status: 'offsite', online: false,
+    lastLog: 'Last seen 18 mins ago', location: 'Off farm route', zone: 'Off farm', battery: 52,
+    phone: '+2348010000006', chatUserId: 'blessing', arrived: '06:42', checkedOut: '12:25', onsiteToday: '5h 43m',
+    schedule: '07:00-16:00', attendanceRate: 93, punctuality: 89, safetyScore: 92, tasksCompleted: 41,
+    tasks: [
+      { title: 'Supply run receipt', due: '13:30', status: 'active', metric: 'Inventory' },
+      { title: 'Return gate check-in', due: '14:00', status: 'pending', metric: 'Attendance' },
+    ],
+    performance: [
+      { label: 'Supply runs', value: '3', delta: 'week', icon: 'truck', color: C.blue },
+      { label: 'Records', value: '9', delta: 'today', icon: 'fileText', color: C.green },
+      { label: 'Safety', value: '92%', delta: 'stable', icon: 'shieldCheck', color: C.green2 },
+      { label: 'Attendance', value: '93%', delta: '-1%', icon: 'clock', color: C.amber },
+    ],
+    logs: [
+      { title: 'Entered farm boundary', time: '06:42' },
+      { title: 'Entered Poultry House B', time: '07:16' },
+      { title: 'Exited farm boundary', time: '12:25', detail: 'Supply run', tone: 'warn' },
+    ],
+    week: [{ day: 'MON', hours: '7.5h' }, { day: 'TUE', hours: '7.2h' }, { day: 'WED', hours: '7.9h' }, { day: 'THU', hours: '6.8h' }, { day: 'FRI', hours: '5.7h' }],
+  },
+  {
+    id: 'w7', initials: 'SE', name: 'Segun Eze', role: 'Vet Assistant', status: 'onsite', online: true,
+    lastLog: 'Last log 3 mins ago', location: 'Poultry House B', zone: 'Poultry House B', battery: 78,
+    phone: '+2348010000007', chatUserId: 'segun', arrived: '06:52', checkedOut: '--', onsiteToday: '6h 09m',
+    schedule: '07:00-16:00', attendanceRate: 96, punctuality: 94, safetyScore: 93, tasksCompleted: 58,
+    tasks: [
+      { title: 'Vaccination spot check', due: '09:30', status: 'done', metric: 'Health' },
+      { title: 'Poultry House B review', due: '14:30', status: 'active', metric: 'Health' },
+    ],
+    performance: [
+      { label: 'Health checks', value: '10', delta: 'today', icon: 'heart', color: C.red },
+      { label: 'Treatment sync', value: '96%', delta: '+2%', icon: 'pill', color: C.blue },
+      { label: 'Safety', value: '93%', delta: 'stable', icon: 'shieldCheck', color: C.green },
+      { label: 'Attendance', value: '96%', delta: '+1%', icon: 'clock', color: C.amber },
+    ],
+    logs: [
+      { title: 'Entered farm boundary', time: '06:52' },
+      { title: 'Entered Poultry House B', time: '07:06', detail: 'Geofence check-in' },
+      { title: 'Health record submitted', time: '09:48', detail: 'Batch B: normal' },
+    ],
+    week: [{ day: 'MON', hours: '7.7h' }, { day: 'TUE', hours: '7.6h' }, { day: 'WED', hours: '8.0h' }, { day: 'THU', hours: '7.8h' }, { day: 'FRI', hours: '6.6h' }],
+  },
+  {
+    id: 'w8', initials: 'MJ', name: 'Mary James', role: 'Store Clerk', status: 'signal', online: false,
+    lastLog: 'Signal lost 12 mins ago', location: 'Storage Facility', zone: 'Storage Facility', battery: 11,
+    phone: '+2348010000008', chatUserId: 'mary-workforce', arrived: '06:57', checkedOut: '--', onsiteToday: '5h 58m',
+    schedule: '07:00-16:00', attendanceRate: 95, punctuality: 91, safetyScore: 90, tasksCompleted: 33,
+    tasks: [
+      { title: 'Inventory count', due: '11:00', status: 'done', metric: 'Inventory' },
+      { title: 'Charge tracking device', due: 'now', status: 'active', metric: 'Signal' },
+    ],
+    performance: [
+      { label: 'Inventory sync', value: '88%', delta: 'offline', icon: 'clipboardList', color: C.blue },
+      { label: 'Battery', value: '11%', delta: 'critical', icon: 'battery', color: C.red },
+      { label: 'Records', value: '12', delta: 'today', icon: 'fileText', color: C.green },
+      { label: 'Safety', value: '90%', delta: 'review', icon: 'shieldCheck', color: C.amber },
+    ],
+    logs: [
+      { title: 'Entered farm boundary', time: '06:57' },
+      { title: 'Entered Storage Facility', time: '07:10' },
+      { title: 'GPS signal lost', time: '12:41', detail: 'Last known Storage Facility', tone: 'warn' },
+    ],
+    week: [{ day: 'MON', hours: '7.3h' }, { day: 'TUE', hours: '7.5h' }, { day: 'WED', hours: '7.1h' }, { day: 'THU', hours: '7.2h' }, { day: 'FRI', hours: '6.0h' }],
+  },
+  {
     id: 'w9', initials: 'DE', name: 'Dele Akin', role: 'Farmhand', status: 'restricted', online: true,
     lastLog: 'Flagged 8 mins ago', location: 'Chemical Storage', zone: 'Chemical Storage', battery: 55,
     phone: '+2348010000009', chatUserId: 'dele', arrived: '06:35', checkedOut: '--', onsiteToday: '6h 30m',
@@ -132,6 +242,28 @@ const WORKERS: WorkerDetail[] = [
       { title: 'Restricted zone entry', time: '12:58', detail: 'Chemical Storage', tone: 'bad' },
     ],
     week: [{ day: 'MON', hours: '7.0h' }, { day: 'TUE', hours: '7.4h' }, { day: 'WED', hours: '6.9h' }, { day: 'THU', hours: '7.1h' }, { day: 'FRI', hours: '6.4h' }],
+  },
+  {
+    id: 'w10', initials: 'IF', name: 'Ifeanyi Folarin', role: 'Supervisor', status: 'onsite', online: true,
+    lastLog: 'Online now', location: 'Admin Block', zone: 'Admin Block', battery: 94,
+    phone: '+2348010000010', chatUserId: 'ifeanyi', arrived: '06:40', checkedOut: '--', onsiteToday: '6h 22m',
+    schedule: '07:00-17:00', attendanceRate: 99, punctuality: 97, safetyScore: 99, tasksCompleted: 121,
+    tasks: [
+      { title: 'Review daily operations', due: '12:00', status: 'active', metric: 'Reports' },
+      { title: 'Approve restricted-zone exception', due: 'now', status: 'pending', metric: 'Safety' },
+    ],
+    performance: [
+      { label: 'Approvals', value: '7', delta: 'today', icon: 'clipboardCheck', color: C.green },
+      { label: 'Team coverage', value: '100%', delta: 'live', icon: 'users', color: C.blue },
+      { label: 'Safety', value: '99%', delta: 'clean', icon: 'shieldCheck', color: C.green2 },
+      { label: 'Attendance', value: '99%', delta: '+1%', icon: 'clock', color: C.amber },
+    ],
+    logs: [
+      { title: 'Entered farm boundary', time: '06:40' },
+      { title: 'Entered Admin Block', time: '06:48' },
+      { title: 'Operations review opened', time: '11:55', detail: 'Team summary checked', tone: 'ok' },
+    ],
+    week: [{ day: 'MON', hours: '8.2h' }, { day: 'TUE', hours: '8.3h' }, { day: 'WED', hours: '8.1h' }, { day: 'THU', hours: '8.4h' }, { day: 'FRI', hours: '6.8h' }],
   },
 ]
 
@@ -264,7 +396,12 @@ export default function WorkerDetailScreen() {
     if (!convId) { Alert.alert('FarmChat unavailable', 'No FarmChat contact found for ' + worker.name + '.'); return }
     router.push(('/(tabs)/chat/' + convId) as any)
   }, [conv?.id, createConversation, seedDemoData, worker.chatUserId, worker.name])
-  const callWorker = React.useCallback(() => { openDm() }, [openDm])
+  const callWorker = React.useCallback(async () => {
+    const url = 'tel:' + worker.phone
+    const supported = await Linking.canOpenURL(url)
+    if (supported) { await Linking.openURL(url); return }
+    Alert.alert('Call unavailable', 'Your device cannot start a phone call right now.')
+  }, [worker.phone])
   const viewLiveMap = React.useCallback(() => {
     router.push({ pathname: '/workforce-live', params: { tab: 'live' } } as any)
   }, [])
@@ -314,7 +451,7 @@ export default function WorkerDetailScreen() {
         <View style={s.locationCard}><View style={s.locationIcon}><GoonaIcon icon={Icons.navigation} size={18} color={C.green} /></View><View style={{ flex: 1 }}><Text style={s.locationTitle}>{worker.location}</Text><Text style={s.locationSub}>{worker.zone} - Battery {worker.battery}% - Geofence active</Text></View></View>
         {criticalAlerts.length ? <View style={s.alertCard}><GoonaIcon icon={Icons.alertTriangle} size={17} color={C.red} /><View style={{ flex: 1 }}>{criticalAlerts.map((alert) => <Text key={alert} style={s.alertText}>{alert}</Text>)}</View></View> : null}
         <Section title="Communication" tag={conv?.unreadCount ? String(conv.unreadCount) + ' unread' : undefined} />
-        <View style={s.actions}><ActionButton icon={Icons.phone} label="Call" onPress={callWorker} /><ActionButton icon={Icons.messageCircle} label="Message" onPress={openDm} badge={conv?.unreadCount} /><ActionButton icon={Icons.mapPin} label="Live map" onPress={viewLiveMap} /></View>
+        <View style={s.actions}><ActionButton icon={Icons.phone} label="Call" onPress={callWorker} /><ActionButton icon={Icons.messageCircle} label="Message" onPress={openDm} badge={conv?.unreadCount} /><ActionButton icon={Icons.calendar} label="View week" onPress={() => Alert.alert('Weekly attendance', worker.name + ' has logged ' + worker.week.map((d) => d.hours).join(', ') + ' this week.')} /><ActionButton icon={Icons.mapPin} label="Live map" onPress={viewLiveMap} /></View>
         <Section title="Today's activity" tag={worker.checkedOut === '--' ? 'Live route' : 'Complete'} />
         <PremiumRouteMap worker={worker} onRecenter={viewLiveMap} />
         <View style={s.timelineCard}>{activityRows.map((log, i) => <View key={log.title + log.time} style={s.timelineRow}><View style={s.timelineRail}><View style={[s.timelineDot, log.kind === 'Work' && { backgroundColor: C.blue }, log.kind === 'Live' && { backgroundColor: C.green2 }, log.tone === 'bad' && { backgroundColor: C.red }, log.tone === 'warn' && { backgroundColor: C.amber }]} />{i < activityRows.length - 1 ? <View style={s.timelineLine} /> : null}</View><View style={{ flex: 1 }}><View style={s.activityTitleRow}><Text style={[s.timelineTitle, log.tone === 'bad' && { color: C.red }]}>{log.title}</Text><Text style={[s.activityKind, log.kind === 'Work' && s.activityKindWork, log.kind === 'Live' && s.activityKindLive]}>{log.kind}</Text></View>{log.detail ? <Text style={s.timelineSub}>{log.detail}</Text> : null}</View><Text style={s.timelineTime}>{log.time}</Text></View>)}</View>
@@ -422,3 +559,4 @@ const s = StyleSheet.create({
   weekDay: { fontSize: 8, color: C.mut, fontWeight: '900' },
   weekHours: { fontSize: 12, color: C.ink, fontWeight: '900', marginTop: 5 },
 })
+

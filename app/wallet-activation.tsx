@@ -1,19 +1,27 @@
 import React, { useEffect } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, Platform,
+  StyleSheet,
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import { Icons } from '../shared/icons'
+import { Icons, type IconComponent } from '../shared/icons'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 import { useWalletStore, isKycFullyCompleted, getPendingReturnUrl, setPendingReturnUrl } from '../store/useWalletStore'
 
-const STEPS = [
+type WalletActivationStep = {
+  icon: IconComponent
+  label: string
+  desc: string
+  route: string
+  step: 1 | 2 | 3 | 4 | 5
+}
+
+const STEPS: WalletActivationStep[] = [
   { icon: Icons.user, label: 'Personal Information', desc: 'Name, Date of Birth', route: '/kyc-step-1', step: 1 },
   { icon: Icons.fingerprint, label: 'BVN Verification', desc: 'Verify your BVN', route: '/kyc-step-2', step: 2 },
   { icon: Icons.shieldCheck, label: 'Identity Verification', desc: 'Verify your NIN', route: '/kyc-step-3', step: 3 },
@@ -46,7 +54,7 @@ export default function WalletActivationScreen() {
       const pending = getPendingReturnUrl()
       if (pending) {
         setPendingReturnUrl(null)
-        router.replace(pending)
+        router.replace(pending as any)
       }
     }
   }, [status])
@@ -126,7 +134,7 @@ export default function WalletActivationScreen() {
                 return (
                   <TouchableOpacity key={step.step} style={styles.stepCard} activeOpacity={0.7} onPress={() => router.push(step.route as any)}>
                     <View style={[styles.stepIcon, completed && styles.stepIconDone]}>
-                      <GoonaIcon icon={completed ? Check : step.icon} size={18} color={completed ? '#FFFFFF' : '#2E7D32'} />
+                      <GoonaIcon icon={completed ? Icons.check : step.icon} size={18} color={completed ? '#FFFFFF' : '#2E7D32'} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.stepLabel}>{step.label}</Text>
@@ -150,7 +158,7 @@ export default function WalletActivationScreen() {
                   const pending = getPendingReturnUrl()
                   if (pending) {
                     setPendingReturnUrl(null)
-                    router.replace(pending)
+                    router.replace(pending as any)
                   }
                 }}>
                   <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.activateGrad}>
@@ -211,3 +219,4 @@ const styles = StyleSheet.create({
   activatedFeatureRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   activatedFeatureText: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
 })
+

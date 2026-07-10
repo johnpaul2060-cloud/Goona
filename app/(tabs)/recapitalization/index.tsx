@@ -221,7 +221,7 @@ colors={['#065F46', '#047857']}
 const ACTION_RAIL = [
   { emoji: '\u2795', label: 'Fund', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
   { emoji: '\uD83D\uDCC5', label: 'Plan', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
-  { emoji: '\uD83D\uDCB0', label: 'Budget', color: '#0F766E', bg: '#DDF5F0', route: '/records/expenses/budget' as const },
+  { emoji: '\uD83D\uDCB0', label: 'Budget', color: '#0F766E', bg: '#DDF5F0', route: '/records/expenses/budget-setup' as const },
   { emoji: '\uD83D\uDCC8', label: 'Timeline', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/project-timeline' as const },
   { emoji: '\uD83D\uDCCA', label: 'Report', color: '#8B5CF6', bg: '#F5F3FF', route: '/recapitalization/readiness-report' as const },
 ]
@@ -237,7 +237,7 @@ function ActionRail({ index }: { index: number }) {
             key={a.label}
             style={styles.actionRailCard}
             activeOpacity={0.7}
-            onPress={() => router.push(a.route)}
+            onPress={() => a.label === 'Budget' ? router.push({ pathname: '/records/expenses/budget-setup', params: { from: 'recapitalization' } } as any) : router.push(a.route)}
           >
             <Text style={styles.actionRailEmoji}>{a.emoji}</Text>
             <Text style={styles.actionRailLabel}>{a.label}</Text>
@@ -1104,7 +1104,6 @@ const styles = StyleSheet.create({
     flex: 1, height: 8, borderRadius: 4, backgroundColor: '#F1F5F9', overflow: 'hidden',
   },
   rfncProgressFill: { height: '100%', borderRadius: 4, backgroundColor: '#2E7D32' },
-  rfncProgressText: { fontSize: S.font(13), fontWeight: '700', color: '#1B1B1B' },
   rfncProgressText: { fontSize: S.font(13), fontWeight: '700', color: '#1B1B1B' },
   rfncItems: { gap: S.pad(10) },
   rfncRow: {

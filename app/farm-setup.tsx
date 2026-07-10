@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import Svg, { Path, Circle, Ellipse, Rect, Line } from 'react-native-svg';
 import { Icons } from '../shared/icons';
 import GoonaIcon from '../components/ui/GoonaIcon';
-import CountryPicker from 'react-native-country-picker-modal';
+import CountrySelect from 'rn-country-select';
 
 const STATES_DATA: Record<string, { label: string; value: string }[]> = {
   NG: [
@@ -202,6 +202,7 @@ export default function FarmSetupScreen() {
   const [countryCode, setCountryCode] = useState('NG');
   const [countryName, setCountryName] = useState('Nigeria');
   const [selectedRegion, setSelectedRegion] = useState('');
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [regionSearch, setRegionSearch] = useState('');
   const [selectedType, setSelectedType] = useState('poultry');
@@ -283,23 +284,15 @@ export default function FarmSetupScreen() {
                     <Path d="M10 3C7 3 5 5 5 8C5 12 10 17 10 17C10 17 15 12 15 8C15 5 13 3 10 3Z" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
                     <Circle cx="10" cy="8" r="2" stroke="#A0AEA1" strokeWidth="1.2" fill="none" />
                   </Svg>
-                  <View style={styles.locSelectorContent}>
-                    <CountryPicker
-                      countryCode={countryCode as any}
-                      withFilter
-                      withFlag
-                      withEmoji
-                      withCountryNameButton
-                      withCallingCode={false}
-                      withAlphaFilter
-                      containerButtonStyle={styles.countryPickerBtn}
-                      onSelect={(c) => {
-                        setCountryCode(c.cca2);
-                        setCountryName(typeof c.name === 'string' ? c.name : c.cca2);
-                        setSelectedRegion('');
-                      }}
-                    />
-                  </View>
+                  <TouchableOpacity
+                    style={styles.locSelectorContent}
+                    activeOpacity={0.7}
+                    onPress={() => setShowCountryPicker(true)}
+                  >
+                    <Text style={styles.countryDisplayText}>
+                      {countryCode ? `${String.fromCodePoint(0x1F1E6 - 65 + countryCode.charCodeAt(0), 0x1F1E6 - 65 + countryCode.charCodeAt(1))} ${countryName}` : 'Select Country'}
+                    </Text>
+                  </TouchableOpacity>
                   <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                     <Path d="M3 4.5L6 7.5L9 4.5" stroke="#A0AEA1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </Svg>
@@ -392,6 +385,29 @@ export default function FarmSetupScreen() {
                   </View>
                 </View>
               </Modal>
+
+              <CountrySelect
+                visible={showCountryPicker}
+                onClose={() => setShowCountryPicker(false)}
+                onSelect={(c) => {
+                  setCountryCode(c.cca2);
+                  setCountryName(c.name.common || c.cca2);
+                  setSelectedRegion('');
+                  setShowCountryPicker(false);
+                }}
+                theme="light"
+                showCloseButton
+                modalType="popup"
+                countrySelectStyle={{
+                  countryName: { fontSize: 15, fontWeight: '500', color: '#1F2937' },
+                  flag: { fontSize: 22 },
+                  searchInput: { fontSize: 15, color: '#1B1B1B' },
+                  searchContainer: {
+                    backgroundColor: '#F8FAF7', borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0',
+                    paddingHorizontal: 14, height: 48,
+                  },
+                }}
+              />
             </View>
 
             <View style={styles.formSection}>
@@ -681,9 +697,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0',
     paddingLeft: 16, paddingRight: 12, gap: 12,
   },
-  locSelectorContent: { flex: 1, minWidth: 0 },
+  locSelectorContent: { flex: 1, minWidth: 0, justifyContent: 'center' },
   locSelectorText: { fontSize: 17, fontWeight: '600', color: '#1F2937', flex: 1 },
-  countryPickerBtn: { justifyContent: 'center' },
+  countryDisplayText: { fontSize: 17, fontWeight: '600', color: '#1F2937' },
   regionOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'flex-end',

@@ -2,13 +2,12 @@ import React, { useEffect, useState, useRef, useCallback } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Animated as RNAnimated,
-  Pressable,
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
-import Svg, { Rect, Circle, Path, G, Text as SvgText, Ellipse } from 'react-native-svg'
+
 import GoonaIcon from '../components/ui/GoonaIcon'
 import { Icons } from '../shared/icons'
 import { router } from 'expo-router'
@@ -34,12 +33,12 @@ const C = {
   greenBg: '#E6F4E9',
 }
 
-type QType = 'mc' | 'spot' | 'estimate'
+type QType = 'mc' | 'estimate'
 
 interface Q {
   type: QType; pack: string; q: string
   opts?: string[]; correct?: number; iq: string
-  min?: number; max?: number; target?: number; unit?: string; tol?: number; scene?: string
+  min?: number; max?: number; target?: number; unit?: string; tol?: number
 }
 
 interface PackDef { key: string; name: string; bg: string; color: string; locked: boolean; icon: string }
@@ -67,19 +66,25 @@ const BK: Q[] = [
   { type: 'mc', pack: 'heat', q: 'Midday heat. Birds panting with wings held away. Your first move?', opts: ['Add more feed', 'Increase ventilation & airflow', 'Turn on a heat lamp', 'Cut their water'], correct: 1, iq: 'Panting + spread wings = heat stress. Airflow and cooling come first.' },
   { type: 'mc', pack: 'heat', q: 'Hot still night. Catfish gulping at the surface. What is happening?', opts: ['They are hungry', 'Low dissolved oxygen', 'Normal behaviour', 'Water too cold'], correct: 1, iq: 'Gulping at the surface means oxygen is low. Hot still nights crash O2.' },
   { type: 'estimate', pack: 'heat', q: 'Ideal brooding temperature for week-one chicks?', min: 24, max: 40, target: 33, unit: 'C', tol: 3, iq: 'Week-one chicks want about 33C dropping 3C each week.' },
+  { type: 'mc', pack: 'heat', q: 'Birds stop eating during a heatwave. What should you add to water?', opts: ['Sugar', 'Electrolytes & vitamins', 'Salt', 'Antibiotics'], correct: 1, iq: 'Electrolytes help replace minerals lost through panting and keep birds drinking.' },
   { type: 'mc', pack: 'disease', q: 'New birds arriving from another farm. Best practice?', opts: ['Mix them right away', 'Quarantine 2 weeks', 'Vaccinate after a month', 'Just wash your hands'], correct: 1, iq: 'New stock can carry disease silently. Quarantine 1-2 weeks first.' },
   { type: 'mc', pack: 'disease', q: 'Sudden egg drop, greenish droppings, some deaths. Likely?', opts: ['Normal molt', 'Too much water', 'Newcastle disease', 'Overfeeding'], correct: 2, iq: 'That cluster points to Newcastle. Isolate and call a vet.' },
   { type: 'estimate', pack: 'disease', q: 'Above what weekly mortality percent is a red-flag emergency?', min: 0, max: 15, target: 5, unit: '%', tol: 2, iq: 'Above ~5% mortality in broilers is a danger threshold.' },
+  { type: 'mc', pack: 'disease', q: 'Worker shows up with manure on boots from a neighbours farm. Best action?', opts: ['Wipe it off with a rag', 'Provide boot bath & foot dip station', 'Ignore it', 'Send worker home'], correct: 1, iq: 'Boots tracked between farms spread pathogens. A foot dip station stops cross-contamination.' },
+  { type: 'mc', pack: 'disease', q: 'A dead bird found with blood-stained vent area. What is likely?', opts: ['Coccidiosis', 'Heat stress', 'Vitamin deficiency', 'Old age'], correct: 0, iq: 'Bloody droppings and vent staining are classic coccidiosis signs. Check litter moisture and treat fast.' },
   { type: 'mc', pack: 'feed', q: 'Your broilers hit week 5 heading to market. Which feed?', opts: ['Starter crumbs', 'Grower mash', 'Finisher feed', 'Layer mash'], correct: 2, iq: 'Week 5 broilers need Finisher feed for maximum weight gain.' },
   { type: 'mc', pack: 'feed', q: 'Improve FCR. Most reliable lever?', opts: ['Feed much less', 'Consistent feeding + clean water', 'More antibiotics', 'Bigger feeders'], correct: 1, iq: 'FCR improves with consistency: steady feeding, clean water, low stress.' },
   { type: 'estimate', pack: 'feed', q: 'Daily feed for 500 broilers in week 4 (~150g each)?', min: 0, max: 150, target: 75, unit: 'kg', tol: 12, iq: '~150g x 500 birds is about 75kg per day.' },
-  { type: 'spot', pack: 'feed', q: 'Tap the problem in this coop.', scene: 'coopWater', iq: 'The water trough is bone dry. Dehydration hits within hours.' },
+  { type: 'mc', pack: 'feed', q: 'Birds leaving feed pellets untouched. What to check first?', opts: ['Switch feed brand', 'Check feeder height & adjust', 'Feed less often', 'Add cooking oil'], correct: 1, iq: 'Feeder height matters — birds prefer feed at chest level. Too high or low reduces intake.' },
+  { type: 'mc', pack: 'feed', q: 'Which nutrient is most critical for eggshell strength?', opts: ['Protein', 'Calcium', 'Vitamin A', 'Carbohydrates'], correct: 1, iq: 'Calcium is the backbone of eggshell quality. Oyster shell supplement helps layers.' },
   { type: 'mc', pack: 'money', q: 'Feed price jumps 30%. Smartest short-term move?', opts: ['Sell flock today', 'Lock bulk feed order now', 'Stop feeding', 'Switch to scraps'], correct: 1, iq: 'Locking a bulk order at today rate protects your margin.' },
   { type: 'mc', pack: 'money', q: 'Birds at target weight, market price soft. Best call?', opts: ['Hold for months', 'Sell at target', 'Stop feeding but keep them', 'Double flock size'], correct: 1, iq: 'Past target weight extra feed eats your profit.' },
+  { type: 'mc', pack: 'money', q: 'Bulk order discount requires 25% upfront. Cash is tight. Best move?', opts: ['Skip the deal', 'Use a short-term supplier credit', 'Borrow from friends', 'Sell birds early'], correct: 1, iq: 'Supplier credit bridges cash gaps without disrupting operations.' },
+  { type: 'mc', pack: 'money', q: 'Profit margin per bird drops below 5%. First cost to review?', opts: ['Labour cost', 'Feed conversion ratio', 'Electricity bill', 'Transport'], correct: 1, iq: 'Feed is 60-70% of production cost. Improving FCR has the fastest impact on margin.' },
   { type: 'mc', pack: 'brooding', q: 'Day-old chicks huddled under the heat lamp. What does this mean?', opts: ['Too hot', 'Too cold', 'Just right', 'Just sleeping'], correct: 1, iq: 'Huddling under the lamp = too cold. Nudge temperature up.' },
   { type: 'mc', pack: 'brooding', q: 'Chicks moved to far edges away from heat. This means?', opts: ['Too cold', 'Too hot', 'Sick birds', 'Out of feed'], correct: 1, iq: 'Scattering to edges = too hot. Lower the lamp.' },
-  { type: 'spot', pack: 'brooding', q: 'Tap what is wrong in this brooder.', scene: 'coopCrowd', iq: 'Birds jammed into one corner - overcrowding causes smothering and disease.' },
-  { type: 'spot', pack: 'disease', q: 'Tap the issue in this pond.', scene: 'pond', iq: 'A dead fish left in the pond spreads disease. Remove it fast.' },
+  { type: 'mc', pack: 'brooding', q: 'Chicks panting in the first week with litter caking under drinkers. Issue?', opts: ['Normal humidity', 'Ventilation too low', 'Light too bright', 'Feed too coarse'], correct: 1, iq: 'Poor ventilation traps moisture causing litter cake and respiratory stress.' },
+  { type: 'mc', pack: 'brooding', q: 'Best drinker height for week-old chicks?', opts: ['At floor level', 'At back height of chicks', 'Head height of adult birds', 'Above head level'], correct: 1, iq: 'Drinkers at chick back height ensures easy access without spillage.' },
 ]
 
 const STORAGE_KEY = 'goona_academy_challenges_v1'
@@ -94,7 +99,7 @@ function dateLabel() {
 function seedState(): SState {
   const done: string[] = []; const d = new Date()
   for (let i = 1; i <= 4; i++) { const x = new Date(d); x.setDate(d.getDate() - i); done.push(`${x.getFullYear()}-${x.getMonth() + 1}-${x.getDate()}`) }
-  return { streak: 4, best: 11, xp: 1240, weekly: 2210, completed: done, todayDoneKey: null, todayScore: 0, packProg: { heat: 6, disease: 4, feed: 7, money: 0, brooding: 8 }, youBest: 0 }
+  return { streak: 4, best: 11, xp: 1240, weekly: 2210, completed: done, todayDoneKey: null, todayScore: 0, packProg: { heat: 3, disease: 4, feed: 5, money: 0, brooding: 4 }, youBest: 0 }
 }
 function hashStr(s: string) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) }; return h >>> 0 }
 function mulberry32(a: number) {
@@ -110,111 +115,6 @@ const LB_DATA = [
   { nm: 'GreenNest Farms', pts: 2610, av: 'GN' },
   { nm: 'Kibo Layers', pts: 2480, av: 'KL' },
 ]
-
-/* SCENE SVG HELPERS */
-
-function birdSvg(x: number, y: number, sc: number) {
-  return <G transform={`translate(${x} ${y}) scale(${sc})`}>
-    <Ellipse cx="0" cy="6" rx="13" ry="10" fill="#F4F1E8" />
-    <Circle cx="9" cy="-4" r="7" fill="#F4F1E8" />
-    <Path d="M15 -5 l6 2 -5 3z" fill="#E0A23A" />
-    <Circle cx="10" cy="-5" r="1.4" fill="#2A2A2A" />
-    <Path d="M-10 8 q-6 2 -3 7" stroke="#E0A23A" strokeWidth="2" fill="none" />
-    <Path d="M4 14 l0 5 M-2 14 l0 5" stroke="#E0A23A" strokeWidth="2" />
-  </G>
-}
-function fishSvg(x: number, y: number, c: string) {
-  return <G transform={`translate(${x} ${y})`}>
-    <Ellipse cx="0" cy="0" rx="20" ry="9" fill={c} />
-    <Path d="M18 0 l12 -8 0 16z" fill={c} />
-    <Circle cx="-12" cy="-2" r="2" fill="#fff" />
-    <Path d="M-6 0 q6 -6 12 0 q-6 6 -12 0" fill="rgba(255,255,255,.15)" />
-  </G>
-}
-function hSpot(x: number, y: number, w: number, h: number) {
-  return { position: 'absolute' as const, left: `${(x / 320) * 100}%`, top: `${(y / 200) * 100}%`, width: `${(w / 320) * 100}%`, height: `${(h / 200) * 100}%` } as const
-}
-
-/* SPOT SCENES */
-
-function CoopWaterScene({ onTap, answered }: { onTap: (correct: boolean) => void; answered: boolean }) {
-  const [taps, setTaps] = useState<Set<number>>(new Set())
-  const tap = (idx: number, correct: boolean) => { if (taps.has(idx)) return; setTaps(new Set(taps).add(idx)); onTap(correct) }
-  return <Svg viewBox="0 0 320 200" width="100%" height={180}>
-    <Rect width="320" height="200" fill="#F2F7EC" />
-    <Rect y="150" width="320" height="50" fill="#E0E9D6" />
-    <Rect x="0" y="0" width="320" height="20" fill="#D9E4CE" />
-    <Pressable onPress={() => tap(0, false)} style={hSpot(40, 120, 48, 30)}>
-      <Rect x="40" y="120" width="48" height="30" rx="5" fill="#C98A3A" />
-      <Rect x="40" y="120" width="48" height="10" rx="5" fill="#E0A85A" />
-      <Rect x="50" y="128" width="28" height="14" rx="3" fill="#6B4A1E" />
-      <Circle cx="64" cy="135" r="34" fill={taps.has(0) ? 'rgba(226,59,46,0.2)' : 'transparent'} stroke={taps.has(0) ? '#E23B2E' : 'transparent'} strokeWidth="2" />
-    </Pressable>
-    {birdSvg(150, 118, 1)}{birdSvg(190, 124, 1)}{birdSvg(225, 116, 1)}
-    <Pressable onPress={() => tap(1, true)} style={hSpot(240, 128, 60, 22)}>
-      <Rect x="240" y="128" width="60" height="22" rx="6" fill="#9FB7C9" />
-      <Rect x="244" y="132" width="52" height="12" rx="4" fill="#C2D2DE" />
-      <Path d="M250 138h44" stroke="#9FB7C9" strokeWidth="2" strokeDasharray="3 4" />
-      <SvgText x="270" y="120" fontSize="11" fill="#E23B2E" textAnchor="middle" fontWeight="700">dry</SvgText>
-      <Circle cx="270" cy="138" r="38" fill={taps.has(1) ? 'rgba(46,125,50,0.15)' : 'transparent'} stroke={taps.has(1) ? '#2E7D32' : 'transparent'} strokeWidth="2" />
-    </Pressable>
-    <Pressable onPress={() => tap(2, false)} style={hSpot(10, 60, 40, 90)}>
-      <Rect x="10" y="60" width="10" height="90" fill="#9C7B4E" />
-      <Rect x="10" y="70" width="40" height="6" fill="#B08E5E" />
-      <Rect x="10" y="90" width="40" height="6" fill="#B08E5E" />
-      <Rect x="10" y="110" width="40" height="6" fill="#B08E5E" />
-    </Pressable>
-  </Svg>
-}
-
-function CoopCrowdScene({ onTap }: { onTap: (correct: boolean) => void }) {
-  const [taps, setTaps] = useState<Set<number>>(new Set())
-  const tap = (idx: number, correct: boolean) => { if (taps.has(idx)) return; setTaps(new Set(taps).add(idx)); onTap(correct) }
-  const cPos = [[230, 120], [252, 118], [274, 122], [240, 134], [262, 132], [284, 130], [248, 146], [270, 144]]
-  return <Svg viewBox="0 0 320 200" width="100%" height={180}>
-    <Rect width="320" height="200" fill="#F2F7EC" />
-    <Rect y="150" width="320" height="50" fill="#E0E9D6" />
-    <Pressable onPress={() => tap(0, true)} style={hSpot(230, 110, 70, 50)}>
-      {cPos.map((p, i) => <G key={`crowd-bird-${i}`}>{birdSvg(p[0], p[1], 0.8)}</G>)}
-      <Circle cx="258" cy="132" r="46" fill={taps.has(0) ? 'rgba(46,125,50,0.15)' : 'transparent'} stroke={taps.has(0) ? '#2E7D32' : 'transparent'} strokeWidth="2" />
-    </Pressable>
-    <Pressable onPress={() => tap(1, false)} style={hSpot(60, 110, 40, 40)}>
-      {birdSvg(70, 128, 1)}
-      <Circle cx="78" cy="130" r="30" fill={taps.has(1) ? 'rgba(226,59,46,0.2)' : 'transparent'} stroke={taps.has(1) ? '#E23B2E' : 'transparent'} strokeWidth="2" />
-    </Pressable>
-    <Pressable onPress={() => tap(2, false)} style={hSpot(120, 125, 50, 30)}>
-      <Rect x="120" y="130" width="50" height="20" rx="6" fill="#9FB7C9" />
-      <Rect x="124" y="133" width="42" height="11" rx="4" fill="#5FA8D8" />
-    </Pressable>
-    <Pressable onPress={() => tap(3, false)} style={hSpot(134, 10, 30, 40)}>
-      <Path d="M150 10 L150 34" stroke="#888" strokeWidth="3" />
-      <Path d="M134 34 H166 L160 52 H140 Z" fill="#E0A85A" />
-      <Circle cx="150" cy="50" r="6" fill="#FFD66B" />
-    </Pressable>
-  </Svg>
-}
-
-function PondScene({ onTap }: { onTap: (correct: boolean) => void }) {
-  const [taps, setTaps] = useState<Set<number>>(new Set())
-  const tap = (idx: number, correct: boolean) => { if (taps.has(idx)) return; setTaps(new Set(taps).add(idx)); onTap(correct) }
-  return <Svg viewBox="0 0 320 200" width="100%" height={180}>
-    <Rect width="320" height="200" fill="#CFE6E2" />
-    <Rect y="30" width="320" height="170" fill="#5FA8B8" />
-    <Path d="M0 50 Q80 42 160 50 T320 50" stroke="#7FC0CE" strokeWidth="3" fill="none" opacity="0.6" />
-    <Path d="M0 90 Q80 82 160 90 T320 90" stroke="#7FC0CE" strokeWidth="3" fill="none" opacity="0.4" />
-    <Pressable onPress={() => tap(0, false)} style={hSpot(50, 95, 55, 50)}>{fishSvg(80, 120, '#2E5E6E')}</Pressable>
-    <Pressable onPress={() => tap(1, false)} style={hSpot(125, 128, 50, 50)}>{fishSvg(150, 150, '#2E5E6E')}</Pressable>
-    <Pressable onPress={() => tap(2, true)} style={hSpot(210, 30, 55, 60)}>
-      <G transform="rotate(180 240 60)">{fishSvg(240, 60, '#B9C4C0')}</G>
-      <SvgText x="240" y="44" fontSize="11" fill="#E23B2E" textAnchor="middle" fontWeight="700">!</SvgText>
-      <Circle cx="240" cy="62" r="34" fill={taps.has(2) ? 'rgba(46,125,50,0.15)' : 'transparent'} stroke={taps.has(2) ? '#2E7D32' : 'transparent'} strokeWidth="2" />
-    </Pressable>
-    <Pressable onPress={() => tap(3, false)} style={hSpot(10, 148, 55, 50)}>
-      <Path d="M30 200 Q26 160 36 150 Q40 168 34 200" fill="#3C7A4E" />
-      <Path d="M44 200 Q42 168 50 158 Q52 174 48 200" fill="#48905E" />
-    </Pressable>
-  </Svg>
-}
 
 /* STREAK HERO */
 
@@ -312,7 +212,7 @@ function TodayCard({ state, onPlay, meta }: { state: SState; onPlay: () => void;
             </View>
           </View>
           <Text style={s.tcTitle}>{meta.title}</Text>
-          <Text style={s.tcSub}>5 quick rounds - multiple choice, spot-the-problem & estimates. Keep your streak alive.</Text>
+           <Text style={s.tcSub}>5 quick rounds of multiple choice & estimates. Keep your streak alive.</Text>
           <View style={s.tcFoot}>
             <View style={s.reward}>
               <GoonaIcon icon={Icons.star} size={15} color={C.green} />
@@ -456,12 +356,6 @@ function QuizOverlay({ session, onClose, onEnd }: { session: SSess; onClose: () 
     setAnswered(true); applyScore(i === q.correct, timerFrac, 1); setShowIq(true)
   }
 
-  const handleSpotAnswer = (isCorrect: boolean) => {
-    if (answered) return
-    if (timerRef.current) clearInterval(timerRef.current)
-    setAnswered(true); applyScore(isCorrect, timerFrac, 1); setShowIq(true)
-  }
-
   const [estGuess, setEstGuess] = useState(Math.round(((q.min || 0) + (q.max || 100)) / 2))
   const handleEstimateLock = (guess?: number) => {
     const val = guess ?? estGuess
@@ -518,7 +412,7 @@ function QuizOverlay({ session, onClose, onEnd }: { session: SSess; onClose: () 
         <View style={s.qKicker}>
           <View style={[s.qkIc, { backgroundColor: pack.bg }]}><Text style={{ fontSize: 16 }}>{pack.icon}</Text></View>
           <Text style={s.qkTx}>{pack.name}</Text>
-          <Text style={s.qkType}>{q.type === 'mc' ? 'Multiple Choice' : q.type === 'spot' ? 'Spot the Problem' : 'Estimate'}</Text>
+          <Text style={s.qkType}>{q.type === 'mc' ? 'Multiple Choice' : 'Estimate'}</Text>
         </View>
         <Text style={s.qTitle}>{q.q}</Text>
 
@@ -538,15 +432,6 @@ function QuizOverlay({ session, onClose, onEnd }: { session: SSess; onClose: () 
                 </TouchableOpacity>
               )
             })}
-          </View>
-        )}
-
-        {q.type === 'spot' && (
-          <View style={s.sceneWrap}>
-            {q.scene === 'coopWater' && <CoopWaterScene onTap={handleSpotAnswer} answered={answered} />}
-            {q.scene === 'coopCrowd' && <CoopCrowdScene onTap={handleSpotAnswer} />}
-            {q.scene === 'pond' && <PondScene onTap={handleSpotAnswer} />}
-            <Text style={s.spotHint}>Tap the problem in the scene</Text>
           </View>
         )}
 
@@ -895,9 +780,6 @@ const s = StyleSheet.create({
   okKeyCorrect: { backgroundColor: C.greenL, borderColor: C.greenL },
   okKeyText: { fontWeight: '700', fontSize: 13, color: C.mut },
   okTx: { flex: 1, fontSize: 14.5, fontWeight: '600', color: C.ink, lineHeight: 18.1 },
-
-  sceneWrap: { marginTop: 16, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: C.line, height: 200 },
-  spotHint: { fontSize: 12.5, color: C.mut, textAlign: 'center', fontWeight: '600', marginTop: 12 },
 
   estWrap: { marginTop: 22 },
   estReadout: { alignItems: 'center', marginBottom: 8 },

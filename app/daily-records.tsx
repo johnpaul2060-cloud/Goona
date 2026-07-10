@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import {
-  View, Text, TouchableOpacity, TextInput, ScrollView,
+  View, Text, TouchableOpacity, TextInput, ScrollView, Alert, ToastAndroid,
   StyleSheet, KeyboardAvoidingView, Platform,
-  Modal, Dimensions,
+  Modal,
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -11,19 +11,38 @@ import Animated, {
   FadeInUp, FadeInDown,
 } from 'react-native-reanimated'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
-import BatchPickerModal from '../components/BatchPickerModal'
+import DateTimePicker from '@react-native-community/datetimepicker'
+import * as Haptics from 'expo-haptics'
+import { useFarmChatStore, type FeedPost } from '../store/useFarmChatStore'
 
 const RECORD_TYPES = [
   { key: 'feed' as const, label: 'Feed', icon: Icons.wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', emoji: '\uD83C\uDF3D' },
-  { key: 'mortality' as const, label: 'Mortality', icon: Icons.skull, iconBg: '#FFF1F2', iconColor: '#EF4444', emoji: '\uD83D\uDC80' },
-  { key: 'medication' as const, label: 'Medication', icon: Icons.pill, iconBg: '#EEF3FF', iconColor: '#1A56FF', emoji: '\uD83D\uDC8A' },
-  { key: 'eggs' as const, label: 'Eggs', icon: Icons.egg, iconBg: '#F0FDF4', iconColor: '#16A34A', emoji: '\uD83E\uDD5A' },
+  { key: 'eggs' as const, label: 'Egg production', icon: Icons.egg, iconBg: '#F0FDF4', iconColor: '#16A34A', emoji: '\uD83E\uDD5A' },
   { key: 'water' as const, label: 'Water', icon: Icons.droplets, iconBg: '#EEF3FF', iconColor: '#0EA5E9', emoji: '\uD83D\uDCA7' },
-  { key: 'observation' as const, label: 'Notes', icon: Icons.eye, iconBg: '#F5F3FF', iconColor: '#8B5CF6', emoji: '\uD83D\uDCDD' },
+  { key: 'medication' as const, label: 'Medication', icon: Icons.pill, iconBg: '#EEF3FF', iconColor: '#1A56FF', emoji: '\uD83D\uDC8A' },
+  { key: 'mortality' as const, label: 'Mortality', icon: Icons.skull, iconBg: '#FFF1F2', iconColor: '#EF4444', emoji: '\uD83D\uDC80' },
+  { key: 'observation' as const, label: 'Note', icon: Icons.eye, iconBg: '#F5F3FF', iconColor: '#8B5CF6', emoji: '\uD83D\uDCDD' },
 ] as const
 
+const BATCHES = [
+  'Broiler Batch A',
+  'Layer Batch B',
+  'Starter Pen C',
+  'Turkey Unit',
+  'Poultry Expansion Batch',
+]
+
+const BATCH_META: Record<string, { birds: number; activeFeedType: string }> = {
+  'Broiler Batch A': { birds: 500, activeFeedType: 'Grower' },
+  'Layer Batch B': { birds: 350, activeFeedType: 'Layer Mash' },
+  'Starter Pen C': { birds: 220, activeFeedType: 'Starter' },
+  'Turkey Unit': { birds: 90, activeFeedType: 'Grower' },
+  'Poultry Expansion Batch': { birds: 300, activeFeedType: 'Finisher' },
+}
+
+const FEED_TYPES = ['Starter', 'Grower', 'Finisher', 'Layer Mash'] as const
 type RecordKey = (typeof RECORD_TYPES)[number]['key']
+type QuickLogValues = Record<string, string>
 
 const SNAPSHOT_METRICS = [
   { label: 'Feed Logged', value: '120 kg', icon: Icons.wheat, color: '#F59E0B', bg: '#FFFBEB', trend: 'up' as const, change: '+8% vs yesterday' },
@@ -41,15 +60,6 @@ const DAILY_LOGS = [
   { key: 'observation', label: 'Notes', done: false },
 ]
 
-const PROGRESS_PCT = Math.round((DAILY_LOGS.filter(l => l.done).length / DAILY_LOGS.length) * 100)
-
-const RECENT_ACTIVITY = [
-  { icon: Icons.wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', title: '120kg Feed Logged', time: 'Today, 8:30 AM', batch: 'Broiler Batch A', date: '20 Jun 2026' },
-  { icon: Icons.pill, iconBg: '#EEF3FF', iconColor: '#1A56FF', title: 'Medication — Newcastle vaccine', time: 'Today, 7:15 AM', batch: '420 broilers', date: '20 Jun 2026' },
-  { icon: Icons.egg, iconBg: '#F0FDF4', iconColor: '#16A34A', title: '360 Eggs Collected', time: 'Yesterday, 4:00 PM', batch: 'Layer Batch B', date: '19 Jun 2026' },
-  { icon: Icons.droplets, iconBg: '#EEF3FF', iconColor: '#0EA5E9', title: '80L Water Consumed', time: 'Yesterday, 3:00 PM', batch: 'Broiler Batch A', date: '19 Jun 2026' },
-  { icon: Icons.skull, iconBg: '#FFF1F2', iconColor: '#EF4444', title: '2 Mortality Recorded', time: 'Yesterday, 2:15 PM', batch: 'Broiler Batch A', date: '19 Jun 2026' },
-]
 
 const IQ_INSIGHTS = [
   { icon: Icons.trendingUp, color: '#F59E0B', bg: '#FFFBEB', title: 'Feed Consumption', desc: 'Feed consumption is 12% below expected for this cycle. Consider reviewing feed formulation.', severity: 'low' as const },
@@ -57,29 +67,54 @@ const IQ_INSIGHTS = [
   { icon: Icons.alertTriangle, color: '#EF4444', bg: '#FEF2F2', title: 'Water Usage Alert', desc: 'Water usage elevated by 8% today. Check for leaks or adjust drinker pressure.', severity: 'elevated' as const },
 ]
 
-const SCREEN_W = Dimensions.get('window').width
 
 /* ─── Form Field ─── */
+function parseFormattedNumber(value?: string) {
+  if (!value) return 0
+  return Number(value.replace(/,/g, '')) || 0
+}
+
+function formatNumberWithCommas(raw: string, decimals = 0) {
+  const cleaned = raw.replace(/[^\d.]/g, '')
+  const [whole = '', ...decimalParts] = cleaned.split('.')
+  const normalizedWhole = whole.replace(/^0+(?=\d)/, '')
+  const formattedWhole = normalizedWhole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  if (decimals <= 0) return formattedWhole
+  if (!decimalParts.length) return formattedWhole
+  const decimal = decimalParts.join('').slice(0, decimals)
+  return `${formattedWhole || '0'}.${decimal}`
+}
+
 function FormField({
-  label, placeholder, prefix, suffix, icon, value, onChangeText, multiline, autoFocus, onFocus,
+  label, placeholder, prefix, suffix, icon, value, onChangeText, multiline, autoFocus, onFocus, formatNumber, numericDecimals = 0, error,
 }: {
   label: string; placeholder?: string; prefix?: string; suffix?: string
-  icon?: React.ReactNode; value?: string; onChangeText?: (v: string) => void; multiline?: boolean; autoFocus?: boolean; onFocus?: () => void
+  icon?: React.ReactNode; value?: string; onChangeText?: (v: string) => void; multiline?: boolean; autoFocus?: boolean; onFocus?: () => void; formatNumber?: boolean; numericDecimals?: number; error?: string
 }) {
   const [focused, setFocused] = useState(false)
+  const [localValue, setLocalValue] = useState(value ?? '')
+  const displayValue = value ?? localValue
+  const handleChangeText = (next: string) => {
+    const formatted = formatNumber ? formatNumberWithCommas(next, numericDecimals) : next
+    if (value === undefined) setLocalValue(formatted)
+    onChangeText?.(formatted)
+  }
+
   return (
     <View style={ffStyles.group}>
-      <View style={[ffStyles.wrap, focused && ffStyles.wrapFocused, multiline && ffStyles.wrapTextarea]}>
+      <View style={[ffStyles.wrap, focused && ffStyles.wrapFocused, error && ffStyles.wrapError, multiline && ffStyles.wrapTextarea]}>
         {icon && <View style={ffStyles.ico}>{icon}</View>}
         {prefix && <Text style={ffStyles.prefix}>{prefix}</Text>}
         <View style={ffStyles.inner}>
           <Text style={ffStyles.lbl}>{label}</Text>
           <TextInput
             style={[ffStyles.input, multiline && { minHeight: 60, textAlignVertical: 'top' }]}
+            accessibilityLabel={label}
             placeholder={placeholder}
             placeholderTextColor="#A0AEA1"
-            value={value}
-            onChangeText={onChangeText}
+            value={displayValue}
+            onChangeText={handleChangeText}
+            keyboardType={formatNumber ? 'decimal-pad' : 'default'}
             onFocus={() => { setFocused(true); onFocus?.() }}
             onBlur={() => setFocused(false)}
             multiline={multiline}
@@ -88,6 +123,7 @@ function FormField({
         </View>
         {suffix && <Text style={ffStyles.suffix}>{suffix}</Text>}
       </View>
+      {error ? <Text style={ffStyles.errorText}>{error}</Text> : null}
     </View>
   )
 }
@@ -95,102 +131,178 @@ const ffStyles = StyleSheet.create({
   group: { marginBottom: 14 },
   wrap: { flexDirection: 'row', alignItems: 'center', height: 50, borderRadius: 14, backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0', paddingHorizontal: 14, gap: 8 },
   wrapFocused: { borderColor: '#2E7D32' },
+  wrapError: { borderColor: '#EF4444', backgroundColor: '#FFF7F7' },
   wrapTextarea: { minHeight: 72, alignItems: 'flex-start', paddingTop: 10 },
   ico: { width: 16, height: 16, flexShrink: 0 },
-  inner: { flex: 1, justifyContent: 'center' },
+  inner: { flex: 1, minWidth: 0, justifyContent: 'center' },
   lbl: { fontSize: 10, fontWeight: '500', color: '#A0AEA1', marginBottom: 1 },
-  input: { fontSize: 14, fontWeight: '500', color: '#1B1B1B', padding: 0 },
-  prefix: { fontSize: 14, fontWeight: '600', color: '#1B1B1B', flexShrink: 0 },
+  input: { minWidth: 0, fontSize: 14, fontWeight: '500', color: '#1B1B1B', padding: 0, paddingVertical: 0, includeFontPadding: false },
+  prefix: { fontSize: 14, lineHeight: 18, fontWeight: '700', color: '#1B1B1B', flexShrink: 0, alignSelf: 'center' },
   suffix: { fontSize: 14, fontWeight: '600', color: '#1B1B1B', flexShrink: 0 },
+  errorText: { marginTop: -9, marginBottom: 10, fontSize: 11, fontWeight: '700', color: '#EF4444' },
 })
 
 /* ─── Quick Log Bottom Sheet (keyboard-aware) ─── */
 function QuickLogSheet({
-  visible, type, onClose, batch, dateStr, onSave,
+  visible, type, onClose, batch, dateStr, timeStr, selectedDate, selectedTime, lastFeedType, onTypeChange, onBatchSelect, onDateSelect, onTimeSelect, onSave,
 }: {
   visible: boolean; type: RecordKey; onClose: () => void
-  batch: string; dateStr: string; onSave?: () => void
+  batch: string; dateStr: string; timeStr: string; selectedDate: Date; selectedTime: Date; lastFeedType?: string
+  onTypeChange: (type: RecordKey) => void; onBatchSelect: (batch: string) => void; onDateSelect: (date: Date) => void; onTimeSelect: (date: Date) => void; onSave?: (values: QuickLogValues) => void
 }) {
   const scrollRef = useRef<ScrollView>(null)
+  const [showBatchOptions, setShowBatchOptions] = useState(false)
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState(false)
+  const [values, setValues] = useState<QuickLogValues>({})
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [formWarning, setFormWarning] = useState('')
+  const batchInfo = BATCH_META[batch] ?? { birds: 0, activeFeedType: 'Grower' }
 
-  const scrollToInput = () => {
-    setTimeout(() => {
-      scrollRef.current?.scrollToEnd({ animated: true })
-    }, 150)
+  const qty = parseFormattedNumber(values.quantity || values.water || values.eggs || values.mortality)
+  const feedQty = parseFormattedNumber(values.quantity)
+  const feedCost = parseFormattedNumber(values.cost)
+  const unitCost = feedQty > 0 && feedCost > 0 ? Math.round(feedCost / feedQty) : 0
+  const realisticFeedMax = Math.max(50, Math.ceil(batchInfo.birds * 0.25))
+  const feedType = values.feedType || lastFeedType || batchInfo.activeFeedType
+  const saveDisabled = Object.keys(fieldErrors).length > 0 || (type === 'feed' && (!feedType || feedQty <= 0)) || (type === 'water' && qty <= 0) || (type === 'eggs' && qty <= 0) || (type === 'mortality' && values.mortality === undefined) || (type === 'medication' && !values.medication?.trim()) || (type === 'observation' && !values.notes?.trim())
+
+  useEffect(() => {
+    if (!visible) return
+    const initialFeedType = lastFeedType || (BATCH_META[batch]?.activeFeedType ?? 'Grower')
+    setValues(type === 'feed' ? { feedType: initialFeedType } : {})
+    setFieldErrors({})
+    setFormWarning('')
+    setShowBatchOptions(false)
+    setShowDatePicker(false)
+    setShowTimePicker(false)
+  }, [visible, type, batch, lastFeedType])
+
+  const validate = (next: QuickLogValues) => {
+    const errors: Record<string, string> = {}
+    const nextFeedQty = parseFormattedNumber(next.quantity)
+    const nextWater = parseFormattedNumber(next.water)
+    const nextEggs = parseFormattedNumber(next.eggs)
+    const nextMortality = parseFormattedNumber(next.mortality)
+    let warning = ''
+
+    if (type === 'feed') {
+      if (!next.feedType?.trim()) errors.feedType = 'Choose a feed type.'
+      if (nextFeedQty <= 0) errors.quantity = 'Enter feed used in kg.'
+      else if (nextFeedQty > realisticFeedMax) warning = 'That quantity looks high for this batch. Please confirm before saving.'
+    }
+    if (type === 'water' && nextWater <= 0) errors.water = 'Enter water used in litres.'
+    if (type === 'eggs' && nextEggs <= 0) errors.eggs = 'Enter eggs collected.'
+    if (type === 'mortality' && next.mortality !== undefined && nextMortality > batchInfo.birds) errors.mortality = 'Mortality cannot exceed batch size.'
+    if (type === 'medication' && next.medication !== undefined && !next.medication.trim()) errors.medication = 'Enter medication name.'
+    if (type === 'observation' && next.notes !== undefined && !next.notes.trim()) errors.notes = 'Enter a note before saving.'
+
+    setFieldErrors(errors)
+    setFormWarning(warning)
+    return { errors, warning }
+  }
+
+  const setField = (key: string, value: string) => {
+    setValues((current) => {
+      const next = { ...current, [key]: value }
+      validate(next)
+      return next
+    })
+  }
+
+  const handleCancel = () => {
+    const dirty = Object.values(values).some((v) => v?.trim())
+    if (!dirty) { onClose(); return }
+    Alert.alert('Discard log?', 'Your entered log details will be lost.', [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: onClose },
+    ])
+  }
+
+  const handleSave = () => {
+    const { errors, warning } = validate(values)
+    if (Object.keys(errors).length > 0) return
+    if (warning && !values.confirmedHigh) {
+      setValues((current) => ({ ...current, confirmedHigh: 'true' }))
+      setFormWarning(`${warning} Tap Save again to confirm.`)
+      return
+    }
+    onSave?.(values)
+  }
+
+  const scrollToInput = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)
+
+  const handleTypeChange = (nextType: RecordKey) => {
+    if (nextType === type) return
+    setShowBatchOptions(false)
+    setShowDatePicker(false)
+    setShowTimePicker(false)
+    setFieldErrors({})
+    setFormWarning('')
+    scrollRef.current?.scrollTo({ y: 0, animated: true })
+    onTypeChange(nextType)
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={qsStyles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        <TouchableOpacity style={qsStyles.backdrop} activeOpacity={1} onPress={onClose} />
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleCancel}>
+      <KeyboardAvoidingView style={qsStyles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <TouchableOpacity style={qsStyles.backdrop} activeOpacity={1} onPress={handleCancel} />
         <Animated.View entering={FadeInDown.duration(350).springify()} style={qsStyles.sheet}>
           <View style={qsStyles.handle} />
-          <View style={qsStyles.contextPill}>
-            <GoonaIcon icon={Icons.calendar} size={12} color="#2E7D32" />
-            <Text style={qsStyles.contextText}>{dateStr}  •  {batch}</Text>
-          </View>
-          <ScrollView
-            ref={scrollRef}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={qsStyles.scrollContent}
-          >
+          <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={qsStyles.scrollContent}>
+            <View style={qsStyles.logContext}>
+              <Text style={qsStyles.contextTitle}>Log Context</Text>
+              <View style={qsStyles.contextGrid}>
+                <TouchableOpacity style={[qsStyles.contextField, qsStyles.contextFieldWide]} activeOpacity={0.75} onPress={() => setShowBatchOptions(!showBatchOptions)}><GoonaIcon icon={Icons.clipboardList} size={18} color="#2E7D32" /><View style={qsStyles.contextFieldText}><Text style={qsStyles.contextLabel}>Batch</Text><Text style={qsStyles.contextValue}>{batch}</Text></View><GoonaIcon icon={Icons.chevronDown} size={14} color="#2E7D32" /></TouchableOpacity>
+                <TouchableOpacity style={qsStyles.contextField} activeOpacity={0.75} onPress={() => setShowDatePicker(true)}><GoonaIcon icon={Icons.calendar} size={18} color="#2E7D32" /><View style={qsStyles.contextFieldText}><Text style={qsStyles.contextLabel}>Date</Text><Text style={qsStyles.contextValue}>{dateStr}</Text></View><GoonaIcon icon={Icons.chevronDown} size={14} color="#2E7D32" /></TouchableOpacity>
+                <TouchableOpacity style={qsStyles.contextField} activeOpacity={0.75} onPress={() => setShowTimePicker(true)}><GoonaIcon icon={Icons.clock} size={18} color="#2E7D32" /><View style={qsStyles.contextFieldText}><Text style={qsStyles.contextLabel}>Time</Text><Text style={qsStyles.contextValue}>{timeStr}</Text></View><GoonaIcon icon={Icons.chevronDown} size={14} color="#2E7D32" /></TouchableOpacity>
+              </View>
+
+            <View style={qsStyles.typeSwitchWrap}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={qsStyles.typeRail}>
+                {RECORD_TYPES.map((record) => {
+                  const active = record.key === type
+                  return (
+                    <TouchableOpacity key={record.key} activeOpacity={0.82} style={[qsStyles.typeChip, active && qsStyles.typeChipActive]} onPress={() => handleTypeChange(record.key)}>
+                      <GoonaIcon icon={record.icon} size={15} color={active ? '#FFFFFF' : record.iconColor} />
+                      <Text style={[qsStyles.typeChipText, active && qsStyles.typeChipTextActive]}>{record.label}</Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </ScrollView>
+            </View>
+              {showBatchOptions && <View style={qsStyles.batchOptions}>{BATCHES.map((item) => <TouchableOpacity key={item} style={[qsStyles.batchOption, item === batch && qsStyles.batchOptionActive]} activeOpacity={0.75} onPress={() => { onBatchSelect(item); setShowBatchOptions(false) }}><Text style={[qsStyles.batchOptionText, item === batch && qsStyles.batchOptionTextActive]}>{item}</Text>{item === batch ? <GoonaIcon icon={Icons.check} size={14} color="#2E7D32" /> : null}</TouchableOpacity>)}</View>}
+              {showDatePicker && <View style={qsStyles.inlinePicker}><DateTimePicker value={selectedDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_event, date) => { if (Platform.OS === 'android') setShowDatePicker(false); if (date) onDateSelect(date) }} themeVariant="light" />{Platform.OS === 'ios' && <TouchableOpacity style={qsStyles.inlineDone} onPress={() => setShowDatePicker(false)}><Text style={qsStyles.inlineDoneText}>Done</Text></TouchableOpacity>}</View>}
+              {showTimePicker && <View style={qsStyles.inlinePicker}><DateTimePicker value={selectedTime} mode="time" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_event, date) => { if (Platform.OS === 'android') setShowTimePicker(false); if (date) onTimeSelect(date) }} themeVariant="light" />{Platform.OS === 'ios' && <TouchableOpacity style={qsStyles.inlineDone} onPress={() => setShowTimePicker(false)}><Text style={qsStyles.inlineDoneText}>Done</Text></TouchableOpacity>}</View>}
+            </View>
+
             {type === 'feed' && (
               <View>
                 <Text style={qsStyles.sheetTitle}>Log Feed Usage</Text>
-                <FormField label="Feed Type" placeholder="e.g. Grower feed" icon={<GoonaIcon icon={Icons.wheat} size={16} color="#A0AEA1" />} autoFocus />
-                <FormField label="Quantity" placeholder="0 kg" suffix="kg" />
-                <FormField label="Cost" placeholder="0.00" prefix={'\u20A6'} onFocus={scrollToInput} />
-                <FormField label="Time" placeholder="e.g. 8:30 AM" icon={<GoonaIcon icon={Icons.clock} size={16} color="#A0AEA1" />} onFocus={scrollToInput} />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
+                <Text style={qsStyles.fieldLabel}>Feed Type</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={qsStyles.chipRail}>
+                  {FEED_TYPES.map((item) => (
+                    <TouchableOpacity key={item} activeOpacity={0.8} style={[qsStyles.choiceChip, feedType === item && qsStyles.choiceChipActive]} onPress={() => setField('feedType', item)}>
+                      <Text style={[qsStyles.choiceChipText, feedType === item && qsStyles.choiceChipTextActive]}>{item}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <FormField label="Quantity" placeholder="0.0 kg" suffix="kg" value={values.quantity} onChangeText={(v) => setField('quantity', v)} formatNumber numericDecimals={1} error={fieldErrors.quantity} />
+                <FormField label="Cost" placeholder="0" prefix={'\u20A6'} value={values.cost} onChangeText={(v) => setField('cost', v)} formatNumber numericDecimals={0} onFocus={scrollToInput} />
+                <View style={qsStyles.liveReadout}>
+                  <Text style={qsStyles.liveReadoutText}>{unitCost > 0 ? `~ \u20A6${formatNumberWithCommas(String(unitCost))}/kg` : 'Enter cost to see cost/kg'}</Text>
+                </View>
+                {formWarning ? <Text style={qsStyles.warnText}>{formWarning}</Text> : null}
+                <FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
               </View>
             )}
-            {type === 'mortality' && (
-              <View>
-                <Text style={qsStyles.sheetTitle}>Log Mortality</Text>
-                <FormField label="Number of Birds Lost" placeholder="0" autoFocus />
-                <FormField label="Suspected Cause" placeholder="e.g. Heat stress" icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} onFocus={scrollToInput} />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
-              </View>
-            )}
-            {type === 'medication' && (
-              <View>
-                <Text style={qsStyles.sheetTitle}>Log Medication</Text>
-                <FormField label="Medication Name" placeholder="e.g. Newcastle vaccine" icon={<GoonaIcon icon={Icons.pill} size={16} color="#A0AEA1" />} autoFocus />
-                <FormField label="Quantity Administered" placeholder="e.g. 1 vial (500 doses)" onFocus={scrollToInput} />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
-              </View>
-            )}
-            {type === 'eggs' && (
-              <View>
-                <Text style={qsStyles.sheetTitle}>Log Egg Production</Text>
-                <FormField label="Eggs Collected" placeholder="0 eggs" suffix="eggs" autoFocus />
-                <FormField label="Estimated Value" placeholder="0.00" prefix={'\u20A6'} onFocus={scrollToInput} />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
-              </View>
-            )}
-            {type === 'water' && (
-              <View>
-                <Text style={qsStyles.sheetTitle}>Log Water Usage</Text>
-                <FormField label="Water Used" placeholder="0 litres" suffix="L" autoFocus />
-                <FormField label="Notes" placeholder="Optional..." icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
-              </View>
-            )}
-            {type === 'observation' && (
-              <View>
-                <Text style={qsStyles.sheetTitle}>Add Observation Note</Text>
-                <FormField label="Notes" placeholder="Describe what you observed..." icon={<GoonaIcon icon={Icons.eye} size={16} color="#A0AEA1" />} multiline autoFocus />
-              </View>
-            )}
+            {type === 'mortality' && <View><Text style={qsStyles.sheetTitle}>Log Mortality</Text><FormField label="Number of Birds Lost" placeholder="0" value={values.mortality} onChangeText={(v) => setField('mortality', v)} formatNumber numericDecimals={0} autoFocus error={fieldErrors.mortality} /><FormField label="Suspected Cause" placeholder="e.g. Heat stress" value={values.cause} onChangeText={(v) => setField('cause', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} onFocus={scrollToInput} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
+            {type === 'medication' && <View><Text style={qsStyles.sheetTitle}>Log Medication</Text><FormField label="Medication Name" placeholder="e.g. Newcastle vaccine" value={values.medication} onChangeText={(v) => setField('medication', v)} icon={<GoonaIcon icon={Icons.pill} size={16} color="#A0AEA1" />} autoFocus error={fieldErrors.medication} /><FormField label="Quantity Administered" placeholder="e.g. 1 vial (500 doses)" value={values.dose} onChangeText={(v) => setField('dose', v)} onFocus={scrollToInput} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
+            {type === 'eggs' && <View><Text style={qsStyles.sheetTitle}>Log Egg Production</Text><FormField label="Eggs Collected" placeholder="0 eggs" suffix="eggs" value={values.eggs} onChangeText={(v) => setField('eggs', v)} formatNumber numericDecimals={0} autoFocus error={fieldErrors.eggs} /><FormField label="Estimated Value" placeholder="0" prefix={'\u20A6'} value={values.value} onChangeText={(v) => setField('value', v)} formatNumber numericDecimals={0} onFocus={scrollToInput} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
+            {type === 'water' && <View><Text style={qsStyles.sheetTitle}>Log Water Usage</Text><FormField label="Water Used" placeholder="0 litres" suffix="L" value={values.water} onChangeText={(v) => setField('water', v)} formatNumber numericDecimals={1} autoFocus error={fieldErrors.water} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
+            {type === 'observation' && <View><Text style={qsStyles.sheetTitle}>Add Observation Note</Text><FormField label="Notes" placeholder="Describe what you observed..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.eye} size={16} color="#A0AEA1" />} multiline autoFocus error={fieldErrors.notes} /></View>}
           </ScrollView>
-          <TouchableOpacity style={qsStyles.saveBtn} activeOpacity={0.9} onPress={onSave}>
-            <GoonaIcon icon={Icons.checkCircle} size={18} color="white" />
-            <Text style={qsStyles.saveText}>Save Record</Text>
-          </TouchableOpacity>
+          <View style={qsStyles.actionRow}><TouchableOpacity style={qsStyles.cancelBtn} activeOpacity={0.85} onPress={handleCancel}><Text style={qsStyles.cancelText}>Cancel</Text></TouchableOpacity><TouchableOpacity style={[qsStyles.saveBtn, saveDisabled && qsStyles.saveBtnDisabled]} activeOpacity={0.9} disabled={saveDisabled} onPress={handleSave}><GoonaIcon icon={Icons.checkCircle} size={18} color="white" /><Text style={qsStyles.saveText}>Save Record</Text></TouchableOpacity></View>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
@@ -201,12 +313,45 @@ const qsStyles = StyleSheet.create({
   backdrop: { position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)' },
   sheet: { backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, maxHeight: '85%' },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', alignSelf: 'center', marginBottom: 12 },
-  contextPill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#F0FDF4', borderRadius: 100, paddingVertical: 6, paddingHorizontal: 14, marginBottom: 14, alignSelf: 'center' },
-  contextText: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
+  logContext: { backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#B7E4C7', borderRadius: 18, padding: 14, marginBottom: 20 },
+  contextTitle: { fontSize: 11, fontWeight: '800', color: '#166534', letterSpacing: 1.6, textTransform: 'uppercase', marginBottom: 10 },
+  contextGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  contextField: { flex: 1, minWidth: '46%', minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'white', borderRadius: 14, borderWidth: 1, borderColor: '#D8ECD8', paddingHorizontal: 12, paddingVertical: 10 },
+  contextFieldWide: { minWidth: '100%' },
+  contextFieldText: { flex: 1 },
+  contextLabel: { fontSize: 9, fontWeight: '800', color: '#94A3B8', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 },
+  contextValue: { fontSize: 14, fontWeight: '800', color: '#166534' },
+  batchOptions: { backgroundColor: 'white', borderRadius: 14, borderWidth: 1, borderColor: '#D8ECD8', marginTop: 10, overflow: 'hidden' },
+  batchOption: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  batchOptionActive: { backgroundColor: '#F0FDF4' },
+  batchOptionText: { fontSize: 13, fontWeight: '700', color: '#64748B' },
+  batchOptionTextActive: { color: '#166534' },
+  inlinePicker: { backgroundColor: 'white', borderRadius: 14, marginTop: 10, overflow: 'hidden' },
+  inlineDone: { height: 42, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  inlineDoneText: { fontSize: 14, fontWeight: '800', color: '#2E7D32' },
+  errorText: { fontSize: 12, fontWeight: '700', color: '#EF4444', marginTop: -10, marginBottom: 12 },
   scrollContent: { paddingBottom: 12 },
   sheetTitle: { fontSize: 18, fontWeight: '700', color: '#1B1B1B', marginBottom: 18 },
-  saveBtn: { height: 52, borderRadius: 16, backgroundColor: '#2E7D32', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 },
-  saveText: { fontSize: 15, fontWeight: '600', color: 'white' },
+  actionRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  cancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F8FAF7', borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center' },
+  cancelText: { fontSize: 15, fontWeight: '800', color: '#64748B' },
+  saveBtn: { flex: 1.35, height: 52, borderRadius: 16, backgroundColor: '#2E7D32', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  saveBtnDisabled: { opacity: 0.42 },
+  fieldLabel: { fontSize: 10, fontWeight: '800', color: '#94A3B8', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
+  typeSwitchWrap: { marginTop: -6, marginBottom: 18 },
+  typeRail: { gap: 8, paddingRight: 20 },
+  typeChip: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, borderWidth: 1, borderColor: '#D8ECD8', backgroundColor: '#FFFFFF', paddingHorizontal: 13 },
+  typeChipActive: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
+  typeChipText: { fontSize: 12, fontWeight: '800', color: '#64748B' },
+  typeChipTextActive: { color: '#FFFFFF' },
+  chipRail: { gap: 8, paddingRight: 20, paddingBottom: 2, marginBottom: 14 },
+  choiceChip: { minHeight: 38, borderRadius: 999, borderWidth: 1, borderColor: '#D8ECD8', backgroundColor: '#fff', paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center' },
+  choiceChipActive: { backgroundColor: '#E6F4E9', borderColor: '#2E7D32' },
+  choiceChipText: { fontSize: 12, fontWeight: '800', color: '#64748B' },
+  choiceChipTextActive: { color: '#166534' },
+  liveReadout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, backgroundColor: '#F8FAF7', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12, marginTop: -4, marginBottom: 12 },
+  liveReadoutText: { fontSize: 13, fontWeight: '800', color: '#166534' },
+  warnText: { fontSize: 12, fontWeight: '700', color: '#B45309', backgroundColor: '#FFFBEB', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 10, marginBottom: 12 },  saveText: { fontSize: 15, fontWeight: '600', color: 'white' },
 })
 
 /* ─── Animated wrapper ─── */
@@ -218,30 +363,95 @@ function AnimatedCard({ children, delay }: { children: React.ReactNode; delay?: 
   )
 }
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 function formatDate(d: Date): string {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
 }
 
+function formatTime(d: Date): string {
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+function buildFarmFeedPost(type: RecordKey, values: QuickLogValues, batch: string, dateStr: string, timeStr: string): FeedPost {
+  const amount = (v?: string) => (v && v.trim() ? v.trim() : '0')
+  const note = values.notes?.trim()
+  const meta = `${batch} � ${dateStr} � ${timeStr}`
+  const id = `quick-log-${type}-${Date.now()}`
+
+  if (type === 'feed') {
+    const qty = amount(values.quantity)
+    const cost = values.cost?.trim()
+    const feedName = values.feedType?.trim()
+    return { id, type: 'feed_record', timestamp: Date.now(), actorName: 'GOONA Records', actorRole: 'Farm Operations', actorInitials: 'GR', actorColor: '#F59E0B', detail: `${qty}kg feed usage recorded for ${batch}${feedName ? ` � ${feedName}` : ''}${cost ? ` � \u20A6${cost}` : ''}.${note ? ` ${note}` : ''}`, highlight: `${qty}kg`, tags: [batch, dateStr, timeStr], batch, likes: 0, comments: 0 }
+  }
+
+  if (type === 'eggs') {
+    const eggs = amount(values.eggs)
+    const value = values.value?.trim()
+    return { id, type: 'announcement', timestamp: Date.now(), actorName: 'GOONA Records', actorRole: 'Egg Production', actorInitials: 'GR', actorColor: '#16A34A', detail: `${eggs} eggs collected for ${batch}${value ? ` � \u20A6${value}` : ''}.${note ? ` ${note}` : ''}`, highlight: `${eggs} eggs`, tags: [batch, dateStr, timeStr], batch, likes: 0, comments: 0 }
+  }
+
+  if (type === 'water') {
+    const water = amount(values.water)
+    return { id, type: 'announcement', timestamp: Date.now(), actorName: 'GOONA Records', actorRole: 'Water Log', actorInitials: 'GR', actorColor: '#0EA5E9', detail: `${water}L water usage logged for ${batch}.${note ? ` ${note}` : ''}`, highlight: `${water}L`, tags: [batch, dateStr, timeStr], batch, likes: 0, comments: 0 }
+  }
+
+  if (type === 'medication') {
+    const med = values.medication?.trim() || 'Medication'
+    return { id, type: 'medication', timestamp: Date.now(), actorName: 'GOONA Meds', actorRole: 'Farm Operations', actorInitials: 'GM', actorColor: '#1A56FF', detail: `${med} logged for ${batch}${values.dose ? ` � ${values.dose}` : ''}.${note ? ` ${note}` : ''}`, highlight: med, tags: [batch, dateStr, timeStr], batch, likes: 0, comments: 0 }
+  }
+
+  if (type === 'mortality') {
+    const lost = amount(values.mortality)
+    return { id, type: 'health_report', timestamp: Date.now(), actorName: 'GOONA Health', actorRole: 'Mortality Log', actorInitials: 'GH', actorColor: '#EF4444', detail: `${lost} mortality recorded for ${batch}${values.cause ? ` � ${values.cause}` : ''}.${note ? ` ${note}` : ''}`, highlight: `${lost} birds`, tags: [batch, dateStr, timeStr], batch, likes: 0, comments: 0, isAlert: lost !== '0', alertColor: '#EF4444' }
+  }
+
+  return { id, type: 'announcement', timestamp: Date.now(), actorName: 'GOONA Records', actorRole: 'Farm Note', actorInitials: 'GR', actorColor: '#8B5CF6', detail: `${note || 'Farm note added'} � ${meta}`, highlight: 'Note', tags: [batch, dateStr, timeStr], batch, likes: 0, comments: 0 }
+}
+
 /* ─── MAIN ─── */
 export default function DailyRecordsScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [showDatePicker, setShowDatePicker] = useState(false)
-  const [selectedBatch, setSelectedBatch] = useState('Layer Batch A')
-  const [showBatchPicker, setShowBatchPicker] = useState(false)
+  const [selectedBatch, setSelectedBatch] = useState('Layer Batch B')
+  const [selectedTime, setSelectedTime] = useState(new Date())
   const [quickLogType, setQuickLogType] = useState<RecordKey | null>(null)
+  const [loggedToday, setLoggedToday] = useState<RecordKey[]>(['feed', 'water', 'mortality', 'eggs'])
+  const [snapshotOverrides, setSnapshotOverrides] = useState<Record<string, string>>({})
+  const [lastFeedByBatch, setLastFeedByBatch] = useState<Record<string, string>>({})
+  const [toastMsg, setToastMsg] = useState('')
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const addFeedPost = useFarmChatStore((s) => s.addFeedPost)
 
   const dateStr = formatDate(selectedDate)
-
-  const onDateChange = (_event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false)
-    if (date) setSelectedDate(date)
-  }
-
+  const timeStr = formatTime(selectedTime)
   const openQuickLog = (key: RecordKey) => setQuickLogType(key)
   const closeQuickLog = () => setQuickLogType(null)
+  const showToast = (msg: string) => {
+    setToastMsg(msg)
+    if (Platform.OS === 'android') ToastAndroid.show(msg, ToastAndroid.SHORT)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToastMsg(''), 1900)
+  }
+  const dashboardLogs = useMemo(() => DAILY_LOGS.map((log) => ({ ...log, done: log.done || loggedToday.includes(log.key as RecordKey) })), [loggedToday])
+  const progressPct = Math.round((dashboardLogs.filter(l => l.done).length / dashboardLogs.length) * 100)
+  const snapshotMetrics = useMemo(() => SNAPSHOT_METRICS.map((metric) => ({ ...metric, value: snapshotOverrides[metric.label] ?? metric.value })), [snapshotOverrides])
+  const handleQuickLogSave = (values: QuickLogValues) => {
+    if (!quickLogType) return
+    addFeedPost(buildFarmFeedPost(quickLogType, values, selectedBatch, dateStr, timeStr))
+    setLoggedToday((current) => current.includes(quickLogType) ? current : [...current, quickLogType])
+    if (quickLogType === 'feed') {
+      const qty = parseFormattedNumber(values.quantity)
+      const feedName = values.feedType
+      setSnapshotOverrides((current) => ({ ...current, 'Feed Logged': `${formatNumberWithCommas(String(qty), 1)} kg` }))
+      if (feedName) setLastFeedByBatch((current) => ({ ...current, [selectedBatch]: feedName }))
+    }
+    if (quickLogType === 'water') setSnapshotOverrides((current) => ({ ...current, 'Water Logged': `${formatNumberWithCommas(String(parseFormattedNumber(values.water)), 1)} L` }))
+    if (quickLogType === 'eggs') setSnapshotOverrides((current) => ({ ...current, 'Egg Production': `${formatNumberWithCommas(String(parseFormattedNumber(values.eggs)))} eggs` }))
+    if (quickLogType === 'mortality') setSnapshotOverrides((current) => ({ ...current, Mortality: `${formatNumberWithCommas(String(parseFormattedNumber(values.mortality)))} birds` }))
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+    showToast('Record saved to FarmChat')
+    closeQuickLog()
+  }
 
   return (
     <View style={styles.container}>
@@ -277,52 +487,7 @@ export default function DailyRecordsScreen() {
             </View>
           </AnimatedCard>
 
-          {/* ─── 2. BATCH + DATE CONTEXT BANNER ─── */}
-          <AnimatedCard delay={130}>
-            <TouchableOpacity activeOpacity={0.85} onLongPress={() => {}}>
-              <View style={styles.contextBanner}>
-                <TouchableOpacity
-                  style={styles.contextSection}
-                  activeOpacity={0.7}
-                  onPress={() => setShowBatchPicker(true)}
-                >
-                  <GoonaIcon icon={Icons.clipboardList} size={14} color="#2E7D32" />
-                  <Text style={styles.contextText} numberOfLines={1}>{selectedBatch}</Text>
-                  <Icons.chevronDown size={10} color="#2E7D32" />
-                </TouchableOpacity>
-                <View style={styles.contextDivider} />
-                <TouchableOpacity
-                  style={styles.contextSection}
-                  activeOpacity={0.7}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <GoonaIcon icon={Icons.calendar} size={14} color="#2E7D32" />
-                  <Text style={styles.contextText}>{dateStr}</Text>
-                  <Icons.chevronDown size={10} color="#2E7D32" />
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </AnimatedCard>
-
-          {/* ─── DATE PICKER ─── */}
-          {showDatePicker && (
-            <View style={styles.datePickerWrap}>
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={onDateChange}
-                themeVariant="light"
-              />
-              {Platform.OS === 'ios' && (
-                <TouchableOpacity style={styles.dateDoneBtn} activeOpacity={0.85} onPress={() => setShowDatePicker(false)}>
-                  <Text style={styles.dateDoneText}>Done</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-
-          {/* ─── 3. QUICK FARM LOGS ─── */}
+          {/* ─── 2. QUICK FARM LOGS ─── */}
           <AnimatedCard delay={180}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Quick Farm Logs</Text>
@@ -351,7 +516,7 @@ export default function DailyRecordsScreen() {
             </View>
           </AnimatedCard>
           <View style={styles.snapshotGrid}>
-            {SNAPSHOT_METRICS.map((m, i) => {
+            {snapshotMetrics.map((m, i) => {
               const IconComp = m.icon
               const TrendIcon = m.trend === 'up' ? Icons.trendingUp : Icons.trendingDown
               return (
@@ -383,16 +548,16 @@ export default function DailyRecordsScreen() {
           <AnimatedCard delay={560}>
             <View style={styles.progressCard}>
               <View style={styles.progressTop}>
-                <Text style={styles.progressPct}>{PROGRESS_PCT}% Complete</Text>
+                <Text style={styles.progressPct}>{progressPct}% Complete</Text>
                 <Text style={styles.progressCount}>
-                  {DAILY_LOGS.filter(l => l.done).length} of {DAILY_LOGS.length} daily logs submitted
+                  {dashboardLogs.filter(l => l.done).length} of {dashboardLogs.length} daily logs submitted
                 </Text>
               </View>
               <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${PROGRESS_PCT}%` }]} />
+                <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
               </View>
               <View style={styles.progressLogs}>
-                {DAILY_LOGS.map((log) => (
+                {dashboardLogs.map((log) => (
                   <View key={log.key} style={styles.progressLogItem}>
                     <View style={[styles.progressDot, { backgroundColor: log.done ? '#16A34A' : '#D1D5DB' }]} />
                     <Text style={[styles.progressLogLabel, log.done && styles.progressLogDone]}>
@@ -436,33 +601,6 @@ export default function DailyRecordsScreen() {
               </AnimatedCard>
             )
           })}
-
-          {/* ─── 7. RECENT ACTIVITY ─── */}
-          <AnimatedCard delay={920}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Activity</Text>
-            </View>
-          </AnimatedCard>
-          <View style={styles.activityList}>
-            {RECENT_ACTIVITY.map((act, i) => {
-              const IconComp = act.icon
-              return (
-                <AnimatedCard key={i} delay={960 + i * 60}>
-                  <View style={styles.activityCard}>
-                    <View style={[styles.activityIcon, { backgroundColor: act.iconBg }]}>
-                      <GoonaIcon icon={IconComp} size={18} color={act.iconColor} />
-                    </View>
-                    <View style={styles.activityContent}>
-                      <Text style={styles.activityContext}>{act.date}  •  {act.batch}</Text>
-                      <Text style={styles.activityTitle}>{act.title}</Text>
-                      <Text style={styles.activityTime}>{act.time}</Text>
-                    </View>
-                  </View>
-                </AnimatedCard>
-              )
-            })}
-          </View>
-
           <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -473,17 +611,20 @@ export default function DailyRecordsScreen() {
           type={quickLogType}
           batch={selectedBatch}
           dateStr={dateStr}
+          timeStr={timeStr}
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          lastFeedType={lastFeedByBatch[selectedBatch]}
+          onTypeChange={setQuickLogType}
+          onBatchSelect={setSelectedBatch}
+          onDateSelect={setSelectedDate}
+          onTimeSelect={setSelectedTime}
           onClose={closeQuickLog}
-          onSave={closeQuickLog}
+          onSave={handleQuickLogSave}
         />
       )}
 
-      <BatchPickerModal
-        visible={showBatchPicker}
-        selected={selectedBatch}
-        onSelect={setSelectedBatch}
-        onClose={() => setShowBatchPicker(false)}
-      />
+      {toastMsg ? <View style={styles.toast}><GoonaIcon icon={Icons.checkCircle} size={16} color="#D4FF4D" /><Text style={styles.toastText}>{toastMsg}</Text></View> : null}
     </View>
   )
 }
@@ -586,4 +727,19 @@ const styles = StyleSheet.create({
   activityContext: { fontSize: 11, fontWeight: '600', color: '#2E7D32', marginBottom: 2 },
   activityTitle: { fontSize: 14, fontWeight: '700', color: '#1B1B1B' },
   activityTime: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
+  toast: { position: 'absolute', left: 24, right: 24, bottom: 34, zIndex: 50, backgroundColor: '#15291A', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 8 },
+  toastText: { fontSize: 13, fontWeight: '800', color: '#fff' },
 })
+
+
+
+
+
+
+
+
+
+
+
+
+

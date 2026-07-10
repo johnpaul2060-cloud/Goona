@@ -881,8 +881,7 @@ export default function ReminderTasksScreen() {
   const [activeTab, setActiveTab] = useState('all')
   const [showCreate, setShowCreate] = useState(false)
   const [editItem, setEditItem] = useState<ReminderTaskItem | null>(null)
-  const [swipeReply, setSwipeReply] = useState('')
-  const [replyText, setReplyText] = useState('')
+
 
   const {
     items, sortKey, setSortKey, initialized, loadFromStorage,
@@ -896,27 +895,6 @@ export default function ReminderTasksScreen() {
 
   const filtered = useMemo(() => getFilteredItems(role, activeTab as any), [items, role, activeTab])
   const sorted = useMemo(() => getSortedItems(filtered), [filtered, sortKey])
-
-  const sendReply = () => {
-    if (!replyText.trim()) return
-    Keyboard.dismiss()
-    addFeedPost({
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      type: 'announcement',
-      timestamp: Date.now(),
-      actorName: authUserName || 'Farm Owner',
-      actorRole: role,
-      actorInitials: (authUserName || 'Farm Owner').split(' ').map((n: string) => n[0]).join('').slice(0, 2) || 'FO',
-      actorColor: '#00695C',
-      detail: `${swipeReply}: ${replyText}`,
-      highlight: 'Reply',
-      tags: ['Reply'],
-      visibility: 'all',
-    })
-    setSwipeReply('')
-    setReplyText('')
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-  }
 
   const handleCreate = (data: any) => {
     addItem(data)
@@ -1027,24 +1005,11 @@ export default function ReminderTasksScreen() {
           <SortPicker sortKey={sortKey} onSelect={setSortKey} />
         </View>
 
-        {/* Swipe reply bar */}
-        {swipeReply !== '' && (
-          <View style={{ paddingHorizontal: 24, paddingVertical: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F1F5F9', borderRadius: 12, padding: 10 }}>
-              <GoonaIcon icon={Icons.arrowLeft} size={14} color="#00695C" />
-              <Text style={{ fontSize: 12, color: '#64748B', flex: 1 }} numberOfLines={1}>{swipeReply}</Text>
-              <TouchableOpacity onPress={() => { setSwipeReply(''); setReplyText('') }}>
-                <GoonaIcon icon={Icons.x} size={14} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
         {/* List */}
         <FlatList
           data={sorted || []}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 10, paddingBottom: 120 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 10, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => (
             <ReminderTaskCard
@@ -1054,11 +1019,6 @@ export default function ReminderTasksScreen() {
               onPress={() => { setEditItem(item); setShowCreate(true) }}
               onSwipeAction={(action) => {
                 if (action === 'complete') handleComplete(item.id)
-                if (action === 'reply') {
-                  setSwipeReply(`Replying to: ${item.title}`)
-                  setReplyText('')
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                }
               }}
             />
           )}
@@ -1070,57 +1030,6 @@ export default function ReminderTasksScreen() {
           }
         />
       </View>
-
-      {/* Input bar */}
-      {!showCreate && (
-        <View style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          paddingBottom: insets.bottom + 8,
-          paddingTop: 8, paddingHorizontal: 16,
-          backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#F1F5F9',
-          shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.03, shadowRadius: 12, elevation: 4,
-        }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F8FAF7', borderRadius: 16, paddingLeft: 10, paddingRight: 4, borderWidth: 1, borderColor: '#E2E8F0' }}>
-            <TouchableOpacity activeOpacity={0.7} onPress={() => setShowCreate(true)} style={{ padding: 8 }}>
-              <GoonaIcon icon={Icons.mic} size={20} color="#00695C" />
-            </TouchableOpacity>
-            <TextInput
-              style={{ flex: 1, fontSize: 15, fontWeight: '500', color: '#1B1B1B', paddingVertical: 10, paddingHorizontal: 0 }}
-              placeholder={swipeReply ? 'Type reply...' : 'Quick task...'}
-              placeholderTextColor="#CBD5E1"
-              value={replyText}
-              onChangeText={setReplyText}
-              onSubmitEditing={() => {
-                if (replyText.trim()) {
-                  if (swipeReply) { sendReply() } else { setShowCreate(true) }
-                }
-              }}
-            />
-            {swipeReply ? (
-              <TouchableOpacity activeOpacity={0.7} onPress={sendReply} style={{ backgroundColor: '#3B82F6', borderRadius: 12, padding: 10 }}>
-                <GoonaIcon icon={Icons.send} size={20} color="white" />
-              </TouchableOpacity>
-            ) : (
-              <>
-                <TouchableOpacity activeOpacity={0.7} onPress={() => setShowCreate(true)} style={{ padding: 6 }}>
-                  <GoonaIcon icon={Icons.image} size={20} color="#00695C" />
-                </TouchableOpacity>
-                <TouchableOpacity activeOpacity={0.7} onPress={() => setShowCreate(true)} style={{ padding: 6 }}>
-                  <GoonaIcon icon={Icons.fileText} size={20} color="#00695C" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => setShowCreate(true)}
-                  style={{ backgroundColor: '#00695C', borderRadius: 12, padding: 10 }}
-                >
-                  <GoonaIcon icon={Icons.plus} size={20} color="white" />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
-      )}
 
       {/* Create/Edit Modal */}
       <CreateTaskModal

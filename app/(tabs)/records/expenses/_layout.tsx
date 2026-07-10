@@ -14,7 +14,7 @@ export default function ExpensesLayout() {
       <Stack.Screen name="categories" />
       <Stack.Screen name="reports" />
       <Stack.Screen name="budget" />
-      <Stack.Screen name="budget-setup" options={gestureDisabledOptions} />
+      <Stack.Screen name="budget-setup" />
       <Stack.Screen name="budget-export" />
     </Stack>
   )

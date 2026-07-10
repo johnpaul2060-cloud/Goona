@@ -61,7 +61,7 @@ export default function ProjectTimelineScreen() {
       <StatusBar style="dark" />
       <BlurView intensity={55} tint="light" style={[styles.headerBlur, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.push('/recapitalization')}>
+          <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/recapitalization' as any)}>
             <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>

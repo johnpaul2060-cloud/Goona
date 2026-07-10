@@ -164,7 +164,13 @@ function TeamTabs({ active, onChange }: { active: TeamTabType; onChange: (t: Tea
         return (
           <Pressable
             key={tab.key}
-            onPress={() => onChange(tab.key)}
+            onPress={() => {
+              if (tab.key === 'workers' && active !== 'workers') {
+                router.push({ pathname: '/worker-detail', params: { id: 'w1' } } as any)
+                return
+              }
+              onChange(tab.key)
+            }}
             style={[ttStyles.pill, isActive && ttStyles.pillActive]}
           >
             <GoonaIcon icon={tab.icon} size={14} color={isActive ? '#fff' : '#64748B'} />
@@ -1118,3 +1124,4 @@ const invStyles = StyleSheet.create({
   },
   btnSecondaryText: { fontWeight: '600', fontSize: 12, color: '#1A2E00' },
 })
+

@@ -176,6 +176,7 @@ export const Icons = {
   bell: Bell,
   book: Book,
   brainCircuit: BrainCircuit,
+  building: Building2,
   building2: Building2,
   calendar: Calendar,
   camera: Camera,
@@ -210,6 +211,7 @@ export const Icons = {
   file: File,
   fileSpreadsheet: FileSpreadsheet,
   fileText: FileText,
+  feed: Wheat,
   filter: Filter,
   fingerprint: Fingerprint,
   fingerprintPattern: FingerprintPattern,
@@ -302,3 +304,4 @@ export const Icons = {
   zap: Zap,
   naira: GoonaNairaIcon,
 } as const
+

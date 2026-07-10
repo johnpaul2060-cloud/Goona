@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   StyleSheet,
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
 import { Icons } from '../../../../shared/icons'
@@ -40,6 +40,8 @@ const STEPS = ['Period', 'Amount', 'Allocate', 'Alerts', 'Review']
 
 export default function BudgetSetupScreen() {
   const insets = useSafeAreaInsets()
+  const params = useLocalSearchParams<{ from?: string }>()
+  const fromRecapitalization = params.from === 'recapitalization'
   const [step, setStep] = useState(1)
 
   const [period, setPeriod] = useState<typeof PERIODS[number] | null>(null)
@@ -143,7 +145,7 @@ export default function BudgetSetupScreen() {
     setSelectedTemplate(templateKey)
     if (allocationMode === 'amount') {
       const newAmts: Record<string, string> = {}
-      for (const key of Object.keys(tmpl.allocs)) {
+      for (const key of Object.keys(tmpl.allocs) as (keyof typeof tmpl.allocs)[]) {
         const pct = parseFloat(tmpl.allocs[key]) || 0
         const amt = totalBudget > 0 ? Math.round((pct / 100) * totalBudget) : 0
         newAmts[key] = amt > 0 ? String(amt) : ''
@@ -481,9 +483,9 @@ export default function BudgetSetupScreen() {
           <TouchableOpacity
             style={styles.successBtn}
             activeOpacity={0.8}
-            onPress={() => router.back()}
+            onPress={() => fromRecapitalization ? router.replace('/(tabs)/recapitalization' as any) : router.back()}
           >
-            <Text style={styles.successBtnText}>Back to Budget</Text>
+            <Text style={styles.successBtnText}>{fromRecapitalization ? 'Back to Recapitalization' : 'Back to Budget'}</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -517,6 +519,8 @@ export default function BudgetSetupScreen() {
             onPress={() => {
               if (step > 1) {
                 setStep(step - 1)
+              } else if (fromRecapitalization) {
+                router.replace('/(tabs)/recapitalization' as any)
               } else if (router.canGoBack()) {
                 router.back()
               } else {

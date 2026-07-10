@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, Platform, Alert,
+  StyleSheet, Alert,
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
@@ -203,7 +203,7 @@ export default function WalletScreen() {
                   activeOpacity={0.7}
                   onPress={handleCopy}
                 >
-                  <GoonaIcon icon={copied ? Check : Copy} size={16} color="#2E7D32" />
+                  <GoonaIcon icon={copied ? Icons.check : Icons.copy} size={16} color="#2E7D32" />
                   <Text style={styles.accountBtnText}>
                     {copied ? 'Copied' : 'Copy'}
                   </Text>
@@ -263,7 +263,7 @@ export default function WalletScreen() {
                 backgroundColor: tx.type === 'credit' ? '#F0FDF4' : '#FEF2F2',
               }]}>
                 <GoonaIcon
-                  icon={tx.type === 'credit' ? ArrowDownLeft : ArrowUpRight}
+                  icon={tx.type === 'credit' ? Icons.arrowDownLeft : Icons.arrowUpRight}
                   size={16}
                   color={tx.type === 'credit' ? '#2E7D32' : '#DC2626'}
                 />
@@ -544,3 +544,4 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
 })
+
