@@ -15,6 +15,7 @@ export default function RecordsLayout() {
       <Stack.Screen name="sales-revenue" />
       <Stack.Screen name="analytics" />
       <Stack.Screen name="expenses" />
+      <Stack.Screen name="history" />
     </Stack>
   )
 }

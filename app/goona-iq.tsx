@@ -10,6 +10,7 @@ import Svg, { Path, Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useHistoryStore } from '../store/useHistoryStore'
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, withSpring, withDelay, FadeInUp, FadeOut,
@@ -426,7 +427,10 @@ export default function GOONAIQScreen() {
           ))}
         </Animated.View>
 
-        {/* ─── 9. ASK GOONA AI — VOICE-ENABLED ASSISTANT ─── */}
+        {/* ─── 9. HISTORICAL FORECASTS ─── */}
+        <HistoricalForecastSection />
+
+        {/* ─── 10. ASK GOONA AI — VOICE-ENABLED ASSISTANT ─── */}
         <Animated.View entering={FadeInUp.duration(500).delay(850).springify()} style={styles.sectionHdr}>
           <Text style={styles.sectionTitle}>Ask GOONA AI</Text>
           <View style={styles.aiStatusBadge}>
@@ -453,7 +457,79 @@ export default function GOONAIQScreen() {
   )
 }
 
-/* ─── AI INTERACTION BAR ─── */
+/* ─── HISTORICAL FORECAST SECTION ─── */
+function HistoricalForecastSection() {
+  const forecasts = useHistoryStore((s) => s.getForecasts())
+  const [expanded, setExpanded] = useState(false)
+  const visible = expanded ? forecasts : forecasts.slice(0, 2)
+
+  if (forecasts.length === 0) return null
+
+  return (
+    <>
+      <Animated.View entering={FadeInUp.duration(500).delay(700).springify()} style={styles.sectionHdr}>
+        <Text style={styles.sectionTitle}>Historical Forecast</Text>
+        <Text style={styles.sectionSub}>Based on your logged data</Text>
+      </Animated.View>
+
+      {visible.map((f, i) => (
+        <ForecastCard key={f.metric} forecast={f} index={i} />
+      ))}
+
+      {forecasts.length > 2 && (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setExpanded((v) => !v)}
+          style={styles.forecastToggle}
+        >
+          <Text style={styles.forecastToggleText}>
+            {expanded ? 'Show less' : `${forecasts.length - 2} more forecast${forecasts.length - 2 > 1 ? 's' : ''} available`}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </>
+  )
+}
+
+/* ─── FORECAST CARD ─── */
+function ForecastCard({ forecast, index }: { forecast: import('../store/useHistoryStore').Forecast; index: number }) {
+  const { style: pressStyle, onPressIn, onPressOut } = usePressScale()
+  const directionIcon = forecast.direction === 'up' ? Icons.trendingUp : forecast.direction === 'down' ? Icons.trendingDown : Icons.minus
+  const directionColor = forecast.direction === 'up' ? '#22C55E' : forecast.direction === 'down' ? '#EF4444' : '#94A3B8'
+  const confidenceColor = forecast.confidence === 'high' ? '#22C55E' : forecast.confidence === 'medium' ? '#F59E0B' : '#EF4444'
+
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(750 + index * 80).springify()} style={[styles.forecastCard, { marginBottom: 10 }]}>
+      <TouchableOpacity activeOpacity={0.92} style={styles.forecastCardInner}>
+        <View style={styles.forecastHead}>
+          <View style={styles.forecastMetricRow}>
+            <GoonaIcon icon={Icons.trendingUp} size={16} color={directionColor} />
+            <Text style={styles.forecastMetric}>{f.metric}</Text>
+          </View>
+          <View style={[styles.forecastBadge, { backgroundColor: directionColor + '18' }]}>
+            <GoonaIcon icon={directionIcon} size={12} color={directionColor} />
+            <Text style={[styles.forecastBadgeText, { color: directionColor }]}>
+              {f.direction === 'up' ? '+' : f.direction === 'down' ? '-' : ''}{f.pctChange}%
+            </Text>
+          </View>
+        </View>
+        <View style={styles.forecastBasis}>
+          <Text style={styles.forecastBasisText}>{f.basis}</Text>
+        </View>
+        <View style={styles.forecastFooter}>
+          <View style={styles.forecastConfidence}>
+            <View style={[styles.forecastConfDot, { backgroundColor: confidenceColor }]} />
+            <Text style={styles.forecastConfText}>{f.confidence} confidence</Text>
+          </View>
+          <TouchableOpacity style={styles.forecastAction} activeOpacity={0.7}>
+            <Text style={styles.forecastActionText}>{f.actionLabel}</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+}
+
 function AIInteractionBar({
   aiState, aiQuery, aiResponse,
   onQueryChange, onSend, onMic, onDismiss, inputRef,
@@ -1194,4 +1270,34 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3, borderLeftColor: '#2E7D32',
   },
   aiSuggestionText: { fontSize: 12, fontWeight: '600', color: '#1B1B1B', lineHeight: 17 },
+
+  /* forecast cards */
+  forecastCard: {
+    backgroundColor: 'white', borderRadius: 22, padding: 18,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
+  },
+  forecastCardInner: { gap: 12 },
+  forecastHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  forecastMetricRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  forecastMetric: { fontSize: 15, fontWeight: '700', color: '#1B1B1B' },
+  forecastBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingVertical: 4, paddingHorizontal: 10, borderRadius: 50,
+  },
+  forecastBadgeText: { fontSize: 12, fontWeight: '700' },
+  forecastBasis: { backgroundColor: '#F8FAF7', borderRadius: 12, padding: 12 },
+  forecastBasisText: { fontSize: 12, lineHeight: 17, color: '#64748B' },
+  forecastFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  forecastConfidence: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  forecastConfDot: { width: 6, height: 6, borderRadius: 3 },
+  forecastConfText: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
+  forecastAction: {
+    paddingVertical: 6, paddingHorizontal: 14, borderRadius: 50,
+    backgroundColor: '#F0FDF4',
+  },
+  forecastActionText: { fontSize: 11, fontWeight: '700', color: '#16A34A' },
+  forecastToggle: { alignItems: 'center', paddingVertical: 12 },
+  forecastToggleText: { fontSize: 13, fontWeight: '600', color: '#16A34A' },
 })

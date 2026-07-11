@@ -117,6 +117,15 @@ const ECOSYSTEM_LINKS = [
     color: '#0F766E',
     bg: '#DDF5F0',
   },
+  {
+    id: 'history',
+    icon: '\u{1F4C4}',
+    label: 'Farm History',
+    desc: 'Browse past records, trends, and export data',
+    route: '/records/history',
+    color: '#7C3AED',
+    bg: '#F3E8FF',
+  },
 ]
 
 function SummaryCard({
