@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dimensions } from 'react-native';
+﻿import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import GoonaIcon from '../../components/ui/GoonaIcon';
@@ -46,8 +46,8 @@ const SEVERITY_COLORS: Record<PrioritySeverity, { text: string; bg: string; bord
   urgent:    { text: '#DC2626', bg: '#FEF2F2', border: '#FECACA', dot: '#EF4444' },
 }
 const TODAY_PRIORITIES: { icon: any; label: string; desc: string; severity: PrioritySeverity }[] = [
-  { icon: Icons.clock, label: 'Medication due today', desc: 'Newcastle vaccine scheduled for Batch A â€” 420 broilers', severity: 'urgent' },
-  { icon: Icons.alertCircle, label: 'Feed stock running low', desc: 'Grower feed at 15% reserve â€” order within 48 hours', severity: 'attention' },
+  { icon: Icons.clock, label: 'Medication due today', desc: 'Newcastle vaccine scheduled for Batch A — 420 broilers', severity: 'urgent' },
+  { icon: Icons.alertCircle, label: 'Feed stock running low', desc: 'Grower feed at 15% reserve — order within 48 hours', severity: 'attention' },
   { icon: Icons.clipboardList, label: 'Water log not submitted', desc: 'Yesterday\'s water consumption record is missing', severity: 'info' },
 ]
 
@@ -153,10 +153,10 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.scrollInner}
         showsVerticalScrollIndicator={false}
       >
-        {/* â”€â”€â”€ GREETING â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ GREETING Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <View style={styles.greeting}>
           <View>
-            <Text style={styles.greetingSub}>Good Morning ðŸ‘‹</Text>
+            <Text style={styles.greetingSub}>Good Morning 😋</Text>
             <Text style={styles.greetingName}>Paul</Text>
             <Text style={styles.greetingStatus}>Your farm is performing well today.</Text>
           </View>
@@ -166,10 +166,10 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* â”€â”€â”€ PRIORITY BANNER â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PRIORITY BANNER Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         {banner.message && banner.level && <PriorityBannerCard message={banner.message} level={banner.level} />}
 
-        {/* â”€â”€â”€ HERO FARM CARD â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ HERO FARM CARD Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <Animated.View entering={FadeIn.duration(400)} style={[styles.heroCard, getCard('hero').highlight && styles.heroCardHighlight]}>
           <LinearGradient
             colors={['#065F46', '#047857']}
@@ -206,7 +206,7 @@ export default function DashboardScreen() {
               <Text style={styles.heroMetricLbl}>Survival Rate</Text>
             </View>
             <View style={styles.heroMetric}>
-              <Text style={styles.heroMetricVal}>â‚¦2.4M</Text>
+              <Text style={styles.heroMetricVal}>₦2.4M</Text>
               <Text style={styles.heroMetricLbl}>Revenue</Text>
             </View>
           </View>
@@ -222,7 +222,7 @@ export default function DashboardScreen() {
           </View>
         </Animated.View>
 
-        {/* â”€â”€â”€ TODAY'S PRIORITIES â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ TODAY'S PRIORITIES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>{"Today's Priorities"}</Text>
         </View>
@@ -242,7 +242,7 @@ export default function DashboardScreen() {
           )
         })}
 
-        {/* â”€â”€â”€ FARM HEALTH SNAPSHOT â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ FARM HEALTH SNAPSHOT Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Farm Health Snapshot</Text>
         </View>
@@ -262,7 +262,7 @@ export default function DashboardScreen() {
           })}
         </View>
 
-        {/* â”€â”€â”€ QUICK ACTIONS â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ QUICK ACTIONS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Quick Actions</Text>
             {engineState.decision.bannerLevel && (
@@ -291,7 +291,7 @@ export default function DashboardScreen() {
           })}
         </ScrollView>
 
-        {/* â”€â”€â”€ GOONA IQ RECOMMENDATION â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ GOONA IQ RECOMMENDATION Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <Animated.View entering={FadeIn.duration(400)} style={styles.iqCard}>
           <View style={styles.iqHead}>
             <View style={styles.iqBadgeRow}>
@@ -305,12 +305,12 @@ export default function DashboardScreen() {
           <View style={styles.iqRecommendation}>
             <GoonaIcon icon={Icons.brainCircuit} size={22} color="#2E7D32" />
             <Text style={styles.iqRecText}>
-              Save â‚¦85,000 this week to remain on track for your next production cycle.
+              Save ₦85,000 this week to remain on track for your next production cycle.
             </Text>
           </View>
         </Animated.View>
 
-        {/* â”€â”€â”€ WEATHER INTELLIGENCE â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ WEATHER INTELLIGENCE Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <TouchableOpacity activeOpacity={0.8} onPress={navigateToWeather}>
           <Animated.View entering={FadeIn.duration(400)} style={styles.weatherCard}>
             <View style={styles.weatherHead}>
@@ -322,7 +322,7 @@ export default function DashboardScreen() {
                 <View style={styles.weatherRow}>
                   <View style={styles.weatherStat}>
                     <GoonaIcon icon={Icons.thermometer} size={14} color="#F59E0B" />
-                    <Text style={styles.weatherVal}>{temp}Â°C</Text>
+                    <Text style={styles.weatherVal}>{temp}Ã‚Â°C</Text>
                     <Text style={styles.weatherLbl}>Temperature</Text>
                   </View>
                   <View style={styles.weatherDiv} />
@@ -349,7 +349,7 @@ export default function DashboardScreen() {
           </Animated.View>
         </TouchableOpacity>
 
-        {/* â”€â”€â”€ PRODUCTION PULSE â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PRODUCTION PULSE Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <Animated.View key={pulseIdx} entering={FadeIn.duration(500)} style={[styles.pulseCard, { backgroundColor: pulse.bg }]}>
           <View style={styles.pulseRow}>
             <View style={[styles.pulseIconWrap, { backgroundColor: pulse.color + '20' }]}>
@@ -364,7 +364,7 @@ export default function DashboardScreen() {
           </View>
         </Animated.View>
 
-        {/* â”€â”€â”€ ACTIVE BATCHES â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ ACTIVE BATCHES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         {batches.length > 0 && (
           <>
             <View style={styles.secHead}>
@@ -396,12 +396,15 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {/* â”€â”€â”€ DAILY CHALLENGE â”€â”€â”€ */}
-        <TouchableOpacity style={styles.challengeCard} activeOpacity={0.8} onPress={() => router.push('/academy/daily-challenge')}>
-          <View style={styles.challengeIconWrap}>
-            <GoonaIcon icon={Icons.award} size={18} color="#F97316" />
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CHALLENGES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+        <TouchableOpacity style={styles.challengeCard} activeOpacity={0.8} onPress={() => router.push('/goona-academy-challenges')}>
+          <View style={[styles.challengeIconWrap, { backgroundColor: '#F0FDF4' }]}>
+            <GoonaIcon icon={Icons.zap} size={20} color="#16A34A" />
           </View>
-          <Text style={styles.challengeText}>Daily Challenge</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.challengeText}>Challenges</Text>
+            <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>Quick rounds Â· keep your streak</Text>
+          </View>
           <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
         </TouchableOpacity>
 
@@ -466,7 +469,7 @@ const styles = StyleSheet.create({
   secTitle: { fontSize: 20, fontWeight: '800', color: '#1F2937' },
   secLink: { fontSize: 13, fontWeight: '500', color: '#2E7D32' },
 
-  /* â”€â”€â”€ TODAY'S PRIORITIES â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ TODAY'S PRIORITIES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   priorityCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     borderRadius: 16, padding: 14, marginBottom: 8,
@@ -478,7 +481,7 @@ const styles = StyleSheet.create({
   priorityLabel: { fontSize: 14, fontWeight: '700' },
   priorityDesc: { fontSize: 11, color: '#64748B', marginTop: 1, lineHeight: 15 },
 
-  /* â”€â”€â”€ FARM HEALTH SNAPSHOT â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ FARM HEALTH SNAPSHOT Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   healthGrid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },
@@ -493,7 +496,7 @@ const styles = StyleSheet.create({
   healthLabel: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
   healthStatus: { fontSize: 12, fontWeight: '700', marginTop: 1 },
 
-  /* â”€â”€â”€ QUICK ACTIONS â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ QUICK ACTIONS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   qaScroll: { paddingBottom: 4, zIndex: 5 },
   qaCard: {
     width: 86, height: 96,
@@ -506,7 +509,7 @@ const styles = StyleSheet.create({
   qaIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   qaLabel: { fontSize: 11, fontWeight: '600', color: '#1B1B1B' },
 
-  /* â”€â”€â”€ GOONA IQ RECOMMENDATION â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ GOONA IQ RECOMMENDATION Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   iqCard: {
     backgroundColor: 'white', borderRadius: 24, padding: 18, marginTop: 18,
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
@@ -520,7 +523,7 @@ const styles = StyleSheet.create({
   iqRecommendation: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   iqRecText: { fontSize: 14, color: '#374151', lineHeight: 20, flex: 1 },
 
-  /* â”€â”€â”€ WEATHER INTELLIGENCE â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ WEATHER INTELLIGENCE Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   weatherCard: {
     backgroundColor: 'white', borderRadius: 24, padding: 18, marginTop: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
@@ -542,7 +545,7 @@ const styles = StyleSheet.create({
   },
   weatherRecText: { fontSize: 12, color: '#374151', flex: 1, lineHeight: 16 },
 
-  /* â”€â”€â”€ PRODUCTION PULSE â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PRODUCTION PULSE Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   pulseCard: {
     borderRadius: 20, padding: 16, marginTop: 16,
     borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
@@ -554,7 +557,7 @@ const styles = StyleSheet.create({
   pulseBadge: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 6 },
   pulseBadgeText: { fontSize: 11, fontWeight: '700' },
 
-  /* â”€â”€â”€ ACTIVE BATCHES â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ ACTIVE BATCHES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   batchCard: {
     backgroundColor: 'white', borderRadius: 24, padding: 18, marginBottom: 12,
     borderLeftWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
@@ -569,7 +572,7 @@ const styles = StyleSheet.create({
   batchProgTrack: { height: 6, backgroundColor: '#F1F5F9', borderRadius: 100, overflow: 'hidden' },
   batchProgFill: { height: '100%', borderRadius: 100 },
 
-  /* â”€â”€â”€ DAILY CHALLENGE â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CHALLENGES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   challengeCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: 'white', borderRadius: 16, padding: 14, marginTop: 16,
@@ -582,7 +585,7 @@ const styles = StyleSheet.create({
   },
   challengeText: { fontSize: 14, fontWeight: '600', color: '#1F2937', flex: 1 },
 
-  /* â”€â”€â”€ PRIORITY BANNER â”€â”€â”€ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PRIORITY BANNER Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   bannerCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     borderRadius: 16, padding: 14, marginTop: 12,
