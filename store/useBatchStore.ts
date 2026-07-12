@@ -1,4 +1,12 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+export interface HarvestSummary {
+  finalCount?: number
+  totalRevenue?: number
+  notes?: string
+}
 
 export interface Batch {
   id: string
@@ -10,14 +18,19 @@ export interface Batch {
   medicationCost: number
   startDate: string
   duration: string
-  status: 'active'
+  status: 'active' | 'completed'
   createdAt: string
+  completedAt?: string
+  harvestSummary?: HarvestSummary
 }
 
 interface BatchState {
   batches: Batch[]
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'createdAt'>) => Batch
   getBatchById: (id: string) => Batch | undefined
+  updateBatch: (id: string, updates: Partial<Batch>) => void
+  completeBatch: (id: string, summary?: HarvestSummary) => void
+  restoreBatch: (id: string) => void
 }
 
 function weeksAgo(weeks: number): string {
@@ -68,17 +81,58 @@ const SEED_BATCHES: Batch[] = [
 
 let nextId = 4
 
-export const useBatchStore = create<BatchState>((set, get) => ({
-  batches: SEED_BATCHES,
-  addBatch: (data) => {
-    const batch: Batch = {
-      ...data,
-      id: `batch_${Date.now()}_${nextId++}`,
-      status: 'active',
-      createdAt: new Date().toISOString(),
+export const useBatchStore = create<BatchState>()(
+  persist(
+    (set, get) => ({
+      batches: SEED_BATCHES,
+      addBatch: (data) => {
+        const batch: Batch = {
+          ...data,
+          id: `batch_${Date.now()}_${nextId++}`,
+          status: 'active',
+          createdAt: new Date().toISOString(),
+        }
+        set((state) => ({ batches: [...state.batches, batch] }))
+        return batch
+      },
+      getBatchById: (id: string) => get().batches.find((b) => b.id === id),
+      updateBatch: (id: string, updates: Partial<Batch>) => {
+        set((state) => ({
+          batches: state.batches.map((b) =>
+            b.id === id ? { ...b, ...updates } : b
+          ),
+        }))
+      },
+      completeBatch: (id: string, summary?: HarvestSummary) => {
+        set((state) => ({
+          batches: state.batches.map((b) =>
+            b.id === id
+              ? {
+                  ...b,
+                  status: 'completed' as const,
+                  completedAt: new Date().toISOString(),
+                  harvestSummary: summary || b.harvestSummary,
+                }
+              : b
+          ),
+        }))
+      },
+      restoreBatch: (id: string) => {
+        set((state) => ({
+          batches: state.batches.map((b) =>
+            b.id === id
+              ? {
+                  ...b,
+                  status: 'active' as const,
+                }
+              : b
+          ),
+        }))
+      },
+    }),
+    {
+      name: 'goona-batches',
+      storage: createJSONStorage(() => AsyncStorage),
     }
-    set((state) => ({ batches: [...state.batches, batch] }))
-    return batch
-  },
-  getBatchById: (id: string) => get().batches.find((b) => b.id === id),
-}))
+  )
+)

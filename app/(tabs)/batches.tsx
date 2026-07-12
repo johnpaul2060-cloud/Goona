@@ -121,14 +121,16 @@ export default function BatchesScreen() {
   }))
 
   const overviewData = useMemo(() => {
-    const active = batches.length
-    const totalBirds = batches.reduce((sum, b) => sum + b.quantity, 0)
-    const totalRevenue = batches.reduce((sum, b) => sum + estimateExpectedRevenue(b), 0)
+    const activeBatches = batches.filter((b) => b.status === 'active')
+    const active = activeBatches.length
+    const totalBirds = activeBatches.reduce((sum, b) => sum + b.quantity, 0)
+    const totalRevenue = activeBatches.reduce((sum, b) => sum + estimateExpectedRevenue(b), 0)
+    const mortalityRisk = activeBatches.some((b) => b.id === 'batch_c') ? 'High' : activeBatches.length > 0 ? 'Low' : '—'
     return [
       { metric: `${active}`, label: 'Active Batches', bg: '#F0FDF4', stroke: '#16A34A' },
       { metric: totalBirds > 1000 ? `${(totalBirds / 1000).toFixed(1)}k` : `${totalBirds}`, label: 'Total Birds', bg: '#EEF3FF', stroke: '#1A56FF' },
-      { metric: 'Low', label: 'Mortality Risk', bg: '#FFFBEB', stroke: '#F59E0B' },
-      { metric: totalRevenue >= 1_000_000 ? `₦${(totalRevenue / 1_000_000).toFixed(1)}M` : `₦${(totalRevenue / 1000).toFixed(0)}k`, label: 'Projected Revenue', bg: '#F0FDF4', stroke: '#16A34A' },
+      { metric: mortalityRisk, label: 'Mortality Risk', bg: '#FFFBEB', stroke: mortalityRisk === 'High' ? '#EF4444' : '#F59E0B' },
+      { metric: activeBatches.length > 0 ? (totalRevenue >= 1_000_000 ? `₦${(totalRevenue / 1_000_000).toFixed(1)}M` : `₦${(totalRevenue / 1000).toFixed(0)}k`) : '—', label: 'Projected Revenue', bg: '#F0FDF4', stroke: '#16A34A' },
     ] as const
   }, [batches])
 
@@ -142,10 +144,10 @@ export default function BatchesScreen() {
       list = list.filter((b) => {
         const prog = computeProgress(b.startDate, b.duration)
         switch (activeFilter) {
-          case 'Active': return prog < 85
-          case 'Near Harvest': return prog >= 85
-          case 'Completed': return false
-          case 'High Risk': return false
+          case 'Active': return b.status === 'active' && prog < 85
+          case 'Near Harvest': return b.status === 'active' && prog >= 85
+          case 'Completed': return b.status === 'completed'
+          case 'High Risk': return b.status === 'active' && (b.id === 'batch_c')
           default: return true
         }
       })

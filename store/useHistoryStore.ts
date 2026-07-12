@@ -21,7 +21,7 @@ export interface HistoryRecord {
   supplier?: string
 }
 
-export type DatePreset = 'today' | 'this-week' | 'this-month' | 'last-month' | 'this-quarter' | 'this-year' | 'last-year' | 'custom'
+export type DatePreset = 'today' | 'last-week' | 'this-week' | 'this-month' | 'last-month' | 'this-quarter' | 'this-year' | 'last-year' | 'custom'
 
 export interface DateRange {
   start: number
@@ -64,6 +64,12 @@ function startOfDay(ts: number): number {
   return d.getTime()
 }
 
+function endOfDay(ts: number): number {
+  const d = new Date(ts)
+  d.setHours(23, 59, 59, 999)
+  return d.getTime()
+}
+
 function periodKey(ts: number, granularity: 'month' | 'quarter' | 'year'): string {
   const d = new Date(ts)
   if (granularity === 'year') return `${d.getFullYear()}`
@@ -82,6 +88,13 @@ function rangeForPreset(preset: DatePreset): DateRange {
       start = startOfDay(now())
       end = now()
       break
+    case 'last-week': {
+      const dow = d.getDay()
+      const thisMonday = d.getDate() - dow + (dow === 0 ? -6 : 1)
+      start = startOfDay(new Date(y, m, thisMonday - 7).getTime())
+      end = endOfDay(new Date(y, m, thisMonday - 1).getTime())
+      break
+    }
     case 'this-week': {
       const dow = d.getDay()
       const diff = d.getDate() - dow + (dow === 0 ? -6 : 1)

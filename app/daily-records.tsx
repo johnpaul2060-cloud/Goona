@@ -88,7 +88,7 @@ function formatNumberWithCommas(raw: string, decimals = 0) {
 }
 
 function FormField({
-  label, placeholder, prefix, suffix, icon, value, onChangeText, multiline, autoFocus, onFocus, formatNumber, numericDecimals = 0, error, showError,
+  label, placeholder, prefix, suffix, icon, value, onChangeText, multiline, autoFocus, onFocus, formatNumber, numericDecimals = 0, error, showError = true,
 }: {
   label: string; placeholder?: string; prefix?: string; suffix?: string
   icon?: React.ReactNode; value?: string; onChangeText?: (v: string) => void; multiline?: boolean; autoFocus?: boolean; onFocus?: () => void; formatNumber?: boolean; numericDecimals?: number; error?: string; showError?: boolean
@@ -141,7 +141,7 @@ const ffStyles = StyleSheet.create({
   input: { minWidth: 0, fontSize: 14, fontWeight: '500', color: '#1B1B1B', padding: 0, paddingVertical: 0, includeFontPadding: false },
   prefix: { fontSize: 14, lineHeight: 18, fontWeight: '700', color: '#1B1B1B', flexShrink: 0, alignSelf: 'center' },
   suffix: { fontSize: 14, fontWeight: '600', color: '#1B1B1B', flexShrink: 0 },
-  errorText: { marginTop: -9, marginBottom: 10, fontSize: 11, fontWeight: '700', color: '#EF4444' },
+  errorText: { marginTop: 6, marginBottom: 10, fontSize: 11, fontWeight: '700', color: '#EF4444' },
 })
 
 /* ─── Quick Log Bottom Sheet (keyboard-aware) ─── */
@@ -294,7 +294,7 @@ function QuickLogSheet({
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-                <FormField label="Feed Given (required)" placeholder="0.0 kg" suffix="kg" value={values.quantity} onChangeText={(v) => setField('quantity', v)} formatNumber numericDecimals={1} error={fieldErrors.quantity} />
+                <FormField label="Feed Given (required)" placeholder="0.0 kg" suffix="kg" value={values.quantity} onChangeText={(v) => setField('quantity', v)} formatNumber numericDecimals={1} error={fieldErrors.quantity} showError={touched.has('quantity')} />
                 <FormField label="Water Used (optional)" placeholder="0 L" suffix="L" value={values.water} onChangeText={(v) => setField('water', v)} formatNumber numericDecimals={1} />
                 {stockWarning && <Text style={qsStyles.warnText}>Feed given exceeds remaining stock ({balance.remainingKg.toLocaleString()} kg). Purchase more feed first.</Text>}
                 {formWarning ? <Text style={qsStyles.warnText}>{formWarning}</Text> : null}
@@ -303,14 +303,14 @@ function QuickLogSheet({
             )}
             {type === 'mortality' && <View><Text style={qsStyles.sheetTitle}>Log Mortality</Text><FormField label="Number of Birds Lost" placeholder="0" value={values.mortality} onChangeText={(v) => setField('mortality', v)} formatNumber numericDecimals={0} autoFocus error={fieldErrors.mortality} /><FormField label="Suspected Cause" placeholder="e.g. Heat stress" value={values.cause} onChangeText={(v) => setField('cause', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} onFocus={scrollToInput} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
             {type === 'medication' && <View><Text style={qsStyles.sheetTitle}>Log Medication</Text><FormField label="Medication Name" placeholder="e.g. Newcastle vaccine" value={values.medication} onChangeText={(v) => setField('medication', v)} icon={<GoonaIcon icon={Icons.pill} size={16} color="#A0AEA1" />} autoFocus error={fieldErrors.medication} /><FormField label="Quantity Administered" placeholder="e.g. 1 vial (500 doses)" value={values.dose} onChangeText={(v) => setField('dose', v)} onFocus={scrollToInput} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
-            {type === 'eggs' && <View><Text style={qsStyles.sheetTitle}>Log Egg Production</Text><FormField label="Eggs Collected" placeholder="0 eggs" suffix="eggs" value={values.eggs} onChangeText={(v) => setField('eggs', v)} formatNumber numericDecimals={0} autoFocus error={fieldErrors.eggs} /><FormField label="Estimated Value" placeholder="0" prefix={'\u20A6'} value={values.value} onChangeText={(v) => setField('value', v)} formatNumber numericDecimals={0} onFocus={scrollToInput} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
+            {type === 'eggs' && <View><Text style={qsStyles.sheetTitle}>Log Egg Production</Text><FormField label="Eggs Collected" placeholder="0 eggs" suffix="eggs" value={values.eggs} onChangeText={(v) => setField('eggs', v)} formatNumber numericDecimals={0} autoFocus error={fieldErrors.eggs} showError={touched.has('eggs')} /><FormField label="Estimated Value" placeholder="0" prefix={'\u20A6'} value={values.value} onChangeText={(v) => setField('value', v)} formatNumber numericDecimals={0} onFocus={scrollToInput} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
             {type === 'water' && <View><Text style={qsStyles.sheetTitle}>Log Water Usage</Text><FormField label="Water Used" placeholder="0 litres" suffix="L" value={values.water} onChangeText={(v) => setField('water', v)} formatNumber numericDecimals={1} autoFocus error={fieldErrors.water} /><FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} /></View>}
             {type === 'inventory' && (
               <View>
                 <Text style={qsStyles.sheetTitle}>Log Stock Purchase</Text>
-                <FormField label="Item Name" placeholder="e.g. Broiler Starter Feed" value={values.itemName} onChangeText={(v) => setField('itemName', v)} autoFocus error={fieldErrors.itemName} />
-                <FormField label="Quantity Purchased" placeholder="0 kg" suffix="kg" value={values.quantity} onChangeText={(v) => setField('quantity', v)} formatNumber numericDecimals={1} error={fieldErrors.quantity} />
-                <FormField label="Amount Paid" placeholder="0" prefix={'\u20A6'} value={values.cost} onChangeText={(v) => setField('cost', v)} formatNumber numericDecimals={0} onFocus={scrollToInput} />
+                <FormField label="Item Name" placeholder="e.g. Broiler Starter Feed" value={values.itemName} onChangeText={(v) => setField('itemName', v)} autoFocus error={fieldErrors.itemName} showError={touched.has('itemName')} />
+                <FormField label="Quantity Purchased" placeholder="0 kg" suffix="kg" value={values.quantity} onChangeText={(v) => setField('quantity', v)} formatNumber numericDecimals={1} error={fieldErrors.quantity} showError={touched.has('quantity')} />
+                <FormField label="Amount Paid" placeholder="0" prefix={'\u20A6'} value={values.cost} onChangeText={(v) => setField('cost', v)} formatNumber numericDecimals={0} onFocus={scrollToInput} error={fieldErrors.cost} showError={touched.has('cost')} />
                 <FormField label="Supplier" placeholder="Optional" value={values.supplier} onChangeText={(v) => setField('supplier', v)} icon={<GoonaIcon icon={Icons.building2} size={16} color="#A0AEA1" />} />
                 <FormField label="Notes" placeholder="Optional..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.fileText} size={16} color="#A0AEA1" />} multiline onFocus={scrollToInput} />
               </View>
@@ -642,80 +642,90 @@ export default function DailyRecordsScreen() {
   }, [snapshotOverrides])
   const handleQuickLogSave = (values: QuickLogValues) => {
     if (!quickLogType) return
-    const post = buildFarmFeedPost(quickLogType, values, selectedBatch, dateStr, timeStr)
-    addFeedPost(post)
-    setLoggedToday((current) => current.includes(quickLogType) ? current : [...current, quickLogType])
-    const now = Date.now()
     const ts = new Date(selectedDate)
     ts.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0)
     const timestamp = ts.getTime()
 
-    if (quickLogType === 'feed') {
-      const qty = parseFormattedNumber(values.quantity)
-      const feedName = values.feedType
-      useHistoryStore.getState().addRecord({
-        type: 'feed', batch: selectedBatch, timestamp,
-        quantity: qty, unit: 'kg',
-        notes: values.notes?.trim(),
-        feedPostId: post.id,
-        metadata: { feedType: feedName },
-      })
-      const waterQty = parseFormattedNumber(values.water)
-      if (waterQty > 0) {
-        useHistoryStore.getState().addRecord({
-          type: 'water', batch: selectedBatch, timestamp,
-          quantity: waterQty, unit: 'L',
+    let recordId: string | undefined
+    let feedPosted = false
+
+    try {
+      if (quickLogType === 'feed') {
+        const qty = parseFormattedNumber(values.quantity)
+        const feedName = values.feedType
+        recordId = useHistoryStore.getState().addRecord({
+          type: 'feed', batch: selectedBatch, timestamp,
+          quantity: qty, unit: 'kg',
           notes: values.notes?.trim(),
-          feedPostId: post.id,
+          metadata: { feedType: feedName },
+        })
+        const waterQty = parseFormattedNumber(values.water)
+        if (waterQty > 0) {
+          useHistoryStore.getState().addRecord({
+            type: 'water', batch: selectedBatch, timestamp,
+            quantity: waterQty, unit: 'L',
+            notes: values.notes?.trim(),
+            feedPostId: recordId,
+          })
+        }
+        setSnapshotOverrides((current) => ({ ...current, 'Feed Logged': `${formatNumberWithCommas(String(qty), 1)} kg` }))
+        if (feedName) setLastFeedByBatch((current) => ({ ...current, [selectedBatch]: feedName }))
+      }
+      if (quickLogType === 'water') {
+        recordId = useHistoryStore.getState().addRecord({
+          type: 'water', batch: selectedBatch, timestamp,
+          quantity: parseFormattedNumber(values.water), unit: 'L',
+          notes: values.notes?.trim(),
+        })
+        setSnapshotOverrides((current) => ({ ...current, 'Water Logged': `${formatNumberWithCommas(String(parseFormattedNumber(values.water)), 1)} L` }))
+      }
+      if (quickLogType === 'eggs') {
+        recordId = useHistoryStore.getState().addRecord({
+          type: 'eggs', batch: selectedBatch, timestamp,
+          quantity: parseFormattedNumber(values.eggs), unit: 'eggs',
+          cost: parseFormattedNumber(values.value) || undefined,
+          notes: values.notes?.trim(),
+        })
+        setSnapshotOverrides((current) => ({ ...current, 'Egg Production': `${formatNumberWithCommas(String(parseFormattedNumber(values.eggs)))} eggs` }))
+      }
+      if (quickLogType === 'mortality') {
+        recordId = useHistoryStore.getState().addRecord({
+          type: 'mortality', batch: selectedBatch, timestamp,
+          quantity: parseFormattedNumber(values.mortality), unit: 'birds',
+          notes: values.notes?.trim(),
+          metadata: { cause: values.cause?.trim() },
+        })
+        setSnapshotOverrides((current) => ({ ...current, Mortality: `${formatNumberWithCommas(String(parseFormattedNumber(values.mortality)))} birds` }))
+      }
+      if (quickLogType === 'inventory') {
+        const qty = parseFormattedNumber(values.quantity)
+        const cost = parseFormattedNumber(values.cost)
+        recordId = useHistoryStore.getState().addRecord({
+          type: 'inventory', batch: selectedBatch, timestamp,
+          quantity: qty, unit: 'kg', cost,
+          itemName: values.itemName?.trim(),
+          supplier: values.supplier?.trim(),
+          notes: values.notes?.trim(),
         })
       }
-      setSnapshotOverrides((current) => ({ ...current, 'Feed Logged': `${formatNumberWithCommas(String(qty), 1)} kg` }))
-      if (feedName) setLastFeedByBatch((current) => ({ ...current, [selectedBatch]: feedName }))
+    } catch (dbErr) {
+      console.error('DB write failed:', dbErr)
+      showToast('Failed to save record. Please try again.')
+      return
     }
-    if (quickLogType === 'water') {
-      useHistoryStore.getState().addRecord({
-        type: 'water', batch: selectedBatch, timestamp,
-        quantity: parseFormattedNumber(values.water), unit: 'L',
-        notes: values.notes?.trim(),
-        feedPostId: post.id,
-      })
-      setSnapshotOverrides((current) => ({ ...current, 'Water Logged': `${formatNumberWithCommas(String(parseFormattedNumber(values.water)), 1)} L` }))
+
+    setLoggedToday((current) => current.includes(quickLogType) ? current : [...current, quickLogType])
+
+    try {
+      const post = buildFarmFeedPost(quickLogType, values, selectedBatch, dateStr, timeStr)
+      addFeedPost(post)
+      feedPosted = true
+    } catch (feedErr) {
+      console.error('Farm Feed post failed:', feedErr)
     }
-    if (quickLogType === 'eggs') {
-      useHistoryStore.getState().addRecord({
-        type: 'eggs', batch: selectedBatch, timestamp,
-        quantity: parseFormattedNumber(values.eggs), unit: 'eggs',
-        cost: parseFormattedNumber(values.value) || undefined,
-        notes: values.notes?.trim(),
-        feedPostId: post.id,
-      })
-      setSnapshotOverrides((current) => ({ ...current, 'Egg Production': `${formatNumberWithCommas(String(parseFormattedNumber(values.eggs)))} eggs` }))
-    }
-    if (quickLogType === 'mortality') {
-      useHistoryStore.getState().addRecord({
-        type: 'mortality', batch: selectedBatch, timestamp,
-        quantity: parseFormattedNumber(values.mortality), unit: 'birds',
-        notes: values.notes?.trim(),
-        metadata: { cause: values.cause?.trim() },
-        feedPostId: post.id,
-      })
-      setSnapshotOverrides((current) => ({ ...current, Mortality: `${formatNumberWithCommas(String(parseFormattedNumber(values.mortality)))} birds` }))
-    }
-    if (quickLogType === 'inventory') {
-      const qty = parseFormattedNumber(values.quantity)
-      const cost = parseFormattedNumber(values.cost)
-      useHistoryStore.getState().addRecord({
-        type: 'inventory', batch: selectedBatch, timestamp,
-        quantity: qty, unit: 'kg', cost,
-        itemName: values.itemName?.trim(),
-        supplier: values.supplier?.trim(),
-        notes: values.notes?.trim(),
-        feedPostId: post.id,
-      })
-      setSnapshotOverrides((current) => ({ ...current, 'Feed Logged': `${formatNumberWithCommas(String(qty), 1)} kg` }))
-    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
-    showToast('Record saved to FarmChat')
+    showToast(feedPosted ? 'Record saved \u00B7 shared to Farm Feed' : 'Record saved (feed update pending)')
     closeQuickLog()
   }
 

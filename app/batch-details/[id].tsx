@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, Dimensions,
+  StyleSheet, Dimensions, Modal, TextInput, Alert,
+  KeyboardAvoidingView, Platform,
 } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
@@ -10,9 +11,9 @@ import { Icons } from '../../shared/icons'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeInUp } from 'react-native-reanimated'
-import BottomDock from '../../components/navigation/BottomDock'
+import Animated, { FadeInUp, SlideInUp } from 'react-native-reanimated'
 import { useBatchStore } from '../../store/useBatchStore'
+import { useFarmChatStore } from '../../store/useFarmChatStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -79,13 +80,6 @@ const BATCH_DETAILS: Record<string, {
     activeBars: number[]
     icon: (c: string) => React.ReactNode
   }[]
-  reinvest: {
-    pct: number
-    goal: string
-    saved: string
-    weekly: string
-    readiness: string
-  }
   insights: { bg: string; iconColor: string; text: string }[]
 }> = {
   batch_a: {
@@ -116,7 +110,6 @@ const BATCH_DETAILS: Record<string, {
       { metric: '+18%', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
       { metric: '₦820k', label: 'Est. Profit', trend: '↑ +24%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
-    reinvest: { pct: 72, goal: '₦350,000', saved: '₦252,000', weekly: '₦18,000', readiness: '3 weeks' },
     insights: [
       { bg: '#E8F5E9', iconColor: '#F9A825', text: 'Feed consistency has improved production efficiency by 14%.' },
       { bg: '#E3F2FD', iconColor: '#1A56FF', text: 'This batch is projected to exceed last cycle profitability by 24%.' },
@@ -150,7 +143,6 @@ const BATCH_DETAILS: Record<string, {
       { metric: '+22%', label: 'Egg Production', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.egg} size={16} color={c} /> },
       { metric: '₦1.2M', label: 'Est. Profit', trend: '↑ +18%', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 85, 95], activeBars: [2, 3, 4], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
-    reinvest: { pct: 85, goal: '₦420,000', saved: '₦357,000', weekly: '₦22,000', readiness: '2 weeks' },
     insights: [
       { bg: '#E8F5E9', iconColor: '#F9A825', text: 'Egg production exceeded targets by 12% this cycle.' },
       { bg: '#E3F2FD', iconColor: '#1A56FF', text: 'Feed-to-egg conversion ratio is at optimal levels.' },
@@ -184,21 +176,12 @@ const BATCH_DETAILS: Record<string, {
       { metric: '+8%', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [25, 35, 50, 60, 70], activeBars: [3, 4], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
       { metric: '₦380k', label: 'Est. Profit', trend: '↓ -6%', trendColor: '#EF4444', iconBg: '#FFF1F2', iconColor: '#EF4444', bars: [30, 45, 55, 50, 45], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
-    reinvest: { pct: 45, goal: '₦280,000', saved: '₦126,000', weekly: '₦14,000', readiness: '6 weeks' },
     insights: [
       { bg: '#FFFBEB', iconColor: '#F59E0B', text: 'Mortality risk elevated. Temperature monitoring recommended.' },
       { bg: '#E3F2FD', iconColor: '#1A56FF', text: 'Feed adjustment showing early signs of recovery.' },
     ],
   },
 }
-
-const QA_ACTIONS = [
-  { label: 'Daily Record', bg: '#F0FDF4', iconColor: '#16A34A', route: '/daily-records' as const },
-  { label: 'Feed Entry', bg: '#FFFBEB', iconColor: '#F59E0B', route: '/daily-records' as const },
-  { label: 'Mortality', bg: '#FFF1F2', iconColor: '#EF4444', route: '/daily-records' as const },
-  { label: 'Sales Entry', bg: '#EEF3FF', iconColor: '#1A56FF', route: '/records/sales-revenue' as const },
-  { label: 'Reports', bg: '#F0FDF4', iconColor: '#16A34A', route: undefined },
-] as const
 
 function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
   const prog = computeProgress(batch.startDate, batch.duration)
@@ -235,13 +218,6 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
       { metric: '—', label: 'Growth Trend', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.trendingUp} size={16} color={c} /> },
       { metric: formatNaira(estRevenue), label: 'Est. Revenue', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.shield} size={16} color={c} /> },
     ],
-    reinvest: {
-      pct: 45,
-      goal: formatNaira(Math.round(totalCost * 0.5)),
-      saved: formatNaira(Math.round(totalCost * 0.2)),
-      weekly: formatNaira(Math.round(totalCost * 0.02)),
-      readiness: 'In progress',
-    },
     insights: [
       { bg: '#E8F5E9', iconColor: '#F9A825', text: 'Batch is being actively tracked. Add daily records to get detailed insights.' },
       { bg: '#E3F2FD', iconColor: '#1A56FF', text: 'Complete feed and medication entries for accurate profitability forecasts.' },
@@ -249,12 +225,20 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
   }
 }
 
-const CIRCUMFERENCE = 2 * Math.PI * 30
-
 export default function BatchDetailsScreen() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const storeBatch = useBatchStore((s) => s.getBatchById(id ?? ''))
+  const completeBatch = useBatchStore((s) => s.completeBatch)
+  const restoreBatch = useBatchStore((s) => s.restoreBatch)
+  const addFeedPost = useFarmChatStore((s) => s.addFeedPost)
+
+  const isCompleted = storeBatch?.status === 'completed'
+
+  const [showCompleteSheet, setShowCompleteSheet] = useState(false)
+  const [harvestFinalCount, setHarvestFinalCount] = useState('')
+  const [harvestRevenue, setHarvestRevenue] = useState('')
+  const [harvestNotes, setHarvestNotes] = useState('')
 
   const batch = useMemo(() => {
     if (!id) return BATCH_DETAILS.batch_a
@@ -263,133 +247,183 @@ export default function BatchDetailsScreen() {
     return BATCH_DETAILS.batch_a
   }, [id, storeBatch])
 
-  const ringOffset = CIRCUMFERENCE - (batch.progress / 100) * CIRCUMFERENCE
+  const displayProgress = isCompleted ? 100 : batch.progress
+
+  function handleOpenCompleteSheet() {
+    const qty = storeBatch?.quantity ?? (parseInt(batch.birdCount, 10) || 0)
+    setHarvestFinalCount(String(qty))
+    setHarvestRevenue('')
+    setHarvestNotes('')
+    setShowCompleteSheet(true)
+  }
+
+  function handleConfirmComplete() {
+    if (!id || !storeBatch) return
+    const finalCount = parseInt(harvestFinalCount) || storeBatch.quantity
+    const totalRevenue = parseInt(harvestRevenue) || 0
+    completeBatch(id, {
+      finalCount,
+      totalRevenue: totalRevenue || undefined,
+      notes: harvestNotes.trim() || undefined,
+    })
+    addFeedPost({
+      id: `harvest-${Date.now()}`,
+      type: 'announcement',
+      timestamp: Date.now(),
+      actorName: 'GOONA Harvest',
+      actorRole: 'Auto · Module',
+      actorInitials: 'GH',
+      actorColor: '#2E7D32',
+      detail: `${storeBatch.batchName} cycle completed — ${finalCount} ${storeBatch.livestockType.toLowerCase()} harvested`,
+      highlight: `${finalCount} birds`,
+      tags: [storeBatch.batchName],
+      batch: storeBatch.batchName,
+    })
+    setShowCompleteSheet(false)
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace('/(tabs)/records/batch-management' as any)
+    }
+  }
+
+  function handleRestore() {
+    if (!id) return
+    restoreBatch(id)
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace('/(tabs)/records/batch-management' as any)
+    }
+  }
+
+  function formatDate(iso: string): string {
+    const d = new Date(iso)
+    return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  function calcCycleLength(start: string, end?: string): string {
+    const s = new Date(start).getTime()
+    const e = end ? new Date(end).getTime() : Date.now()
+    const days = Math.floor((e - s) / (24 * 60 * 60 * 1000))
+    const w = Math.floor(days / 7)
+    const d = days % 7
+    return w > 0 ? `${w}wk ${d}d` : `${d} days`
+  }
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
       <View style={styles.glowBg} pointerEvents="none" />
-      <View style={styles.contour1} pointerEvents="none" />
-      <View style={styles.contour2} pointerEvents="none" />
 
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 8 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* TOP NAV */}
-        <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topNav}>
-          <TouchableOpacity style={styles.navBack} activeOpacity={0.7} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/records/batch-management' as any)}>
-            <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
+        {/* TOP BAR */}
+        <Animated.View entering={FadeInUp.duration(500).springify()} style={styles.topbar}>
+          <TouchableOpacity style={styles.tbBtn} activeOpacity={0.7} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/records/batch-management' as any)}>
+            <GoonaIcon icon={Icons.arrowLeft} size={22} color="#15291A" />
           </TouchableOpacity>
-          <Text style={styles.topTitle}>{batch.name}</Text>
-          <TouchableOpacity style={styles.menuBtn} activeOpacity={0.85}>
-            <GoonaIcon icon={Icons.moreHorizontal} size={20} color="#1F2937" />
+          <Text style={styles.tbTitle}>{batch.name}</Text>
+          <TouchableOpacity style={styles.tbBtn} activeOpacity={0.85}>
+            <GoonaIcon icon={Icons.moreHorizontal} size={22} color="#15291A" />
           </TouchableOpacity>
         </Animated.View>
 
-        {/* HERO CARD */}
-        <Animated.View entering={FadeInUp.duration(500).delay(80).springify()}>
+        {/* ===== PREMIUM HERO ===== */}
+        <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.hero}>
           <LinearGradient
-            colors={['#2E7D32', '#43A047']}
+            colors={isCompleted ? ['#374151', '#4B5563', '#6B7280'] : ['#0C3A24', '#17663A', '#2E8B43', '#3FA345']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-          >
-            <View style={styles.heroDots} pointerEvents="none" />
-            <View style={[styles.heroCc, { width: 280, height: 90, top: -10, right: -30 }]} pointerEvents="none" />
-            <View style={[styles.heroCc, { width: 200, height: 70, bottom: 10, left: -20 }]} pointerEvents="none" />
-            <View style={styles.heroGl} pointerEvents="none" />
+            style={StyleSheet.absoluteFill}
+          />
+          {/* depth layers */}
+          <View style={styles.heroOrb1} pointerEvents="none" />
+          <View style={styles.heroOrb2} pointerEvents="none" />
+          <View style={styles.heroSheen} pointerEvents="none" />
+          <View style={styles.heroRinglines} pointerEvents="none" />
 
-            <View style={styles.heroTop}>
-              <View>
-                <Text style={styles.heroLabel}>ACTIVE PRODUCTION</Text>
-                <Text style={styles.heroMainTitle}>{batch.birdCount} {batch.type}</Text>
-                <Text style={styles.heroSub}>{batch.week}</Text>
+          <View style={styles.heroTop}>
+            <View>
+              <View style={styles.heroEyebrow}>
+                <View style={styles.heroLiveDot} />
+                <Text style={styles.heroEyebrowText}>{isCompleted ? 'Cycle Completed' : 'Active Production'}</Text>
               </View>
-              <View style={styles.heroRing}>
-                <Svg width="72" height="72" viewBox="0 0 72 72">
-                  <Circle cx="36" cy="36" r="30" stroke="rgba(255,255,255,0.15)" strokeWidth="5" fill="none" />
-                  <Circle
-                    cx="36" cy="36" r="30"
-                    stroke="#AEEA00" strokeWidth="5" fill="none"
-                    strokeDasharray={CIRCUMFERENCE}
-                    strokeDashoffset={ringOffset}
-                    strokeLinecap="round"
-                  />
-                </Svg>
-                <View style={styles.heroRingText}>
-                  <Text style={styles.heroRingPct}>{batch.progress}%</Text>
-                  <Text style={styles.heroRingLbl}>Done</Text>
+              <Text style={styles.heroCount}>
+                {batch.birdCount} <Text style={styles.heroCountSmall}>{batch.type}</Text>
+              </Text>
+              <Text style={styles.heroWeek}>
+                {isCompleted
+                  ? `Completed ${storeBatch?.completedAt ? formatDate(storeBatch.completedAt) : ''}`
+                  : batch.totalWeeks - weeksSince(storeBatch?.startDate || '') <= 1
+                    ? `${batch.week} · final week`
+                    : batch.week
+                }
+              </Text>
+              <View style={styles.heroChips}>
+                <View style={[styles.heroChip, styles.heroChipHot]}>
+                  <Text style={styles.heroChipHotText}>{batch.badge}</Text>
+                </View>
+                <View style={styles.heroChip}>
+                  <Text style={styles.heroChipText}>{batch.type}</Text>
                 </View>
               </View>
             </View>
 
-            <View style={styles.heroMetrics}>
-              <View style={styles.heroMetric}>
-                <Text style={styles.heroMetricVal}>{batch.mortality}</Text>
-                <Text style={styles.heroMetricLbl}>Mortality</Text>
-              </View>
-              <View style={styles.heroMetric}>
-                <Text style={styles.heroMetricVal}>{batch.feedUsed}</Text>
-                <Text style={styles.heroMetricLbl}>Feed Used</Text>
-              </View>
-              <View style={styles.heroMetric}>
-                <Text style={styles.heroMetricVal}>{batch.revenue}</Text>
-                <Text style={styles.heroMetricLbl}>Revenue</Text>
-              </View>
-            </View>
-
-            <View style={styles.heroProgress}>
-              <View style={styles.heroProgHead}>
-                <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>Production Cycle Progress</Text>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: 'white' }}>{batch.progress}%</Text>
-              </View>
-              <View style={styles.heroProgTrack}>
-                <View style={[styles.heroProgFill, { width: `${batch.progress}%` as any }]} />
+            {/* ring */}
+            <View style={styles.ringWrap}>
+              <Svg width="96" height="96" viewBox="0 0 96 96">
+                <Circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="8" />
+                <Circle
+                  cx="48" cy="48" r="40" fill="none"
+                  stroke={isCompleted ? '#9CA3AF' : '#AEEA00'}
+                  strokeWidth="8" strokeLinecap="round"
+                  strokeDasharray="251.2"
+                  strokeDashoffset={251.2 - (displayProgress / 100) * 251.2}
+                />
+              </Svg>
+              <View style={styles.ringCenter}>
+                <Text style={[styles.ringPct, isCompleted && { color: '#D1D5DB' }]}>{displayProgress}%</Text>
+                <Text style={styles.ringLbl}>Done</Text>
               </View>
             </View>
-          </LinearGradient>
-        </Animated.View>
+          </View>
 
-        {/* QUICK ACTIONS */}
-        <Animated.View entering={FadeInUp.duration(500).delay(130).springify()}>
-          <View style={styles.secHead}>
-            <Text style={styles.secTitle}>Quick Actions</Text>
+          {/* stat cells */}
+          <View style={styles.heroStats}>
+            <View style={styles.hstat}>
+              <Text style={styles.hstatV}>{batch.mortality}</Text>
+              <Text style={styles.hstatL}>Mortality</Text>
+            </View>
+            <View style={styles.hstat}>
+              <Text style={styles.hstatV}>{batch.feedUsed}</Text>
+              <Text style={styles.hstatL}>Feed Used</Text>
+            </View>
+            <View style={styles.hstat}>
+              <Text style={[styles.hstatV, styles.hstatVLime]}>{batch.revenue}</Text>
+              <Text style={styles.hstatL}>Revenue</Text>
+            </View>
+          </View>
+
+          {/* progress bar */}
+          <View style={styles.heroProg}>
+            <View style={styles.heroProgRow}>
+              <Text style={styles.heroProgLabel}>{isCompleted ? 'Cycle Completed' : 'Production cycle progress'}</Text>
+              <Text style={styles.heroProgVal}>{displayProgress}%</Text>
+            </View>
+            <View style={styles.heroTrack}>
+              <View style={[styles.heroTrackFill, { width: `${displayProgress}%` as any }]} />
+            </View>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(500).delay(160).springify()}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.qaScroll}
-            contentContainerStyle={{ gap: 12 }}
-          >
-            {QA_ACTIONS.map((a, i) => (
-              <TouchableOpacity
-                key={i}
-                style={styles.qaCard}
-                activeOpacity={0.85}
-                onPress={a.route ? () => router.push(a.route) : undefined}
-              >
-                <View style={[styles.qaIcon, { backgroundColor: a.bg }]}>
-                  {i === 0 && <GoonaIcon icon={Icons.clipboardList} size={20} color={a.iconColor} />}
-                  {i === 1 && <GoonaIcon icon={Icons.wheat} size={20} color={a.iconColor} />}
-                  {i === 2 && <GoonaIcon icon={Icons.skull} size={20} color={a.iconColor} />}
-                  {i === 3 && <GoonaIcon icon={Icons.wallet} size={20} color={a.iconColor} />}
-                  {i === 4 && <GoonaIcon icon={Icons.trendingUp} size={20} color={a.iconColor} />}
-                </View>
-                <Text style={styles.qaLabel}>{a.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </Animated.View>
-
-        {/* ANALYTICS */}
-        <Animated.View entering={FadeInUp.duration(500).delay(200).springify()}>
-          <View style={styles.secHead}>
+        {/* PRODUCTION ANALYTICS */}
+        <Animated.View entering={FadeInUp.duration(500).delay(140).springify()}>
+          <View style={styles.sec}>
             <Text style={styles.secTitle}>Production Analytics</Text>
             <TouchableOpacity>
               <Text style={styles.secLink}>Full Report</Text>
@@ -397,267 +431,376 @@ export default function BatchDetailsScreen() {
           </View>
         </Animated.View>
 
-        <View style={styles.analyticsGrid}>
-          {batch.analytics.map((a, i) => (
-            <Animated.View
-              key={i}
-              entering={FadeInUp.duration(500).delay(240 + i * 60).springify()}
-              style={styles.analyticsCard}
-            >
-              <View style={[styles.anIcon, { backgroundColor: a.iconBg }]}>
-                {a.icon(a.iconColor)}
-              </View>
-              <Text style={styles.anMetric}>{a.metric}</Text>
-              <Text style={styles.anLabel}>{a.label}</Text>
-              {a.trend ? <Text style={[styles.anTrend, { color: a.trendColor }]}>{a.trend}</Text> : <View style={{ height: 16 }} />}
-              <View style={styles.miniChart}>
-                {a.bars.map((h, j) => (
-                  <View
-                    key={j}
-                    style={[styles.miniBar, { height: `${h}%` as any, backgroundColor: a.activeBars.includes(j) ? a.iconColor : '#E2E8E0' }]}
-                  />
-                ))}
-              </View>
-            </Animated.View>
-          ))}
+        <View style={styles.analytics}>
+          {batch.analytics.map((a, i) => {
+            const colorClass = i === 0 ? 'green' : i === 1 ? 'blue' : i === 2 ? 'amber' : 'purple'
+            const iconBgMap: Record<string, string> = { green: 'rgba(46,125,50,0.10)', blue: 'rgba(59,102,214,0.10)', amber: 'rgba(217,119,6,0.12)', purple: 'rgba(124,58,214,0.10)' }
+            const iconColorMap: Record<string, string> = { green: '#2E7D32', blue: '#3B66D6', amber: '#D97706', purple: '#7C3AD6' }
+            const trendColorMap: Record<string, string> = { green: '#2E7D32', blue: '#3B66D6', amber: '#D97706', purple: '#7C3AD6' }
+            return (
+              <Animated.View
+                key={i}
+                entering={FadeInUp.duration(500).delay(180 + i * 60).springify()}
+                style={styles.an}
+              >
+                <View style={[styles.anIco, { backgroundColor: iconBgMap[colorClass] }]}>
+                  {a.icon(iconColorMap[colorClass])}
+                </View>
+                <Text style={styles.anV}>{a.metric}</Text>
+                <Text style={styles.anL}>{a.label}</Text>
+                {a.trend ? (
+                  <Text style={[styles.anD, { color: trendColorMap[colorClass] }]}>{a.trend}</Text>
+                ) : null}
+              </Animated.View>
+            )
+          })}
         </View>
 
-        {/* TIMELINE */}
-        <Animated.View entering={FadeInUp.duration(500).delay(380).springify()}>
-          <View style={styles.secHead}>
-            <Text style={styles.secTitle}>Production Timeline</Text>
+        {/* CYCLE TIMELINE */}
+        <Animated.View entering={FadeInUp.duration(500).delay(280).springify()}>
+          <View style={styles.sec}>
+            <Text style={styles.secTitle}>Cycle Timeline</Text>
+            <Text style={styles.secMeta}>this batch</Text>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(500).delay(420).springify()} style={styles.timeline}>
+        <Animated.View entering={FadeInUp.duration(500).delay(320).springify()} style={styles.tl}>
           {batch.timeline.map((item, i) => (
             <View key={i} style={styles.tlItem}>
               <View style={[styles.tlDot, item.warn && styles.tlDotWarn]} />
-              <Text style={styles.tlTitle}>{item.title}</Text>
-              <Text style={styles.tlDesc}>{item.desc}</Text>
-              <Text style={styles.tlTime}>{item.time}</Text>
+              <View style={styles.tlBody}>
+                <Text style={styles.tlTitle}>{item.title}</Text>
+                <Text style={styles.tlDesc}>{item.desc}</Text>
+                <Text style={styles.tlAgo}>{item.time}</Text>
+              </View>
             </View>
           ))}
         </Animated.View>
 
-        {/* REINVESTMENT TRACKER */}
-        <Animated.View entering={FadeInUp.duration(500).delay(460).springify()}>
-          <View style={styles.secHead}>
-            <Text style={styles.secTitle}>Reinvestment Tracker</Text>
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(500).delay(500).springify()} style={styles.reinvestCard}>
-          <View style={styles.reinvestHead}>
-            <Text style={styles.reinvestTitle}>Next Production Cycle Savings</Text>
-            <View style={styles.reinvestBadge}>
-              <Text style={styles.reinvestBadgeText}>On Track</Text>
-            </View>
-          </View>
-
-          <View style={styles.reinvestRingWrap}>
-            <View style={styles.reinvestRing}>
-              <Svg width="80" height="80" viewBox="0 0 80 80">
-                <Circle cx="40" cy="40" r="34" stroke="#E2E8F0" strokeWidth="5" fill="none" />
-                <Circle
-                  cx="40" cy="40" r="34" stroke="#2E7D32" strokeWidth="5" fill="none"
-                  strokeDasharray="213.6"
-                  strokeDashoffset={213.6 - (batch.reinvest.pct / 100) * 213.6}
-                  strokeLinecap="round"
-                />
-              </Svg>
-              <View style={styles.reinvestRingText}>
-                <Text style={styles.reinvestRingPct}>{batch.reinvest.pct}%</Text>
-                <Text style={styles.reinvestRingLbl}>Saved</Text>
-              </View>
-            </View>
-
-            <View style={styles.reinvestMetrics}>
-              <View style={styles.reinvestRow}>
-                <Text style={styles.reinvestRowLbl}>Goal Amount</Text>
-                <Text style={styles.reinvestRowVal}>{batch.reinvest.goal}</Text>
-              </View>
-              <View style={styles.reinvestRow}>
-                <Text style={styles.reinvestRowLbl}>Amount Saved</Text>
-                <Text style={styles.reinvestRowVal}>{batch.reinvest.saved}</Text>
-              </View>
-              <View style={styles.reinvestRow}>
-                <Text style={styles.reinvestRowLbl}>Weekly Target</Text>
-                <Text style={styles.reinvestRowVal}>{batch.reinvest.weekly}</Text>
-              </View>
-              <View style={styles.reinvestRow}>
-                <Text style={styles.reinvestRowLbl}>Est. Readiness</Text>
-                <Text style={[styles.reinvestRowVal, { color: '#16A34A' }]}>{batch.reinvest.readiness}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.reinvestChart}>
-            {[30, 38, 35, 50, 55, 60, 72, 68, 75, 82].map((h, i) => (
-              <View
-                key={i}
-                style={[styles.reinvestBar, { height: `${h}%` as any, backgroundColor: i >= 4 ? '#2E7D32' : '#E2E8E0' }]}
-              />
-            ))}
-          </View>
-        </Animated.View>
-
         {/* SMART INSIGHTS */}
-        <Animated.View style={{ marginTop: 18 }} entering={FadeInUp.duration(500).delay(540).springify()}>
-          <View style={styles.secHead}>
+        <Animated.View entering={FadeInUp.duration(500).delay(360).springify()}>
+          <View style={styles.sec}>
             <Text style={styles.secTitle}>Smart Insights</Text>
+            <Text style={styles.secMeta}>GOONA IQ</Text>
           </View>
         </Animated.View>
 
         {batch.insights.map((ins, i) => (
           <Animated.View
             key={i}
-            entering={FadeInUp.duration(500).delay(580 + i * 80).springify()}
-            style={[styles.insightCard, { backgroundColor: ins.bg }]}
+            entering={FadeInUp.duration(500).delay(400 + i * 80).springify()}
+            style={[styles.ins, i % 2 === 0 ? styles.insGreen : styles.insBlue]}
           >
-            <View style={styles.insightIcon}>
-              <GoonaIcon icon={Icons.wheat} size={20} color={ins.iconColor} />
+            <View style={styles.iIco}>
+              <Text style={{ fontSize: 18 }}>{i % 2 === 0 ? '\uD83D\uDCC8' : '\uD83C\uDF3E'}</Text>
             </View>
-            <Text style={styles.insightText}>
+            <Text style={styles.iTxt}>
               {ins.text.split(/(\d+%|\d+\.?\d*%)/).map((part, j) => (
-                /\d/.test(part) ? <Text key={j} style={{ fontWeight: '700', color: '#2E7D32' }}>{part}</Text> : part
+                /\d/.test(part) ? <Text key={j} style={styles.iBold}>{part}</Text> : part
               ))}
             </Text>
           </Animated.View>
         ))}
 
-        <View style={{ height: 160 }} />
+        {/* COMPLETE CYCLE / RESTORE (BOTTOM) */}
+        <Animated.View entering={FadeInUp.duration(500).delay(460).springify()}>
+          {isCompleted ? (
+            <TouchableOpacity
+              style={styles.restoreBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                const name = batch.name
+                Alert.alert(
+                  'Restore to Active',
+                  `"${name}" will return to Active Batches with all its data preserved. You can complete the cycle again later.`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Restore', style: 'default', onPress: handleRestore },
+                  ]
+                )
+              }}
+            >
+              <View style={styles.restoreIconWrap}>
+                <GoonaIcon icon={Icons.refreshCw} size={20} color="#2E7D32" />
+              </View>
+              <View style={styles.restoreTextWrap}>
+                <Text style={styles.restoreTitle}>Restore to Active</Text>
+                <Text style={styles.restoreSub}>Move batch back to Active Batches</Text>
+              </View>
+              <GoonaIcon icon={Icons.chevronRight} size={18} color="#2E7D32" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.complete} activeOpacity={0.85} onPress={handleOpenCompleteSheet}>
+              <LinearGradient
+                colors={['#E8890C', '#F5A623', '#F7B733']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.completeGlow} pointerEvents="none" />
+              <View style={styles.cIco}>
+                <GoonaIcon icon={Icons.checkCheck} size={24} color="#FFFFFF" />
+              </View>
+              <View style={styles.cBody}>
+                <Text style={styles.cTitle}>Complete Cycle / Harvest</Text>
+                <Text style={styles.cSub}>Move to Farm History · restore anytime</Text>
+              </View>
+              <GoonaIcon icon={Icons.chevronRight} size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+          <Text style={styles.completeNote}>
+            {isCompleted
+              ? 'Batch is in Farm History — all records preserved.'
+              : 'This archives the batch to Farm History — it won\'t delete your records.'
+            }
+          </Text>
+        </Animated.View>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
 
-      <BottomDock />
+      {/* COMPLETE CYCLE CONFIRMATION SHEET */}
+      <Modal visible={showCompleteSheet} transparent animationType="slide" onRequestClose={() => setShowCompleteSheet(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetOverlay}>
+          <TouchableOpacity style={styles.sheetBackdrop} activeOpacity={1} onPress={() => setShowCompleteSheet(false)} />
+          <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetIconWrap}>
+                <GoonaIcon icon={Icons.checkCheck} size={28} color="#F59E0B" />
+              </View>
+              <Text style={styles.sheetTitle}>Complete This Cycle?</Text>
+              <Text style={styles.sheetDesc}>
+                {batch.name} will move to Farm History and leave Active Batches. You can restore it anytime.
+              </Text>
+            </View>
+
+            <View style={styles.sheetBody}>
+              <Text style={styles.sheetSectionTitle}>Harvest Summary (optional)</Text>
+
+              <Text style={styles.sheetInputLabel}>Final Bird Count</Text>
+              <TextInput
+                style={styles.sheetInput}
+                value={harvestFinalCount}
+                onChangeText={setHarvestFinalCount}
+                keyboardType="number-pad"
+                placeholder="e.g. 420"
+                placeholderTextColor="#94A3B8"
+              />
+
+              <Text style={styles.sheetInputLabel}>Total Revenue (₦)</Text>
+              <TextInput
+                style={styles.sheetInput}
+                value={harvestRevenue}
+                onChangeText={setHarvestRevenue}
+                keyboardType="number-pad"
+                placeholder="e.g. 2400000"
+                placeholderTextColor="#94A3B8"
+              />
+
+              <Text style={styles.sheetInputLabel}>Notes</Text>
+              <TextInput
+                style={[styles.sheetInput, styles.sheetInputTextArea]}
+                value={harvestNotes}
+                onChangeText={setHarvestNotes}
+                multiline
+                numberOfLines={3}
+                placeholder="Any harvest notes…"
+                placeholderTextColor="#94A3B8"
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.sheetActions}>
+              <TouchableOpacity
+                style={styles.sheetCancelBtn}
+                activeOpacity={0.85}
+                onPress={() => setShowCompleteSheet(false)}
+              >
+                <Text style={styles.sheetCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.sheetConfirmBtn}
+                activeOpacity={0.85}
+                onPress={handleConfirmComplete}
+              >
+                <LinearGradient
+                  colors={['#F59E0B', '#D97706']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                <Text style={styles.sheetConfirmText}>Complete Cycle</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAF7' },
+  container: { flex: 1, backgroundColor: '#F6F9F4' },
 
-  /* bg */
   glowBg: { position: 'absolute', top: -50, right: -50, width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(232,245,233,0.30)', zIndex: 0 },
-  contour1: { position: 'absolute', width: 350, height: 110, top: '5%', left: '-10%', borderWidth: 1, borderColor: '#2E7D32', borderBottomWidth: 0, borderTopLeftRadius: 175, borderTopRightRadius: 175, opacity: 0.04, transform: [{ rotate: '6deg' }], zIndex: 0 },
-  contour2: { position: 'absolute', width: 280, height: 90, bottom: '15%', right: '-10%', borderWidth: 1, borderColor: '#2E7D32', borderTopWidth: 0, borderBottomLeftRadius: 140, borderBottomRightRadius: 140, opacity: 0.04, transform: [{ rotate: '-8deg' }], zIndex: 0 },
 
-  /* scroll */
   scroll: { flex: 1, zIndex: 1 },
   scrollInner: { paddingHorizontal: 20, paddingTop: 6 },
 
   /* top nav */
-  topNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6 },
-  navBack: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
-  topTitle: { fontFamily: 'Poppins', fontWeight: '700', fontSize: 20, color: '#1B1B1B' },
-  menuBtn: {
-    width: 48, height: 48, borderRadius: 24, backgroundColor: 'white',
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 14, elevation: 3,
-  },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6 },
+  tbBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10 },
+  tbTitle: { fontFamily: 'Poppins', fontWeight: '700', fontSize: 20, color: '#15291A' },
 
   /* hero card */
-  heroCard: {
+  hero: {
     borderRadius: 32, padding: 24, marginTop: 14, overflow: 'hidden',
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.28, shadowRadius: 45, elevation: 8,
+    shadowColor: '#0C3A24', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.28, shadowRadius: 45, elevation: 8,
   },
-  heroDots: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.04, zIndex: 0,
-  },
-  heroCc: { position: 'absolute', borderRadius: 50, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  heroGl: {
+  heroOrb1: {
     position: 'absolute', top: -20, right: -10, width: 160, height: 160, borderRadius: 80,
     backgroundColor: 'rgba(255,255,255,0.08)', zIndex: 0,
   },
+  heroOrb2: {
+    position: 'absolute', bottom: -30, left: -20, width: 120, height: 120, borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.05)', zIndex: 0,
+  },
+  heroSheen: {
+    position: 'absolute', top: '10%', left: '-20%', width: '60%', height: '30%',
+    backgroundColor: 'rgba(255,255,255,0.04)', zIndex: 0, transform: [{ rotate: '-20deg' }],
+  },
+  heroRinglines: {
+    position: 'absolute', top: '5%', right: '-15%', width: '70%', height: '90%',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)', borderRadius: 200, zIndex: 0,
+  },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1 },
-  heroLabel: { fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.7)', letterSpacing: 1 },
-  heroMainTitle: { fontFamily: 'Poppins', fontWeight: '800', fontSize: 30, color: 'white', marginTop: 0 },
-  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: -2 },
-  heroRing: { width: 72, height: 72, position: 'relative', flexShrink: 0 },
-  heroRingText: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center',
+  heroEyebrow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  heroLiveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#AEEA00' },
+  heroEyebrowText: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.8)', letterSpacing: 1, textTransform: 'uppercase' },
+  heroCount: { fontFamily: 'Poppins', fontWeight: '800', fontSize: 30, color: 'white', marginTop: 0, lineHeight: 36 },
+  heroCountSmall: { fontSize: 16, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
+  heroWeek: { fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: -2 },
+  heroChips: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  heroChip: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.12)' },
+  heroChipHot: { backgroundColor: '#FFFBEB' },
+  heroChipHotText: { fontSize: 11, fontWeight: '600', color: '#F59E0B' },
+  heroChipText: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.8)' },
+
+  ringWrap: { width: 96, height: 96, position: 'relative', flexShrink: 0 },
+  ringCenter: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  ringPct: { fontSize: 16, fontWeight: '800', color: 'white' },
+  ringLbl: { fontSize: 7, fontWeight: '500', color: 'rgba(255,255,255,0.6)' },
+
+  heroStats: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, zIndex: 1, gap: 10 },
+  hstat: {
+    flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8,
   },
-  heroRingPct: { fontSize: 16, fontWeight: '800', color: 'white' },
-  heroRingLbl: { fontSize: 7, fontWeight: '500', color: 'rgba(255,255,255,0.6)' },
-  heroMetrics: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, zIndex: 1 },
-  heroMetric: { flex: 1, alignItems: 'center' },
-  heroMetricVal: { fontSize: 22, fontWeight: '800', color: 'white' },
-  heroMetricLbl: { fontSize: 11, fontWeight: '400', color: 'rgba(255,255,255,0.6)', marginTop: 1 },
-  heroProgress: { marginTop: 18, zIndex: 1 },
-  heroProgHead: { flexDirection: 'row', justifyContent: 'space-between' },
-  heroProgTrack: { width: '100%', height: 8, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 100, marginTop: 6, overflow: 'hidden' },
-  heroProgFill: { height: '100%', borderRadius: 100, backgroundColor: '#F9A825' },
+  hstatV: { fontSize: 22, fontWeight: '800', color: 'white' },
+  hstatVLime: { color: '#AEEA00' },
+  hstatL: { fontSize: 11, fontWeight: '400', color: 'rgba(255,255,255,0.6)', marginTop: 1 },
 
-  /* section */
-  secHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 22, marginBottom: 12 },
-  secTitle: { fontSize: 18, fontWeight: '700', color: '#1F2937' },
-  secLink: { fontSize: 13, fontWeight: '500', color: '#2E7D32' },
+  heroProg: { marginTop: 18, zIndex: 1 },
+  heroProgRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  heroProgLabel: { fontSize: 12, color: 'rgba(255,255,255,0.6)' },
+  heroProgVal: { fontSize: 12, fontWeight: '700', color: 'white' },
+  heroTrack: { width: '100%', height: 8, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 100, marginTop: 6, overflow: 'hidden' },
+  heroTrackFill: { height: '100%', borderRadius: 100, backgroundColor: '#AEEA00' },
 
-  /* quick actions */
-  qaScroll: { paddingBottom: 4 },
-  qaCard: {
-    minWidth: 110, backgroundColor: 'white', borderRadius: 22, paddingVertical: 18, paddingHorizontal: 12,
-    alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 2,
-  },
-  qaIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  qaLabel: { fontSize: 13, fontWeight: '600', color: '#1F2937' },
+  /* section headers */
+  sec: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 22, marginBottom: 12 },
+  secTitle: { fontSize: 18, fontWeight: '700', color: '#15291A' },
+  secLink: { fontSize: 13, fontWeight: '500', color: '#17663A' },
+  secMeta: { fontSize: 11, fontWeight: '500', color: '#94A3B8', letterSpacing: 0.5 },
 
-  /* analytics */
-  analyticsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  analyticsCard: {
+  /* analytics grid */
+  analytics: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  an: {
     width: (SCREEN_W - 52) / 2, backgroundColor: 'white', borderRadius: 24, padding: 18,
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 2,
   },
-  anIcon: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  anMetric: { fontSize: 22, fontWeight: '800', color: '#1F2937', marginTop: 8, letterSpacing: -0.3 },
-  anLabel: { fontSize: 11, color: '#64748B', marginTop: 1 },
-  anTrend: { fontSize: 11, fontWeight: '600', marginTop: 4 },
-  miniChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 24, marginTop: 8 },
-  miniBar: { width: 5, borderRadius: 2 },
+  anIco: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  anV: { fontSize: 22, fontWeight: '800', color: '#15291A', marginTop: 8, letterSpacing: -0.3 },
+  anL: { fontSize: 11, color: '#64748B', marginTop: 1 },
+  anD: { fontSize: 11, fontWeight: '600', marginTop: 4 },
 
   /* timeline */
-  timeline: { paddingLeft: 20, position: 'relative' },
+  tl: { paddingLeft: 20, position: 'relative', backgroundColor: 'white', borderRadius: 24, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 1 },
   tlItem: { paddingLeft: 16, paddingBottom: 18, position: 'relative' },
   tlDot: {
-    position: 'absolute', left: -16, top: 3, width: 12, height: 12, borderRadius: 6,
+    position: 'absolute', left: 0, top: 3, width: 12, height: 12, borderRadius: 6,
     borderWidth: 2.5, borderColor: 'white',
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 1, shadowRadius: 0,
-    backgroundColor: '#2E7D32', elevation: 4,
+    backgroundColor: '#17663A', elevation: 4, zIndex: 2,
   },
-  tlDotWarn: {
-    backgroundColor: '#F59E0B',
-    shadowColor: '#F59E0B',
-  },
-  tlTitle: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
+  tlDotWarn: { backgroundColor: '#F59E0B' },
+  tlBody: { flex: 1 },
+  tlTitle: { fontSize: 14, fontWeight: '600', color: '#15291A' },
   tlDesc: { fontSize: 12, color: '#64748B', marginTop: 1 },
-  tlTime: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
+  tlAgo: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
 
-  /* reinvestment */
-  reinvestCard: {
-    backgroundColor: '#E8F5E9', borderRadius: 28, padding: 22,
-    borderWidth: 1, borderColor: 'rgba(46,125,50,0.06)',
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 2,
+  /* insights */
+  ins: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, borderRadius: 24, padding: 18, marginBottom: 10 },
+  insGreen: { backgroundColor: '#E8F5E9' },
+  insBlue: { backgroundColor: '#E3F2FD' },
+  iIco: { width: 40, height: 40, borderRadius: 14, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', flexShrink: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 },
+  iTxt: { fontSize: 13, lineHeight: 20, color: '#15291A', flex: 1 },
+  iBold: { fontWeight: '700', color: '#15291A' },
+
+  /* complete cycle */
+  complete: {
+    borderRadius: 22, marginTop: 16, overflow: 'hidden',
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingVertical: 18, paddingHorizontal: 22,
+    shadowColor: '#D97706', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 5,
   },
-  reinvestHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  reinvestTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937' },
-  reinvestBadge: { paddingVertical: 3, paddingHorizontal: 12, borderRadius: 100, backgroundColor: '#DCFCE7' },
-  reinvestBadgeText: { fontSize: 11, fontWeight: '600', color: '#16A34A' },
-  reinvestRingWrap: { flexDirection: 'row', alignItems: 'center', gap: 24, marginTop: 16 },
-  reinvestRing: { width: 80, height: 80, position: 'relative', flexShrink: 0 },
-  reinvestRingText: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  reinvestRingPct: { fontSize: 18, fontWeight: '800', color: '#1F2937' },
-  reinvestRingLbl: { fontSize: 7, fontWeight: '500', color: '#94A3B8' },
-  reinvestMetrics: { flex: 1 },
-  reinvestRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  reinvestRowLbl: { fontSize: 13, color: '#64748B' },
-  reinvestRowVal: { fontSize: 13, fontWeight: '600', color: '#1F2937' },
-  reinvestChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 32, marginTop: 14 },
-  reinvestBar: { flex: 1, borderRadius: 3 },
+  completeGlow: { position: 'absolute', top: -30, right: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.12)', zIndex: 0 },
+  cIco: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  cBody: { flex: 1, zIndex: 1 },
+  cTitle: { fontSize: 17, fontWeight: '800', color: '#FFFFFF' },
+  cSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 1 },
+  completeNote: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 10, marginBottom: 4 },
 
-  /* insight */
-  insightCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, borderRadius: 24, padding: 18, marginBottom: 10 },
-  insightIcon: { width: 40, height: 40, borderRadius: 14, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', flexShrink: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 },
-  insightText: { fontSize: 13, lineHeight: 20, color: '#1F2937', flex: 1 },
+  /* restore button */
+  restoreBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#FFFFFF', borderRadius: 22, paddingVertical: 18, paddingHorizontal: 22, marginTop: 16,
+    borderWidth: 1.5, borderColor: '#17663A',
+    shadowColor: '#17663A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 20, elevation: 3,
+  },
+  restoreIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#F0FDF4', alignItems: 'center', justifyContent: 'center' },
+  restoreTextWrap: { flex: 1 },
+  restoreTitle: { fontSize: 16, fontWeight: '800', color: '#15291A' },
+  restoreSub: { fontSize: 12, color: '#64748B', marginTop: 1 },
+
+  /* completion sheet */
+  sheetOverlay: { flex: 1, justifyContent: 'flex-end' },
+  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
+  sheet: {
+    backgroundColor: '#FFFFFF', borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    paddingHorizontal: 24, paddingBottom: 40,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.08, shadowRadius: 30, elevation: 15,
+  },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', alignSelf: 'center', marginTop: 12, marginBottom: 8 },
+  sheetHeader: { alignItems: 'center', paddingVertical: 12 },
+  sheetIconWrap: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#FFFBEB', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  sheetTitle: { fontSize: 20, fontWeight: '800', color: '#15291A', textAlign: 'center' },
+  sheetDesc: { fontSize: 13, color: '#64748B', textAlign: 'center', marginTop: 8, lineHeight: 20, paddingHorizontal: 8 },
+  sheetBody: { paddingVertical: 8 },
+  sheetSectionTitle: { fontSize: 14, fontWeight: '700', color: '#15291A', marginBottom: 16 },
+  sheetInputLabel: { fontSize: 12, fontWeight: '600', color: '#64748B', marginBottom: 6, marginTop: 12 },
+  sheetInput: {
+    height: 48, borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0',
+    paddingHorizontal: 16, fontSize: 15, color: '#15291A', backgroundColor: '#F8FAF7',
+  },
+  sheetInputTextArea: { height: 80, paddingTop: 14 },
+  sheetActions: { flexDirection: 'row', gap: 12, marginTop: 24 },
+  sheetCancelBtn: {
+    flex: 1, height: 52, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0',
+    alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF',
+  },
+  sheetCancelText: { fontSize: 15, fontWeight: '700', color: '#64748B' },
+  sheetConfirmBtn: { flex: 1, height: 52, borderRadius: 16, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  sheetConfirmText: { fontSize: 15, fontWeight: '800', color: '#FFFFFF' },
 })
