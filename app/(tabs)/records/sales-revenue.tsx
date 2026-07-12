@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import * as Haptics from 'expo-haptics'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { Icons } from '../../../shared/icons'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle as SvgCircle } from 'react-native-svg'
 import Animated, { FadeInUp } from 'react-native-reanimated'
@@ -79,7 +79,10 @@ type TabType = 'sales' | 'expenses'
 
 export default function SalesRevenueScreen() {
   const insets = useSafeAreaInsets()
-  const [activeTab, setActiveTab] = useState<TabType>('sales')
+  const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>()
+  const [activeTab, setActiveTab] = useState<TabType>(
+    tabParam === 'expenses' ? 'expenses' : 'sales'
+  )
 
   const records = useHistoryStore((s) => s.records)
   const thisMonth = useMemo(() => rangeForPreset('this-month'), [])
@@ -413,7 +416,7 @@ export default function SalesRevenueScreen() {
             <TouchableOpacity
               style={styles.navBack}
               activeOpacity={0.7}
-              onPress={() => router.canGoBack() ? router.back() : router.replace('/records' as any)}
+              onPress={() => router.replace('/(tabs)/records' as any)}
             >
               <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>

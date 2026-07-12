@@ -10,6 +10,7 @@ import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from '
 import { LinearGradient } from 'expo-linear-gradient';
 import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
+import { useHistoryStore } from '../../store/useHistoryStore';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useWeatherStore, seedWeatherForecast } from '../../store/useWeatherStore';
 import { FARM_NAME } from '../../constants/farm';
@@ -67,20 +68,106 @@ const TODAY_PRIORITIES: { icon: any; label: string; desc: string; severity: Prio
   { icon: Icons.clipboardList, label: 'Water log not submitted', desc: 'Yesterday\'s water consumption record is missing', severity: 'info' },
 ]
 
-type HealthStatus = 'ok' | 'warning' | 'info'
-const HEALTH_ITEMS: { icon: any; label: string; status: string; type: HealthStatus }[] = [
-  { icon: Icons.checkCircle, label: 'Feed', status: 'Logged Today', type: 'ok' },
-  { icon: Icons.checkCircle, label: 'Water', status: 'Logged Today', type: 'ok' },
-  { icon: Icons.alertCircle, label: 'Medication', status: 'Due Today', type: 'warning' },
-  { icon: Icons.shield, label: 'Mortality', status: '2 Birds Reported', type: 'info' },
-]
+function startOfDay(ts: number): number {
+  const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime()
+}
+
+type HealthCardStatus = 'ok' | 'warning' | 'info' | 'muted'
+
+function healthCardsFromRecords(records: import('../../store/useHistoryStore').HistoryRecord[]): {
+  icon: string; label: string; status: string; statusType: HealthCardStatus; iconName: string; route: string
+}[] {
+  const now = Date.now()
+  const todayStart = startOfDay(now)
+  const todayEnd = now
+
+  const inToday = (r: import('../../store/useHistoryStore').HistoryRecord) =>
+    r.timestamp >= todayStart && r.timestamp <= todayEnd
+
+  const feedCount = records.filter(r => r.type === 'feed' && inToday(r)).length
+  const waterCount = records.filter(r => r.type === 'water' && inToday(r)).length
+  const medCount = records.filter(r => r.type === 'medication' && inToday(r)).length
+  const mortTotal = records
+    .filter(r => r.type === 'mortality' && inToday(r))
+    .reduce((sum, r) => sum + (r.quantity ?? 0), 0)
+
+  return [
+    {
+      label: 'Feed',
+      icon: feedCount > 0 ? Icons.checkCircle : Icons.alertCircle,
+      status: feedCount > 0 ? 'Logged Today' : 'Not logged',
+      statusType: feedCount > 0 ? 'ok' : 'warning',
+      iconName: Icons.wheat,
+      route: '/(tabs)/records/daily-operations?type=feed',
+    },
+    {
+      label: 'Water',
+      icon: waterCount > 0 ? Icons.checkCircle : Icons.alertCircle,
+      status: waterCount > 0 ? 'Logged Today' : 'Not logged',
+      statusType: waterCount > 0 ? 'ok' : 'warning',
+      iconName: Icons.droplets,
+      route: '/(tabs)/records/daily-operations?type=water',
+    },
+    {
+      label: 'Medication',
+      icon: medCount > 0 ? Icons.checkCircle : Icons.alertCircle,
+      status: medCount > 0 ? 'Logged' : 'Due Today',
+      statusType: medCount > 0 ? 'ok' : 'warning',
+      iconName: Icons.pill,
+      route: '/(tabs)/records/daily-operations?type=medication',
+    },
+    {
+      label: 'Mortality',
+      icon: mortTotal > 0 ? Icons.shield : Icons.checkCircle,
+      status: mortTotal > 0 ? `${mortTotal} Bird${mortTotal !== 1 ? 's' : ''} Reported` : 'None reported',
+      statusType: mortTotal > 0 ? 'info' : 'muted',
+      iconName: Icons.skull,
+      route: '/(tabs)/records/daily-operations?type=mortality',
+    },
+  ]
+}
+
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ FARM HEALTH CARD Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
+const HEALTH_COLORS: Record<string, { dot: string; text: string }> = {
+  ok:      { dot: '#16A34A', text: '#16A34A' },
+  warning: { dot: '#F59E0B', text: '#D97706' },
+  info:    { dot: '#1A56FF', text: '#1A56FF' },
+  muted:   { dot: '#94A3B8', text: '#94A3B8' },
+}
+
+function HealthCard({ card, onPress }: {
+  card: { icon: string; label: string; status: string; statusType: string }
+  onPress: () => void
+}) {
+  const { style: pressStyle, onPressIn, onPressOut } = usePressScale()
+  const c = HEALTH_COLORS[card.statusType] ?? HEALTH_COLORS.muted
+  return (
+    <TouchableOpacity activeOpacity={0.8} onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
+      <Animated.View style={[styles.healthChip, pressStyle]}>
+        <GoonaIcon icon={card.icon} size={14} color={c.dot} />
+        <View style={styles.healthInfo}>
+          <Text style={styles.healthLabel}>{card.label}</Text>
+          <Text style={[styles.healthStatus, { color: c.text }]}>{card.status}</Text>
+        </View>
+        <GoonaIcon icon={Icons.chevronRight} size={12} color="#CBD5E1" />
+      </Animated.View>
+    </TouchableOpacity>
+  )
+}
 
 const ACTION_ICONS: Record<string, { icon: any; color: string; bg: string; route: string }> = {
-  'Record Sale': { icon: Icons.shoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/record-sale' },
-  'Expenses': { icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/sales-revenue' },
+  'Record Sale': { icon: Icons.shoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/(tabs)/records/sales-revenue?tab=sales' },
+  'Expenses': { icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/sales-revenue?tab=expenses' },
   'Daily Records': { icon: Icons.clipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' },
-  'Reports': { icon: Icons.fileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/sales-revenue' },
+  'Reports': { icon: Icons.fileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/sales-revenue?tab=expenses' },
   'Academy': { icon: Icons.graduationCap, color: '#F97316', bg: '#FFF7ED', route: '/goona-academy' },
+}
+
+const PRESET_META: Record<string, { icon: any; color: string; bg: string }> = {
+  'Record Sale': { icon: Icons.shoppingCart, color: '#16A34A', bg: '#F0FDF4' },
+  'Expenses': { icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2' },
+  'Daily Records': { icon: Icons.clipboardList, color: '#1A56FF', bg: '#EEF3FF' },
+  'Academy': { icon: Icons.graduationCap, color: '#F97316', bg: '#FFF7ED' },
 }
 
 const PULSES = [
@@ -101,7 +188,7 @@ function PriorityBannerCard({ message, level }: { message: string; level: Priori
 }
 
 const ROUTE_FALLBACKS: Record<string, string> = {
-  '/(tabs)/records/expenses/budget': '/(tabs)/records/sales-revenue',
+  '/(tabs)/recapitalization/budget': '/(tabs)/recapitalization',
   '/(tabs)/records/expenses/reports': '/(tabs)/records/sales-revenue',
 }
 
@@ -224,6 +311,9 @@ export default function DashboardScreen() {
   const humidity = today?.humidity ?? 68
   const rainProb = today?.rainProbability ?? 15
 
+  const allRecords = useHistoryStore((s) => s.records)
+  const healthCards = useMemo(() => healthCardsFromRecords(allRecords), [allRecords])
+
   const pulse = PULSES[pulseIdx]
 
   return (
@@ -331,19 +421,9 @@ export default function DashboardScreen() {
           <Text style={styles.secTitle}>Farm Health Snapshot</Text>
         </View>
         <View style={styles.healthGrid}>
-          {HEALTH_ITEMS.map((h, i) => {
-            const dotColor = h.type === 'ok' ? '#16A34A' : h.type === 'warning' ? '#F59E0B' : '#1A56FF'
-            const textColor = h.type === 'ok' ? '#16A34A' : h.type === 'warning' ? '#D97706' : '#1A56FF'
-            return (
-              <View key={i} style={styles.healthChip}>
-                <GoonaIcon icon={h.icon} size={14} color={dotColor} />
-                <View style={styles.healthInfo}>
-                  <Text style={styles.healthLabel}>{h.label}</Text>
-                  <Text style={[styles.healthStatus, { color: textColor }]}>{h.status}</Text>
-                </View>
-              </View>
-            )
-          })}
+          {healthCards.map((h, i) => (
+            <HealthCard key={i} card={h} onPress={() => router.push(h.route as any)} />
+          ))}
         </View>
 
         {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ QUICK ACTIONS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
@@ -406,7 +486,7 @@ export default function DashboardScreen() {
                 <View style={styles.weatherRow}>
                   <View style={styles.weatherStat}>
                     <GoonaIcon icon={Icons.thermometer} size={14} color="#F59E0B" />
-                    <Text style={styles.weatherVal}>{temp}Ã‚Â°C</Text>
+                    <Text style={styles.weatherVal}>{temp}°C</Text>
                     <Text style={styles.weatherLbl}>Temperature</Text>
                   </View>
                   <View style={styles.weatherDiv} />

@@ -110,11 +110,11 @@ export default function RecordSaleScreen() {
   const productScales = PRODUCT_LIST.map(() => usePressScale())
   const paymentScales = PAYMENTS.map(() => usePressScale())
 
-  const salesRecords = useHistoryStore((s) => s.records.filter((r) => r.type === 'sale'))
+  const allRecords = useHistoryStore((s) => s.records)
 
   const sevenDayStats = useMemo(() => {
     const cutoff = Date.now() - 7 * 86400000
-    const recent = salesRecords.filter((r) => r.timestamp >= cutoff)
+    const recent = allRecords.filter((r) => r.type === 'sale' && r.timestamp >= cutoff)
     const total = recent.reduce((sum, r) => sum + (r.cost ?? 0), 0)
     const count = recent.length
     const productRevenue: Record<string, number> = {}
@@ -132,7 +132,7 @@ export default function RecordSaleScreen() {
       broilers: 'Broilers', layers: 'Layers', eggs: 'Eggs', other: 'Custom', unknown: '—',
     }
     return { total, count, topProduct: productLabels[topProduct] ?? topProduct }
-  }, [salesRecords])
+  }, [allRecords])
 
   const displayTotal = sevenDayStats.total >= 1_000_000
     ? `₦${(sevenDayStats.total / 1_000_000).toFixed(1)}M`
@@ -344,7 +344,7 @@ export default function RecordSaleScreen() {
           <TextInput
             style={styles.quantityInput}
             value={quantityDisplay}
-            onChangeText={(v) => setQuantity(v.replace(/,/g, ''))}
+            onChangeText={(v) => setQuantity(prev => { const c = v.replace(/,/g, ''); return prev === c ? prev : c })}
             keyboardType="numeric"
             placeholder="0"
             placeholderTextColor="#CBD5E1"
@@ -395,7 +395,7 @@ export default function RecordSaleScreen() {
           <TextInput
             style={styles.priceInput}
             value={pricePerUnitDisplay}
-            onChangeText={(v) => setPricePerUnitRaw(v.replace(/[^0-9]/g, ''))}
+            onChangeText={(v) => setPricePerUnitRaw(prev => { const c = v.replace(/[^0-9]/g, ''); return prev === c ? prev : c })}
             keyboardType="numeric"
             placeholder="0"
             placeholderTextColor="#CBD5E1"
@@ -602,7 +602,7 @@ export default function RecordSaleScreen() {
                 activeOpacity={0.7}
                 onPress={() => {
                   if (step > 1) { setStep(step - 1); return }
-                  router.canGoBack() ? router.back() : router.replace('/records' as any)
+                  router.replace('/(tabs)/records/sales-revenue' as any)
                 }}
                 onPressIn={ps.onPressIn}
                 onPressOut={ps.onPressOut}

@@ -63,7 +63,7 @@ export default function BottomDock({ hidden }: { hidden?: boolean }) {
   const activeIndex = (() => {
     if (pathname === '/(tabs)' || pathname === '/(tabs)/dashboard' || pathname === '/dashboard') return 0
     if (pathname.includes('/farmchat') || pathname.includes('/chat/')) return 1
-    if (pathname.includes('records') || pathname.includes('/budget') || pathname.includes('sales') || pathname.includes('record-sale') || pathname.includes('create-batch') || pathname.includes('daily-records') || pathname.includes('batch-details') || pathname.includes('/batches')) return 2
+    if (pathname.includes('records') || pathname.includes('sales') || pathname.includes('record-sale') || pathname.includes('create-batch') || pathname.includes('daily-records') || pathname.includes('batch-details') || pathname.includes('/batches')) return 2
     if (pathname.includes('recapitalization') || pathname.includes('recapt') || pathname.includes('plan-recapt')) return 3
     if (pathname.includes('team') || pathname.includes('teams') || pathname.includes('worker') || pathname.includes('settings') || pathname.includes('goona-iq') || pathname.includes('academy') || pathname.includes('farm-profile') || pathname.includes('device-management') || pathname.includes('permissions') || pathname.includes('workforce') || pathname.includes('farm-boundaries') || pathname.includes('geofence') || pathname.includes('reminder-tasks') || pathname.includes('reminder')) return 4
     return 0

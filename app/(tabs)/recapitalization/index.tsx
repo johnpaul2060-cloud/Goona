@@ -221,7 +221,7 @@ colors={['#065F46', '#047857']}
 const RECAP_TOOLS = [
   { emoji: '\u2795', label: 'Fund', desc: 'Add a contribution to your production fund', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
   { emoji: '\uD83D\uDCC5', label: 'Plan', desc: 'Set targets and plan your next cycle', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
-  { emoji: '\uD83D\uDCB0', label: 'Budget', desc: 'Manage budget and allocations', color: '#0F766E', bg: '#DDF5F0', route: '/records/expenses/budget-setup' as const },
+  { emoji: '\uD83D\uDCB0', label: 'Budget', desc: 'Manage budget and allocations', color: '#0F766E', bg: '#DDF5F0', route: '/(tabs)/recapitalization/budget-setup' as const },
   { emoji: '\uD83D\uDCC8', label: 'Timeline & Reports', desc: 'Contribution history, milestones & exportable insights', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/timeline-reports' as const },
 ]
 
@@ -235,7 +235,7 @@ function RecapToolsList({ index }: { index: number }) {
           key={a.label}
           style={styles.recapToolRow}
           activeOpacity={0.7}
-          onPress={() => a.label === 'Budget' ? router.push({ pathname: '/records/expenses/budget-setup', params: { from: 'recapitalization' } } as any) : router.push(a.route)}
+          onPress={() => router.push(a.route as any)}
         >
           <View style={[styles.recapToolIcon, { backgroundColor: a.bg }]}>
             <Text style={styles.recapToolEmoji}>{a.emoji}</Text>

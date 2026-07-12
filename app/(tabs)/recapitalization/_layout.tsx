@@ -8,6 +8,9 @@ export default function RecapitalizationLayout() {
       <Stack.Screen name="project-timeline" />
       <Stack.Screen name="readiness-report" />
       <Stack.Screen name="timeline-reports" />
+      <Stack.Screen name="budget" />
+      <Stack.Screen name="budget-setup" />
+      <Stack.Screen name="budget-export" />
     </Stack>
   )
 }

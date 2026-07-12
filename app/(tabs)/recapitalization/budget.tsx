@@ -6,10 +6,10 @@ import {
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle as SvgCircle } from 'react-native-svg'
-import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { Icons } from '../../../../shared/icons'
+import GoonaIcon from '../../../components/ui/GoonaIcon'
+import { Icons } from '../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import { formatNaira } from '../../../../utils/format'
+import { formatNaira } from '../../../utils/format'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -55,8 +55,8 @@ const INSIGHTS = [
 
 const QUICK_ACTIONS = [
   { icon: Icons.fileText, label: 'Spending Report', route: '/records/expenses/reports' as const, color: '#1A56FF', bg: '#EEF3FF' },
-  { icon: Icons.settings, label: 'Set Budget', route: '/records/expenses/budget-setup' as const, color: '#F59E0B', bg: '#FFFBEB' },
-  { icon: Icons.arrowUpRight, label: 'Export', route: '/records/expenses/budget-export' as const, color: '#8B5CF6', bg: '#F5F3FF' },
+  { icon: Icons.settings, label: 'Set Budget', route: '/(tabs)/recapitalization/budget-setup' as const, color: '#F59E0B', bg: '#FFFBEB' },
+  { icon: Icons.arrowUpRight, label: 'Export', route: '/(tabs)/recapitalization/budget-export' as const, color: '#8B5CF6', bg: '#F5F3FF' },
 ]
 
 function BudgetGauge({ score }: { score: number }) {
@@ -129,7 +129,7 @@ export default function BudgetScreen() {
           <TouchableOpacity
             style={styles.navBack}
             activeOpacity={0.7}
-            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/recapitalization' as any)}
+            onPress={() => router.back()}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>

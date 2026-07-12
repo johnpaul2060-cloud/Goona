@@ -5,7 +5,7 @@ import {
   Modal, Pressable,
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { Icons } from '../shared/icons'
 import Animated, {
   FadeInUp, FadeInDown, useSharedValue, useAnimatedStyle, withSpring,
@@ -608,10 +608,13 @@ function buildFarmFeedPost(type: RecordKey, values: QuickLogValues, batch: strin
 
 /* ─── MAIN ─── */
 export default function DailyRecordsScreen() {
+  const { type: initialType } = useLocalSearchParams<{ type?: string }>()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedBatch, setSelectedBatch] = useState('Layer Batch B')
   const [selectedTime, setSelectedTime] = useState(new Date())
-  const [quickLogType, setQuickLogType] = useState<RecordKey | null>(null)
+  const [quickLogType, setQuickLogType] = useState<RecordKey | null>(
+    RECORD_TYPES.some(t => t.key === initialType) ? (initialType as RecordKey) : null
+  )
   const [loggedToday, setLoggedToday] = useState<RecordKey[]>(['feed', 'mortality', 'eggs'])
   const [snapshotOverrides, setSnapshotOverrides] = useState<Record<string, string>>({})
   const [lastFeedByBatch, setLastFeedByBatch] = useState<Record<string, string>>({})

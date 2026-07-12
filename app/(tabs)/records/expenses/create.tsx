@@ -98,7 +98,7 @@ export default function CreateExpenseScreen() {
           <TouchableOpacity
             style={styles.navBack}
             activeOpacity={0.7}
-            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/(tabs)/records/sales-revenue' as any) } }}
+            onPress={() => router.replace('/(tabs)/records/sales-revenue' as any)}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>
@@ -163,7 +163,7 @@ export default function CreateExpenseScreen() {
               placeholderTextColor="#CBD5E1"
               keyboardType="numeric"
               value={displayAmount}
-              onChangeText={(v) => setAmountRaw(v.replace(/[^0-9]/g, ''))}
+              onChangeText={(v) => setAmountRaw(prev => { const c = v.replace(/[^0-9]/g, ''); return prev === c ? prev : c })}
             />
           </View>
 

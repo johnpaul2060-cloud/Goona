@@ -5,8 +5,8 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { Icons } from '../../../../shared/icons'
+import GoonaIcon from '../../../components/ui/GoonaIcon'
+import { Icons } from '../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 
 const EXPORT_OPTIONS = [
@@ -38,7 +38,7 @@ export default function BudgetExportScreen() {
           <TouchableOpacity
             style={styles.successBtn}
             activeOpacity={0.8}
-            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/sales-revenue' as any) } }}
+            onPress={() => router.back()}
           >
             <Text style={styles.successBtnText}>Back to Budget</Text>
           </TouchableOpacity>
@@ -58,7 +58,7 @@ export default function BudgetExportScreen() {
           <TouchableOpacity
             style={styles.navBack}
             activeOpacity={0.7}
-            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/sales-revenue' as any) } }}
+            onPress={() => router.back()}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>

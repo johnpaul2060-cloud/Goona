@@ -3,12 +3,12 @@ import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   StyleSheet,
 } from 'react-native'
-import { router, useLocalSearchParams } from 'expo-router'
+import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import GoonaIcon from '../../../../components/ui/GoonaIcon'
-import { Icons } from '../../../../shared/icons'
+import GoonaIcon from '../../../components/ui/GoonaIcon'
+import { Icons } from '../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import { formatInput, parseAmount, formatNaira } from '../../../../utils/format'
+import { formatInput, parseAmount, formatNaira } from '../../../utils/format'
 
 const PERIODS = ['Weekly', 'Monthly', 'Quarterly', 'Production Cycle', 'Custom'] as const
 
@@ -40,8 +40,6 @@ const STEPS = ['Period', 'Amount', 'Allocate', 'Alerts', 'Review']
 
 export default function BudgetSetupScreen() {
   const insets = useSafeAreaInsets()
-  const params = useLocalSearchParams<{ from?: string }>()
-  const fromRecapitalization = params.from === 'recapitalization'
   const [step, setStep] = useState(1)
 
   const [period, setPeriod] = useState<typeof PERIODS[number] | null>(null)
@@ -483,9 +481,9 @@ export default function BudgetSetupScreen() {
           <TouchableOpacity
             style={styles.successBtn}
             activeOpacity={0.8}
-            onPress={() => fromRecapitalization ? router.replace('/(tabs)/recapitalization' as any) : router.back()}
+            onPress={() => router.back()}
           >
-            <Text style={styles.successBtnText}>{fromRecapitalization ? 'Back to Recapitalization' : 'Back to Budget'}</Text>
+            <Text style={styles.successBtnText}>Back to Budget</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -519,12 +517,8 @@ export default function BudgetSetupScreen() {
             onPress={() => {
               if (step > 1) {
                 setStep(step - 1)
-              } else if (fromRecapitalization) {
-                router.replace('/(tabs)/recapitalization' as any)
-              } else if (router.canGoBack()) {
-                router.back()
               } else {
-                router.replace('/records/sales-revenue' as any)
+                router.back()
               }
             }}
           >
