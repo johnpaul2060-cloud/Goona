@@ -38,7 +38,7 @@ export default function BudgetExportScreen() {
           <TouchableOpacity
             style={styles.successBtn}
             activeOpacity={0.8}
-            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses/budget' as any) } }}
+            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/sales-revenue' as any) } }}
           >
             <Text style={styles.successBtnText}>Back to Budget</Text>
           </TouchableOpacity>
@@ -58,7 +58,7 @@ export default function BudgetExportScreen() {
           <TouchableOpacity
             style={styles.navBack}
             activeOpacity={0.7}
-            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/expenses/budget' as any) } }}
+            onPress={() => { if (router.canGoBack()) { router.back() } else { router.replace('/records/sales-revenue' as any) } }}
           >
             <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
           </TouchableOpacity>

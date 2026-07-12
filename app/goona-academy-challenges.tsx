@@ -619,7 +619,7 @@ export default function GoonaAcademyChallengesScreen() {
     <View style={s.container}>
       <StatusBar style="dark" />
       <View style={[s.topBar, { paddingTop: insets.top + 4 }]}>
-        <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={s.iconBtn}><GoonaIcon icon={Icons.arrowLeft} size={19} color={C.ink} /></TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => router.navigate('/goona-academy')} style={s.iconBtn}><GoonaIcon icon={Icons.arrowLeft} size={19} color={C.ink} /></TouchableOpacity>
         <View style={s.topTitle}><Text style={s.topTitleText}>Challenges</Text><Text style={s.topTitleSub}>GOONA Academy</Text></View>
         <TouchableOpacity activeOpacity={0.7} onPress={() => toast('Play daily to keep your streak')} style={s.iconBtn}><GoonaIcon icon={Icons.info} size={19} color={C.ink} /></TouchableOpacity>
       </View>
@@ -739,7 +739,7 @@ const s = StyleSheet.create({
   lb: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   lbRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: C.line2 },
   lbRowYou: { marginHorizontal: -16, paddingHorizontal: 16, backgroundColor: C.greenBg, borderBottomColor: 'transparent' },
-  lbRank: { fontSize: 16, width: 24, textAlign: 'center', color: C.mut2 },
+  lbRank: { fontSize: 16, minWidth: 34, textAlign: 'center', color: C.mut2 },
   lbAv: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   lbAvText: { fontWeight: '700', fontSize: 13, color: '#fff' },
   lbNm: { flex: 1, fontSize: 13.5, fontWeight: '700', color: C.ink },

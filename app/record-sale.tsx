@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
   StyleSheet, Dimensions, Modal, KeyboardAvoidingView, Platform, Alert,
@@ -7,31 +7,36 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Icons } from '../shared/icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
   withSequence, withRepeat, FadeInUp, FadeIn, Easing,
 } from 'react-native-reanimated'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import BottomDock from '../components/navigation/BottomDock'
-import { formatInput, parseAmount, formatNaira } from '../utils/format'
+import DateTimePicker from '@react-native-community/datetimepicker'
+import { formatInput, parseAmount } from '../utils/format'
+import { useHistoryStore } from '../store/useHistoryStore'
+import { useFarmChatStore } from '../store/useFarmChatStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const H_PAD = 20
 
-type ProductType = 'broilers' | 'layers' | 'eggs' | 'catfish' | 'feed' | 'other'
+type ProductType = 'broilers' | 'layers' | 'eggs' | 'other'
 type PaymentType = 'cash' | 'transfer' | 'pos' | 'credit'
 
 type ProductConfig = {
   label: string; emoji: string; price: number; unit: string; qtyLabel: string; priceLabel: string
 }
 
+const PRODUCT_COLORS: Record<string, string> = {
+  broilers: '#D97706', layers: '#2563EB', eggs: '#EAB308', other: '#8B5CF6',
+}
+
 const PRODUCTS: Record<ProductType, ProductConfig> = {
   broilers: { label: 'Broilers', emoji: '\u{1F425}', price: 4500, unit: 'bird', qtyLabel: 'Birds Sold', priceLabel: 'Price Per Bird' },
   layers:  { label: 'Layers', emoji: '\u{1F413}', price: 3200, unit: 'bird', qtyLabel: 'Birds Sold', priceLabel: 'Price Per Bird' },
   eggs:    { label: 'Eggs', emoji: '\u{1F95A}', price: 3500, unit: 'crate', qtyLabel: 'Crates Sold', priceLabel: 'Price Per Crate' },
-  catfish: { label: 'Catfish', emoji: '\u{1F41F}', price: 1200, unit: 'kg', qtyLabel: 'Weight Sold (kg)', priceLabel: 'Price Per Kg' },
-  feed:    { label: 'Feed', emoji: '\u{1F33E}', price: 18000, unit: 'bag', qtyLabel: 'Bags Sold', priceLabel: 'Price Per Bag' },
-  other:   { label: 'Custom Product', emoji: '\u{2795}', price: 0, unit: 'unit', qtyLabel: 'Quantity', priceLabel: 'Price Per Unit' },
+  other:   { label: 'Custom', emoji: '\u{2795}', price: 0, unit: 'unit', qtyLabel: 'Quantity', priceLabel: 'Price Per Unit' },
 }
 
 const PAYMENTS: { key: PaymentType; emoji: string; label: string }[] = [
@@ -45,6 +50,11 @@ const STEPS = ['Product', 'Quantity', 'Payment', 'Save']
 const PRODUCT_LIST = Object.keys(PRODUCTS) as ProductType[]
 
 const UNIT_OPTIONS = ['Bags', 'Kg', 'Tonnes', 'Crates', 'Pieces', 'Litres', 'Sacks', 'Units', 'Custom']
+
+const BATCHES = [
+  'Broiler Batch A', 'Layer Batch B', 'Starter Pen C',
+  'Turkey Unit', 'Poultry Expansion Batch',
+]
 
 function usePressScale(scaleTo = 0.96) {
   const scale = useSharedValue(1)
@@ -90,12 +100,57 @@ export default function RecordSaleScreen() {
   const [customProductName, setCustomProductName] = useState('')
   const [unitType, setUnitType] = useState('Units')
   const [customUnit, setCustomUnit] = useState('')
+  const [selectedBatch, setSelectedBatch] = useState(BATCHES[0])
+  const [showBatchOptions, setShowBatchOptions] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [selectedTime, setSelectedTime] = useState(new Date())
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState(false)
+  const [logContextCollapsed, setLogContextCollapsed] = useState(false)
   const productScales = PRODUCT_LIST.map(() => usePressScale())
   const paymentScales = PAYMENTS.map(() => usePressScale())
 
-  const qty = parseFloat(quantity) || 0
+  const salesRecords = useHistoryStore((s) => s.records.filter((r) => r.type === 'sale'))
+
+  const sevenDayStats = useMemo(() => {
+    const cutoff = Date.now() - 7 * 86400000
+    const recent = salesRecords.filter((r) => r.timestamp >= cutoff)
+    const total = recent.reduce((sum, r) => sum + (r.cost ?? 0), 0)
+    const count = recent.length
+    const productRevenue: Record<string, number> = {}
+    for (const r of recent) {
+      const meta = r.metadata as Record<string, unknown> | undefined
+      const pType = (meta?.productType as string) ?? 'unknown'
+      productRevenue[pType] = (productRevenue[pType] ?? 0) + (r.cost ?? 0)
+    }
+    let topProduct = '—'
+    let topRevenue = 0
+    for (const [p, rev] of Object.entries(productRevenue)) {
+      if (rev > topRevenue) { topRevenue = rev; topProduct = p }
+    }
+    const productLabels: Record<string, string> = {
+      broilers: 'Broilers', layers: 'Layers', eggs: 'Eggs', other: 'Custom', unknown: '—',
+    }
+    return { total, count, topProduct: productLabels[topProduct] ?? topProduct }
+  }, [salesRecords])
+
+  const displayTotal = sevenDayStats.total >= 1_000_000
+    ? `₦${(sevenDayStats.total / 1_000_000).toFixed(1)}M`
+    : sevenDayStats.total >= 1_000
+      ? `₦${(sevenDayStats.total / 1_000).toFixed(0)}k`
+      : `₦${sevenDayStats.total.toLocaleString('en-NG')}`
+
+  useEffect(() => {
+    if (step > 1) setLogContextCollapsed(true)
+  }, [step])
+
+  const dateStr = selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const timeStr = selectedTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+
+  const qty = parseFloat(quantity.replace(/,/g, '')) || 0
   const ppu = parseAmount(pricePerUnitRaw) || (product ? PRODUCTS[product].price : 0)
   const pricePerUnitDisplay = formatInput(pricePerUnitRaw)
+  const quantityDisplay = quantity ? qty.toLocaleString('en-NG') : ''
   const total = qty * ppu
 
   useEffect(() => {
@@ -124,12 +179,48 @@ export default function RecordSaleScreen() {
   const canSave = paymentMethod !== null
 
   const handleSave = () => {
-    if (!canSave) return
+    if (!canSave || !product) return
     setSubmitting(true)
-    setTimeout(() => {
+    try {
+      const productLabel = product === 'other' ? (customProductName || 'Custom') : PRODUCTS[product].label
+      const recordId = useHistoryStore.getState().addRecord({
+        type: 'sale',
+        timestamp: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), selectedTime.getHours(), selectedTime.getMinutes()).getTime(),
+        batch: selectedBatch,
+        quantity: qty,
+        unit: displayUnit,
+        cost: total,
+        notes: `Sale of ${qty.toLocaleString('en-NG')} ${displayUnit} ${productLabel} · ${buyerName || 'Anonymous'} · ${PAYMENTS.find(p => p.key === paymentMethod)?.label || 'Unknown'}`,
+        metadata: {
+          productType: product,
+          paymentMethod,
+          buyerName: buyerName || undefined,
+          phoneNumber: phoneNumber || undefined,
+          customerType: customerType || undefined,
+          customProductName: product === 'other' ? customProductName : undefined,
+        },
+      })
+      useFarmChatStore.getState().addFeedPost({
+        id: `feed-${recordId}`,
+        type: 'sale',
+        timestamp: Date.now(),
+        actorName: 'Farm Records',
+        actorRole: 'System',
+        actorInitials: 'FR',
+        actorColor: '#16A34A',
+        detail: `Sale recorded: ${qty.toLocaleString('en-NG')} ${displayUnit} ${productLabel} — ₦${total.toLocaleString('en-NG')}`,
+        highlight: `+₦${total.toLocaleString('en-NG')}`,
+        tags: ['Revenue', productLabel],
+      })
       setSubmitting(false)
       setShowSuccess(true)
-    }, 1200)
+    } catch (err) {
+      setSubmitting(false)
+      Alert.alert('Save Failed', 'Unable to record sale. Your data is intact. Would you like to retry?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Retry', onPress: () => handleSave() },
+      ])
+    }
   }
 
   const resetForm = () => {
@@ -145,6 +236,9 @@ export default function RecordSaleScreen() {
     setUnitType('Units')
     setCustomUnit('')
     setShowBuyer(false)
+    setSelectedBatch(BATCHES[0])
+    setSelectedDate(new Date())
+    setSelectedTime(new Date())
   }
 
   const txId = `GOONA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`
@@ -154,15 +248,20 @@ export default function RecordSaleScreen() {
       {STEPS.map((s, i) => {
         const active = step === i + 1
         const done = step > i + 1
+        const tappable = done
         return (
           <React.Fragment key={s}>
-            <View style={styles.stepGroup}>
-              <View style={[styles.stepDot, active && styles.stepDotActive, done && styles.stepDotDone]}>
-                {done ? <Text style={styles.stepDotDoneText}>{'\u2713'}</Text> : <Text style={[styles.stepDotNum, active && styles.stepDotNumActive]}>{i + 1}</Text>}
+            {i > 0 && <View style={[styles.connectorLine, (done || active) && styles.connectorLineFilled]} />}
+            <TouchableOpacity style={styles.stepNodeWrap} activeOpacity={tappable ? 0.7 : 1} onPress={tappable ? () => setStep(i + 1) : undefined} disabled={!tappable}>
+              <View style={[styles.stepNode, active && styles.stepNodeActive, done && styles.stepNodeDone]}>
+                {done ? (
+                  <GoonaIcon icon={Icons.check} size={12} color="#FFF" />
+                ) : (
+                  <Text style={[styles.stepNodeNum, active && styles.stepNodeNumActive]}>{i + 1}</Text>
+                )}
               </View>
-              <Text numberOfLines={1} style={[styles.stepLabel, active && styles.stepLabelActive, done && styles.stepLabelDone]}>{s}</Text>
-            </View>
-            {i < STEPS.length - 1 && <View style={[styles.stepLine, done && styles.stepLineDone]} />}
+              <Text style={[styles.stepLabel, active && styles.stepLabelActive, done && styles.stepLabelDone]}>{s}</Text>
+            </TouchableOpacity>
           </React.Fragment>
         )
       })}
@@ -177,6 +276,8 @@ export default function RecordSaleScreen() {
         {PRODUCT_LIST.map((p, idx) => {
           const pr = PRODUCTS[p]
           const cps = productScales[idx]
+          const sel = product === p
+          const accent = PRODUCT_COLORS[p] || '#2E7D32'
           return (
             <Animated.View key={p} style={cps.style}>
               <TouchableOpacity
@@ -184,13 +285,27 @@ export default function RecordSaleScreen() {
                 onPress={() => selectProduct(p)}
                 onPressIn={cps.onPressIn}
                 onPressOut={cps.onPressOut}
-                style={[styles.productCard, product === p && styles.productCardSelected]}
+                style={styles.productCardWrap}
               >
-                <View style={[styles.productIconWrap, product === p && styles.productIconWrapSelected]}>
-                  <Text style={styles.productEmoji}>{pr.emoji}</Text>
+                <View style={[styles.productCard, { borderColor: sel ? accent : accent + '25' }, sel && { backgroundColor: '#FAFDF8' }]}>
+                  {sel && (
+                    <View style={[styles.productCheck, { backgroundColor: accent }]}>
+                      <GoonaIcon icon={Icons.check} size={12} color="#FFF" />
+                    </View>
+                  )}
+                  <LinearGradient
+                    colors={sel ? [accent + 'CC', accent + '88'] : [accent + '15', accent + '08']}
+                    style={[styles.productIconWrap, sel && styles.productIconWrapSelected]}
+                  >
+                    <Text style={styles.productEmoji}>{pr.emoji}</Text>
+                  </LinearGradient>
+                  <Text style={[styles.productLabel, { color: sel ? accent : '#1B1B1B' }]}>{pr.label}</Text>
+                  {p !== 'other' && (
+                    <Text style={[styles.productPrice, sel && { color: accent }]}>
+                      &#x20A6;{pr.price.toLocaleString('en-NG')}/{pr.unit}
+                    </Text>
+                  )}
                 </View>
-                <Text style={[styles.productLabel, product === p && styles.productLabelSelected]}>{pr.label}</Text>
-                {p !== 'other' && <Text style={styles.productPrice}>&#x20A6;{pr.price.toLocaleString('en-NG')}/{pr.unit}</Text>}
               </TouchableOpacity>
             </Animated.View>
           )
@@ -228,8 +343,8 @@ export default function RecordSaleScreen() {
           </TouchableOpacity>
           <TextInput
             style={styles.quantityInput}
-            value={quantity}
-            onChangeText={setQuantity}
+            value={quantityDisplay}
+            onChangeText={(v) => setQuantity(v.replace(/,/g, ''))}
             keyboardType="numeric"
             placeholder="0"
             placeholderTextColor="#CBD5E1"
@@ -361,7 +476,22 @@ export default function RecordSaleScreen() {
         <View style={styles.summaryDivider} />
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Quantity</Text>
-          <Text style={styles.summaryValue}>{qty} {displayUnit}</Text>
+          <Text style={styles.summaryValue}>{qty.toLocaleString('en-NG')} {displayUnit}</Text>
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Batch</Text>
+          <Text style={styles.summaryValue}>{selectedBatch}</Text>
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Date</Text>
+          <Text style={styles.summaryValue}>{dateStr}</Text>
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Time</Text>
+          <Text style={styles.summaryValue}>{timeStr}</Text>
         </View>
         <View style={styles.summaryDivider} />
         <View style={styles.summaryRow}>
@@ -460,7 +590,7 @@ export default function RecordSaleScreen() {
       >
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 160 }]}
+          contentContainerStyle={[styles.scrollInner, { paddingTop: insets.top + 12, paddingBottom: 100 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -489,32 +619,96 @@ export default function RecordSaleScreen() {
             </View>
           </Animated.View>
 
-          {/* Metrics Strip */}
+          {/* Metrics Strip — rolling 7 days */}
           <Animated.View entering={FadeInUp.duration(500).delay(40).springify()} style={styles.metricsStrip}>
             <View style={styles.metricCell}>
-              <Text style={styles.metricValue}>&#x20A6;820k</Text>
-              <Text style={styles.metricLabel}>Today's Sales</Text>
+              <Text style={styles.metricValue}>{displayTotal}</Text>
+              <Text style={styles.metricLabel}>Last 7 Days</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricCell}>
-              <Text style={styles.metricValue}>14</Text>
+              <Text style={styles.metricValue}>{sevenDayStats.count}</Text>
               <Text style={styles.metricLabel}>Transactions</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricCell}>
-              <Text style={styles.metricValue}>Broilers</Text>
+              <Text style={styles.metricValue}>{sevenDayStats.topProduct}</Text>
               <Text style={styles.metricLabel}>Top Product</Text>
             </View>
           </Animated.View>
 
-          {/* Step Indicator */}
-          {step > 1 && renderStepIndicator()}
+          {/* Log Context — collapsible */}
+          {logContextCollapsed ? (
+            <TouchableOpacity activeOpacity={0.75} onPress={() => setLogContextCollapsed(false)} style={styles.logContextCollapsed}>
+              <View style={styles.logContextCollapsedLeft}>
+                <GoonaIcon icon={Icons.clipboardList} size={14} color="#2E7D32" />
+                <Text style={styles.logContextCollapsedText}>{selectedBatch}</Text>
+                <Text style={styles.logContextCollapsedSep}>·</Text>
+                <GoonaIcon icon={Icons.calendar} size={14} color="#2E7D32" />
+                <Text style={styles.logContextCollapsedText}>{dateStr}</Text>
+                <Text style={styles.logContextCollapsedSep}>·</Text>
+                <GoonaIcon icon={Icons.clock} size={14} color="#2E7D32" />
+                <Text style={styles.logContextCollapsedText}>{timeStr}</Text>
+              </View>
+              <GoonaIcon icon={Icons.chevronDown} size={14} color="#2E7D32" />
+            </TouchableOpacity>
+          ) : (
+            <Animated.View entering={FadeInUp.duration(300).springify()} style={styles.logContextCard}>
+              <TouchableOpacity activeOpacity={0.75} onPress={() => setLogContextCollapsed(true)} style={styles.logContextHeader}>
+                <Text style={styles.logContextTitle}>Log Context</Text>
+                <GoonaIcon icon={Icons.chevronUp} size={14} color="#2E7D32" />
+              </TouchableOpacity>
+              <View style={styles.logContextGrid}>
+                <TouchableOpacity style={[styles.logContextField, styles.logContextFieldWide]} activeOpacity={0.75} onPress={() => setShowBatchOptions(!showBatchOptions)}>
+                  <GoonaIcon icon={Icons.clipboardList} size={16} color="#2E7D32" />
+                  <View style={styles.logContextFieldText}><Text style={styles.logContextLabel}>Batch</Text><Text style={styles.logContextValue}>{selectedBatch}</Text></View>
+                  <GoonaIcon icon={Icons.chevronDown} size={13} color="#2E7D32" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.logContextField} activeOpacity={0.75} onPress={() => setShowDatePicker(true)}>
+                  <GoonaIcon icon={Icons.calendar} size={16} color="#2E7D32" />
+                  <View style={styles.logContextFieldText}><Text style={styles.logContextLabel}>Date</Text><Text style={styles.logContextValue}>{dateStr}</Text></View>
+                  <GoonaIcon icon={Icons.chevronDown} size={13} color="#2E7D32" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.logContextField} activeOpacity={0.75} onPress={() => setShowTimePicker(true)}>
+                  <GoonaIcon icon={Icons.clock} size={16} color="#2E7D32" />
+                  <View style={styles.logContextFieldText}><Text style={styles.logContextLabel}>Time</Text><Text style={styles.logContextValue}>{timeStr}</Text></View>
+                  <GoonaIcon icon={Icons.chevronDown} size={13} color="#2E7D32" />
+                </TouchableOpacity>
+              </View>
+              {showBatchOptions && (
+                <View style={styles.batchOptions}>
+                  {BATCHES.map((item) => (
+                    <TouchableOpacity key={item} style={[styles.batchOption, item === selectedBatch && styles.batchOptionActive]} activeOpacity={0.75} onPress={() => { setSelectedBatch(item); setShowBatchOptions(false) }}>
+                      <Text style={[styles.batchOptionText, item === selectedBatch && styles.batchOptionTextActive]}>{item}</Text>
+                      {item === selectedBatch ? <GoonaIcon icon={Icons.check} size={14} color="#2E7D32" /> : null}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              {showDatePicker && (
+                <View style={styles.inlinePicker}>
+                  <DateTimePicker value={selectedDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_event, date) => { if (Platform.OS === 'android') setShowDatePicker(false); if (date) setSelectedDate(date) }} themeVariant="light" />
+                  {Platform.OS === 'ios' && <TouchableOpacity style={styles.inlineDone} onPress={() => setShowDatePicker(false)}><Text style={styles.inlineDoneText}>Done</Text></TouchableOpacity>}
+                </View>
+              )}
+              {showTimePicker && (
+                <View style={styles.inlinePicker}>
+                  <DateTimePicker value={selectedTime} mode="time" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_event, date) => { if (Platform.OS === 'android') setShowTimePicker(false); if (date) setSelectedTime(date) }} themeVariant="light" />
+                  {Platform.OS === 'ios' && <TouchableOpacity style={styles.inlineDone} onPress={() => setShowTimePicker(false)}><Text style={styles.inlineDoneText}>Done</Text></TouchableOpacity>}
+                </View>
+              )}
+              <View style={styles.logContextDivider} />
+              {renderStepIndicator()}
+            </Animated.View>
+          )}
 
           {/* Step Content */}
-          {step === 1 && renderProductStep()}
-          {step === 2 && renderQuantityStep()}
-          {step === 3 && renderPaymentStep()}
-          {step === 4 && renderSummaryStep()}
+          <View>
+            {step === 1 && renderProductStep()}
+            {step === 2 && renderQuantityStep()}
+            {step === 3 && renderPaymentStep()}
+            {step === 4 && renderSummaryStep()}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -527,20 +721,28 @@ export default function RecordSaleScreen() {
             </View>
             <Text style={styles.modalTitle}>Sale Recorded{'\n'}Successfully</Text>
             <Text style={styles.modalAmount}>&#x20A6;{total.toLocaleString('en-NG')}</Text>
-            <View style={styles.modalMeta}>
-              <View style={styles.modalMetaRow}>
-                <Text style={styles.modalMetaLabel}>Transaction ID</Text>
-                <Text style={styles.modalMetaVal}>{txId}</Text>
+              <View style={styles.modalMeta}>
+                <View style={styles.modalMetaRow}>
+                  <Text style={styles.modalMetaLabel}>Transaction ID</Text>
+                  <Text style={styles.modalMetaVal}>{txId}</Text>
+                </View>
+                <View style={styles.modalMetaRow}>
+                  <Text style={styles.modalMetaLabel}>Product</Text>
+                  <Text style={styles.modalMetaVal}>{product === 'other' ? (customProductName || 'Custom') : product ? PRODUCTS[product].label : '-'}</Text>
+                </View>
+                <View style={styles.modalMetaRow}>
+                  <Text style={styles.modalMetaLabel}>Quantity</Text>
+                  <Text style={styles.modalMetaVal}>{qty.toLocaleString('en-NG')} {displayUnit}</Text>
+                </View>
+                <View style={styles.modalMetaRow}>
+                  <Text style={styles.modalMetaLabel}>Batch</Text>
+                  <Text style={styles.modalMetaVal}>{selectedBatch}</Text>
+                </View>
+                <View style={styles.modalMetaRow}>
+                  <Text style={styles.modalMetaLabel}>Date</Text>
+                  <Text style={styles.modalMetaVal}>{dateStr}</Text>
+                </View>
               </View>
-              <View style={styles.modalMetaRow}>
-                <Text style={styles.modalMetaLabel}>Product</Text>
-                <Text style={styles.modalMetaVal}>{product === 'other' ? (customProductName || 'Custom') : product ? PRODUCTS[product].label : '-'}</Text>
-              </View>
-              <View style={styles.modalMetaRow}>
-                <Text style={styles.modalMetaLabel}>Quantity</Text>
-                <Text style={styles.modalMetaVal}>{qty} {displayUnit}</Text>
-              </View>
-            </View>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalBtn} activeOpacity={0.85} onPress={() => { setShowSuccess(false); resetForm() }}>
                 <Text style={styles.modalBtnText}>Record Another Sale</Text>
@@ -555,8 +757,6 @@ export default function RecordSaleScreen() {
           </Animated.View>
         </View>
       </Modal>
-
-      <BottomDock />
     </View>
   )
 }
@@ -586,40 +786,42 @@ const styles = StyleSheet.create({
   metricValue: { fontSize: 16, fontWeight: '800', color: '#1B1B1B' },
   metricLabel: { fontSize: 10, fontWeight: '500', color: '#94A3B8', marginTop: 1 },
 
-  /* Step Indicator */
-  stepRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 16, paddingHorizontal: 8 },
-  stepGroup: { flexDirection: 'row', alignItems: 'center', flexShrink: 0 },
-  stepDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#F1F5F1', alignItems: 'center', justifyContent: 'center' },
-  stepDotActive: { backgroundColor: '#2E7D32' },
-  stepDotDone: { backgroundColor: '#16A34A' },
-  stepDotNum: { fontSize: 12, fontWeight: '700', color: '#94A3B8' },
-  stepDotNumActive: { color: '#FFF' },
-  stepDotDoneText: { fontSize: 12, fontWeight: '700', color: '#FFF' },
-  stepLabel: { fontSize: 12, fontWeight: '600', color: '#94A3B8', marginLeft: 5 },
-  stepLabelActive: { color: '#2E7D32' },
+  /* Horizontal Compact Stepper */
+  stepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 6, backgroundColor: '#F8FAF7', zIndex: 10 },
+  stepNodeWrap: { alignItems: 'center', gap: 2 },
+  stepNode: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' },
+  stepNodeActive: { backgroundColor: '#2E7D32', shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 3 },
+  stepNodeDone: { backgroundColor: '#16A34A' },
+  stepNodeNum: { fontSize: 11, fontWeight: '800', color: '#9CA3AF' },
+  stepNodeNumActive: { color: '#FFF' },
+  stepLabel: { fontSize: 9, fontWeight: '600', color: '#9CA3AF', letterSpacing: 0.1 },
+  stepLabelActive: { color: '#2E7D32', fontWeight: '700' },
   stepLabelDone: { color: '#16A34A' },
-  stepLine: { flex: 1, height: 2, backgroundColor: '#F1F5F1', marginHorizontal: 6 },
-  stepLineDone: { backgroundColor: '#16A34A' },
+  connectorLine: { width: 24, height: 2, backgroundColor: '#E5E7EB', borderRadius: 1, },
+  connectorLineFilled: { backgroundColor: '#16A34A' },
 
   /* Step Content */
   stepContent: { paddingTop: 4 },
   stepTitle: { fontSize: 24, fontWeight: '800', color: '#1B1B1B', letterSpacing: -0.5 },
   stepSub: { fontSize: 14, color: '#94A3B8', marginTop: 2, marginBottom: 20 },
 
-  /* Product Grid */
-  productGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  /* Product Grid — Premium Cards */
+  productGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  productCardWrap: { width: (SCREEN_W - H_PAD * 2 - 12) / 2, },
   productCard: {
-    width: (SCREEN_W - H_PAD * 2 - 10) / 2, backgroundColor: 'white', borderRadius: 22, padding: 18, alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#E8ECEE',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 1,
+    backgroundColor: 'white', borderRadius: 24, paddingVertical: 24, paddingHorizontal: 12, alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#E8ECEE', overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2,
   },
-  productCardSelected: { borderColor: '#2E7D32', backgroundColor: '#FAFDF8' },
-  productIconWrap: { width: 52, height: 52, borderRadius: 16, backgroundColor: '#F8FAF7', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  productIconWrapSelected: { backgroundColor: 'rgba(46,125,50,0.08)' },
-  productEmoji: { fontSize: 24 },
-  productLabel: { fontSize: 15, fontWeight: '700', color: '#1B1B1B', marginBottom: 2 },
-  productLabelSelected: { color: '#2E7D32' },
-  productPrice: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
+  productCheck: {
+    position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 11,
+    alignItems: 'center', justifyContent: 'center', zIndex: 2,
+  },
+  productIconWrap: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  productIconWrapSelected: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
+  productEmoji: { fontSize: 26 },
+  productLabel: { fontSize: 16, fontWeight: '700', color: '#1B1B1B', marginBottom: 4 },
+  productPrice: { fontSize: 12, fontWeight: '600', color: '#64748B' },
 
   /* Custom Product */
   customNameCard: { backgroundColor: 'white', borderRadius: 24, padding: 20, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
@@ -719,4 +921,129 @@ const styles = StyleSheet.create({
   modalBtnText: { fontWeight: '700', fontSize: 14, color: '#FFF' },
   modalBtnOutline: { paddingVertical: 14, borderRadius: 16, borderWidth: 1.5, borderColor: '#E2E8E0', alignItems: 'center' },
   modalBtnOutlineText: { fontWeight: '600', fontSize: 14, color: '#1B1B1B' },
+  logContextCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    marginTop: 8,
+    marginBottom: 8,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  logContextHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 14,
+  },
+  logContextTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2E7D32',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  logContextCollapsed: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 16,
+    marginTop: 8, marginBottom: 8,
+    borderWidth: 1, borderColor: '#E2E8F0',
+  },
+  logContextCollapsedLeft: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1,
+  },
+  logContextCollapsedText: {
+    fontSize: 12, fontWeight: '600', color: '#1B1B1B',
+  },
+  logContextCollapsedSep: {
+    fontSize: 12, fontWeight: '600', color: '#94A3B8',
+  },
+  logContextDivider: {
+    height: 1, backgroundColor: '#E5E7EB', marginVertical: 10,
+  },
+  logContextGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  logContextField: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    minWidth: 100,
+  },
+  logContextFieldWide: {
+    flex: 2,
+    minWidth: '100%',
+  },
+  logContextFieldText: {
+    flex: 1,
+  },
+  logContextLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6B7280',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  logContextValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1B1B1B',
+    marginTop: 1,
+  },
+  batchOptions: {
+    marginTop: 10,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+  batchOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  batchOptionActive: {
+    backgroundColor: '#F0FDF4',
+  },
+  batchOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  batchOptionTextActive: {
+    color: '#2E7D32',
+    fontWeight: '700',
+  },
+  inlinePicker: {
+    marginTop: 10,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
+  inlineDone: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    alignSelf: 'flex-end',
+  },
+  inlineDoneText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#2E7D32',
+  },
 })

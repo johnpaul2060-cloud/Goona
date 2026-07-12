@@ -524,7 +524,7 @@ export default function BudgetSetupScreen() {
               } else if (router.canGoBack()) {
                 router.back()
               } else {
-                router.replace('/records/expenses/budget' as any)
+                router.replace('/records/sales-revenue' as any)
               }
             }}
           >

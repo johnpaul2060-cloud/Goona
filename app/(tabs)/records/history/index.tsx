@@ -148,12 +148,15 @@ export default function FarmHistoryHomeScreen() {
   const isCustom = selectedPreset === 'custom'
 
   const range = useMemo((): DateRange => {
-    if (isCustom && customStart && customEnd) {
-      return {
-        start: startOfDay(customStart.getTime()),
-        end: endOfDay(customEnd.getTime()),
-        preset: 'custom',
+    if (isCustom) {
+      if (customStart && customEnd) {
+        return {
+          start: startOfDay(customStart.getTime()),
+          end: endOfDay(customEnd.getTime()),
+          preset: 'custom',
+        }
       }
+      return { start: 0, end: 0, preset: 'custom' }
     }
     return rangeForPreset(selectedPreset)
   }, [selectedPreset, customStart, customEnd])
@@ -202,36 +205,29 @@ export default function FarmHistoryHomeScreen() {
   const handlePickPreset = useCallback((key: DatePreset) => {
     if (key === 'custom') {
       setSelectedPreset('custom')
-      if (!customStart) setShowStartPicker(true)
     } else {
       setSelectedPreset(key)
       setCustomStart(null)
       setCustomEnd(null)
     }
-  }, [customStart])
+  }, [])
 
   const handleStartDateChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
-    setShowStartPicker(false)
+    if (Platform.OS === 'android') setShowStartPicker(false)
     if (date) {
-      const newStart = date
-      setCustomStart(newStart)
-      if (!customEnd || newStart > customEnd) {
-        setCustomEnd(new Date(newStart.getTime() + 86400000))
-        setShowEndPicker(true)
+      setCustomStart(date)
+      if (customEnd && date > customEnd) {
+        setCustomEnd(null)
       }
-    } else if (!customStart) {
-      setSelectedPreset('this-month')
-    }
-  }, [customEnd, customStart])
-
-  const handleEndDateChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
-    setShowEndPicker(false)
-    if (date) {
-      setCustomEnd(date)
-    } else if (!customEnd) {
-      setSelectedPreset('this-month')
     }
   }, [customEnd])
+
+  const handleEndDateChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') setShowEndPicker(false)
+    if (date) {
+      setCustomEnd(date)
+    }
+  }, [])
 
   const clearCustomRange = useCallback(() => {
     setCustomStart(null)
@@ -324,8 +320,15 @@ export default function FarmHistoryHomeScreen() {
           <View style={styles.headerTitles}>
             <Text style={styles.headerTitle}>Farm History</Text>
             <Text style={styles.headerSub}>
-              {isCustom && customStart && customEnd ? rangeLabel : ''}
-              {totalRecords > 0 ? ` ${totalRecords} records` : ' Browse past records'}
+              {isCustom && !customStart
+                ? 'Select From date above'
+                : isCustom && !customEnd
+                  ? 'Select To date above'
+                  : isCustom && customStart && customEnd
+                    ? `${rangeLabel} \u00B7 ${totalRecords} records`
+                    : totalRecords > 0
+                      ? `${totalRecords} records`
+                      : 'Browse past records'}
             </Text>
           </View>
           <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
@@ -397,21 +400,39 @@ export default function FarmHistoryHomeScreen() {
 
         {/* Native date pickers */}
         {showStartPicker && (
-          <DateTimePicker
-            value={customStart || new Date()}
-            mode="date"
-            maximumDate={new Date()}
-            onChange={handleStartDateChange}
-          />
+          <View style={styles.datePickerWrap}>
+            <DateTimePicker
+              value={customStart || new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              maximumDate={new Date()}
+              onChange={handleStartDateChange}
+              themeVariant="light"
+            />
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity style={styles.datePickerDone} onPress={() => setShowStartPicker(false)}>
+                <Text style={styles.datePickerDoneText}>Done</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
         {showEndPicker && customStart && (
-          <DateTimePicker
-            value={customEnd || customStart}
-            mode="date"
-            minimumDate={customStart}
-            maximumDate={new Date()}
-            onChange={handleEndDateChange}
-          />
+          <View style={styles.datePickerWrap}>
+            <DateTimePicker
+              value={customEnd || customStart}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              minimumDate={customStart}
+              maximumDate={new Date()}
+              onChange={handleEndDateChange}
+              themeVariant="light"
+            />
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity style={styles.datePickerDone} onPress={() => setShowEndPicker(false)}>
+                <Text style={styles.datePickerDoneText}>Done</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
 
         {/* Record Type Filter Chips */}
@@ -624,6 +645,9 @@ const styles = StyleSheet.create({
   headerSub: { fontSize: 12, color: '#A0AEA1', marginTop: 1 },
 
   exportBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#F0FDF4', alignItems: 'center', justifyContent: 'center' },
+  datePickerWrap: { backgroundColor: 'white', borderRadius: 24, marginTop: 8, paddingTop: 8, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 2 },
+  datePickerDone: { height: 48, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9', marginHorizontal: 16 },
+  datePickerDoneText: { fontSize: 15, fontWeight: '600', color: '#2E7D32' },
   scroll: { flex: 1 },
   scrollInner: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 160 },
   presetScroll: { marginBottom: 4, zIndex: 5 },

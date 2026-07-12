@@ -1,14 +1,16 @@
 ﻿import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { useNavigation, CommonActions } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import GoonaIcon from '../../components/ui/GoonaIcon';
 import NotificationBadge from '../../components/NotificationBadge';
 import { Icons } from '../../shared/icons';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import BottomDock from '../../components/navigation/BottomDock';
 import { useBatchStore } from '../../store/useBatchStore';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useWeatherStore, seedWeatherForecast } from '../../store/useWeatherStore';
 import { FARM_NAME } from '../../constants/farm';
 import {
@@ -39,6 +41,20 @@ function computeProgress(startDate: string, duration: string): number {
   return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)))
 }
 
+function todayKey() {
+  const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+}
+
+function usePressScale() {
+  const scale = useSharedValue(1)
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  return {
+    style,
+    onPressIn: () => { scale.value = withSpring(0.97, { damping: 15, stiffness: 200 }) },
+    onPressOut: () => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }) },
+  }
+}
+
 type PrioritySeverity = 'info' | 'attention' | 'urgent'
 const SEVERITY_COLORS: Record<PrioritySeverity, { text: string; bg: string; border: string; dot: string }> = {
   info:      { text: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0', dot: '#16A34A' },
@@ -61,9 +77,9 @@ const HEALTH_ITEMS: { icon: any; label: string; status: string; type: HealthStat
 
 const ACTION_ICONS: Record<string, { icon: any; color: string; bg: string; route: string }> = {
   'Record Sale': { icon: Icons.shoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/record-sale' },
-  'Expenses': { icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/expenses' },
+  'Expenses': { icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/sales-revenue' },
   'Daily Records': { icon: Icons.clipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' },
-  'Reports': { icon: Icons.fileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/expenses/reports' },
+  'Reports': { icon: Icons.fileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/sales-revenue' },
   'Academy': { icon: Icons.graduationCap, color: '#F97316', bg: '#FFF7ED', route: '/goona-academy' },
 }
 
@@ -85,8 +101,66 @@ function PriorityBannerCard({ message, level }: { message: string; level: Priori
 }
 
 const ROUTE_FALLBACKS: Record<string, string> = {
-  '/(tabs)/records/expenses/budget': '/(tabs)/records/expenses',
-  '/(tabs)/records/expenses/reports': '/(tabs)/records/expenses',
+  '/(tabs)/records/expenses/budget': '/(tabs)/records/sales-revenue',
+  '/(tabs)/records/expenses/reports': '/(tabs)/records/sales-revenue',
+}
+
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CHALLENGES PREMIUM CARD Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
+function ChallengeCard({ state }: { state: { streak: number; todayDoneKey: string | null; xp: number } | null }) {
+  const { style: pressStyle, onPressIn, onPressOut } = usePressScale()
+  const navigation = useNavigation()
+
+  const isTodayDone = state?.todayDoneKey === todayKey()
+  const streak = state?.streak ?? 0
+  const xp = state?.xp ?? 0
+
+  const todayStatus = isTodayDone ? 'Done' : 'Not played today'
+  const todayIcon = isTodayDone ? Icons.check : Icons.clock
+
+  return (
+    <Animated.View style={pressStyle}>
+      <TouchableOpacity
+        style={styles.challengeCard}
+        activeOpacity={1}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        onPress={() => {
+          navigation.getParent()?.dispatch(
+            CommonActions.reset({
+              index: 2,
+              routes: [
+                { name: '(tabs)', state: { routes: [{ name: 'team' }] } },
+                { name: 'goona-academy' },
+                { name: 'goona-academy-challenges' },
+              ],
+            })
+          )
+        }}
+      >
+        <View style={styles.challengeAccent} />
+        <View style={styles.challengeIconWrap}>
+          <LinearGradient colors={['#AEEA00', '#2E7D32']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.challengeGlow}>
+            <GoonaIcon icon={Icons.zap} size={22} color="#FFFFFF" />
+          </LinearGradient>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.challengeTitle}>Challenges</Text>
+          <View style={styles.challengeMetaRow}>
+            <GoonaIcon icon={Icons.flame} size={12} color="#F59E0B" />
+            <Text style={styles.challengeMetaText}>{streak}-day streak</Text>
+            <View style={styles.challengeMetaDiv} />
+            <GoonaIcon icon={todayIcon} size={12} color={isTodayDone ? '#16A34A' : '#94A3B8'} />
+            <Text style={[styles.challengeMetaText, isTodayDone && { color: '#16A34A' }]}>{todayStatus}</Text>
+          </View>
+          <Text style={styles.challengeSub}>60-sec rounds · keep your streak alive</Text>
+        </View>
+        <LinearGradient colors={['#2E7D32', '#1B5E20']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.challengePlayBtn}>
+          <GoonaIcon icon={Icons.play} size={12} color="#FFFFFF" />
+          <Text style={styles.challengePlayText}>Play</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  )
 }
 
 
@@ -95,6 +169,16 @@ export default function DashboardScreen() {
   const batches = useBatchStore((s) => s.batches)
   const weatherStore = useWeatherStore()
   const [pulseIdx, setPulseIdx] = useState(0)
+  const [challengeState, setChallengeState] = useState<{ streak: number; todayDoneKey: string | null; xp: number } | null>(null)
+
+  useEffect(() => {
+    AsyncStorage.getItem('goona_academy_challenges_v1').then(raw => {
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        setChallengeState({ streak: parsed.streak, todayDoneKey: parsed.todayDoneKey, xp: parsed.xp })
+      }
+    }).catch(() => {})
+  }, [])
 
   const cardPriorities = useAdaptiveDashboard()
   const adaptiveActions = useAdaptiveQuickActions()
@@ -396,17 +480,8 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CHALLENGES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
-        <TouchableOpacity style={styles.challengeCard} activeOpacity={0.8} onPress={() => router.push('/goona-academy-challenges')}>
-          <View style={[styles.challengeIconWrap, { backgroundColor: '#F0FDF4' }]}>
-            <GoonaIcon icon={Icons.zap} size={20} color="#16A34A" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.challengeText}>Challenges</Text>
-            <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>Quick rounds Â· keep your streak</Text>
-          </View>
-          <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
-        </TouchableOpacity>
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CHALLENGES (premium game card) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+        <ChallengeCard state={challengeState} />
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -572,18 +647,40 @@ const styles = StyleSheet.create({
   batchProgTrack: { height: 6, backgroundColor: '#F1F5F9', borderRadius: 100, overflow: 'hidden' },
   batchProgFill: { height: '100%', borderRadius: 100 },
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CHALLENGES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CHALLENGES (premium game card) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   challengeCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: 'white', borderRadius: 16, padding: 14, marginTop: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04, shadowRadius: 12, elevation: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#F5FCF0', borderRadius: 20, padding: 14, marginTop: 16,
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1, shadowRadius: 20, elevation: 3,
+    borderWidth: 1, borderColor: '#E5F0DD', overflow: 'hidden',
+  },
+  challengeAccent: {
+    position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
+    backgroundColor: '#AEEA00', borderTopLeftRadius: 20, borderBottomLeftRadius: 20,
   },
   challengeIconWrap: {
-    width: 36, height: 36, borderRadius: 10, backgroundColor: '#FFF7ED',
+    width: 44, height: 44, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    shadowColor: '#AEEA00', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 8, elevation: 4,
+  },
+  challengeGlow: {
+    width: 44, height: 44, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
-  challengeText: { fontSize: 14, fontWeight: '600', color: '#1F2937', flex: 1 },
+  challengeTitle: { fontSize: 16, fontWeight: '700', color: '#1B1B1B' },
+  challengeMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  challengeMetaText: { fontSize: 11, fontWeight: '600', color: '#64748B' },
+  challengeMetaDiv: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#CBD5E1' },
+  challengeSub: { fontSize: 10, color: '#94A3B8', marginTop: 2 },
+  challengePlayBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 100,
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
+  },
+  challengePlayText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
 
   /* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PRIORITY BANNER Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
   bannerCard: {

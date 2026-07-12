@@ -357,7 +357,7 @@ export default function GoonaAcademyScreen() {
       >
         {/* ─── TOP NAV ─── */}
         <Animated.View entering={FadeInUp.duration(500).springify()} style={s.topNav}>
-          <TouchableOpacity onPress={() => router.back()} style={s.navBack} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => router.navigate('/(tabs)/team')} style={s.navBack} activeOpacity={0.7}>
             <GoonaIcon icon={Icons.arrowLeft} size={22} color="#15291A" />
           </TouchableOpacity>
           <View style={s.navLogo}>

@@ -7,6 +7,7 @@ export default function RecapitalizationLayout() {
       <Stack.Screen name="index" options={gestureDisabledOptions} />
       <Stack.Screen name="project-timeline" />
       <Stack.Screen name="readiness-report" />
+      <Stack.Screen name="timeline-reports" />
     </Stack>
   )
 }

@@ -194,15 +194,11 @@ function EcosystemCard({ item, index }: { item: (typeof ECOSYSTEM_LINKS)[0]; ind
 
 export default function RecordsDashboardScreen() {
   const insets = useSafeAreaInsets()
-  const [headerH, setHeaderH] = useState(0)
   const TOP = insets.top
 
   return (
     <View style={styles.container}>
-      <View
-        onLayout={(e) => { if (headerH === 0) setHeaderH(e.nativeEvent.layout.height) }}
-        style={[styles.headerBlock, { paddingTop: TOP + 8 }]}
-      >
+      <View style={[styles.headerBlock, { paddingTop: TOP + 8 }]}>
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.headerTitle}>Records</Text>
@@ -213,10 +209,7 @@ export default function RecordsDashboardScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollInner,
-          { paddingTop: headerH ? headerH + 12 : TOP + 100, paddingBottom: 160 },
-        ]}
+        contentContainerStyle={[styles.scrollInner, { paddingBottom: 160 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Analytics Cards */}

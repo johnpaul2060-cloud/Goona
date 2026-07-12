@@ -217,33 +217,36 @@ colors={['#065F46', '#047857']}
   )
 }
 
-/* ─── 3. QUICK ACTIONS RAIL ─── */
-const ACTION_RAIL = [
-  { emoji: '\u2795', label: 'Fund', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
-  { emoji: '\uD83D\uDCC5', label: 'Plan', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
-  { emoji: '\uD83D\uDCB0', label: 'Budget', color: '#0F766E', bg: '#DDF5F0', route: '/records/expenses/budget-setup' as const },
-  { emoji: '\uD83D\uDCC8', label: 'Timeline', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/project-timeline' as const },
-  { emoji: '\uD83D\uDCCA', label: 'Report', color: '#8B5CF6', bg: '#F5F3FF', route: '/recapitalization/readiness-report' as const },
+/* ─── 3. RECAP TOOLS (vertical list) ─── */
+const RECAP_TOOLS = [
+  { emoji: '\u2795', label: 'Fund', desc: 'Add a contribution to your production fund', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
+  { emoji: '\uD83D\uDCC5', label: 'Plan', desc: 'Set targets and plan your next cycle', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
+  { emoji: '\uD83D\uDCB0', label: 'Budget', desc: 'Manage budget and allocations', color: '#0F766E', bg: '#DDF5F0', route: '/records/expenses/budget-setup' as const },
+  { emoji: '\uD83D\uDCC8', label: 'Timeline & Reports', desc: 'Contribution history, milestones & exportable insights', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/timeline-reports' as const },
 ]
 
-function ActionRail({ index }: { index: number }) {
+function RecapToolsList({ index }: { index: number }) {
   const animStyle = useStaggerEntry(index, 60)
 
   return (
     <Animated.View style={animStyle}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionRailScroll}>
-        {ACTION_RAIL.map((a) => (
-          <TouchableOpacity
-            key={a.label}
-            style={styles.actionRailCard}
-            activeOpacity={0.7}
-            onPress={() => a.label === 'Budget' ? router.push({ pathname: '/records/expenses/budget-setup', params: { from: 'recapitalization' } } as any) : router.push(a.route)}
-          >
-            <Text style={styles.actionRailEmoji}>{a.emoji}</Text>
-            <Text style={styles.actionRailLabel}>{a.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {RECAP_TOOLS.map((a) => (
+        <TouchableOpacity
+          key={a.label}
+          style={styles.recapToolRow}
+          activeOpacity={0.7}
+          onPress={() => a.label === 'Budget' ? router.push({ pathname: '/records/expenses/budget-setup', params: { from: 'recapitalization' } } as any) : router.push(a.route)}
+        >
+          <View style={[styles.recapToolIcon, { backgroundColor: a.bg }]}>
+            <Text style={styles.recapToolEmoji}>{a.emoji}</Text>
+          </View>
+          <View style={styles.recapToolInfo}>
+            <Text style={styles.recapToolLabel}>{a.label}</Text>
+            <Text style={styles.recapToolDesc}>{a.desc}</Text>
+          </View>
+          <GoonaIcon icon={Icons.chevronRight} size={16} color="#94A3B8" />
+        </TouchableOpacity>
+      ))}
     </Animated.View>
   )
 }
@@ -941,11 +944,11 @@ export default function RecapitalizationDashboardScreen() {
         {/* ─── HERO ─── */}
         <ProductionReadinessHero index={0} />
 
-        {/* ─── QUICK ACTIONS ─── */}
+        {/* ─── RECAP TOOLS ─── */}
         <View style={[styles.sectionHead, { marginTop: S.pad(14) }]}>
-          <Text style={styles.secTitle}>Quick Actions</Text>
+          <Text style={styles.secTitle}>Recap Tools</Text>
         </View>
-        <ActionRail index={1} />
+        <RecapToolsList index={1} />
 
         {/* ─── CONTRIBUTION CALENDAR ─── */}
         <View style={styles.sectionHead}>
@@ -1070,17 +1073,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(174,234,0,0.08)',
   },
 
-  /* ─── ACTION RAIL ─── */
-  actionRailScroll: { gap: S.pad(10), paddingVertical: S.pad(4), paddingRight: S.pad(20) },
-  actionRailCard: {
-    flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
-    width: S.isSmall ? 78 : 86, height: S.isSmall ? 86 : 96,
-    backgroundColor: 'white', borderRadius: S.scale(20),
-    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05, shadowRadius: 20, elevation: 2,
+  /* ─── RECAP TOOLS (vertical list) ─── */
+  recapToolRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: 'white', borderRadius: 20, padding: 14, marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04, shadowRadius: 14, elevation: 2,
   },
-  actionRailEmoji: { fontSize: S.font(26) },
-  actionRailLabel: { fontSize: S.font(S.isSmall ? 11 : 12), fontWeight: '700', color: '#1B1B1B' },
+  recapToolIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  recapToolEmoji: { fontSize: 18 },
+  recapToolInfo: { flex: 1 },
+  recapToolLabel: { fontSize: 14, fontWeight: '700', color: '#1B1B1B' },
+  recapToolDesc: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
 
   /* ─── READINESS DRIVERS ─── */
   driversCard: {},
