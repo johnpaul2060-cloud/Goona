@@ -584,19 +584,15 @@ export class FarmPriorityEngine {
       { label: 'Record Sale', priority: 30, highlight: false },
       { label: 'Expenses', priority: 35, highlight: false },
       { label: 'Daily Records', priority: 40, highlight: false },
-      { label: 'Reports', priority: 25, highlight: false },
       { label: 'Academy', priority: 10, highlight: false },
     ]
 
     if (rule === 'financial_crisis') {
       actions.find(a => a.label === 'Expenses')!.priority = 85
-      actions.find(a => a.label === 'Reports')!.priority = 70
     } else if (rule === 'health_crisis') {
       actions.find(a => a.label === 'Daily Records')!.priority = 95
       actions.find(a => a.label === 'Daily Records')!.highlight = true
       actions.find(a => a.label === 'Expenses')!.priority = 50
-    } else if (rule === 'cycle_ending') {
-      actions.find(a => a.label === 'Reports')!.priority = 80
     } else {
       actions.find(a => a.label === 'Daily Records')!.priority = 60
       actions.find(a => a.label === 'Record Sale')!.priority = 55

@@ -18,7 +18,7 @@ import { useFarmChatStore, type FeedPost } from '../store/useFarmChatStore'
 import { useHistoryStore } from '../store/useHistoryStore'
 
 const RECORD_TYPES = [
-  { key: 'feed' as const, label: 'Feed + Water', icon: Icons.wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', emoji: '\uD83C\uDF3D' },
+  { key: 'feed' as const, label: 'Feed & Water', icon: Icons.wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', emoji: '\uD83C\uDF3D' },
   { key: 'eggs' as const, label: 'Egg production', icon: Icons.egg, iconBg: '#F0FDF4', iconColor: '#16A34A', emoji: '\uD83E\uDD5A' },
   { key: 'mortality' as const, label: 'Mortality', icon: Icons.skull, iconBg: '#FFF1F2', iconColor: '#EF4444', emoji: '\uD83D\uDC80' },
   { key: 'medication' as const, label: 'Medication', icon: Icons.pill, iconBg: '#EEF3FF', iconColor: '#1A56FF', emoji: '\uD83D\uDC8A' },
@@ -54,7 +54,7 @@ const SNAPSHOT_METRICS = [
 ]
 
 const DAILY_LOGS = [
-  { key: 'feed', label: 'Feed + Water', done: true },
+  { key: 'feed', label: 'Feed & Water', done: true },
   { key: 'mortality', label: 'Mortality', done: true },
   { key: 'medication', label: 'Medication', done: false },
   { key: 'eggs', label: 'Egg Production', done: true },
@@ -263,7 +263,7 @@ function QuickLogSheet({
           <View style={qsStyles.handle} />
           <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={qsStyles.scrollContent}>
             <View style={qsStyles.logContext}>
-              <Text style={qsStyles.contextTitle}>Log Context</Text>
+              <Text style={qsStyles.contextTitle}>Details</Text>
               <View style={qsStyles.contextGrid}>
                 <TouchableOpacity style={[qsStyles.contextField, qsStyles.contextFieldWide]} activeOpacity={0.75} onPress={() => setShowBatchOptions(!showBatchOptions)}><GoonaIcon icon={Icons.clipboardList} size={18} color="#2E7D32" /><View style={qsStyles.contextFieldText}><Text style={qsStyles.contextLabel}>Batch</Text><Text style={qsStyles.contextValue}>{batch}</Text></View><GoonaIcon icon={Icons.chevronDown} size={14} color="#2E7D32" /></TouchableOpacity>
                 <TouchableOpacity style={qsStyles.contextField} activeOpacity={0.75} onPress={() => setShowDatePicker(true)}><GoonaIcon icon={Icons.calendar} size={18} color="#2E7D32" /><View style={qsStyles.contextFieldText}><Text style={qsStyles.contextLabel}>Date</Text><Text style={qsStyles.contextValue}>{dateStr}</Text></View><GoonaIcon icon={Icons.chevronDown} size={14} color="#2E7D32" /></TouchableOpacity>
@@ -278,7 +278,7 @@ function QuickLogSheet({
 
     {type === 'feed' && (
               <View>
-                <Text style={qsStyles.sheetTitle}>Log Feed + Water</Text>
+                <Text style={qsStyles.sheetTitle}>Log Feed & Water</Text>
                 {balance.remainingKg > 0 && (
                   <View style={qsStyles.stockInfo}>
                     <Text style={qsStyles.stockInfoText}>

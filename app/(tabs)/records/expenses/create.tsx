@@ -107,7 +107,7 @@ export default function CreateExpenseScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.logContextCard}>
-          <Text style={styles.logContextTitle}>Log Context</Text>
+          <Text style={styles.logContextTitle}>Details</Text>
           <View style={styles.logContextGrid}>
             {showBatch ? (
               <TouchableOpacity style={[styles.logContextField, styles.logContextFieldWide]} activeOpacity={0.75} onPress={() => setShowBatchOptions(!showBatchOptions)}>

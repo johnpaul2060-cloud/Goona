@@ -159,7 +159,6 @@ const ACTION_ICONS: Record<string, { icon: any; color: string; bg: string; route
   'Record Sale': { icon: Icons.shoppingCart, color: '#16A34A', bg: '#F0FDF4', route: '/(tabs)/records/sales-revenue?tab=sales' },
   'Expenses': { icon: Icons.banknote, color: '#EF4444', bg: '#FFF1F2', route: '/(tabs)/records/sales-revenue?tab=expenses' },
   'Daily Records': { icon: Icons.clipboardList, color: '#1A56FF', bg: '#EEF3FF', route: '/(tabs)/records/daily-operations' },
-  'Reports': { icon: Icons.fileText, color: '#8B5CF6', bg: '#F5F3FF', route: '/(tabs)/records/sales-revenue?tab=expenses' },
   'Academy': { icon: Icons.graduationCap, color: '#F97316', bg: '#FFF7ED', route: '/goona-academy' },
 }
 
@@ -365,7 +364,11 @@ export default function DashboardScreen() {
               </View>
               <Text style={styles.heroFarmName}>{FARM_NAME}</Text>
             </View>
-            <TouchableOpacity style={styles.heroChartBtn}>
+            <TouchableOpacity
+              style={styles.heroChartBtn}
+              activeOpacity={0.7}
+              onPress={() => router.push('/(tabs)/records/analytics' as any)}
+            >
               <GoonaIcon icon={Icons.barChart3} size={22} color="#FFFFFF" />
             </TouchableOpacity>
           </View>

@@ -197,7 +197,7 @@ export default function CategoryHistoryScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollInner}
+        contentContainerStyle={[styles.scrollInner, { paddingBottom: insets.bottom + 20 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Summary Header */}
@@ -254,7 +254,7 @@ export default function CategoryHistoryScreen() {
         </View>
       </ScrollView>
 
-      <BottomDock />
+      <BottomDock hidden />
     </View>
   )
 }
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#1B1B1B' },
   headerSub: { fontSize: 12, color: '#A0AEA1', marginTop: 1 },
   scroll: { flex: 1 },
-  scrollInner: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 160 },
+  scrollInner: { paddingHorizontal: 20, paddingTop: 12 },
   presetScroll: { marginBottom: 8, zIndex: 5 },
   presetScrollInner: { gap: 8, paddingVertical: 4 },
   presetChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F1F5F1' },

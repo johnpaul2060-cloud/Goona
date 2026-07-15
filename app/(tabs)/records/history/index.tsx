@@ -468,7 +468,7 @@ export default function FarmHistoryHomeScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollInner}
+        contentContainerStyle={[styles.scrollInner, { paddingBottom: insets.bottom + 20 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* === RESULTS: grouped by type === */}
@@ -630,7 +630,7 @@ export default function FarmHistoryHomeScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      <BottomDock />
+      <BottomDock hidden />
     </View>
   )
 }
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
   datePickerDone: { height: 48, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9', marginHorizontal: 16 },
   datePickerDoneText: { fontSize: 15, fontWeight: '600', color: '#2E7D32' },
   scroll: { flex: 1 },
-  scrollInner: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 160 },
+  scrollInner: { paddingHorizontal: 20, paddingTop: 12 },
   presetScroll: { marginBottom: 4, zIndex: 5 },
   presetScrollInner: { gap: 8, paddingVertical: 4 },
   presetChip: {

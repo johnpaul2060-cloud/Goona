@@ -602,7 +602,7 @@ export default function RecordSaleScreen() {
                 activeOpacity={0.7}
                 onPress={() => {
                   if (step > 1) { setStep(step - 1); return }
-                  router.replace('/(tabs)/records/sales-revenue' as any)
+                  router.back()
                 }}
                 onPressIn={ps.onPressIn}
                 onPressOut={ps.onPressOut}
@@ -637,7 +637,7 @@ export default function RecordSaleScreen() {
             </View>
           </Animated.View>
 
-          {/* Log Context — collapsible */}
+          {/* Details — collapsible */}
           {logContextCollapsed ? (
             <TouchableOpacity activeOpacity={0.75} onPress={() => setLogContextCollapsed(false)} style={styles.logContextCollapsed}>
               <View style={styles.logContextCollapsedLeft}>
@@ -655,7 +655,7 @@ export default function RecordSaleScreen() {
           ) : (
             <Animated.View entering={FadeInUp.duration(300).springify()} style={styles.logContextCard}>
               <TouchableOpacity activeOpacity={0.75} onPress={() => setLogContextCollapsed(true)} style={styles.logContextHeader}>
-                <Text style={styles.logContextTitle}>Log Context</Text>
+                <Text style={styles.logContextTitle}>Details</Text>
                 <GoonaIcon icon={Icons.chevronUp} size={14} color="#2E7D32" />
               </TouchableOpacity>
               <View style={styles.logContextGrid}>

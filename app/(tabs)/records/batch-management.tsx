@@ -62,7 +62,7 @@ const FILTER_LABELS: { key: FilterKey; label: string }[] = [
 const QUICK_ACTIONS = [
   { label: 'New Batch', icon: Icons.plus, bg: '#EAF6EC', color: '#2E7D32', route: '/create-batch' },
   { label: 'Records', icon: Icons.clipboardList, bg: '#EAF0FB', color: '#3B66D6', route: '/daily-records' },
-  { label: 'Reports', icon: Icons.barChart3, bg: '#FBF2E3', color: '#C2740A', route: '/batches' },
+
   { label: 'Feed', icon: Icons.wheat, bg: '#F0EAFB', color: '#7C3AD6', route: '/daily-records' },
 ] as const
 
@@ -390,7 +390,7 @@ export default function BatchManagementScreen() {
 
   const contentWidth = Math.min(width, 430) - 44
   const statWidth = Math.max(150, (contentWidth - 11) / 2)
-  const quickWidth = Math.max(74, (contentWidth - 30) / 4)
+  const quickWidth = Math.max(74, (contentWidth - 30) / 3)
   const priorityItem = attention[0]
   const statusLine = formatStatusLine(counts.harvest, counts.attention, counts.avgProgress)
 
@@ -406,9 +406,6 @@ export default function BatchManagementScreen() {
             <GoonaIcon icon={Icons.arrowLeft} size={22} color="#15291A" />
           </Pressable>
           <Text style={styles.topTitle}>Batch Management</Text>
-          <Pressable style={styles.navButton} onPress={() => router.push('/(tabs)/batches' as any)}>
-            <GoonaIcon icon={Icons.search} size={20} color="#15291A" />
-          </Pressable>
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(420).delay(70).springify()} style={styles.header}>
@@ -465,7 +462,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F6F9F4' },
   bgGlow: { position: 'absolute', top: -80, right: -90, width: 300, height: 300, borderRadius: 150, backgroundColor: 'rgba(174,234,0,0.12)' },
   listContent: { paddingHorizontal: 22 },
-  topNav: { height: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topNav: { height: 46, flexDirection: 'row', alignItems: 'center', gap: 10 },
   navButton: { width: 40, height: 40, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.86)', alignItems: 'center', justifyContent: 'center', shadowColor: '#142819', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
   topTitle: { fontSize: 17, fontWeight: '800', color: '#15291A', letterSpacing: -0.2 },
   header: { marginTop: 18 },

@@ -9,13 +9,15 @@ import GoonaIcon from '../components/ui/GoonaIcon'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
-  FadeInUp, FadeIn,
+  FadeInUp,
 } from 'react-native-reanimated'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { useBatchStore } from '../store/useBatchStore'
 import { formatInput, parseAmount } from '../utils/format'
+
 
 function usePressScale() {
   const scale = useSharedValue(1)
@@ -30,6 +32,15 @@ function usePressScale() {
 const LIVESTOCK_TYPES = ['Broilers', 'Layers', 'Fish Farming', 'Goat/Sheep', 'Piggery', 'Mixed Farming'] as const
 
 const DURATION_OPTIONS = ['4 Weeks', '6 Weeks', '8 Weeks', 'Custom'] as const
+
+const LIVESTOCK_COLORS: Record<string, string> = {
+  Broilers: '#D97706', Layers: '#2563EB', 'Fish Farming': '#0891B2',
+  'Goat/Sheep': '#7C3AED', Piggery: '#DB2777', 'Mixed Farming': '#16A34A',
+}
+
+const DURATION_COLORS: Record<string, string> = {
+  '4 Weeks': '#16A34A', '6 Weeks': '#2563EB', '8 Weeks': '#D97706', Custom: '#7C3AED',
+}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -47,62 +58,117 @@ function parseNumeric(val: string): number {
 function LivestockIcon({ type, selected }: { type: string; selected: boolean }) {
   const c = selected ? 'white' : '#1B1B1B'
   const opacity = selected ? 1 : 0.3
-  switch (type) {
-    case 'Broilers':
-      return (
-        <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <Ellipse cx="14" cy="18" rx="7" ry="5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
-          <Circle cx="14" cy="13" r="4" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
-          <Circle cx="14" cy="12.5" r="1" fill={c} />
-          <Path d="M13 10L15 9" stroke="#F9A825" strokeWidth="1.2" strokeLinecap="round" />
-        </Svg>
-      )
-    case 'Layers':
-      return (
-        <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <Ellipse cx="14" cy="18" rx="7" ry="5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
-          <Circle cx="14" cy="13" r="4" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
-          <Circle cx="14" cy="12.5" r="1" fill={c} />
-        </Svg>
-      )
-    case 'Fish Farming':
-      return (
-        <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <Ellipse cx="14" cy="18" rx="6" ry="4" fill="#B8D8E8" fillOpacity={selected ? 0.15 : opacity} />
-          <Path d="M10 16L8 15" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
-          <Path d="M18 16L20 15" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
-        </Svg>
-      )
-    case 'Goat/Sheep':
-      return (
-        <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <Path d="M10 20C10 20 9 16 14 16C19 16 18 20 18 20" stroke={c} strokeWidth="1.5" fill="none" />
-          <Circle cx="14" cy="12" r="4.5" stroke={c} strokeWidth="1.5" fill="none" />
-          <Circle cx="12.5" cy="11" r="1" fill={c} />
-        </Svg>
-      )
-    case 'Piggery':
-      return (
-        <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <Ellipse cx="14" cy="18" rx="8" ry="6" fill={selected ? 'rgba(255,255,255,0.15)' : '#E8D5C4'} fillOpacity={opacity} />
-          <Ellipse cx="14" cy="18" rx="8" ry="6" stroke={c} strokeWidth="1.3" fill="none" />
-          <Circle cx="14" cy="13" r="5" stroke={c} strokeWidth="1.3" fill="none" />
-          <Circle cx="12.5" cy="12" r="0.8" fill={c} />
-          <Circle cx="15.5" cy="12" r="0.8" fill={c} />
-        </Svg>
-      )
-    case 'Mixed Farming':
-      return (
-        <Svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <Ellipse cx="14" cy="18" rx="9" ry="6" fill={selected ? 'rgba(255,255,255,0.15)' : '#E8F5E9'} fillOpacity={opacity} />
-          <Path d="M8 14C10 12 12 14 14 12C16 14 18 12 20 14" stroke={c} strokeWidth="1.2" fill="none" />
-          <Circle cx="10" cy="16" r="1.5" fill="#F5F5F0" stroke="#D4C9B8" strokeWidth="0.6" />
-          <Circle cx="18" cy="16" r="1.5" fill="#F5F5F0" stroke="#D4C9B8" strokeWidth="0.6" />
-        </Svg>
-      )
-    default:
-      return null
-  }
+  return (
+    <Svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      {type === 'Broilers' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="6" ry="4.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="10" r="3.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="9.5" r="1" fill={c} />
+          <Path d="M9.5 7L11.5 6" stroke="#F9A825" strokeWidth="1.2" strokeLinecap="round" />
+        </>
+      )}
+      {type === 'Layers' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="6" ry="4.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="10" r="3.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="9.5" r="1" fill={c} />
+          <Path d="M8 16L10 18L14 15" stroke={c} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </>
+      )}
+      {type === 'Fish Farming' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="5" ry="3.5" fill="#B8D8E8" fillOpacity={selected ? 0.15 : opacity} />
+          <Path d="M7 12.5L6 12" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
+          <Path d="M15 12.5L16 12" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
+        </>
+      )}
+      {type === 'Goat/Sheep' && (
+        <>
+          <Path d="M8 16C8 16 7 12 11 12C15 12 14 16 14 16" stroke={c} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+          <Circle cx="11" cy="9" r="4" stroke={c} strokeWidth="1.3" fill="none" />
+          <Circle cx="10" cy="8" r="0.8" fill={c} />
+          <Path d="M13 8L14.5 7" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
+        </>
+      )}
+      {type === 'Piggery' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="7" ry="5" fill={selected ? 'rgba(255,255,255,0.15)' : '#E8D5C4'} fillOpacity={opacity} />
+          <Ellipse cx="11" cy="14" rx="7" ry="5" stroke={c} strokeWidth="1.2" fill="none" />
+          <Circle cx="11" cy="10" r="4.5" stroke={c} strokeWidth="1.2" fill="none" />
+          <Circle cx="9.5" cy="9.5" r="0.7" fill={c} />
+          <Circle cx="12.5" cy="9.5" r="0.7" fill={c} />
+        </>
+      )}
+      {type === 'Mixed Farming' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="7" ry="5" fill={selected ? 'rgba(255,255,255,0.15)' : '#E8F5E9'} fillOpacity={opacity} />
+          <Path d="M6 11C7.5 9.5 9 11 11 9.5C13 11 14.5 9.5 16 11" stroke={c} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          <Circle cx="7.5" cy="13" r="1.5" fill="#F5F5F0" stroke="#D4C9B8" strokeWidth="0.6" />
+          <Circle cx="14.5" cy="13" r="1.5" fill="#F5F5F0" stroke="#D4C9B8" strokeWidth="0.6" />
+        </>
+      )}
+    </Svg>
+  )
+}
+
+function LivestockTile({ type, selected, accent, onSelect }: { type: string; selected: boolean; accent: string; onSelect: () => void }) {
+  const ps = usePressScale()
+  return (
+    <Animated.View style={ps.style}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={onSelect}
+        onPressIn={ps.onPressIn}
+        onPressOut={ps.onPressOut}
+        style={styles.typeCardWrap}
+      >
+        <View style={[styles.typeCard, { borderColor: selected ? accent : accent + '30' }, selected && { backgroundColor: '#FAFDF8' }]}>
+          {selected && (
+            <View style={[styles.typeCheck, { backgroundColor: accent }]}>
+              <GoonaIcon icon={Icons.check} size={12} color="#FFF" />
+            </View>
+          )}
+          <LinearGradient
+            colors={selected ? [accent + 'E0', accent + '99'] : [accent + '15', accent + '08']}
+            style={[styles.typeIcon, selected && styles.typeIconSelected]}
+          >
+            <LivestockIcon type={type} selected={selected} />
+          </LinearGradient>
+          <Text style={[styles.typeName, { color: selected ? accent : '#1F2937' }]} numberOfLines={1}>{type}</Text>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+}
+
+function DurationPill({ opt, selected, accent, onSelect }: { opt: string; selected: boolean; accent: string; onSelect: () => void }) {
+  const ps = usePressScale()
+  return (
+    <Animated.View style={ps.style}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={onSelect}
+        onPressIn={ps.onPressIn}
+        onPressOut={ps.onPressOut}
+        style={styles.durationPillWrap}
+      >
+        <View style={[styles.durationPill, { borderColor: selected ? accent : accent + '30' }, selected && { backgroundColor: '#FAFDF8' }]}>
+          {selected && (
+            <View style={[styles.durationCheck, { backgroundColor: accent }]}>
+              <GoonaIcon icon={Icons.check} size={10} color="#FFF" />
+            </View>
+          )}
+          <LinearGradient
+            colors={selected ? [accent + 'E0', accent + '99'] : [accent + '15', accent + '08']}
+            style={[styles.durationPillBg, selected && styles.durationPillBgSelected]}
+          >
+            <Text style={[styles.durationPillText, { color: selected ? '#FFF' : '#1F2937' }]}>{opt}</Text>
+          </LinearGradient>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  )
 }
 
 export default function CreateBatchScreen() {
@@ -135,6 +201,7 @@ export default function CreateBatchScreen() {
   }
 
   const handleCreateBatch = () => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     if (!batchName.trim()) {
       Alert.alert('Required', 'Please enter a batch name.')
       return
@@ -158,7 +225,7 @@ export default function CreateBatchScreen() {
     setShowSuccess(true)
     setTimeout(() => {
       setShowSuccess(false)
-      router.push('/batches')
+      router.replace('/batches?from=batch-management')
     }, 2200)
   }
 
@@ -256,6 +323,7 @@ export default function CreateBatchScreen() {
           {/* FORM CARD */}
           <Animated.View entering={FadeInUp.duration(500).delay(180).springify()} style={styles.formCard}>
             {/* BATCH NAME */}
+            {/* BATCH NAME */}
             <View style={styles.formSection}>
               <Text style={styles.formLabel}>Batch Name</Text>
               <View style={[styles.fieldWrap, batchName.length > 0 && styles.fieldWrapFocused]}>
@@ -282,40 +350,25 @@ export default function CreateBatchScreen() {
             {/* LIVESTOCK TYPE */}
             <View style={styles.formSection}>
               <Text style={styles.formLabel}>Livestock Type</Text>
-              <View style={styles.typeGrid}>
-                {LIVESTOCK_TYPES.map((type) => {
-                  const selected = livestockType === type
-                  return (
-                    <TouchableOpacity
-                      key={type}
-                      activeOpacity={0.85}
-                      onPress={() => setLivestockType(type)}
-                      style={styles.typeCardWrap}
-                    >
-                      {selected ? (
-                        <LinearGradient
-                          colors={['#2E7D32', '#43A047']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.typeCardSelected}
-                        >
-                          <View style={styles.typeIcon}>
-                            <LivestockIcon type={type} selected />
-                          </View>
-                          <Text style={styles.typeNameSelected}>{type}</Text>
-                        </LinearGradient>
-                      ) : (
-                        <View style={styles.typeCard}>
-                          <View style={styles.typeIcon}>
-                            <LivestockIcon type={type} selected={false} />
-                          </View>
-                          <Text style={styles.typeName}>{type}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  )
-                })}
-              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                style={styles.typeScroll}
+                contentContainerStyle={styles.typeScrollInner}
+                snapToInterval={136}
+                decelerationRate="fast"
+              >
+                {LIVESTOCK_TYPES.map((type) => (
+                  <LivestockTile
+                    key={type}
+                    type={type}
+                    selected={livestockType === type}
+                    accent={LIVESTOCK_COLORS[type]}
+                    onSelect={() => setLivestockType(type)}
+                  />
+                ))}
+              </ScrollView>
             </View>
 
             {/* INITIAL QUANTITY */}
@@ -335,13 +388,9 @@ export default function CreateBatchScreen() {
                 >
                   <Text style={styles.stepperBtnText}>−</Text>
                 </TouchableOpacity>
-                <Animated.Text
-                  key={quantity}
-                  entering={FadeIn.duration(150)}
-                  style={styles.stepperVal}
-                >
-                  {quantity}
-                </Animated.Text>
+                <Text style={styles.stepperVal}>
+                  {quantity.toLocaleString('en-NG')}
+                </Text>
                 <TouchableOpacity
                   style={styles.stepperBtn}
                   activeOpacity={0.85}
@@ -482,38 +531,30 @@ export default function CreateBatchScreen() {
             {/* DURATION */}
             <View style={styles.formSection}>
               <Text style={styles.formLabel}>Expected Production Duration</Text>
-              <View style={styles.durationRow}>
-                {DURATION_OPTIONS.map((opt) => {
-                  const selected = duration === opt
-                  return (
-                    <TouchableOpacity
-                      key={opt}
-                      activeOpacity={0.85}
-                      onPress={() => setDuration(opt)}
-                      style={styles.durationPillWrap}
-                    >
-                      {selected ? (
-                        <LinearGradient
-                          colors={['#2E7D32', '#43A047']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.durationPillSelected}
-                        >
-                          <Text style={styles.durationPillSelectedText}>{opt}</Text>
-                        </LinearGradient>
-                      ) : (
-                        <View style={styles.durationPill}>
-                          <Text style={styles.durationPillText}>{opt}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  )
-                })}
-              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                style={styles.durationScroll}
+                contentContainerStyle={styles.durationScrollInner}
+                snapToInterval={112}
+                decelerationRate="fast"
+              >
+                {DURATION_OPTIONS.map((opt) => (
+                  <DurationPill
+                    key={opt}
+                    opt={opt}
+                    selected={duration === opt}
+                    accent={DURATION_COLORS[opt]}
+                    onSelect={() => setDuration(opt)}
+                  />
+                ))}
+              </ScrollView>
             </View>
 
             {/* FORECAST CARD */}
             <Animated.View entering={FadeInUp.duration(500).delay(300).springify()} style={styles.forecastCard}>
+              <LinearGradient colors={['#E8F5E9', '#F0FDF4']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
               <View style={styles.forecastHead}>
                 <Text style={styles.forecastTitle}>Projected Production Summary</Text>
                 <View style={styles.forecastIcon}>
@@ -553,6 +594,7 @@ export default function CreateBatchScreen() {
                 activeOpacity={0.9}
                 onPress={handleCreateBatch}
               >
+                <LinearGradient colors={['#2E7D32', '#43A047']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
                 <GoonaIcon icon={Icons.checkCircle} size={20} color="white" />
                 <Text style={styles.primaryBtnText}>Create Batch</Text>
               </TouchableOpacity>
@@ -636,8 +678,9 @@ const styles = StyleSheet.create({
 
   /* form card */
   formCard: {
-    backgroundColor: 'white', borderRadius: 30, padding: 24, marginTop: 18,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.06, shadowRadius: 40, elevation: 4,
+    backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 34, padding: 24, marginTop: 18,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.08, shadowRadius: 50, elevation: 6,
   },
   formSection: { marginBottom: 20 },
   formLabel: { fontSize: 14, fontWeight: '600', color: '#1F2937', marginBottom: 8 },
@@ -645,11 +688,15 @@ const styles = StyleSheet.create({
 
   /* field */
   fieldWrap: {
-    flexDirection: 'row', alignItems: 'center', height: 58, borderRadius: 18,
-    backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0',
+    flexDirection: 'row', alignItems: 'center', height: 60, borderRadius: 20,
+    backgroundColor: '#F2F6F1', borderWidth: 1.5, borderColor: '#E2E8F0',
     paddingHorizontal: 16, gap: 12,
   },
-  fieldWrapFocused: { borderColor: '#2E7D32' },
+  fieldWrapFocused: {
+    borderColor: '#2E7D32',
+    backgroundColor: '#EBF5EB',
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 2,
+  },
   fieldIco: { width: 20, height: 20, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
   fieldInner: { flex: 1, justifyContent: 'center', minWidth: 0 },
   fieldLbl: { fontSize: 10, fontWeight: '500', color: '#A0AEA1', marginBottom: 1 },
@@ -659,54 +706,61 @@ const styles = StyleSheet.create({
   fieldRight: { flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
 
   /* type grid */
-  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  typeCardWrap: { width: '48%' },
+  typeScroll: { marginBottom: 4 },
+  typeScrollInner: { gap: 10 },
+  typeCardWrap: { width: 126 },
   typeCard: {
-    borderRadius: 20, borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: 'white',
-    paddingVertical: 16, paddingHorizontal: 8, alignItems: 'center', gap: 8,
+    borderRadius: 18, borderWidth: 1.5, overflow: 'hidden',
+    backgroundColor: 'white', paddingVertical: 14, paddingHorizontal: 8, alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2,
   },
-  typeCardSelected: {
-    borderRadius: 20, paddingVertical: 16, paddingHorizontal: 8, alignItems: 'center', gap: 8,
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 6,
+  typeCheck: {
+    position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: 9,
+    alignItems: 'center', justifyContent: 'center', zIndex: 2,
   },
-  typeIcon: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  typeName: { fontSize: 13, fontWeight: '600', color: '#1F2937', textAlign: 'center' },
-  typeNameSelected: { fontSize: 13, fontWeight: '600', color: 'white', textAlign: 'center' },
+  typeIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  typeIconSelected: { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
+  typeName: { fontSize: 12, fontWeight: '700', textAlign: 'center' },
 
   /* stepper */
   stepperWrap: {
-    flexDirection: 'row', alignItems: 'center', height: 58, borderRadius: 18,
-    backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0',
+    flexDirection: 'row', alignItems: 'center', height: 60, borderRadius: 20,
+    backgroundColor: '#F2F6F1', borderWidth: 1.5, borderColor: '#E2E8F0',
     paddingHorizontal: 6, gap: 6,
   },
   stepperBtn: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: 'white',
+    width: 46, height: 46, borderRadius: 16, backgroundColor: 'white',
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
-  stepperBtnText: { fontSize: 20, fontWeight: '500', color: '#1B1B1B' },
+  stepperBtnText: { fontSize: 22, fontWeight: '600', color: '#1B1B1B' },
   stepperVal: {
-    flex: 1, textAlign: 'center', fontSize: 22, fontWeight: '700', color: '#1B1B1B',
+    flex: 1, textAlign: 'center', fontSize: 24, fontWeight: '800', color: '#1B1B1B',
   },
 
   /* duration pills */
-  durationRow: { flexDirection: 'row', gap: 10 },
-  durationPillWrap: { flex: 1 },
+  durationScroll: { marginBottom: 4 },
+  durationScrollInner: { gap: 10 },
+  durationPillWrap: { width: 100 },
   durationPill: {
-    height: 50, borderRadius: 14, borderWidth: 1.5, borderColor: '#E2E8F0',
-    backgroundColor: 'white', alignItems: 'center', justifyContent: 'center',
+    borderRadius: 16, borderWidth: 1.5, overflow: 'hidden',
+    backgroundColor: 'white', paddingVertical: 3, paddingHorizontal: 3, alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
   },
-  durationPillText: { fontSize: 14, fontWeight: '500', color: '#1F2937' },
-  durationPillSelected: {
-    height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 4,
+  durationCheck: {
+    position: 'absolute', top: 2, right: 2, width: 14, height: 14, borderRadius: 7,
+    alignItems: 'center', justifyContent: 'center', zIndex: 2,
   },
-  durationPillSelectedText: { fontSize: 14, fontWeight: '500', color: 'white' },
+  durationPillBg: { height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  durationPillBgSelected: { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
+  durationPillText: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
 
   /* forecast card */
   forecastCard: {
-    backgroundColor: '#E8F5E9', borderRadius: 24, padding: 20, marginTop: 4,
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 1,
+    borderRadius: 26, padding: 22, marginTop: 4, overflow: 'hidden',
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1, borderColor: 'rgba(46,125,50,0.15)',
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 28, elevation: 4,
   },
   forecastHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   forecastTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937' },
@@ -724,10 +778,9 @@ const styles = StyleSheet.create({
 
   /* primary btn */
   primaryBtn: {
-    width: '100%', height: 58, borderRadius: 20,
-    backgroundColor: '#2E7D32',
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18,
-    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.3, shadowRadius: 35, elevation: 6,
+    width: '100%', height: 60, borderRadius: 22,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18, overflow: 'hidden',
+    shadowColor: '#2E7D32', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.35, shadowRadius: 40, elevation: 8,
   },
   primaryBtnText: { fontWeight: '600', fontSize: 16, color: 'white' },
 

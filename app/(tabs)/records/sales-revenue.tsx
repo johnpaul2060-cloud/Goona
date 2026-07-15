@@ -421,9 +421,6 @@ export default function SalesRevenueScreen() {
               <GoonaIcon icon={Icons.arrowLeft} size={24} color="#1B1B1B" />
             </TouchableOpacity>
             <Text style={styles.topTitle}>Sales & Revenue</Text>
-            <TouchableOpacity style={styles.chartBtn} activeOpacity={0.8} onPress={() => router.push('/records/sales-revenue' as any)}>
-              <GoonaIcon icon={Icons.barChart3} size={20} color="#1F2937" />
-            </TouchableOpacity>
           </View>
         </AnimatedCard>
 
@@ -531,7 +528,7 @@ const styles = StyleSheet.create({
   topNav: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
     paddingTop: 6,
   },
   navBack: {
@@ -545,14 +542,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 20,
     color: '#1B1B1B',
-  },
-  chartBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerSection: {
     marginTop: 8,
