@@ -1,72 +1,12 @@
-import { create } from 'zustand'
+import type { Plan } from './usePlanStore'
 
 export type CheckInStatus = 'completed' | 'partial' | 'missed' | 'exceeded' | 'none'
-type ActiveStatus = Exclude<CheckInStatus, 'none'>
 
 export interface DayRecord {
   date: string
   status: CheckInStatus
   amount?: number
 }
-
-function fmtDate(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function generateMockRecords(): Record<string, DayRecord> {
-  const records: Record<string, DayRecord> = {}
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-
-  // last 5 days of previous month — all completed (streak continuity)
-  const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0)
-  for (let i = 4; i >= 0; i--) {
-    const d = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), prevMonth.getDate() - i)
-    records[fmtDate(d)] = { date: fmtDate(d), status: 'completed', amount: 85000 }
-  }
-
-  // current month — varied states up to today
-  const statuses: ActiveStatus[] = [
-    'completed', 'completed', 'exceeded', 'completed', 'missed',
-    'completed', 'partial', 'completed', 'exceeded', 'completed',
-    'completed', 'missed', 'completed', 'partial', 'completed',
-    'completed', 'exceeded', 'completed',
-  ]
-  for (let i = 1; i <= 28; i++) {
-    const d = new Date(today.getFullYear(), today.getMonth(), i)
-    if (d > today) break
-    const status = statuses[(i - 1) % statuses.length]
-    const amt =
-      status === 'exceeded' ? 95000 + Math.floor(Math.random() * 15000) :
-      status === 'completed' ? 80000 + Math.floor(Math.random() * 10000) :
-      status === 'partial' ? 35000 + Math.floor(Math.random() * 20000) :
-      undefined
-    records[fmtDate(d)] = { date: fmtDate(d), status, amount: amt }
-  }
-
-  return records
-}
-
-interface RecoveryState {
-  records: Record<string, DayRecord>
-  checkIn: (dateStr: string, status: ActiveStatus, amount?: number) => void
-}
-
-export const useRecoveryStore = create<RecoveryState>((set) => ({
-  records: generateMockRecords(),
-  checkIn: (dateStr, status, amount) =>
-    set((state) => ({
-      records: {
-        ...state.records,
-        [dateStr]: { date: dateStr, status, amount: amount ?? state.records[dateStr]?.amount },
-      },
-    })),
-}))
-
-/* ── helpers ─────────────────────────────────────── */
 
 export function fmtDateFromParts(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -92,12 +32,12 @@ export function getStatusLabel(status: CheckInStatus): string {
   }
 }
 
-export function computeStreak(records: Record<string, DayRecord>): number {
+export function computeStreakByDay(records: Record<string, DayRecord>): number {
   const today = new Date()
   let streak = 0
   for (let i = 0; i < 365; i++) {
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i)
-    const ds = fmtDate(d)
+    const ds = fmtDateFromParts(d.getFullYear(), d.getMonth(), d.getDate())
     const r = records[ds]
     if (!r) break
     if (r.status === 'completed' || r.status === 'exceeded') {
@@ -128,8 +68,140 @@ export function computeMonthlyStats(records: Record<string, DayRecord>, year: nu
   return stats
 }
 
-export function generateInsights(records: Record<string, DayRecord>): string[] {
-  const streak = computeStreak(records)
+/* ─── Build calendar records from plan contributions ─── */
+
+export interface CalendarMeta {
+  records: Record<string, DayRecord>
+  totalSaved: number
+  totalTarget: number
+  activePlanCount: number
+  missedCount: number
+  streak: number
+}
+
+function fmtDate(d: Date): string {
+  return fmtDateFromParts(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
+function daysUntilNextSchedule(schedule: 'Daily' | 'Weekly' | 'Monthly', ref: Date): number {
+  switch (schedule) {
+    case 'Daily': return 1
+    case 'Weekly': {
+      const day = ref.getDay()
+      const daysUntilFriday = (5 - day + 7) % 7
+      return daysUntilFriday === 0 ? 7 : daysUntilFriday
+    }
+    case 'Monthly': {
+      const nextMonth = new Date(ref.getFullYear(), ref.getMonth() + 1, 1)
+      return Math.ceil((nextMonth.getTime() - ref.getTime()) / 86400000)
+    }
+  }
+}
+
+function perContributionAmount(plan: Plan): number {
+  const totalContributions = plan.contributions.length
+  const remaining = plan.target - plan.saved
+  const expectedCount = Math.max(1, totalContributions + 1)
+  if (remaining > 0) {
+    const daysLeft = Math.max(1, Math.ceil((new Date(plan.targetDate).getTime() - Date.now()) / 86400000))
+    switch (plan.schedule) {
+      case 'Daily': return Math.round(Math.max(remaining / daysLeft, 1))
+      case 'Weekly': return Math.round(Math.max((remaining / daysLeft) * 7, 1))
+      case 'Monthly': return Math.round(Math.max((remaining / daysLeft) * 30.44, 1))
+    }
+  }
+  return Math.round(plan.target / expectedCount)
+}
+
+export function buildCalendarRecords(plans: Plan[]): CalendarMeta {
+  const records: Record<string, DayRecord> = {}
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  const activePlans = plans.filter((p) => p.status === 'active')
+
+  /* ── Aggregate contributions from all plans ── */
+  for (const plan of plans) {
+    for (const c of plan.contributions) {
+      const cDate = new Date(c.date)
+      const ds = fmtDate(cDate)
+      const existing = records[ds]
+      const perAmt = perContributionAmount(plan)
+      const isExceeded = c.amount > perAmt
+      if (!existing) {
+        records[ds] = {
+          date: ds,
+          status: isExceeded ? 'exceeded' : 'completed',
+          amount: c.amount,
+        }
+      } else {
+        existing.amount = (existing.amount ?? 0) + c.amount
+        if (isExceeded && existing.status !== 'exceeded') existing.status = 'exceeded'
+      }
+    }
+  }
+
+  /* ── Mark missed days for active plans ── */
+  const startDate = new Date(today.getFullYear(), today.getMonth(), 1)
+  startDate.setMonth(startDate.getMonth() - 1)
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+  for (const plan of activePlans) {
+    const d = new Date(startDate)
+    while (d <= endDate) {
+      const ds = fmtDate(d)
+      if (d <= today && !records[ds]) {
+        const gap = daysUntilNextSchedule(plan.schedule, d)
+        if (gap <= 1) {
+          records[ds] = { date: ds, status: 'missed' }
+        }
+      }
+      d.setDate(d.getDate() + 1)
+    }
+  }
+
+  /* ── Compute metrics ── */
+  let completedCount = 0
+  let missedCount = 0
+  let totalSaved = 0
+  for (const key in records) {
+    const r = records[key]
+    if (r.status === 'completed' || r.status === 'exceeded') {
+      completedCount++
+      totalSaved += r.amount ?? 0
+    }
+    if (r.status === 'missed') missedCount++
+  }
+
+  const streak = computeStreakByDay(records)
+  const totalTarget = activePlans.reduce((sum, p) => sum + p.target, 0)
+
+  return {
+    records,
+    totalSaved,
+    totalTarget,
+    activePlanCount: activePlans.length,
+    missedCount,
+    streak,
+  }
+}
+
+export function getExpectedAmountForDay(plans: Plan[], dateStr: string): number {
+  const d = new Date(dateStr + 'T12:00:00')
+  const ds = fmtDate(d)
+  let total = 0
+  for (const plan of plans) {
+    if (plan.status !== 'active') continue
+    const gap = daysUntilNextSchedule(plan.schedule, d)
+    if (gap <= 1) {
+      total += perContributionAmount(plan)
+    }
+  }
+  return total || 0
+}
+
+export function generateInsights(records: Record<string, DayRecord>, activePlanCount: number): string[] {
+  const streak = computeStreakByDay(records)
   const now = new Date()
   const stats = computeMonthlyStats(records, now.getFullYear(), now.getMonth())
   const messages: string[] = []
@@ -149,7 +221,9 @@ export function generateInsights(records: Record<string, DayRecord>): string[] {
     messages.push(`You exceeded your recapt target ${stats.exceeded}x this month (${pct}% of check-ins).`)
   }
 
-  if (messages.length === 0 && stats.total > 0) {
+  if (activePlanCount === 0) {
+    messages.push('Create a plan to start tracking your recapt consistency.')
+  } else if (messages.length === 0 && stats.total > 0) {
     messages.push('Every recapt brings you closer to your next production cycle.')
   }
 

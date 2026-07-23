@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, Alert,
@@ -174,7 +174,7 @@ function DurationPill({ opt, selected, accent, onSelect }: { opt: string; select
 export default function CreateBatchScreen() {
   const [batchName, setBatchName] = useState('')
   const [livestockType, setLivestockType] = useState<string>('Broilers')
-  const [quantity, setQuantity] = useState(500)
+  const [quantityStr, setQuantityStr] = useState('')
   const [purchaseCost, setPurchaseCost] = useState('')
   const [feedCost, setFeedCost] = useState('')
   const [medicationCost, setMedicationCost] = useState('')
@@ -186,6 +186,42 @@ export default function CreateBatchScreen() {
   const addBatch = useBatchStore((s) => s.addBatch)
 
   const pressScale = usePressScale()
+
+  const quantityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const quantityIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const adjustQuantity = (delta: number) => {
+    setQuantityStr(prev => {
+      const current = parseInt(prev || '0', 10) || 0
+      let next = current + delta
+      if (next < 1) next = 1
+      if (next > 100000) next = 100000
+      return String(next)
+    })
+  }
+
+  const handleQuantityPressIn = (direction: 'up' | 'down') => {
+    const delta = direction === 'up' ? 1 : -1
+    adjustQuantity(delta)
+    quantityTimerRef.current = setTimeout(() => {
+      let step = 1
+      quantityIntervalRef.current = setInterval(() => {
+        adjustQuantity(delta * step)
+        step = Math.min(step + 10, 100)
+      }, 80)
+    }, 400)
+  }
+
+  const handleQuantityPressOut = () => {
+    if (quantityTimerRef.current) {
+      clearTimeout(quantityTimerRef.current)
+      quantityTimerRef.current = null
+    }
+    if (quantityIntervalRef.current) {
+      clearInterval(quantityIntervalRef.current)
+      quantityIntervalRef.current = null
+    }
+  }
 
   const purchaseVal = parseNumeric(purchaseCost)
   const feedVal = parseNumeric(feedCost)
@@ -210,11 +246,15 @@ export default function CreateBatchScreen() {
       Alert.alert('Required', 'Please select a livestock type.')
       return
     }
+    if (!quantityStr || parseInt(quantityStr, 10) < 1) {
+      Alert.alert('Required', 'Please enter a valid livestock quantity.')
+      return
+    }
 
     addBatch({
       batchName: batchName.trim(),
       livestockType,
-      quantity,
+      quantity: parseInt(quantityStr, 10),
       purchaseCost: purchaseVal,
       feedCost: feedVal,
       medicationCost: medicationVal,
@@ -323,29 +363,13 @@ export default function CreateBatchScreen() {
           {/* FORM CARD */}
           <Animated.View entering={FadeInUp.duration(500).delay(180).springify()} style={styles.formCard}>
             {/* BATCH NAME */}
-            {/* BATCH NAME */}
-            <View style={styles.formSection}>
-              <Text style={styles.formLabel}>Batch Name</Text>
-              <View style={[styles.fieldWrap, batchName.length > 0 && styles.fieldWrapFocused]}>
-                <View style={styles.fieldIco}>
-                  <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <Line x1="4" y1="10" x2="16" y2="10" stroke="#A0AEA1" strokeWidth="1.4" strokeLinecap="round" />
-                    <Line x1="4" y1="6" x2="11" y2="6" stroke="#A0AEA1" strokeWidth="1.4" strokeLinecap="round" />
-                    <Line x1="4" y1="14" x2="13" y2="14" stroke="#A0AEA1" strokeWidth="1.4" strokeLinecap="round" />
-                  </Svg>
-                </View>
-                <View style={styles.fieldInner}>
-                  <Text style={styles.fieldLbl}>Batch Name</Text>
-                  <TextInput
-                    style={styles.fieldInput}
-                    value={batchName}
-                    onChangeText={setBatchName}
-                    placeholder="e.g. Broiler Batch A"
-                    placeholderTextColor="#A0AEA1"
-                  />
-                </View>
-              </View>
-            </View>
+            <TextInput
+              value={batchName}
+              onChangeText={setBatchName}
+              placeholder="e.g. Broiler Batch A"
+              placeholderTextColor="#A0AEA1"
+              style={styles.batchNameInput}
+            />
 
             {/* LIVESTOCK TYPE */}
             <View style={styles.formSection}>
@@ -384,17 +408,24 @@ export default function CreateBatchScreen() {
                 <TouchableOpacity
                   style={styles.stepperBtn}
                   activeOpacity={0.85}
-                  onPress={() => setQuantity(Math.max(10, quantity - 50))}
+                  onPressIn={() => handleQuantityPressIn('down')}
+                  onPressOut={handleQuantityPressOut}
                 >
                   <Text style={styles.stepperBtnText}>−</Text>
                 </TouchableOpacity>
-                <Text style={styles.stepperVal}>
-                  {quantity.toLocaleString('en-NG')}
-                </Text>
+                <TextInput
+                  style={styles.stepperInput}
+                  value={formatInput(quantityStr)}
+                  onChangeText={(v) => setQuantityStr(v.replace(/\D/g, ''))}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor="#A0AEA1"
+                />
                 <TouchableOpacity
                   style={styles.stepperBtn}
                   activeOpacity={0.85}
-                  onPress={() => setQuantity(Math.min(100000, quantity + 50))}
+                  onPressIn={() => handleQuantityPressIn('up')}
+                  onPressOut={handleQuantityPressOut}
                 >
                   <Text style={styles.stepperBtnText}>+</Text>
                 </TouchableOpacity>
@@ -701,6 +732,11 @@ const styles = StyleSheet.create({
   fieldInner: { flex: 1, justifyContent: 'center', minWidth: 0 },
   fieldLbl: { fontSize: 10, fontWeight: '500', color: '#A0AEA1', marginBottom: 1 },
   fieldInput: { fontSize: 15, fontWeight: '500', color: '#1B1B1B', padding: 0, margin: 0, fontFamily: 'Inter' },
+  batchNameInput: {
+    height: 60, borderRadius: 20, backgroundColor: '#F2F6F1',
+    borderWidth: 1.5, borderColor: '#E2E8F0', paddingHorizontal: 16,
+    fontSize: 15, fontWeight: '500', color: '#1B1B1B', fontFamily: 'Inter',
+  },
   fieldInputText: { fontSize: 15, fontWeight: '500', color: '#1B1B1B' },
   fieldPrefix: { fontSize: 16, fontWeight: '600', color: '#1B1B1B', flexShrink: 0 },
   fieldRight: { flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
@@ -736,6 +772,10 @@ const styles = StyleSheet.create({
   stepperBtnText: { fontSize: 22, fontWeight: '600', color: '#1B1B1B' },
   stepperVal: {
     flex: 1, textAlign: 'center', fontSize: 24, fontWeight: '800', color: '#1B1B1B',
+  },
+  stepperInput: {
+    flex: 1, textAlign: 'center', fontSize: 24, fontWeight: '800', color: '#1B1B1B',
+    padding: 0, margin: 0, fontFamily: 'Inter',
   },
 
   /* duration pills */

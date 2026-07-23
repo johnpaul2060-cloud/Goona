@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router'
 import { stackGestureDefaults } from '../../../utils/navigationGestures'
 
-export default function ChatLayout() {
+export default function FarmChatLayout() {
   return (
     <Stack screenOptions={stackGestureDefaults}>
-      <Stack.Screen name="[id]" />
+      <Stack.Screen name="index" />
+      <Stack.Screen name="chat/[id]" />
     </Stack>
   )
 }

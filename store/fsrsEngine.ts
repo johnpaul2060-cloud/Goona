@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { useRecoveryStore, computeStreak } from './useRecoveryStore'
+import { usePlanStore } from './usePlanStore'
+import { buildCalendarRecords } from './useRecoveryStore'
 
 /* ══════════════════════════════════════════════════════════════
    Farm Start Readiness Score (FSRS) — Types & Constants
@@ -290,16 +291,9 @@ export function useFSRS(
   checklistDefs: { key: string; label: string }[] = [],
   target = 2500000,
 ): FSRSResult {
-  const records = useRecoveryStore(s => s.records)
-  const streak = computeStreak(records)
-
-  let totalSaved = 0
-  let missedCheckins = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
-    if (r.status === 'missed') missedCheckins++
-  }
+  const plans = usePlanStore((s) => s.plans)
+  const calendarMeta = useMemo(() => buildCalendarRecords(plans), [plans])
+  const { totalSaved, streak, missedCount: missedCheckins } = calendarMeta
 
   return useMemo(
     () => computeFSRS({ checklist, checklistDefs, totalSaved, target, streak, missedCheckins }),

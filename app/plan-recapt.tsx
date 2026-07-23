@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
+import { usePlanStore } from '../store/usePlanStore'
 import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
 const PROJECTS = [
@@ -77,6 +78,8 @@ export default function PlanRecaptScreen() {
   const [tempDate, setTempDate] = useState<Date | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly')
   const [showSummary, setShowSummary] = useState(false)
+  const [createdPlanId, setCreatedPlanId] = useState<string | null>(null)
+  const createPlan = usePlanStore((s) => s.createPlan)
 
   const targetAmount = parseAmount(amountRaw)
   const displayAmount = formatInput(amountRaw)
@@ -139,6 +142,14 @@ export default function PlanRecaptScreen() {
   const handleCreate = () => {
     if (!canSubmit) return
     Keyboard.dismiss()
+    const plan = createPlan({
+      icon: selectedProject?.icon ?? '\u{1F4B0}',
+      name: goalName.trim(),
+      target: targetAmount,
+      schedule: selectedPlan,
+      targetDate: targetDate!.toISOString(),
+    })
+    setCreatedPlanId(plan.id)
     setShowSummary(true)
   }
 
@@ -189,7 +200,7 @@ export default function PlanRecaptScreen() {
             <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
 
-          <Text style={styles.heroTitle}>Plan Next Project</Text>
+          <Text style={styles.heroTitle}>Plan Next Cycle</Text>
           <Text style={styles.heroSub}>
             Save towards your next farm expenditure.
           </Text>
@@ -262,7 +273,7 @@ export default function PlanRecaptScreen() {
                     return
                   }
                   router.push(
-                    `/fund-project?name=${encodeURIComponent(goalName)}&target=${targetAmount}&saved=0&plan=${selectedPlan}&amount=${nextAmount}`,
+                    `/fund-project?planId=${createdPlanId}&amount=${nextAmount}`,
                   )
                 }}
               >

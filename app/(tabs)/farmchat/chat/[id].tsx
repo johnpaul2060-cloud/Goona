@@ -1,8 +1,8 @@
 import { useEffect, useCallback } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { useFarmChatStore, FarmChatMessage, MessageReplyTo } from '../../../store/useFarmChatStore'
-import UnifiedChatScreen from '../../../components/farmchat/UnifiedChatScreen'
+import { useFarmChatStore, FarmChatMessage, MessageReplyTo } from '../../../../store/useFarmChatStore'
+import UnifiedChatScreen from '../../../../components/farmchat/UnifiedChatScreen'
 
 export default function ChatDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -39,7 +39,7 @@ export default function ChatDetailScreen() {
   }, [id, sendMessage])
 
   const handleBack = useCallback(() => {
-    router.replace('/(tabs)/farmchat')
+    router.back()
   }, [])
 
   if (!conv) return <View style={styles.container} />

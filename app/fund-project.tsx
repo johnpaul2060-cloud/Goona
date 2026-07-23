@@ -10,6 +10,7 @@ import { router, useLocalSearchParams, usePathname } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
+import { usePlanStore } from '../store/usePlanStore'
 import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
 const PROJECTS = [
@@ -55,6 +56,7 @@ export default function FundProjectScreen() {
     plan?: string
     amount?: string
     contributionType?: string
+    planId?: string
   }>()
   const pathname = usePathname()
   const walletStatus = useWalletStore((s) => s.walletStatus)
@@ -72,7 +74,19 @@ export default function FundProjectScreen() {
     }
   }, [walletStatus])
 
+  const planFromStore = usePlanStore((s) => params.planId ? s.getPlanById(params.planId) : undefined)
+  const recordContribution = usePlanStore((s) => s.recordContribution)
+
   const project = useMemo(() => {
+    if (planFromStore) {
+      return {
+        id: 0,
+        icon: planFromStore.icon || '\u{1F4B0}',
+        name: planFromStore.name,
+        target: planFromStore.target,
+        saved: planFromStore.saved,
+      }
+    }
     if (params.name) {
       const target = parseInt(params.target || '0', 10)
       const saved = parseInt(params.saved || '0', 10)
@@ -85,7 +99,7 @@ export default function FundProjectScreen() {
       }
     }
     return PROJECTS.find(p => p.id === parseInt(params.id || '1', 10)) || PROJECTS[0]
-  }, [params])
+  }, [params, planFromStore])
 
   const [amountStr, setAmountStr] = useState(
     params.amount ? parseInt(params.amount, 10).toString() : '',
@@ -95,10 +109,12 @@ export default function FundProjectScreen() {
 
   const amount = parseAmount(amountStr)
   const displayAmount = formatInput(amountStr)
-  const isQuickFund = !!params.amount
+  const isQuickFund = !!params.amount || !!params.planId
   const contributionTypeLabel = params.plan
     ? `${params.plan} Contribution`
-    : 'Contribution'
+    : params.planId
+      ? `${planFromStore?.schedule ?? ''} Contribution`
+      : 'Contribution'
 
   const handleQuickAmount = useCallback((val: number) => {
     setAmountStr(val.toString())
@@ -110,8 +126,11 @@ export default function FundProjectScreen() {
 
   const handleSubmit = useCallback(() => {
     Keyboard.dismiss()
+    if (params.planId && amount > 0) {
+      recordContribution(params.planId, amount)
+    }
     setShowSuccess(true)
-  }, [])
+  }, [params.planId, amount, recordContribution])
 
   useEffect(() => {
     if (!showSuccess) return

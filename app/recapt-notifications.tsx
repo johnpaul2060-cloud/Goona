@@ -17,9 +17,11 @@ import { router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import BottomDock from '../components/navigation/BottomDock'
 import {
-  useRecoveryStore, fmtDateFromParts, DayRecord,
-  computeStreak, computeMonthlyStats, generateInsights,
+  fmtDateFromParts, type DayRecord,
+  buildCalendarRecords, computeStreakByDay,
+  computeMonthlyStats, generateInsights,
 } from '../store/useRecoveryStore'
+import { usePlanStore } from '../store/usePlanStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -91,11 +93,11 @@ function computeReadiness(records: Record<string, DayRecord>): number {
     else if (r?.status === 'partial') weightedSum += weight * 0.5
   }
   const base = maxSum > 0 ? weightedSum / maxSum : 0
-  const streak = computeStreak(records)
+  const streak = computeStreakByDay(records)
   return Math.min(base + Math.min(streak * 0.015, 0.15), 1)
 }
 
-function generateNotifications(records: Record<string, DayRecord>): NotifItem[] {
+function generateNotifications(records: Record<string, DayRecord>, activePlanCount: number): NotifItem[] {
   const list: NotifItem[] = []
   const now = new Date()
   const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
@@ -104,7 +106,7 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
 
   /* 1. Urgent: savings due today */
   if (!todayChecked) {
-    const streak = computeStreak(records)
+    const streak = computeStreakByDay(records)
     list.push({
       id: 'save-today', type: 'savings_reminder', priority: 'urgent',
       icon: '\u{1F4B0}', title: 'Weekly recapt contribution due today',
@@ -149,7 +151,7 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
   })
 
   /* 4. Insight: GOONA IQ financial insights */
-  const insights = generateInsights(records)
+  const insights = generateInsights(records, activePlanCount)
   insights.slice(0, 2).forEach((msg, i) => {
     list.push({
       id: `iq-${i}`, type: 'goona_iq_insight', priority: 'insight',
@@ -164,7 +166,7 @@ function generateNotifications(records: Record<string, DayRecord>): NotifItem[] 
   })
 
   /* 5. Achievement: streak milestones */
-  const streak = computeStreak(records)
+  const streak = computeStreakByDay(records)
   if (streak >= 7) {
     list.push({
       id: 'streak-milestone', type: 'achievement_streak', priority: 'achievement',
@@ -306,28 +308,29 @@ const ncStyles = StyleSheet.create({
 /* ─── Main Screen ─── */
 export default function RecaptNotificationsScreen() {
   const insets = useSafeAreaInsets()
-  const records = useRecoveryStore((s) => s.records)
-  const checkIn = useRecoveryStore((s) => s.checkIn)
+  const plans = usePlanStore((s) => s.plans)
+  const recordContribution = usePlanStore((s) => s.recordContribution)
+  const { records } = useMemo(() => buildCalendarRecords(plans), [plans])
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<FilterKey>('all')
   const [savedMsg, setSavedMsg] = useState('')
 
-  const allNotifs = useMemo(() => generateNotifications(records), [records])
+  const activePlanCount = plans.filter(p => p.status === 'active').length
+  const allNotifs = useMemo(() => generateNotifications(records, activePlanCount), [records, activePlanCount])
   const activeNotifs = allNotifs.filter((n) => !dismissed.has(n.id))
   const filteredNotifs = activeNotifs.filter((n) => filter === 'all' || n.priority === filter)
 
   const handleAction = (id: string, action: NotifActionType) => {
-    const now = new Date()
-    const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
-
     switch (action) {
       case 'save':
-      case 'complete':
-        checkIn(todayStr, 'completed', 85000)
+      case 'complete': {
+        const activePlan = plans.find(p => p.status === 'active')
+        if (activePlan) recordContribution(activePlan.id, 85000)
         setSavedMsg('Recapt recorded! +85,000')
         setTimeout(() => setSavedMsg(''), 2500)
         setDismissed((prev) => new Set(prev).add(id))
         break
+      }
       case 'snooze':
       case 'dismiss':
       case 'reschedule':
@@ -435,7 +438,7 @@ export default function RecaptNotificationsScreen() {
               <Text style={s.summaryText}>
                 You have <Text style={{ fontWeight: '700' }}>{activeNotifs.length} notification{activeNotifs.length !== 1 ? 's' : ''}</Text> pending.
                 Your production readiness is at <Text style={{ fontWeight: '700' }}>{Math.round(computeReadiness(records) * 100)}%</Text>.
-                {computeStreak(records) >= 7 ? ' Strong streak momentum. Keep it up!' : ' Consistent recapt accelerates your timeline.'}
+                {computeStreakByDay(records) >= 7 ? ' Strong streak momentum. Keep it up!' : ' Consistent recapt accelerates your timeline.'}
               </Text>
             </LinearGradient>
           </Animated.View>

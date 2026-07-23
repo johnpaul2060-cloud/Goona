@@ -394,7 +394,7 @@ export default function WorkerDetailScreen() {
     seedDemoData()
     const convId = conv?.id || createConversation(worker.chatUserId)
     if (!convId) { Alert.alert('FarmChat unavailable', 'No FarmChat contact found for ' + worker.name + '.'); return }
-    router.push(('/(tabs)/chat/' + convId) as any)
+    router.push(('/(tabs)/farmchat/chat/' + convId) as any)
   }, [conv?.id, createConversation, seedDemoData, worker.chatUserId, worker.name])
   const callWorker = React.useCallback(async () => {
     const url = 'tel:' + worker.phone

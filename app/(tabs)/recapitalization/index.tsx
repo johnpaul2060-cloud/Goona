@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Keyboard, PanResponder, Modal, Platform, LayoutAnimation, UIManager,
@@ -26,9 +26,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import BottomDock from '../../../components/navigation/BottomDock'
 import RecoveryCheckInModal from '../../../components/RecoveryCheckInModal'
 import {
-  useRecoveryStore, fmtDateFromParts,
-  computeStreak,
+  fmtDateFromParts,
+  buildCalendarRecords,
+  getExpectedAmountForDay,
+  computeStreakByDay,
+  type DayRecord, type CalendarMeta,
 } from '../../../store/useRecoveryStore'
+import { usePlanStore } from '../../../store/usePlanStore'
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window')
 const IS_SMALL = SCREEN_W < 375
@@ -69,7 +73,9 @@ function usePressScale() {
 }
 
 function AnimatedBell() {
-  const records = useRecoveryStore((s) => s.records)
+  const plans = usePlanStore((s) => s.plans)
+  const calMeta = buildCalendarRecords(plans)
+  const { records } = calMeta
   const now = new Date()
   const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
   let missedCount = 0
@@ -130,13 +136,8 @@ function AnimatedCard({ children, delay }: { children: React.ReactNode; delay?: 
 function ProductionReadinessHero({ index }: { index: number }) {
   const animStyle = useStaggerEntry(index)
   const { style: pressStyle, onPressIn, onPressOut } = usePressScale()
-  const records = useRecoveryStore((s) => s.records)
-
-  let totalSaved = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
-  }
+  const plans = usePlanStore((s) => s.plans)
+  const { totalSaved, streak } = useMemo(() => buildCalendarRecords(plans), [plans])
   const target = 2500000
   const progress = Math.min(totalSaved / target, 1)
   const ringCircumference = 2 * Math.PI * 38
@@ -145,8 +146,6 @@ function ProductionReadinessHero({ index }: { index: number }) {
   useEffect(() => {
     ringAnim.value = withTiming(strokeDashoffset, { duration: 1500, easing: Easing.out(Easing.cubic) })
   }, [totalSaved])
-
-  const streak = computeStreak(records)
   const streakWeeks = Math.max(1, Math.floor(streak / 7))
   const readinessPct = Math.min(Math.round(progress * 100) + streakWeeks * 2, 100)
   const statusLabel = readinessPct >= 80 ? 'On Track' : readinessPct >= 50 ? 'Building' : 'Just Started'
@@ -219,8 +218,8 @@ colors={['#065F46', '#047857']}
 
 /* ─── 3. RECAP TOOLS (vertical list) ─── */
 const RECAP_TOOLS = [
-  { emoji: '\u2795', label: 'Fund', desc: 'Add a contribution to your production fund', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
-  { emoji: '\uD83D\uDCC5', label: 'Plan', desc: 'Set targets and plan your next cycle', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
+  { emoji: '\u2795', label: 'Add Contribution', desc: 'Put money toward your next production cycle', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
+  { emoji: '\uD83D\uDCC5', label: 'Plan Next Cycle', desc: 'Set targets and prepare your next cycle', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
   { emoji: '\uD83D\uDCB0', label: 'Budget', desc: 'Manage budget and allocations', color: '#0F766E', bg: '#DDF5F0', route: '/(tabs)/recapitalization/budget-setup' as const },
   { emoji: '\uD83D\uDCC8', label: 'Timeline & Reports', desc: 'Contribution history, milestones & exportable insights', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/timeline-reports' as const },
 ]
@@ -297,21 +296,16 @@ function ReadyForNextCycleChecklist({
   index: number; items: Record<ChecklistKey, boolean>; onToggle: (key: ChecklistKey) => void
 }) {
   const animStyle = useStaggerEntry(index, 80)
-  const records = useRecoveryStore((s) => s.records)
+  const plans = usePlanStore((s) => s.plans)
+  const { totalSaved, streak } = useMemo(() => buildCalendarRecords(plans), [plans])
 
   const completed = CHECKLIST_DEFS.filter(d => items[d.key]).length
   const total = CHECKLIST_DEFS.length
   const opsPct = Math.round((completed / total) * 100)
   const allComplete = completed === total
 
-  let totalSaved = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
-  }
   const target = 2500000
   const progress = Math.min(totalSaved / target, 1)
-  const streak = computeStreak(records)
   const streakWeeks = Math.max(1, Math.floor(streak / 7))
   const readinessPct = Math.min(Math.round(progress * 100) + streakWeeks * 2, 100)
   const restartDate = new Date()
@@ -388,10 +382,11 @@ function ReadyForNextCycleChecklist({
 /* ─── 5. CONTRIBUTION CALENDAR ─── */
 function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPress: (d: Date) => void }) {
   const animStyle = useStaggerEntry(index, 90)
-  const records = useRecoveryStore((s) => s.records)
+  const plans = usePlanStore((s) => s.plans)
+  const calMeta = buildCalendarRecords(plans)
+  const { records, missedCount, streak } = calMeta
   const now = new Date()
   const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
-  const streak = computeStreak(records)
 
   const { width: winW } = useWindowDimensions()
   const calCellW = (winW - 40 - CALENDAR_GAP * (CAL_COLS - 1) - (S.isSmall ? 8 : 4)) / CAL_COLS
@@ -410,12 +405,10 @@ function RecoveryTrackerCalendar({ index, onDayPress }: { index: number; onDayPr
 
   /* ─── Calendar Analytics ─── */
   let completedCount = 0
-  let missedCount = 0
   let upcomingDue = 0
   for (const key in records) {
     const r = records[key]
     if (r.status === 'completed' || r.status === 'exceeded') completedCount++
-    if (r.status === 'missed') missedCount++
   }
   const totalDays = completedCount + missedCount
   const consistencyScore = totalDays > 0 ? Math.round((completedCount / totalDays) * 100) : 0
@@ -646,6 +639,7 @@ function DayDetailModal({
   visible: boolean; date: Date | null; records: Record<string, DayRecord>
   onClose: () => void; onCheckIn: (d: Date) => void
 }) {
+  const plans = usePlanStore((s) => s.plans)
   if (!visible || !date) return null
 
   const now = new Date()
@@ -658,8 +652,8 @@ function DayDetailModal({
 
   const status = record?.status || (isFuture ? 'upcoming' : 'none')
   const amount = record?.amount
-  const expected = 85000
-  const streak = computeStreak(records)
+  const expected = getExpectedAmountForDay(plans, dateStr) || 0
+  const streak = computeStreakByDay(records)
 
   const sc: Record<string, string> = {
     completed: '#2E7D32', exceeded: '#AEEA00',
@@ -752,17 +746,14 @@ function DayDetailModal({
 /* ─── 6. GOONA IQ INSIGHTS ─── */
 function GoonaIqInsights({ index, opsCompleted, fsrs }: { index: number; opsCompleted: number; fsrs: import('../../../store/fsrsEngine').FSRSResult }) {
   const animStyle = useStaggerEntry(index, 110)
-  const records = useRecoveryStore((s) => s.records)
+  const plans = usePlanStore((s) => s.plans)
+  const calMeta = buildCalendarRecords(plans)
+  const { records, totalSaved, missedCount, activePlanCount } = calMeta
   const opsTotal = CHECKLIST_DEFS.length
 
-  let totalSaved = 0
-  let missedCount = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
-    if (r.status === 'missed') missedCount++
-  }
-  const target = 2500000
+  const target = activePlanCount > 0
+    ? plans.filter((p) => p.status === 'active').reduce((sum, p) => sum + p.target, 0)
+    : 2500000
   const gap = target - totalSaved
 
   const insights: {
@@ -874,8 +865,6 @@ export default function RecapitalizationDashboardScreen() {
     setCheckInDate(d)
     setShowCheckIn(true)
   }, [])
-
-  const records = useRecoveryStore((s) => s.records)
 
   /* ─── Checklist State ─── */
   const [checklist, setChecklist] = useState<Record<ChecklistKey, boolean>>({

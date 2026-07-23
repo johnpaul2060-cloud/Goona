@@ -13,9 +13,13 @@ import { Icons } from '../../../shared/icons'
 import { BlurView } from 'expo-blur'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import {
-  useRecoveryStore, fmtDateFromParts,
-  computeStreak, computeMonthlyStats, generateInsights,
+  fmtDateFromParts,
+  buildCalendarRecords,
+  computeStreakByDay as computeStreak,
+  computeMonthlyStats,
+  generateInsights,
 } from '../../../store/useRecoveryStore'
+import { usePlanStore } from '../../../store/usePlanStore'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -70,7 +74,8 @@ const segStyles = StyleSheet.create({
 
 /* ─── Timeline Tab ─── */
 function TimelineTab() {
-  const records = useRecoveryStore((s) => s.records)
+  const plans = usePlanStore((s) => s.plans)
+  const { records } = buildCalendarRecords(plans)
   const now = new Date()
   const streak = computeStreak(records)
 
@@ -205,22 +210,17 @@ function TimelineTab() {
 
 /* ─── Reports Tab ─── */
 function ReportsTab() {
-  const records = useRecoveryStore((s) => s.records)
+  const plans = usePlanStore((s) => s.plans)
+  const calMeta = buildCalendarRecords(plans)
+  const { records, totalSaved, missedCount: totalMissed, activePlanCount } = calMeta
   const now = new Date()
   const todayStr = fmtDateFromParts(now.getFullYear(), now.getMonth(), now.getDate())
   const streak = computeStreak(records)
   const stats = computeMonthlyStats(records, now.getFullYear(), now.getMonth())
-  const insights = generateInsights(records)
+  const insights = generateInsights(records, activePlanCount)
 
-  let totalSaved = 0
-  let totalMissed = 0
-  for (const key in records) {
-    const r = records[key]
-    if (r.amount && (r.status === 'completed' || r.status === 'exceeded')) totalSaved += r.amount
-    if (r.status === 'missed') totalMissed++
-  }
-  const totalTarget = 2500000
-  const overallProgress = Math.min(totalSaved / totalTarget, 1)
+  const totalTarget = plans.filter((p) => p.status === 'active').reduce((sum, p) => sum + p.target, 0) || 2500000
+  const overallProgress = totalTarget > 0 ? Math.min(totalSaved / totalTarget, 1) : 0
 
   const consistencyRate = stats.total > 0
     ? Math.round(((stats.completed + stats.exceeded) / stats.total) * 100)

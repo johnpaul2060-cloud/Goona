@@ -1,26 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
-  View, Text, TouchableOpacity, Pressable, TextInput,
-  StyleSheet, Platform, Keyboard,
+  View, Text, TouchableOpacity, TextInput,
+  StyleSheet, Platform, Keyboard, ScrollView,
 } from 'react-native'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
 } from 'react-native-reanimated'
-import { useRecoveryStore, CheckInStatus } from '../store/useRecoveryStore'
+import { usePlanStore } from '../store/usePlanStore'
 import GoonaIcon from './ui/GoonaIcon'
 import { Icons } from '../shared/icons'
 import { formatInput, parseAmount } from '../utils/format'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-type ActiveStatus = Exclude<CheckInStatus, 'none'>
-
-const STATUS_CONFIG: { key: ActiveStatus; label: string; description: string; icon: any }[] = [
-  { key: 'completed', label: 'Completed', description: 'You met your recovery target', icon: Icons.check },
-  { key: 'partial', label: 'Partial', description: 'You recovered some of the target', icon: Icons.minus },
-  { key: 'missed', label: 'Missed', description: 'You skipped this period', icon: Icons.x },
-  { key: 'exceeded', label: 'Exceeded', description: 'You recovered more than planned', icon: Icons.star },
-]
 
 function fmtDate(d: Date): string {
   const y = d.getFullYear()
@@ -36,13 +27,13 @@ export default function RecoveryCheckInModal({
   date: Date | null
   onClose: () => void
 }) {
-  const records = useRecoveryStore((s) => s.records)
-  const checkIn = useRecoveryStore((s) => s.checkIn)
+  const plans = usePlanStore((s) => s.plans)
+  const recordContribution = usePlanStore((s) => s.recordContribution)
+  const activePlans = useMemo(() => plans.filter((p) => p.status === 'active'), [plans])
 
   const dateStr = date ? fmtDate(date) : ''
-  const currentRecord = dateStr ? records[dateStr] : undefined
 
-  const [selectedStatus, setSelectedStatus] = useState<ActiveStatus | null>(null)
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
   const [amountRaw, setAmountRaw] = useState('')
   const [isVisible, setIsVisible] = useState(false)
   const amountDisplay = formatInput(amountRaw)
@@ -63,11 +54,8 @@ export default function RecoveryCheckInModal({
   }, [visible])
 
   useEffect(() => {
-    if (visible && currentRecord) {
-      setSelectedStatus(currentRecord.status as ActiveStatus)
-      setAmountRaw(currentRecord.amount ? String(currentRecord.amount) : '')
-    } else if (visible) {
-      setSelectedStatus(null)
+    if (visible) {
+      setSelectedPlanId(activePlans.length === 1 ? activePlans[0].id : null)
       setAmountRaw('')
     }
   }, [visible, dateStr])
@@ -81,41 +69,18 @@ export default function RecoveryCheckInModal({
   }))
 
   const handleConfirm = useCallback(() => {
-    if (!selectedStatus || !dateStr) return
-    const parsedAmount = amountRaw ? parseAmount(amountRaw) : undefined
-    checkIn(dateStr, selectedStatus, parsedAmount)
+    if (!dateStr) return
     Keyboard.dismiss()
+    if (selectedPlanId && amountRaw) {
+      const parsedAmount = parseAmount(amountRaw)
+      if (parsedAmount > 0) {
+        recordContribution(selectedPlanId, parsedAmount)
+      }
+    }
     onClose()
-  }, [selectedStatus, dateStr, amountRaw, checkIn, onClose])
+  }, [selectedPlanId, dateStr, amountRaw, recordContribution, onClose])
 
   if (!isVisible) return null
-
-  const selectedBg = (key: ActiveStatus) => {
-    switch (key) {
-      case 'completed': return 'rgba(46,125,50,0.08)'
-      case 'partial': return 'rgba(245,158,11,0.08)'
-      case 'missed': return 'rgba(239,68,68,0.08)'
-      case 'exceeded': return 'rgba(174,234,0,0.12)'
-    }
-  }
-
-  const selectedBorder = (key: ActiveStatus) => {
-    switch (key) {
-      case 'completed': return '#2E7D32'
-      case 'partial': return '#F59E0B'
-      case 'missed': return '#EF4444'
-      case 'exceeded': return '#AEEA00'
-    }
-  }
-
-  const statusColor = (key: ActiveStatus) => {
-    switch (key) {
-      case 'completed': return '#2E7D32'
-      case 'partial': return '#F59E0B'
-      case 'missed': return '#EF4444'
-      case 'exceeded': return '#AEEA00'
-    }
-  }
 
   return (
     <View style={styles.overlay}>
@@ -139,7 +104,7 @@ export default function RecoveryCheckInModal({
         </View>
 
         <Text style={styles.sheetSub}>
-          Did you complete your recovery target for this period?
+          Record a contribution for this day.
         </Text>
 
         {date && (
@@ -150,66 +115,66 @@ export default function RecoveryCheckInModal({
           </View>
         )}
 
-        <View style={styles.optionsGroup}>
-          {STATUS_CONFIG.map((opt) => {
-            const active = selectedStatus === opt.key
-            const IconComp = opt.icon
-            return (
-              <Pressable
-                key={opt.key}
-                onPress={() => setSelectedStatus(opt.key)}
-                style={[
-                  styles.optionRow,
-                  active && {
-                    backgroundColor: selectedBg(opt.key),
-                    borderColor: selectedBorder(opt.key),
-                  },
-                ]}
-              >
-                <View style={[styles.optionIcon, active && { opacity: 1 }]}>
-                  <GoonaIcon icon={IconComp} size={18} color={statusColor(opt.key)} strokeWidth={1.5} />
-                </View>
-                <View style={styles.optionContent}>
-                  <Text style={[styles.optionLabel, active && { color: selectedBorder(opt.key) }]}>
-                    {opt.label}
-                  </Text>
-                  <Text style={styles.optionDesc}>{opt.description}</Text>
-                </View>
-                <View style={[
-                  styles.optionRadio,
-                  active && { borderColor: selectedBorder(opt.key), backgroundColor: selectedBorder(opt.key) },
-                ]}>
-                  {active && <GoonaIcon icon={Icons.check} size={10} color="white" strokeWidth={3} />}
-                </View>
-              </Pressable>
-            )
-          })}
-        </View>
-
-        <View style={styles.amountSection}>
-          <Text style={styles.amountLabel}>Amount Recovered</Text>
-          <View style={styles.amountInputRow}>
-            <Text style={styles.amountPrefix}>₦</Text>
-            <TextInput
-              style={styles.amountInput}
-              value={amountDisplay}
-              onChangeText={(v) => setAmountRaw(v.replace(/[^0-9]/g, ''))}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor="#CBD5E1"
-            />
+        {activePlans.length === 0 ? (
+          <View style={styles.noPlansBanner}>
+            <GoonaIcon icon={Icons.target} size={20} color="#94A3B8" />
+            <Text style={styles.noPlansText}>No active plans. Create a plan first.</Text>
           </View>
-          <Text style={styles.amountHint}>Optional — helps track recovery accuracy</Text>
-        </View>
+        ) : (
+          <>
+            {activePlans.length > 1 && (
+              <>
+                <Text style={styles.sectionLabel}>Select Plan</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.planScroll}>
+                  {activePlans.map((p) => {
+                    const active = selectedPlanId === p.id
+                    return (
+                      <TouchableOpacity
+                        key={p.id}
+                        activeOpacity={0.8}
+                        onPress={() => setSelectedPlanId(p.id)}
+                        style={[styles.planChip, active && styles.planChipActive]}
+                      >
+                        <Text style={styles.planChipIcon}>{p.icon || '\u{1F4B0}'}</Text>
+                        <Text style={[styles.planChipLabel, active && styles.planChipLabelActive]}>{p.name}</Text>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </ScrollView>
+              </>
+            )}
+            {activePlans.length === 1 && (
+              <View style={styles.singlePlanRow}>
+                <Text style={styles.singlePlanIcon}>{activePlans[0].icon || '\u{1F4B0}'}</Text>
+                <Text style={styles.singlePlanName}>{activePlans[0].name}</Text>
+              </View>
+            )}
+
+            <View style={styles.amountSection}>
+              <Text style={styles.amountLabel}>Contribution Amount</Text>
+              <View style={styles.amountInputRow}>
+                <Text style={styles.amountPrefix}>{'\u20A6'}</Text>
+                <TextInput
+                  style={styles.amountInput}
+                  value={amountDisplay}
+                  onChangeText={(v) => setAmountRaw(v.replace(/[^0-9]/g, ''))}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  placeholderTextColor="#CBD5E1"
+                />
+              </View>
+            </View>
+          </>
+        )}
 
         <TouchableOpacity
-          style={[styles.confirmBtn, !selectedStatus && styles.confirmBtnDisabled]}
+          style={[styles.confirmBtn, (!selectedPlanId || !amountRaw) && styles.confirmBtnDisabled]}
           activeOpacity={0.85}
           onPress={handleConfirm}
-          disabled={!selectedStatus}
+          disabled={!selectedPlanId || !amountRaw}
         >
-          <Text style={[styles.confirmBtnText, !selectedStatus && styles.confirmBtnTextDisabled]}>
-            Confirm Check-in
+          <Text style={[styles.confirmBtnText, (!selectedPlanId || !amountRaw) && styles.confirmBtnTextDisabled]}>
+            {selectedPlanId && amountRaw ? 'Record Contribution' : 'Enter amount to contribute'}
           </Text>
         </TouchableOpacity>
       </Animated.View>
@@ -267,23 +232,33 @@ const styles = StyleSheet.create({
   },
   dateBadgeText: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
 
-  optionsGroup: { marginTop: 18, gap: 8 },
-  optionRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 14, paddingHorizontal: 14,
-    borderRadius: 16,
-    backgroundColor: '#F8FAF7',
-    borderWidth: 1, borderColor: 'transparent',
+  noPlansBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#F1F5F9', borderRadius: 14,
+    padding: 16, marginTop: 16,
   },
-  optionIcon: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', opacity: 0.7 },
-  optionContent: { flex: 1, marginLeft: 10 },
-  optionLabel: { fontSize: 14, fontWeight: '700', color: '#1F2937' },
-  optionDesc: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
-  optionRadio: {
-    width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2, borderColor: '#D1D5DB',
-    alignItems: 'center', justifyContent: 'center',
+  noPlansText: { fontSize: 13, fontWeight: '600', color: '#94A3B8', flex: 1 },
+
+  sectionLabel: { fontSize: 13, fontWeight: '700', color: '#1F2937', marginTop: 16, marginBottom: 10 },
+  planScroll: { marginBottom: 4 },
+  planChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 10, paddingHorizontal: 14,
+    borderRadius: 100, backgroundColor: '#F1F5F9',
+    marginRight: 8, borderWidth: 1.5, borderColor: 'transparent',
   },
+  planChipActive: { backgroundColor: '#F0FDF4', borderColor: '#2E7D32' },
+  planChipIcon: { fontSize: 16 },
+  planChipLabel: { fontSize: 13, fontWeight: '700', color: '#64748B' },
+  planChipLabelActive: { color: '#2E7D32' },
+  singlePlanRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#F0FDF4', borderRadius: 14,
+    padding: 14, marginTop: 14,
+    borderWidth: 1, borderColor: '#D4EDDA',
+  },
+  singlePlanIcon: { fontSize: 20 },
+  singlePlanName: { fontSize: 15, fontWeight: '700', color: '#1F2937' },
 
   amountSection: { marginTop: 20 },
   amountLabel: { fontSize: 13, fontWeight: '600', color: '#1F2937' },
@@ -295,7 +270,6 @@ const styles = StyleSheet.create({
   },
   amountPrefix: { fontSize: 18, fontWeight: '700', color: '#94A3B8', marginRight: 8 },
   amountInput: { flex: 1, fontSize: 17, fontWeight: '700', color: '#1F2937' },
-  amountHint: { fontSize: 11, color: '#CBD5E1', marginTop: 4 },
 
   confirmBtn: {
     height: 52, borderRadius: 16,

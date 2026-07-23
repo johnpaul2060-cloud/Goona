@@ -2,15 +2,15 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { Icons } from '../../shared/icons'
-import { useFarmChatStore } from '../../store/useFarmChatStore'
-import { useAuthStore } from '../../store/useAuthStore'
-import { usePrioritizedChat, PRIORITY_COLORS } from '../../store/farmPriorityEngine'
-import { FARM_NAME } from '../../constants/farm'
-import FeedPostCard from '../../components/farmchat/FeedPostCard'
-import ConversationListItem from '../../components/farmchat/ConversationListItem'
-import CreateGroupModal from '../../components/farmchat/CreateGroupModal'
-import BottomDock from '../../components/navigation/BottomDock'
+import { Icons } from '../../../shared/icons'
+import { useFarmChatStore } from '../../../store/useFarmChatStore'
+import { useAuthStore } from '../../../store/useAuthStore'
+import { usePrioritizedChat, PRIORITY_COLORS } from '../../../store/farmPriorityEngine'
+import { FARM_NAME } from '../../../constants/farm'
+import FeedPostCard from '../../../components/farmchat/FeedPostCard'
+import ConversationListItem from '../../../components/farmchat/ConversationListItem'
+import CreateGroupModal from '../../../components/farmchat/CreateGroupModal'
+import BottomDock from '../../../components/navigation/BottomDock'
 
 type InternalTab = 'feed' | 'messages' | 'groups'
 type Comment = { id: string; username: string; text: string; timestamp: number }
@@ -134,7 +134,7 @@ export default function FarmChatScreen() {
   }, [rankedFeed, userRole])
 
   const openConversation = useCallback((convId: string) => {
-    router.push(`/(tabs)/chat/${convId}`)
+    router.push(`/(tabs)/farmchat/chat/${convId}`)
   }, [])
 
   const handleCommentSend = useCallback((text: string) => {
@@ -152,51 +152,6 @@ export default function FarmChatScreen() {
   const groups = conversations.filter((c) => c.type === 'group')
   const totalMessageUnread = useMemo(() => direct.reduce((s, c) => s + c.unreadCount, 0), [direct])
   const totalGroupUnread = useMemo(() => groups.reduce((s, c) => s + c.unreadCount, 0), [groups])
-
-  const renderFeedHeader = () => (
-    <View>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.topComposer}>
-          <TextInput
-            style={styles.topComposerInput}
-            placeholder="What's happening in the farm?"
-            placeholderTextColor="#94A3B8"
-            value={postText}
-            onChangeText={setPostText}
-            multiline
-          />
-          <View style={styles.topComposerActions}>
-            <View style={styles.topComposerLeft}>
-              <TouchableOpacity style={styles.topComposerIconBtn}>
-                <Icons.camera size={20} color="#64748B" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.topComposerIconBtn}>
-                <Icons.mic size={20} color="#64748B" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.topComposerIconBtn}>
-                <Icons.barChart3 size={20} color="#64748B" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.topComposerIconBtn}>
-                <Icons.paperclip size={20} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity style={[styles.topComposerSendBtn, !postText.trim() && styles.topComposerSendBtnDisabled]}>
-              <Icons.send size={18} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-      {pinnedFeedType && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8 }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
-          <Text style={{ fontSize: 12, fontWeight: '600', color: '#EF4444', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Priority Feed — {pinnedFeedType.replace('_', ' ')}
-          </Text>
-        </View>
-      )}
-      <SectionDivider label="Today" count={12} />
-    </View>
-  )
 
   return (
     <View style={styles.container}>
@@ -247,6 +202,41 @@ export default function FarmChatScreen() {
         })}
       </View>
 
+      {/* FEED COMPOSER — outside FlatList so re-renders can't remount the TextInput */}
+      {internalTab === 'feed' && (
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.topComposer}>
+            <TextInput
+              style={styles.topComposerInput}
+              placeholder="What's happening in the farm?"
+              placeholderTextColor="#94A3B8"
+              value={postText}
+              onChangeText={setPostText}
+              multiline
+            />
+            <View style={styles.topComposerActions}>
+              <View style={styles.topComposerLeft}>
+                <TouchableOpacity style={styles.topComposerIconBtn}>
+                  <Icons.camera size={20} color="#64748B" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.topComposerIconBtn}>
+                  <Icons.mic size={20} color="#64748B" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.topComposerIconBtn}>
+                  <Icons.barChart3 size={20} color="#64748B" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.topComposerIconBtn}>
+                  <Icons.paperclip size={20} color="#64748B" />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity style={[styles.topComposerSendBtn, !postText.trim() && styles.topComposerSendBtnDisabled]}>
+                <Icons.send size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      )}
+
       {/* Content — fills remaining space naturally */}
       {internalTab === 'feed' ? (
         <FlatList
@@ -271,9 +261,22 @@ export default function FarmChatScreen() {
               </View>
             )
           }}
-          ListHeaderComponent={renderFeedHeader}
+          ListHeaderComponent={(
+            <View>
+              {pinnedFeedType && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8 }}>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#EF4444', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Priority Feed — {pinnedFeedType.replace('_', ' ')}
+                  </Text>
+                </View>
+              )}
+              <SectionDivider label="Today" count={12} />
+            </View>
+          )}
           contentContainerStyle={{ paddingBottom: DOCK_TOTAL_HEIGHT + 40 }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         />
       ) : internalTab === 'messages' ? (
         <FlatList
@@ -292,7 +295,7 @@ export default function FarmChatScreen() {
           renderItem={({ item }) => (
             <ConversationListItem conv={item} isGroup onPress={() => openConversation(item.id)} />
           )}
-          ListHeaderComponent={() => (
+          ListHeaderComponent={(
             <TouchableOpacity style={styles.createGroupBtn} activeOpacity={0.85} onPress={() => setShowCreateGroup(true)}>
               <Icons.plus size={18} color="#fff" />
               <Text style={styles.createGroupText}>Create New Group</Text>

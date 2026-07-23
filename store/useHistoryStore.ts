@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-export type RecordType = 'feed' | 'eggs' | 'water' | 'medication' | 'mortality' | 'observation' | 'sale' | 'expense' | 'inventory'
+export type RecordType = 'feed' | 'eggs' | 'water' | 'medication' | 'mortality' | 'observation' | 'sale' | 'expense' | 'inventory' | 'completedPlan'
 
 export interface HistoryRecord {
   id: string

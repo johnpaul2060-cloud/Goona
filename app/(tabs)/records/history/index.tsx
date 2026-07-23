@@ -17,6 +17,7 @@ import {
   type RecordType, type DatePreset, type DateRange, type HistoryRecord, type AggregatedMetric,
 } from '../../../../store/useHistoryStore'
 import { useBatchStore, Batch } from '../../../../store/useBatchStore'
+import { usePlanStore } from '../../../../store/usePlanStore'
 import BottomDock from '../../../../components/navigation/BottomDock'
 
 const RECORD_TYPES: { type: RecordType; label: string; icon: string; color: string; bg: string; unitLabel: string }[] = [
@@ -197,6 +198,9 @@ export default function FarmHistoryHomeScreen() {
       .filter((b) => b.status === 'completed')
       .sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime())
   }, [batches])
+
+  const completedPlans = usePlanStore((s) => s.plans)
+  const completedPlanList = useMemo(() => completedPlans.filter((p) => p.status === 'completed'), [completedPlans])
 
   const totalRecords = useMemo(() => {
     return typeResults.reduce((sum, r) => sum + r.records.length, 0)
@@ -618,6 +622,64 @@ export default function FarmHistoryHomeScreen() {
                   style={styles.restoreRow}
                   activeOpacity={0.7}
                   onPress={() => handleRestore(b)}
+                >
+                  <GoonaIcon icon={Icons.refreshCw} size={16} color="#2E7D32" />
+                  <Text style={styles.restoreRowText}>Restore to Active</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </Animated.View>
+        )}
+
+        {/* === COMPLETED PLANS === */}
+        {completedPlanList.length > 0 && (
+          <Animated.View entering={FadeInUp.duration(400).delay(250).springify()} style={styles.completedSection}>
+            <View style={styles.completedSectionHead}>
+              <View style={styles.completedSectionHeadLeft}>
+                <GoonaIcon icon={Icons.target} size={18} color="#2E7D32" />
+                <Text style={styles.completedSectionTitle}>Completed Plans</Text>
+              </View>
+              <View style={styles.completedCountBadge}>
+                <Text style={styles.completedCountText}>{completedPlanList.length}</Text>
+              </View>
+            </View>
+            {completedPlanList.map((p) => (
+              <View key={p.id} style={styles.completedCard}>
+                <View style={styles.completedCardBody}>
+                  <View style={styles.completedCardTop}>
+                    <Text style={styles.completedCardName}>{p.name}</Text>
+                    <View style={styles.completedCardBadge}>
+                      <Text style={styles.completedCardBadgeText}>{p.schedule}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.completedCardMeta}>
+                    <View style={styles.completedMetaItem}>
+                      <Text style={styles.completedMetaVal}>{formatNaira(p.completionSummary?.totalContributed ?? p.saved)}</Text>
+                      <Text style={styles.completedMetaLbl}>Total Saved</Text>
+                    </View>
+                    <View style={styles.completedMetaDivider} />
+                    <View style={styles.completedMetaItem}>
+                      <Text style={styles.completedMetaVal}>{formatNaira(p.target)}</Text>
+                      <Text style={styles.completedMetaLbl}>Target</Text>
+                    </View>
+                    <View style={styles.completedMetaDivider} />
+                    <View style={styles.completedMetaItem}>
+                      <Text style={styles.completedMetaVal}>{p.contributions.length}</Text>
+                      <Text style={styles.completedMetaLbl}>Contributions</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.completedDate}>
+                    Completed {p.completedAt ? formatDate(p.completedAt) : ''}
+                  </Text>
+                </View>
+                <View style={styles.completedCardDivider} />
+                <TouchableOpacity
+                  style={styles.restoreRow}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    const restorePlan = usePlanStore.getState().restorePlan
+                    restorePlan(p.id)
+                  }}
                 >
                   <GoonaIcon icon={Icons.refreshCw} size={16} color="#2E7D32" />
                   <Text style={styles.restoreRowText}>Restore to Active</Text>

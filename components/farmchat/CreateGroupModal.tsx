@@ -151,7 +151,7 @@ export default function CreateGroupModal({ visible, onClose }: CreateGroupModalP
       reset()
       onClose()
       InteractionManager.runAfterInteractions(() => {
-        router.push(`/(tabs)/chat/${gid}` as any)
+        router.push(`/(tabs)/farmchat/chat/${gid}` as any)
       })
     }
   }

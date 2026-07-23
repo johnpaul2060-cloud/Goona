@@ -10,30 +10,12 @@ import { Icons } from '../shared/icons'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 import { useWalletStore, setPendingReturnUrl } from '../store/useWalletStore'
+import { usePlanStore } from '../store/usePlanStore'
 import { formatInput, parseAmount, formatNaira } from '../utils/format'
 
-const DEMO_PROJECTS = [
-  { id: 1, icon: '\u{1F33E}', name: 'Feed Purchase', target: 500000, saved: 250000 },
-  { id: 2, icon: '\u{1F477}', name: 'Staff Salaries', target: 300000, saved: 120000 },
-  { id: 3, icon: '\u{1F3D7}\uFE0F', name: 'Infrastructure', target: 3000000, saved: 900000 },
-  { id: 4, icon: '\u{1F425}', name: 'Restocking', target: 800000, saved: 580000 },
-] as const
-
-const DEMO_HISTORY = [
-  { date: 'Today', project: 'Feed Purchase', amount: 10000, status: 'Successful' },
-  { date: 'Yesterday', project: 'Staff Salaries', amount: 20000, status: 'Successful' },
-  { date: '18 Jun 2026', project: 'Infrastructure', amount: 50000, status: 'Successful' },
-  { date: '15 Jun 2026', project: 'Feed Purchase', amount: 15000, status: 'Successful' },
-  { date: '12 Jun 2026', project: 'Restocking', amount: 25000, status: 'Successful' },
-] as const
-
-const DEMO_UPCOMING = [
-  { project: 'Staff Salaries', due: 'Friday', amount: 10000 },
-  { project: 'Feed Purchase', due: 'Monday', amount: 15000 },
-  { project: 'Infrastructure', due: '1 Jul 2026', amount: 50000 },
-] as const
-
 const QUICK_AMOUNTS = [5000, 10000, 20000, 50000, 100000]
+
+type TabType = 'history' | 'upcoming'
 
 function formatCurrency(n: number) {
   return formatNaira(n)
@@ -49,18 +31,33 @@ export default function FundRecaptScreen() {
   const router = useRouter()
   const [quickAmount, setQuickAmount] = useState<number | null>(null)
   const [customAmountStr, setCustomAmountStr] = useState('')
+  const [activeTab, setActiveTab] = useState<TabType>('history')
+  const walletStatus = useWalletStore((s) => s.walletStatus)
+  const plans = usePlanStore((s) => s.plans)
+  const activePlans = useMemo(() => plans.filter((p) => p.status === 'active'), [plans])
+  const completedPlans = useMemo(() => plans.filter((p) => p.status === 'completed'), [plans])
+
+  const allContributions = useMemo(() => {
+    const entries: Array<{ date: string; project: string; amount: number }> = []
+    for (const plan of plans) {
+      for (const c of plan.contributions) {
+        entries.push({ date: c.date, project: plan.name, amount: c.amount })
+      }
+    }
+    return entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [plans])
 
   const totalSaved = useMemo(
-    () => DEMO_PROJECTS.reduce((sum, p) => sum + p.saved, 0),
-    [],
+    () => activePlans.reduce((sum, p) => sum + p.saved, 0),
+    [activePlans],
   )
 
-  const activeProjects = DEMO_PROJECTS.length
-  const completedProjects = 2
+  const activeProjects = activePlans.length
+  const completedProjects = completedPlans.length
 
   const totalTarget = useMemo(
-    () => DEMO_PROJECTS.reduce((sum, p) => sum + p.target, 0),
-    [],
+    () => activePlans.reduce((sum, p) => sum + p.target, 0),
+    [activePlans],
   )
 
   const overallProgress = totalTarget > 0
@@ -80,16 +77,60 @@ export default function FundRecaptScreen() {
     setQuickAmount(null)
   }, [])
 
-  const walletStatus = useWalletStore((s) => s.walletStatus)
-
-  const handleFundProject = useCallback((projectId: number) => {
+  const handleFundProject = useCallback((planId: string) => {
     if (walletStatus !== 'activated') {
       setPendingReturnUrl('/fund-recapt')
       router.push('/wallet-activation')
       return
     }
-    router.push(`/fund-project?id=${projectId}`)
+    router.push(`/fund-project?planId=${planId}`)
   }, [walletStatus])
+
+  const upcoming = useMemo(() => {
+    return activePlans
+      .filter((p) => p.contributions.length > 0 || p.saved > 0)
+      .map((p) => {
+        const perContribution = Math.round(p.target / Math.max(1, p.contributions.length + 1))
+        return {
+          project: p.name,
+          amount: perContribution,
+        }
+      })
+  }, [activePlans])
+
+  function formatDateDisplay(iso: string): string {
+    const d = new Date(iso)
+    const now = new Date()
+    const diff = now.getTime() - d.getTime()
+    if (diff < 86400000 && d.getDate() === now.getDate()) return 'Today'
+    if (diff < 172800000 && d.getDate() === now.getDate() - 1) return 'Yesterday'
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  const renderTabToggle = () => (
+    <View style={styles.tabRow}>
+      {(['history', 'upcoming'] as TabType[]).map((tab) => {
+        const active = activeTab === tab
+        return (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tabBtn, active && styles.tabBtnActive]}
+            activeOpacity={0.7}
+            onPress={() => setActiveTab(tab)}
+          >
+            <GoonaIcon
+              icon={tab === 'history' ? Icons.clock : Icons.calendar}
+              size={16}
+              color={active ? '#FFF' : '#64748B'}
+            />
+            <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
+              {tab === 'history' ? 'HISTORY' : 'UPCOMING'}
+            </Text>
+          </TouchableOpacity>
+        )
+      })}
+    </View>
+  )
 
   return (
     <View style={styles.container}>
@@ -117,7 +158,7 @@ export default function FundRecaptScreen() {
             <GoonaIcon icon={Icons.arrowLeft} size={20} color="#1F2937" />
           </TouchableOpacity>
 
-          <Text style={styles.heroTitle}>Fund Recapt</Text>
+          <Text style={styles.heroTitle}>Add Contribution</Text>
           <Text style={styles.heroSub}>
             Add money to your projects and track your progress.
           </Text>
@@ -197,31 +238,37 @@ export default function FundRecaptScreen() {
         >
           <Text style={styles.sectionLabel}>Active Projects</Text>
           <View style={styles.projectStack}>
-            {DEMO_PROJECTS.map((project, idx) => {
-              const progress = project.target > 0
-                ? Math.min(1, project.saved / project.target)
+            {activePlans.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <GoonaIcon icon={Icons.target} size={24} color="#CBD5E1" />
+                <Text style={styles.emptyText}>No active projects yet</Text>
+                <Text style={styles.emptySub}>Create a plan to get started.</Text>
+              </View>
+            ) : (activePlans.map((plan, idx) => {
+              const progress = plan.target > 0
+                ? Math.min(1, plan.saved / plan.target)
                 : 0
               return (
                 <Animated.View
-                  key={project.id}
+                  key={plan.id}
                   entering={FadeInUp.duration(350).delay(idx * 80).springify()}
                   style={styles.projectCard}
                 >
                   <View style={styles.projectHead}>
-                    <Text style={styles.projectIcon}>{project.icon}</Text>
+                    <Text style={styles.projectIcon}>{plan.icon}</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.projectName}>{project.name}</Text>
+                      <Text style={styles.projectName}>{plan.name}</Text>
                       <View style={styles.projectTargetRow}>
                         <View style={styles.projectTargetItem}>
                           <Text style={styles.projectTargetLabel}>Target</Text>
                           <Text style={styles.projectTargetValue}>
-                            {formatCurrency(project.target)}
+                            {formatCurrency(plan.target)}
                           </Text>
                         </View>
                         <View style={styles.projectTargetItem}>
                           <Text style={styles.projectTargetLabel}>Saved</Text>
                           <Text style={[styles.projectTargetValue, { color: '#2E7D32' }]}>
-                            {formatCurrency(project.saved)}
+                            {formatCurrency(plan.saved)}
                           </Text>
                         </View>
                       </View>
@@ -247,14 +294,14 @@ export default function FundRecaptScreen() {
                   <TouchableOpacity
                     style={styles.fundBtn}
                     activeOpacity={0.8}
-                    onPress={() => handleFundProject(project.id)}
+                    onPress={() => handleFundProject(plan.id)}
                   >
                     <GoonaIcon icon={Icons.wallet} size={16} color="#FFFFFF" />
                     <Text style={styles.fundBtnText}>Fund Project</Text>
                   </TouchableOpacity>
                 </Animated.View>
               )
-            })}
+            }))}
           </View>
         </Animated.View>
 
@@ -306,7 +353,9 @@ export default function FundRecaptScreen() {
                     router.push('/wallet-activation')
                     return
                   }
-                  router.push('/fund-project?id=1')
+                  if (activePlans.length > 0) {
+                    router.push(`/fund-project?planId=${activePlans[0].id}&amount=${customAmount}`)
+                  }
                 }}
               >
                 <Text style={styles.quickFundBtnText}>Add</Text>
@@ -315,58 +364,59 @@ export default function FundRecaptScreen() {
           </View>
         </Animated.View>
 
-        {/* ── CONTRIBUTION HISTORY ── */}
+        {/* ── TAB TOGGLE + CONTRIBUTION TABLE ── */}
         <Animated.View
           entering={FadeInDown.duration(400).delay(260).springify()}
         >
-          <Text style={styles.sectionLabel}>Contribution History</Text>
-          <View style={styles.historyCard}>
-            {DEMO_HISTORY.map((item, idx) => (
-              <View key={idx}>
-                {idx > 0 && <View style={styles.historyDivider} />}
-                <View style={styles.historyRow}>
-                  <View style={styles.historyLeft}>
-                    <Text style={styles.historyDate}>{item.date}</Text>
-                    <Text style={styles.historyProject}>{item.project}</Text>
-                  </View>
-                  <View style={styles.historyRight}>
-                    <Text style={styles.historyAmount}>
-                      {formatCurrency(item.amount)}
-                    </Text>
-                    <View style={styles.historyStatusBadge}>
-                      <Text style={styles.historyStatusText}>{item.status}</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
+          {renderTabToggle()}
 
-        {/* ── UPCOMING CONTRIBUTIONS ── */}
-        <Animated.View
-          entering={FadeInDown.duration(400).delay(320).springify()}
-        >
-          <Text style={styles.sectionLabel}>Upcoming Contributions</Text>
-          <View style={styles.upcomingCard}>
-            {DEMO_UPCOMING.map((item, idx) => (
-              <View key={idx}>
-                {idx > 0 && <View style={styles.historyDivider} />}
-                <View style={styles.upcomingRow}>
-                  <Text style={styles.upcomingProject}>{item.project}</Text>
-                  <View style={styles.upcomingRight}>
-                    <View style={styles.upcomingDue}>
-                      <GoonaIcon icon={Icons.calendar} size={12} color="#94A3B8" />
-                      <Text style={styles.upcomingDueText}>{item.due}</Text>
+          {activeTab === 'history' ? (
+            <View style={styles.historyCard}>
+              {allContributions.length === 0 ? (
+                <View style={styles.emptySubRow}>
+                  <Text style={styles.emptySubText}>No contributions yet</Text>
+                </View>
+              ) : (allContributions.slice(0, 20).map((item, idx) => (
+                <View key={idx}>
+                  {idx > 0 && <View style={styles.historyDivider} />}
+                  <View style={styles.historyRow}>
+                    <View style={styles.historyLeft}>
+                      <Text style={styles.historyDate}>{formatDateDisplay(item.date)}</Text>
+                      <Text style={styles.historyProject}>{item.project}</Text>
                     </View>
-                    <Text style={styles.upcomingAmount}>
-                      {formatCurrency(item.amount)}
-                    </Text>
+                    <View style={styles.historyRight}>
+                      <Text style={styles.historyAmount}>
+                        {formatCurrency(item.amount)}
+                      </Text>
+                      <View style={styles.historyStatusBadge}>
+                        <Text style={styles.historyStatusText}>Successful</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              )))}
+            </View>
+          ) : (
+            <View style={styles.upcomingCard}>
+              {upcoming.length === 0 ? (
+                <View style={styles.emptySubRow}>
+                  <Text style={styles.emptySubText}>No upcoming contributions</Text>
+                </View>
+              ) : (upcoming.map((item, idx) => (
+                <View key={idx}>
+                  {idx > 0 && <View style={styles.historyDivider} />}
+                  <View style={styles.upcomingRow}>
+                    <Text style={styles.upcomingProject}>{item.project}</Text>
+                    <View style={styles.upcomingRight}>
+                      <Text style={styles.upcomingAmount}>
+                        {formatCurrency(item.amount)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )))}
+            </View>
+          )}
         </Animated.View>
       </ScrollView>
     </View>
@@ -750,5 +800,71 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#1B1B1B',
+  },
+
+  /* ── Tab Toggle ── */
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 14,
+  },
+  tabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  tabBtnActive: {
+    backgroundColor: '#2E7D32',
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  tabLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  tabLabelActive: {
+    color: '#FFFFFF',
+  },
+
+  /* ── Empty States ── */
+  emptyCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 2,
+  },
+  emptyText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#94A3B8',
+  },
+  emptySub: {
+    fontSize: 13,
+    color: '#CBD5E1',
+  },
+  emptySubRow: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  emptySubText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#94A3B8',
   },
 })

@@ -14,7 +14,6 @@ export default function TabLayout() {
       <Tabs.Screen name="farmchat" />
       <Tabs.Screen name="records" />
       <Tabs.Screen name="recapitalization" />
-      <Tabs.Screen name="chat" options={{ href: null }} />
       <Tabs.Screen name="team" />
     </Tabs>
   );

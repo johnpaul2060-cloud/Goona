@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useAuthStore } from './useAuthStore'
 import { useBatchStore } from './useBatchStore'
 import { useWeatherStore } from './useWeatherStore'
-import { useRecoveryStore, computeStreak, computeMonthlyStats } from './useRecoveryStore'
-import type { DayRecord } from './useRecoveryStore'
+import { buildCalendarRecords, computeMonthlyStats } from './useRecoveryStore'
+import type { CalendarMeta } from './useRecoveryStore'
+import { usePlanStore } from './usePlanStore'
 import { useFarmChatStore } from './useFarmChatStore'
 import { useNotificationStore } from './useNotificationStore'
 import type { Batch } from './useBatchStore'
@@ -133,8 +134,7 @@ export interface EngineInputData {
   batches: Batch[]
   todayWeather: WeatherDay | null
   weatherAlerts: { type: string; message: string }[]
-  recoveryRecords: Record<string, DayRecord>
-  recoveryStreak: number
+  calendarMeta: CalendarMeta
   feedPosts: FeedPost[]
   notifications: AppNotification[]
 }
@@ -143,7 +143,8 @@ export function collectEngineData(): EngineInputData {
   const auth = useAuthStore.getState()
   const batchStore = useBatchStore.getState()
   const weatherStore = useWeatherStore.getState()
-  const recoveryStore = useRecoveryStore.getState()
+  const plans = usePlanStore.getState().plans
+  const calendarMeta = buildCalendarRecords(plans)
   const chatStore = useFarmChatStore.getState()
   const notifStore = useNotificationStore.getState()
 
@@ -152,8 +153,7 @@ export function collectEngineData(): EngineInputData {
     batches: batchStore.batches,
     todayWeather: weatherStore.getToday(),
     weatherAlerts: weatherStore.getAlerts(),
-    recoveryRecords: recoveryStore.records,
-    recoveryStreak: computeStreak(recoveryStore.records),
+    calendarMeta,
     feedPosts: chatStore.feedPosts,
     notifications: notifStore.notifications,
   }
@@ -199,7 +199,8 @@ export class FarmPriorityEngine {
   }
 
   private financialSignals(data: EngineInputData): PrioritySignal[] {
-    const { batches, recoveryRecords, recoveryStreak } = data
+    const { batches, calendarMeta } = data
+    const { records: recoveryRecords, streak: recoveryStreak } = calendarMeta
     const totalFeedCost = batches.reduce((s, b) => s + b.feedCost, 0)
     const totalMedCost = batches.reduce((s, b) => s + b.medicationCost, 0)
     const totalCost = batches.reduce((s, b) => s + b.purchaseCost + b.feedCost + b.medicationCost, 0)
@@ -256,7 +257,8 @@ export class FarmPriorityEngine {
   }
 
   private farmOperationSignals(data: EngineInputData): PrioritySignal[] {
-    const { batches, feedPosts, recoveryStreak } = data
+    const { batches, feedPosts, calendarMeta } = data
+    const { streak: recoveryStreak } = calendarMeta
     const now = Date.now()
 
     const healthReports = feedPosts.filter(p => p.type === 'health_report')
@@ -640,7 +642,7 @@ export function PriorityProvider({ children }: { children: ReactNode }) {
       useAuthStore,
       useBatchStore,
       useWeatherStore,
-      useRecoveryStore,
+      usePlanStore,
       useFarmChatStore,
       useNotificationStore,
     ]
