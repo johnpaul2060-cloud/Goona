@@ -5,7 +5,7 @@ import {
   useWindowDimensions,
 } from 'react-native'
 import { usePriorityEngine, PRIORITY_COLORS, useDomainColor, usePriorityBanner } from '../../../store/farmPriorityEngine'
-import { RecapFundingCockpit, BudgetFundingCockpit, CollapsedRecapSummary, CollapsedBudgetSummary, NextCycleCockpit, type DriverItem, type BudgetItem } from '../../../components/financial-cockpit'
+import { RecapFundingCockpit, CollapsedRecapSummary, NextCycleCockpit, type DriverItem } from '../../../components/financial-cockpit'
 import { useFSRS } from '../../../store/fsrsEngine'
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -220,7 +220,7 @@ colors={['#065F46', '#047857']}
 const RECAP_TOOLS = [
   { emoji: '\u2795', label: 'Add Contribution', desc: 'Put money toward your next production cycle', color: '#2E7D32', bg: '#F0FDF4', route: '/fund-recapt' as const },
   { emoji: '\uD83D\uDCC5', label: 'Plan Next Cycle', desc: 'Set targets and prepare your next cycle', color: '#F59E0B', bg: '#FFFBEB', route: '/plan-recapt' as const },
-  { emoji: '\uD83D\uDCB0', label: 'Budget', desc: 'Manage budget and allocations', color: '#0F766E', bg: '#DDF5F0', route: '/(tabs)/recapitalization/budget-setup' as const },
+  { emoji: '\uD83D\uDCB0', label: 'Budget', desc: 'Manage budget and allocations', color: '#0F766E', bg: '#DDF5F0', route: '/(tabs)/recapitalization/budget' as const },
   { emoji: '\uD83D\uDCC8', label: 'Timeline & Reports', desc: 'Contribution history, milestones & exportable insights', color: '#1A56FF', bg: '#EEF3FF', route: '/recapitalization/timeline-reports' as const },
 ]
 
@@ -262,21 +262,6 @@ function FundingBreakdown({ index, expanded }: { index: number; expanded: boolea
   const animStyle = useStaggerEntry(index, 70)
   if (!expanded) return <CollapsedRecapSummary items={DRIVER_ITEMS} />
   return <Animated.View style={animStyle}><RecapFundingCockpit items={DRIVER_ITEMS} /></Animated.View>
-}
-
-/* ─── 4b. BUDGET FUNDING BREAKDOWN ─── */
-const BUDGET_ITEMS: BudgetItem[] = [
-  { emoji: '\uD83D\uDCBC', label: 'Salaries & Labour', pct: 74, allocated: 450000, spent: 333000, remaining: 117000, budget: 450000, color: '#7C3AED', bg: '#F3E8FF' },
-  { emoji: '\uD83C\uDF3D', label: 'Feed Purchases', pct: 92, allocated: 680000, spent: 625600, remaining: 54400, budget: 680000, color: '#16A34A', bg: '#F0FDF4' },
-  { emoji: '\uD83D\uDC8A', label: 'Medication', pct: 45, allocated: 200000, spent: 90000, remaining: 110000, budget: 200000, color: '#1A56FF', bg: '#EEF3FF' },
-  { emoji: '\uD83D\uDD27', label: 'Maintenance', pct: 30, allocated: 150000, spent: 45000, remaining: 105000, budget: 150000, color: '#F59E0B', bg: '#FFFBEB' },
-  { emoji: '\u26A1', label: 'Utilities / Logistics', pct: 58, allocated: 280000, spent: 162400, remaining: 117600, budget: 280000, color: '#EF4444', bg: '#FEF2F2' },
-]
-
-function BudgetBreakdown({ index, expanded }: { index: number; expanded: boolean }) {
-  const animStyle = useStaggerEntry(index, 90)
-  if (!expanded) return <CollapsedBudgetSummary items={BUDGET_ITEMS} />
-  return <Animated.View style={animStyle}><BudgetFundingCockpit items={BUDGET_ITEMS} /></Animated.View>
 }
 
 /* ─── 5. READY FOR NEXT CYCLE CHECKLIST ─── */
@@ -878,15 +863,10 @@ export default function RecapitalizationDashboardScreen() {
 
   /* ─── Collapsible Sections ─── */
   const [recapFundingOpen, setRecapFundingOpen] = useState(true)
-  const [budgetFundingOpen, setBudgetFundingOpen] = useState(true)
   const [nextCycleOpen, setNextCycleOpen] = useState(false)
   const toggleRecapFunding = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
     setRecapFundingOpen(prev => !prev)
-  }
-  const toggleBudgetFunding = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-    setBudgetFundingOpen(prev => !prev)
   }
   const toggleNextCycle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
@@ -953,18 +933,6 @@ export default function RecapitalizationDashboardScreen() {
           </TouchableOpacity>
         </View>
         <FundingBreakdown index={3} expanded={recapFundingOpen} />
-
-        {/* ─── BUDGET FUNDING BREAKDOWN ─── */}
-        <View style={styles.sectionHead}>
-          <TouchableOpacity style={styles.sectionHeadToggle} onPress={toggleBudgetFunding} activeOpacity={0.7}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.secTitle}>Budget Funding</Text>
-              <Text style={styles.secSub}>Short-term operational planning for current cycle</Text>
-            </View>
-            <GoonaIcon icon={Icons.chevronDown} size={16} color="#94A3B8" style={{ transform: budgetFundingOpen ? [{ rotate: '0deg' }] : [{ rotate: '-90deg' }] }} />
-          </TouchableOpacity>
-        </View>
-        <BudgetBreakdown index={4} expanded={budgetFundingOpen} />
 
         {/* ─── NEXT CYCLE READINESS ─── */}
         <View style={styles.sectionHead}>

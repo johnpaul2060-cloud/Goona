@@ -11,6 +11,9 @@ export default function RecapitalizationLayout() {
       <Stack.Screen name="budget" />
       <Stack.Screen name="budget-setup" />
       <Stack.Screen name="budget-export" />
+      <Stack.Screen name="budget-analytics" />
+      <Stack.Screen name="budget-details" />
+      <Stack.Screen name="budget-calendar" />
     </Stack>
   )
 }
