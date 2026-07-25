@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { migrateItemName, EXPENSE_CATEGORY_KEYS } from '../shared/expense-categories'
 
 export type RecordType = 'feed' | 'eggs' | 'water' | 'medication' | 'mortality' | 'observation' | 'sale' | 'expense' | 'inventory' | 'completedPlan'
 
@@ -9,6 +10,7 @@ export interface HistoryRecord {
   type: RecordType
   timestamp: number
   batch: string
+  batchId?: string
   quantity?: number
   unit?: string
   cost?: number
@@ -146,6 +148,11 @@ function isMoneyType(type: RecordType): boolean {
 function buildSeedRecords(): HistoryRecord[] {
   const records: HistoryRecord[] = []
   const batches = ['Broiler Batch A', 'Layer Batch B', 'Broiler Batch C']
+  const batchIds: Record<string, string> = {
+    'Broiler Batch A': 'batch_a',
+    'Layer Batch B': 'batch_b',
+    'Broiler Batch C': 'batch_c',
+  }
   const nowTs = now()
   const day = 86400000
 
@@ -156,6 +163,7 @@ function buildSeedRecords(): HistoryRecord[] {
     if (daysAgo % 2 === 0) {
       records.push({
         id: generateId(), type: 'feed', timestamp: ts, batch,
+        batchId: batchIds[batch],
         quantity: Math.round(40 + Math.random() * 60),
         unit: 'kg',
         notes: daysAgo === 0 ? 'Morning feeding' : undefined,
@@ -164,6 +172,7 @@ function buildSeedRecords(): HistoryRecord[] {
     if (daysAgo % 3 === 0) {
       records.push({
         id: generateId(), type: 'water', timestamp: ts, batch,
+        batchId: batchIds[batch],
         quantity: Math.round(80 + Math.random() * 40),
         unit: 'L',
       })
@@ -171,6 +180,7 @@ function buildSeedRecords(): HistoryRecord[] {
     if (daysAgo % 5 === 0) {
       records.push({
         id: generateId(), type: 'eggs', timestamp: ts, batch,
+        batchId: batchIds[batch],
         quantity: Math.round(200 + Math.random() * 150),
         unit: 'eggs',
       })
@@ -178,6 +188,7 @@ function buildSeedRecords(): HistoryRecord[] {
     if (daysAgo % 7 === 0 && daysAgo > 0) {
       records.push({
         id: generateId(), type: 'mortality', timestamp: ts, batch,
+        batchId: batchIds[batch],
         quantity: Math.round(1 + Math.random() * 3),
         unit: 'birds',
       })
@@ -185,6 +196,7 @@ function buildSeedRecords(): HistoryRecord[] {
     if (daysAgo % 10 === 0) {
       records.push({
         id: generateId(), type: 'medication', timestamp: ts, batch,
+        batchId: batchIds[batch],
         quantity: Math.round(1 + Math.random() * 2),
         unit: 'vials', cost: Math.round(5000 + Math.random() * 15000),
         notes: 'Routine vaccination',
@@ -194,16 +206,19 @@ function buildSeedRecords(): HistoryRecord[] {
 
   for (let daysAgo = 0; daysAgo < 90; daysAgo++) {
     const ts = nowTs - daysAgo * day
-    records.push({
-      id: generateId(), type: 'sale', timestamp: ts, batch: batches[daysAgo % 3],
-      quantity: Math.round(50 + Math.random() * 200),
+      records.push({
+        id: generateId(), type: 'sale', timestamp: ts, batch: batches[daysAgo % 3],
+        batchId: batchIds[batches[daysAgo % 3]],
+        quantity: Math.round(50 + Math.random() * 200),
       unit: daysAgo % 2 === 0 ? 'eggs' : 'kg',
       cost: Math.round(40000 + Math.random() * 80000),
     })
     if (daysAgo % 3 === 0) {
       records.push({
         id: generateId(), type: 'expense', timestamp: ts, batch: batches[daysAgo % 3],
+        batchId: batchIds[batches[daysAgo % 3]],
         cost: Math.round(5000 + Math.random() * 30000),
+        itemName: ['transport', 'medication', 'utilities', 'repairs', 'labour'][daysAgo % 5],
         notes: ['Transport', 'Vet visit', 'Utilities', 'Repairs', 'Labour'][daysAgo % 5],
       })
     }
@@ -211,9 +226,10 @@ function buildSeedRecords(): HistoryRecord[] {
 
   for (let daysAgo = 0; daysAgo < 30; daysAgo += 14) {
     const ts = nowTs - daysAgo * day
-    records.push({
-      id: generateId(), type: 'inventory', timestamp: ts, batch: batches[0],
-      quantity: Math.round(2000 + Math.random() * 3000),
+      records.push({
+        id: generateId(), type: 'inventory', timestamp: ts, batch: batches[0],
+        batchId: batchIds[batches[0]],
+        quantity: Math.round(2000 + Math.random() * 3000),
       unit: 'kg',
       cost: Math.round(150000 + Math.random() * 100000),
       itemName: 'Broiler Starter Feed',
@@ -229,7 +245,7 @@ interface HistoryState {
   records: HistoryRecord[]
   seeded: boolean
   addRecord: (r: Omit<HistoryRecord, 'id'>) => string
-  getRecords: (opts: { type?: RecordType; range: DateRange; batch?: string; search?: string }) => HistoryRecord[]
+  getRecords: (opts: { type?: RecordType; range: DateRange; batch?: string; batchId?: string; search?: string }) => HistoryRecord[]
   getAggregation: (opts: { type: RecordType; range: DateRange; granularity: 'month' | 'quarter' | 'year' }) => PeriodAggregation[]
   getMetric: (opts: { type: RecordType; range: DateRange }) => AggregatedMetric
   getFeedStockBalance: () => { purchasedKg: number; consumedKg: number; remainingKg: number }
@@ -250,11 +266,12 @@ export const useHistoryStore = create<HistoryState>()(
         return id
       },
 
-      getRecords: ({ type, range, batch, search }) => {
+      getRecords: ({ type, range, batch, search, batchId }) => {
         let results = get().records.filter(
           (r) => r.timestamp >= range.start && r.timestamp <= range.end,
         )
         if (type) results = results.filter((r) => r.type === type)
+        if (batchId) results = results.filter((r) => r.batchId === batchId)
         if (batch) results = results.filter((r) => r.batch === batch)
         if (search) {
           const q = search.toLowerCase()
@@ -456,6 +473,12 @@ export const useHistoryStore = create<HistoryState>()(
         if (state && !state.seeded) {
           state.records = buildSeedRecords()
           state.seeded = true
+        }
+        if (state) {
+          state.records = state.records.map((r) => ({
+            ...r,
+            itemName: migrateItemName(r.itemName),
+          }))
         }
       },
     },

@@ -12,7 +12,8 @@ import GoonaIcon from '../../components/ui/GoonaIcon'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInUp, SlideInUp } from 'react-native-reanimated'
-import { useBatchStore } from '../../store/useBatchStore'
+import { useBatchStore, type BudgetAllocation } from '../../store/useBatchStore'
+import { useHistoryStore } from '../../store/useHistoryStore'
 import { useFarmChatStore } from '../../store/useFarmChatStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
@@ -43,6 +44,10 @@ function getBadge(progress: number): { text: string; bg: string; color: string }
 function formatNaira(amount: number): string {
   if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1)}M`
   if (amount >= 1000) return `₦${(amount / 1000).toFixed(0)}k`
+  return `₦${amount.toLocaleString('en-NG')}`
+}
+
+function formatNairaFull(amount: number): string {
   return `₦${amount.toLocaleString('en-NG')}`
 }
 
@@ -225,15 +230,182 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
   }
 }
 
+// ─── BUDGET SECTION ───
+
+function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/useBatchStore').Batch; batchRevenue?: number }) {
+  const records = useHistoryStore((s) => s.records)
+  const updateBudgetAllocations = useBatchStore((s) => s.updateBudgetAllocations)
+
+  const allocations = batch.budgetAllocations ?? []
+  const totalBudget = allocations.reduce((s, a) => s + a.amount, 0)
+
+  // Compute spend per category from expense records
+  const spendByCategory = useMemo(() => {
+    const batchRecords = records.filter(
+      (r) => (r.batchId === batch.id || r.batch === batch.batchName) && r.type === 'expense' && r.cost
+    )
+    const result: Record<string, number> = {}
+    for (const r of batchRecords) {
+      const cat = r.itemName || ''
+      result[cat] = (result[cat] || 0) + (r.cost || 0)
+    }
+    return result
+  }, [records, batch.id, batch.batchName])
+
+  // Map allocation categories to their spend (direct key match)
+  const allocSpend = useMemo(() => {
+    return allocations.map((a) => {
+      const spent = spendByCategory[a.key] || 0
+      const remaining = a.amount - spent
+      let status: 'on_track' | 'near_limit' | 'over_budget' | 'none' = 'none'
+      let statusColor = '#94A3B8'
+      if (a.amount > 0) {
+        const pct = spent / a.amount
+        if (pct > 1) { status = 'over_budget'; statusColor = '#EF4444' }
+        else if (pct > 0.8) { status = 'near_limit'; statusColor = '#F59E0B' }
+        else if (pct > 0) { status = 'on_track'; statusColor = '#16A34A' }
+      }
+      return { ...a, spent, remaining, status, statusColor }
+    })
+  }, [allocations, spendByCategory])
+
+  const totalSpent = allocSpend.reduce((s, a) => s + a.spent, 0)
+  const totalRemaining = totalBudget - totalSpent
+  const overallPct = totalBudget > 0 ? Math.min(totalSpent / totalBudget, 1) : 0
+  let overallStatus = '#16A34A'
+  if (totalBudget > 0 && totalSpent > totalBudget) overallStatus = '#EF4444'
+  else if (totalBudget > 0 && totalSpent / totalBudget > 0.8) overallStatus = '#F59E0B'
+
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(360).springify()}>
+      <View style={styles.budgetCard}>
+        {/* Section header */}
+        <View style={styles.sec}>
+          <Text style={styles.secTitle}>Budget</Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push(`/batch-details/budget-setup?id=${batch.id}` as any)}
+          >
+            <Text style={styles.secLink}>Edit</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Overall summary */}
+        <View style={styles.budgetSummary}>
+          <View style={styles.budgetSummaryItem}>
+            <Text style={styles.budgetSummaryLabel}>Allocated</Text>
+            <Text style={styles.budgetSummaryValue}>{formatNairaFull(totalBudget)}</Text>
+          </View>
+          <View style={styles.budgetSummaryDiv} />
+          <View style={styles.budgetSummaryItem}>
+            <Text style={styles.budgetSummaryLabel}>Spent</Text>
+            <Text style={[styles.budgetSummaryValue, { color: '#EF4444' }]}>{formatNairaFull(totalSpent)}</Text>
+          </View>
+          <View style={styles.budgetSummaryDiv} />
+          <View style={styles.budgetSummaryItem}>
+            <Text style={styles.budgetSummaryLabel}>Remaining</Text>
+            <Text style={[styles.budgetSummaryValue, { color: totalRemaining < 0 ? '#EF4444' : '#16A34A' }]}>
+              {formatNairaFull(Math.max(0, totalRemaining))}
+            </Text>
+          </View>
+        </View>
+
+        {/* Overall progress bar */}
+        <View style={styles.budgetOverallBar}>
+          <View style={styles.budgetOverallTrack}>
+            <View style={[styles.budgetOverallFill, { width: `${overallPct * 100}%`, backgroundColor: overallStatus }]} />
+          </View>
+          <Text style={[styles.budgetOverallPct, { color: overallStatus }]}>
+            {totalBudget > 0 ? `${Math.round(overallPct * 100)}%` : '—'}
+          </Text>
+        </View>
+
+        {/* Per-category breakdown */}
+        <View style={styles.budgetCategories}>
+          {allocSpend.map((a) => (
+            <View key={a.key} style={styles.budgetCatRow}>
+              <View style={styles.budgetCatLeft}>
+                <View style={[styles.budgetCatDot, { backgroundColor: a.statusColor }]} />
+                <Text style={styles.budgetCatLabel}>{a.label}</Text>
+              </View>
+              <View style={styles.budgetCatRight}>
+                <View style={styles.budgetCatAmounts}>
+                  <Text style={styles.budgetCatAlloc}>{formatNairaFull(a.amount)}</Text>
+                  <Text style={[styles.budgetCatSpent, { color: a.statusColor }]}>{formatNairaFull(a.spent)}</Text>
+                </View>
+                <View style={styles.budgetCatBar}>
+                  <View
+                    style={[styles.budgetCatBarFill, {
+                      width: `${a.amount > 0 ? Math.min(a.spent / a.amount, 1) * 100 : 0}%`,
+                      backgroundColor: a.statusColor,
+                    }]}
+                  />
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Revenue & Profit */}
+        {batchRevenue != null && (
+          <>
+            <View style={styles.budgetDivider} />
+            <View style={styles.revenueSection}>
+              <Text style={styles.revenueSectionTitle}>Revenue & Profit</Text>
+              <View style={styles.revenueGrid}>
+                <View style={styles.revenueItem}>
+                  <Text style={styles.revenueLabel}>Revenue</Text>
+                  <Text style={styles.revenueValue}>{formatNairaFull(batchRevenue)}</Text>
+                </View>
+                <View style={styles.revenueItem}>
+                  <Text style={styles.revenueLabel}>Spent</Text>
+                  <Text style={[styles.revenueValue, { color: '#EF4444' }]}>{formatNairaFull(totalSpent)}</Text>
+                </View>
+                <View style={styles.revenueItem}>
+                  <Text style={styles.revenueLabel}>Profit</Text>
+                  <Text style={[styles.revenueValue, { color: batchRevenue - totalSpent >= 0 ? '#16A34A' : '#EF4444' }]}>
+                    {batchRevenue - totalSpent >= 0 ? '' : '-'}{formatNairaFull(Math.abs(batchRevenue - totalSpent))}
+                  </Text>
+                </View>
+              </View>
+              {totalBudget > 0 && (
+                <View style={styles.marginRow}>
+                  <Text style={styles.marginLabel}>Margin</Text>
+                  <View style={[styles.marginBadge, { backgroundColor: batchRevenue - totalSpent >= 0 ? '#F0FDF4' : '#FEF2F2' }]}>
+                    <Text style={[styles.marginText, { color: batchRevenue - totalSpent >= 0 ? '#16A34A' : '#EF4444' }]}>
+                      {totalSpent > 0
+                        ? `${((batchRevenue - totalSpent) / totalSpent * 100).toFixed(0)}%`
+                        : batchRevenue > 0 ? '∞' : '—'}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </>
+        )}
+      </View>
+    </Animated.View>
+  )
+}
+
 export default function BatchDetailsScreen() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const storeBatch = useBatchStore((s) => s.getBatchById(id ?? ''))
   const completeBatch = useBatchStore((s) => s.completeBatch)
   const restoreBatch = useBatchStore((s) => s.restoreBatch)
+  const deleteBatch = useBatchStore((s) => s.deleteBatch)
   const addFeedPost = useFarmChatStore((s) => s.addFeedPost)
 
   const isCompleted = storeBatch?.status === 'completed'
+
+  const records = useHistoryStore((s) => s.records)
+  const batchRevenue = useMemo(() => {
+    if (!storeBatch) return 0
+    return records
+      .filter((r) => (r.batchId === storeBatch.id || r.batch === storeBatch.batchName) && r.type === 'sale')
+      .reduce((sum, r) => sum + (r.cost || 0), 0)
+  }, [records, storeBatch?.id, storeBatch?.batchName])
 
   const [showCompleteSheet, setShowCompleteSheet] = useState(false)
   const [harvestFinalCount, setHarvestFinalCount] = useState('')
@@ -295,6 +467,25 @@ export default function BatchDetailsScreen() {
     } else {
       router.replace('/(tabs)/records/batch-management' as any)
     }
+  }
+
+  function handleDelete() {
+    if (!id) return
+    Alert.alert(
+      'Delete Batch Permanently?',
+      `"${storeBatch?.batchName || batch.name}" and all its records will be permanently deleted. This cannot be undone. Linked history records will be detached (not deleted).`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => {
+          deleteBatch(id)
+          if (router.canGoBack()) {
+            router.back()
+          } else {
+            router.replace('/(tabs)/records/batch-management' as any)
+          }
+        }},
+      ]
+    )
   }
 
   function formatDate(iso: string): string {
@@ -404,8 +595,8 @@ export default function BatchDetailsScreen() {
               <Text style={styles.hstatL}>Feed Used</Text>
             </View>
             <View style={styles.hstat}>
-              <Text style={[styles.hstatV, styles.hstatVLime]}>{batch.revenue}</Text>
-              <Text style={styles.hstatL}>Revenue</Text>
+              <Text style={[styles.hstatV, styles.hstatVLime]}>{batchRevenue > 0 ? formatNairaFull(batchRevenue) : batch.revenue}</Text>
+              <Text style={styles.hstatL}>{batchRevenue > 0 ? 'Revenue (actual)' : 'Est. Revenue'}</Text>
             </View>
           </View>
 
@@ -477,8 +668,13 @@ export default function BatchDetailsScreen() {
           ))}
         </Animated.View>
 
+        {/* BUDGET */}
+        {storeBatch && storeBatch.budgetAllocations && storeBatch.budgetAllocations.length > 0 && (
+          <BudgetSection batch={storeBatch} batchRevenue={batchRevenue} />
+        )}
+
         {/* SMART INSIGHTS */}
-        <Animated.View entering={FadeInUp.duration(500).delay(360).springify()}>
+        <Animated.View entering={FadeInUp.duration(500).delay(400).springify()}>
           <View style={styles.sec}>
             <Text style={styles.secTitle}>Smart Insights</Text>
             <Text style={styles.secMeta}>GOONA IQ</Text>
@@ -505,7 +701,8 @@ export default function BatchDetailsScreen() {
         {/* COMPLETE CYCLE / RESTORE (BOTTOM) */}
         <Animated.View entering={FadeInUp.duration(500).delay(460).springify()}>
           {isCompleted ? (
-            <TouchableOpacity
+            <>
+              <TouchableOpacity
               style={styles.restoreBtn}
               activeOpacity={0.85}
               onPress={() => {
@@ -529,6 +726,21 @@ export default function BatchDetailsScreen() {
               </View>
               <GoonaIcon icon={Icons.chevronRight} size={18} color="#2E7D32" />
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              activeOpacity={0.85}
+              onPress={handleDelete}
+            >
+              <View style={styles.deleteIconWrap}>
+                <GoonaIcon icon={Icons.trash2} size={20} color="#EF4444" />
+              </View>
+              <View style={styles.deleteTextWrap}>
+                <Text style={styles.deleteTitle}>Delete Batch</Text>
+                <Text style={styles.deleteSub}>Permanently delete batch and all records</Text>
+              </View>
+              <GoonaIcon icon={Icons.chevronRight} size={18} color="#EF4444" />
+            </TouchableOpacity>
+            </>
           ) : (
             <TouchableOpacity style={styles.complete} activeOpacity={0.85} onPress={handleOpenCompleteSheet}>
               <LinearGradient
@@ -774,6 +986,18 @@ const styles = StyleSheet.create({
   restoreTitle: { fontSize: 16, fontWeight: '800', color: '#15291A' },
   restoreSub: { fontSize: 12, color: '#64748B', marginTop: 1 },
 
+  /* delete button */
+  deleteBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#FFFFFF', borderRadius: 22, paddingVertical: 18, paddingHorizontal: 22, marginTop: 8,
+    borderWidth: 1.5, borderColor: '#FCA5A5',
+    shadowColor: '#EF4444', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 2,
+  },
+  deleteIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center' },
+  deleteTextWrap: { flex: 1 },
+  deleteTitle: { fontSize: 16, fontWeight: '800', color: '#991B1B' },
+  deleteSub: { fontSize: 12, color: '#EF4444', marginTop: 1 },
+
   /* completion sheet */
   sheetOverlay: { flex: 1, justifyContent: 'flex-end' },
   sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
@@ -803,4 +1027,61 @@ const styles = StyleSheet.create({
   sheetCancelText: { fontSize: 15, fontWeight: '700', color: '#64748B' },
   sheetConfirmBtn: { flex: 1, height: 52, borderRadius: 16, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   sheetConfirmText: { fontSize: 15, fontWeight: '800', color: '#FFFFFF' },
+
+  /* budget section */
+  budgetCard: {
+    backgroundColor: 'white', borderRadius: 24, padding: 20, marginTop: 4,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 1,
+  },
+  budgetSummary: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    backgroundColor: '#F8FAF7', borderRadius: 16, padding: 16, marginBottom: 12,
+  },
+  budgetSummaryItem: { alignItems: 'center', flex: 1 },
+  budgetSummaryDiv: { width: 1, backgroundColor: '#E2E8F0' },
+  budgetSummaryLabel: { fontSize: 11, fontWeight: '600', color: '#94A3B8', marginBottom: 4 },
+  budgetSummaryValue: { fontSize: 16, fontWeight: '800', color: '#1B1B1B' },
+  budgetOverallBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16,
+  },
+  budgetOverallTrack: {
+    flex: 1, height: 8, borderRadius: 4, backgroundColor: '#F1F5F9', overflow: 'hidden',
+  },
+  budgetOverallFill: { height: '100%', borderRadius: 4 },
+  budgetOverallPct: { fontSize: 13, fontWeight: '700', width: 40, textAlign: 'right' },
+  budgetCategories: { gap: 10 },
+  budgetCatRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F8FAF7',
+  },
+  budgetCatLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, width: 100 },
+  budgetCatDot: { width: 7, height: 7, borderRadius: 3.5 },
+  budgetCatLabel: { fontSize: 13, fontWeight: '600', color: '#1B1B1B' },
+  budgetCatRight: { flex: 1 },
+  budgetCatAmounts: {
+    flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4,
+  },
+  budgetCatAlloc: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
+  budgetCatSpent: { fontSize: 11, fontWeight: '700' },
+  budgetCatBar: {
+    height: 4, borderRadius: 2, backgroundColor: '#F1F5F9', overflow: 'hidden',
+  },
+  budgetCatBarFill: { height: '100%', borderRadius: 2 },
+
+  /* Revenue & Profit */
+  budgetDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 16 },
+  revenueSection: {},
+  revenueSectionTitle: { fontSize: 14, fontWeight: '700', color: '#1B1B1B', marginBottom: 12 },
+  revenueGrid: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    backgroundColor: '#F8FAF7', borderRadius: 16, padding: 14, marginBottom: 10,
+  },
+  revenueItem: { alignItems: 'center', flex: 1 },
+  revenueLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', marginBottom: 4 },
+  revenueValue: { fontSize: 16, fontWeight: '800', color: '#1B1B1B' },
+  marginRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 },
+  marginLabel: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  marginBadge: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 8 },
+  marginText: { fontSize: 14, fontWeight: '800' },
 })

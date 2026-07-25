@@ -1,6 +1,13 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { EXPENSE_CATEGORIES } from '../shared/expense-categories'
+
+export interface BudgetAllocation {
+  key: string
+  label: string
+  amount: number
+}
 
 export interface HarvestSummary {
   finalCount?: number
@@ -22,19 +29,34 @@ export interface Batch {
   createdAt: string
   completedAt?: string
   harvestSummary?: HarvestSummary
+  budgetAllocations: BudgetAllocation[]
 }
 
 interface BatchState {
   batches: Batch[]
-  addBatch: (batch: Omit<Batch, 'id' | 'status' | 'createdAt'>) => Batch
+  addBatch: (batch: Omit<Batch, 'id' | 'status' | 'createdAt' | 'budgetAllocations'>) => Batch
   getBatchById: (id: string) => Batch | undefined
   updateBatch: (id: string, updates: Partial<Batch>) => void
   completeBatch: (id: string, summary?: HarvestSummary) => void
   restoreBatch: (id: string) => void
+  deleteBatch: (id: string) => void
+  updateBudgetAllocations: (id: string, allocations: BudgetAllocation[]) => void
 }
 
 function weeksAgo(weeks: number): string {
   return new Date(Date.now() - weeks * 7 * 24 * 60 * 60 * 1000).toISOString()
+}
+
+function seedAllocations(pc: number, fc: number, mc: number): BudgetAllocation[] {
+  const expCategories = EXPENSE_CATEGORIES.map((c) => ({
+    key: c.key,
+    label: c.label,
+    amount: c.key === 'feed' ? fc : c.key === 'medication' ? mc : 0,
+  }))
+  return [
+    { key: 'purchase', label: 'Purchase', amount: pc },
+    ...expCategories,
+  ]
 }
 
 const SEED_BATCHES: Batch[] = [
@@ -50,6 +72,7 @@ const SEED_BATCHES: Batch[] = [
     duration: '8 Weeks',
     status: 'active',
     createdAt: weeksAgo(4),
+    budgetAllocations: seedAllocations(150000, 850000, 45000),
   },
   {
     id: 'batch_b',
@@ -63,6 +86,7 @@ const SEED_BATCHES: Batch[] = [
     duration: '8 Weeks',
     status: 'active',
     createdAt: weeksAgo(8),
+    budgetAllocations: seedAllocations(180000, 920000, 38000),
   },
   {
     id: 'batch_c',
@@ -76,6 +100,7 @@ const SEED_BATCHES: Batch[] = [
     duration: '8 Weeks',
     status: 'active',
     createdAt: weeksAgo(3),
+    budgetAllocations: seedAllocations(105000, 620000, 32000),
   },
 ]
 
@@ -91,6 +116,7 @@ export const useBatchStore = create<BatchState>()(
           id: `batch_${Date.now()}_${nextId++}`,
           status: 'active',
           createdAt: new Date().toISOString(),
+          budgetAllocations: seedAllocations(data.purchaseCost, data.feedCost, data.medicationCost),
         }
         set((state) => ({ batches: [...state.batches, batch] }))
         return batch
@@ -100,6 +126,13 @@ export const useBatchStore = create<BatchState>()(
         set((state) => ({
           batches: state.batches.map((b) =>
             b.id === id ? { ...b, ...updates } : b
+          ),
+        }))
+      },
+      updateBudgetAllocations: (id, allocations) => {
+        set((state) => ({
+          batches: state.batches.map((b) =>
+            b.id === id ? { ...b, budgetAllocations: allocations } : b
           ),
         }))
       },
@@ -127,6 +160,11 @@ export const useBatchStore = create<BatchState>()(
                 }
               : b
           ),
+        }))
+      },
+      deleteBatch: (id: string) => {
+        set((state) => ({
+          batches: state.batches.filter((b) => b.id !== id),
         }))
       },
     }),

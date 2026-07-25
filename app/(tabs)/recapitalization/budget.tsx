@@ -12,6 +12,8 @@ import { Icons } from '../../../shared/icons'
 import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated'
 import { formatNaira } from '../../../utils/format'
 import { useBudgetStore, type Budget } from '../../../store/useBudgetStore'
+import { useBatchStore } from '../../../store/useBatchStore'
+import { useHistoryStore } from '../../../store/useHistoryStore'
 
 function getBudgetStatus(b: Budget) {
   const used = b.spent > 0 ? (b.spent / b.totalAmount) * 100 : 0
@@ -261,6 +263,112 @@ function QuickActions() {
   )
 }
 
+// ─── BATCH BUDGET LIST ───
+
+function formatNairaFull(amount: number): string {
+  return `₦${amount.toLocaleString('en-NG')}`
+}
+
+function BatchBudgetCard({ batch }: { batch: import('../../../store/useBatchStore').Batch }) {
+  const records = useHistoryStore((s) => s.records)
+  const allocations = batch.budgetAllocations ?? []
+  const totalBudget = allocations.reduce((s, a) => s + a.amount, 0)
+
+  const spendByCategory = useMemo(() => {
+    const batchRecords = records.filter(
+      (r) => (r.batchId === batch.id || r.batch === batch.batchName) && r.type === 'expense' && r.cost
+    )
+    const result: Record<string, number> = {}
+    for (const r of batchRecords) {
+      const cat = r.itemName || ''
+      result[cat] = (result[cat] || 0) + (r.cost || 0)
+    }
+    return result
+  }, [records, batch.id, batch.batchName])
+
+  const totalSpent = useMemo(() => {
+    let spent = 0
+    for (const a of allocations) {
+      spent += spendByCategory[a.key] || 0
+    }
+    return spent
+  }, [allocations, spendByCategory])
+
+  const remaining = totalBudget - totalSpent
+  const pct = totalBudget > 0 ? Math.min(totalSpent / totalBudget, 1) : 0
+  let statusColor = '#16A34A'
+  let statusLabel = 'On Track'
+  if (totalBudget > 0 && totalSpent > totalBudget) {
+    statusColor = '#EF4444'; statusLabel = 'Over Budget'
+  } else if (totalBudget > 0 && totalSpent / totalBudget > 0.8) {
+    statusColor = '#F59E0B'; statusLabel = 'Near Limit'
+  }
+
+  return (
+    <Animated.View entering={FadeInUp.duration(300).springify()}>
+      <TouchableOpacity
+        style={s.batchBudgetCard}
+        activeOpacity={0.7}
+        onPress={() => router.push(`/batch-details/${batch.id}` as any)}
+      >
+        <View style={s.batchBudgetTop}>
+          <View style={s.batchBudgetLeft}>
+            <Text style={s.batchBudgetName}>{batch.batchName}</Text>
+            <Text style={s.batchBudgetMeta}>{batch.livestockType} · {batch.quantity} heads</Text>
+          </View>
+          <View style={[s.batchBudgetStatus, { backgroundColor: statusColor + '15' }]}>
+            <Text style={[s.batchBudgetStatusText, { color: statusColor }]}>{statusLabel}</Text>
+          </View>
+        </View>
+
+        <View style={s.batchBudgetAmounts}>
+          <View style={s.batchBudgetAmountItem}>
+            <Text style={s.batchBudgetAmountLabel}>Budget</Text>
+            <Text style={s.batchBudgetAmountValue}>{formatNaira(totalBudget)}</Text>
+          </View>
+          <View style={s.batchBudgetAmountItem}>
+            <Text style={s.batchBudgetAmountLabel}>Spent</Text>
+            <Text style={[s.batchBudgetAmountValue, { color: '#EF4444' }]}>{formatNaira(totalSpent)}</Text>
+          </View>
+          <View style={s.batchBudgetAmountItem}>
+            <Text style={s.batchBudgetAmountLabel}>Remaining</Text>
+            <Text style={[s.batchBudgetAmountValue, { color: remaining < 0 ? '#EF4444' : '#16A34A' }]}>
+              {formatNaira(Math.max(0, remaining))}
+            </Text>
+          </View>
+        </View>
+
+        <View style={s.batchBudgetBar}>
+          <View style={s.batchBudgetTrack}>
+            <View style={[s.batchBudgetFill, { width: `${pct * 100}%`, backgroundColor: statusColor }]} />
+          </View>
+          <Text style={[s.batchBudgetPct, { color: statusColor }]}>
+            {totalBudget > 0 ? `${Math.round(pct * 100)}%` : '—'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+}
+
+function BatchBudgetList() {
+  const batches = useBatchStore((s) => s.batches)
+  const activeBatches = useMemo(() => batches.filter((b) => b.status === 'active'), [batches])
+
+  if (activeBatches.length === 0) return null
+
+  return (
+    <AnimatedCard delay={0}>
+      <SectionHeader title="Batch Budgets" count={String(activeBatches.length)} />
+      {activeBatches.map((b, i) => (
+        <View key={b.id} style={{ marginBottom: 10 }}>
+          <BatchBudgetCard batch={b} />
+        </View>
+      ))}
+    </AnimatedCard>
+  )
+}
+
 // ─── ENTRY LINKS ───
 
 function EntryLink({ icon, iconBg, iconColor, title, desc, route, delay }: {
@@ -291,10 +399,18 @@ function EntryLink({ icon, iconBg, iconColor, title, desc, route, delay }: {
 
 function BudgetHistorySection() {
   const allBudgets = useBudgetStore((s) => s.budgets)
-  const completed = useMemo(() =>
+  const allBatches = useBatchStore((s) => s.batches)
+  const records = useHistoryStore((s) => s.records)
+
+  const completedBudgets = useMemo(() =>
     allBudgets.filter((b) => b.status === 'completed' || b.status === 'archived' || b.status === 'cancelled'),
     [allBudgets]
   )
+  const completedBatches = useMemo(() =>
+    allBatches.filter((b) => b.status === 'completed'),
+    [allBatches]
+  )
+  const totalCount = completedBudgets.length + completedBatches.length
   const [expanded, setExpanded] = useState(false)
   const [reduceMotion, setReduceMotion] = useState(false)
   const chevronRotate = useRef(new RNAnimated.Value(0)).current
@@ -313,7 +429,7 @@ function BudgetHistorySection() {
     }).start()
   }, [expanded, chevronRotate, reduceMotion])
 
-  if (completed.length === 0) return null
+  if (totalCount === 0) return null
 
   const chevronStyle = {
     transform: [{
@@ -331,7 +447,7 @@ function BudgetHistorySection() {
           <View style={s.historyHeaderLeft}>
             <Text style={s.historyHeaderTitle}>Budget History</Text>
             <View style={s.historyHeaderCount}>
-              <Text style={s.historyHeaderCountText}>{completed.length}</Text>
+              <Text style={s.historyHeaderCountText}>{totalCount}</Text>
             </View>
           </View>
           <RNAnimated.View style={chevronStyle}>
@@ -342,12 +458,71 @@ function BudgetHistorySection() {
 
       {expanded && (
         <Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(300).springify()}>
-          {completed.map((b, i) => (
+          {/* Completed standalone budgets */}
+          {completedBudgets.map((b, i) => (
             <HistoryRow key={b.id} budget={b} index={i} />
+          ))}
+          {/* Completed batch cards */}
+          {completedBatches.map((b, i) => (
+            <CompletedBatchCard key={b.id} batch={b} index={completedBudgets.length + i} />
           ))}
         </Animated.View>
       )}
     </AnimatedCard>
+  )
+}
+
+function CompletedBatchCard({ batch, index }: { batch: import('../../../store/useBatchStore').Batch; index: number }) {
+  const records = useHistoryStore((s) => s.records)
+  const allocations = batch.budgetAllocations ?? []
+  const totalBudget = allocations.reduce((s, a) => s + a.amount, 0)
+
+  const totalSpent = useMemo(() => {
+    const batchRecords = records.filter(
+      (r) => (r.batchId === batch.id || r.batch === batch.batchName) && r.type === 'expense' && r.cost
+    )
+    let spent = 0
+    for (const a of allocations) {
+      for (const r of batchRecords) {
+        const cat = r.itemName || ''
+        if (a.key === cat) spent += r.cost || 0
+      }
+    }
+    return spent
+  }, [records, batch.id, batch.batchName, allocations])
+
+  return (
+    <Animated.View entering={FadeInUp.duration(250).delay(100 + index * 50).springify()}>
+      <TouchableOpacity
+        style={s.historyCard}
+        activeOpacity={0.7}
+        onPress={() => router.push(`/batch-details/${batch.id}` as any)}
+      >
+        <View style={s.historyTop}>
+          <View style={s.historyLeft}>
+            <Text style={s.historyName}>{batch.batchName}</Text>
+            <Text style={s.historyAmount}>{formatNaira(totalBudget)}</Text>
+          </View>
+          <View style={[s.badge, { backgroundColor: '#F1F5F9', borderColor: '#94A3B830' }]}>
+            <View style={[s.badgeDot, { backgroundColor: '#94A3B8' }]} />
+            <Text style={[s.badgeText, { color: '#94A3B8' }]}>Completed</Text>
+          </View>
+        </View>
+
+        <View style={s.historyMeta}>
+          <Text style={s.historyMetaText}>{batch.livestockType}</Text>
+          <Text style={s.historyMetaText}>{batch.quantity} heads</Text>
+          <Text style={s.historyMetaText}>{formatNaira(totalSpent)} spent</Text>
+        </View>
+
+        <View style={s.historyBottom}>
+          <View style={s.historyViewWrap}>
+            <Text style={s.historyViewText}>View Batch</Text>
+            <GoonaIcon icon={Icons.chevronRight} size={12} color="#2E7D32" />
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   )
 }
 
@@ -496,6 +671,9 @@ export default function BudgetScreen() {
 
         {/* ─── SUMMARY HERO ─── */}
         <SummaryHero />
+
+        {/* ─── BATCH BUDGETS ─── */}
+        <BatchBudgetList />
 
         {/* ─── ACTIVE BUDGETS ─── */}
         <ActiveBudgetList />
@@ -700,6 +878,38 @@ const s = StyleSheet.create({
   historyRestoreText: { fontSize: 11, fontWeight: '700', color: '#2E7D32' },
   historyViewWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   historyViewText: { fontSize: 12, fontWeight: '700', color: '#2E7D32' },
+
+  // ─── BATCH BUDGET CARD ───
+  batchBudgetCard: {
+    marginHorizontal: 16, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+  },
+  batchBudgetTop: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12,
+  },
+  batchBudgetLeft: {},
+  batchBudgetName: { fontSize: 15, fontWeight: '700', color: '#1B1B1B' },
+  batchBudgetMeta: { fontSize: 12, fontWeight: '500', color: '#94A3B8', marginTop: 1 },
+  batchBudgetStatus: {
+    paddingVertical: 3, paddingHorizontal: 10, borderRadius: 12,
+  },
+  batchBudgetStatusText: { fontSize: 11, fontWeight: '700' },
+  batchBudgetAmounts: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    backgroundColor: '#F8FAF7', borderRadius: 14, padding: 12, marginBottom: 10,
+  },
+  batchBudgetAmountItem: { alignItems: 'center', flex: 1 },
+  batchBudgetAmountLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', marginBottom: 2 },
+  batchBudgetAmountValue: { fontSize: 15, fontWeight: '800', color: '#1B1B1B' },
+  batchBudgetBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+  },
+  batchBudgetTrack: {
+    flex: 1, height: 6, borderRadius: 3, backgroundColor: '#F1F5F9', overflow: 'hidden',
+  },
+  batchBudgetFill: { height: '100%', borderRadius: 3 },
+  batchBudgetPct: { fontSize: 12, fontWeight: '700', width: 36, textAlign: 'right' },
 })
 
 const styles = StyleSheet.create({

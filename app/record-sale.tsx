@@ -17,6 +17,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { formatInput, parseAmount } from '../utils/format'
 import { useHistoryStore } from '../store/useHistoryStore'
 import { useFarmChatStore } from '../store/useFarmChatStore'
+import { useBatchStore } from '../store/useBatchStore'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const H_PAD = 20
@@ -50,11 +51,6 @@ const STEPS = ['Product', 'Quantity', 'Payment', 'Save']
 const PRODUCT_LIST = Object.keys(PRODUCTS) as ProductType[]
 
 const UNIT_OPTIONS = ['Bags', 'Kg', 'Tonnes', 'Crates', 'Pieces', 'Litres', 'Sacks', 'Units', 'Custom']
-
-const BATCHES = [
-  'Broiler Batch A', 'Layer Batch B', 'Starter Pen C',
-  'Turkey Unit', 'Poultry Expansion Batch',
-]
 
 function usePressScale(scaleTo = 0.96) {
   const scale = useSharedValue(1)
@@ -100,8 +96,6 @@ export default function RecordSaleScreen() {
   const [customProductName, setCustomProductName] = useState('')
   const [unitType, setUnitType] = useState('Units')
   const [customUnit, setCustomUnit] = useState('')
-  const [selectedBatch, setSelectedBatch] = useState(BATCHES[0])
-  const [showBatchOptions, setShowBatchOptions] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedTime, setSelectedTime] = useState(new Date())
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -111,6 +105,24 @@ export default function RecordSaleScreen() {
   const paymentScales = PAYMENTS.map(() => usePressScale())
 
   const allRecords = useHistoryStore((s) => s.records)
+  const storeBatches = useBatchStore((s) => s.batches)
+
+  const batchItems = useMemo(() => {
+    if (storeBatches.length > 0) {
+      return storeBatches.map((b) => ({ name: b.batchName, id: b.id }))
+    }
+    return [
+      { name: 'Broiler Batch A', id: 'batch_a' },
+      { name: 'Layer Batch B', id: 'batch_b' },
+      { name: 'Starter Pen C', id: '' },
+      { name: 'Turkey Unit', id: '' },
+      { name: 'Poultry Expansion Batch', id: '' },
+    ]
+  }, [storeBatches])
+
+  const [selectedBatch, setSelectedBatch] = useState(batchItems[0]?.name ?? '')
+  const [selectedBatchId, setSelectedBatchId] = useState(batchItems[0]?.id ?? '')
+  const [showBatchOptions, setShowBatchOptions] = useState(false)
 
   const sevenDayStats = useMemo(() => {
     const cutoff = Date.now() - 7 * 86400000
@@ -187,6 +199,7 @@ export default function RecordSaleScreen() {
         type: 'sale',
         timestamp: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), selectedTime.getHours(), selectedTime.getMinutes()).getTime(),
         batch: selectedBatch,
+        batchId: selectedBatchId || undefined,
         quantity: qty,
         unit: displayUnit,
         cost: total,
@@ -236,7 +249,8 @@ export default function RecordSaleScreen() {
     setUnitType('Units')
     setCustomUnit('')
     setShowBuyer(false)
-    setSelectedBatch(BATCHES[0])
+    setSelectedBatch(batchItems[0]?.name ?? '')
+    setSelectedBatchId(batchItems[0]?.id ?? '')
     setSelectedDate(new Date())
     setSelectedTime(new Date())
   }
@@ -677,10 +691,10 @@ export default function RecordSaleScreen() {
               </View>
               {showBatchOptions && (
                 <View style={styles.batchOptions}>
-                  {BATCHES.map((item) => (
-                    <TouchableOpacity key={item} style={[styles.batchOption, item === selectedBatch && styles.batchOptionActive]} activeOpacity={0.75} onPress={() => { setSelectedBatch(item); setShowBatchOptions(false) }}>
-                      <Text style={[styles.batchOptionText, item === selectedBatch && styles.batchOptionTextActive]}>{item}</Text>
-                      {item === selectedBatch ? <GoonaIcon icon={Icons.check} size={14} color="#2E7D32" /> : null}
+                  {batchItems.map((item) => (
+                    <TouchableOpacity key={item.name} style={[styles.batchOption, item.name === selectedBatch && styles.batchOptionActive]} activeOpacity={0.75} onPress={() => { setSelectedBatch(item.name); setSelectedBatchId(item.id); setShowBatchOptions(false) }}>
+                      <Text style={[styles.batchOptionText, item.name === selectedBatch && styles.batchOptionTextActive]}>{item.name}</Text>
+                      {item.name === selectedBatch ? <GoonaIcon icon={Icons.check} size={14} color="#2E7D32" /> : null}
                     </TouchableOpacity>
                   ))}
                 </View>
