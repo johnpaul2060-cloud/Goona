@@ -15,6 +15,8 @@ import Animated, { FadeInUp, FadeInDown, SlideInUp } from 'react-native-reanimat
 import { useBatchStore, type BudgetAllocation } from '../../store/useBatchStore'
 import { useHistoryStore } from '../../store/useHistoryStore'
 import { useFarmChatStore } from '../../store/useFarmChatStore'
+import AnimalsSection from '../../components/animals/AnimalsSection'
+import BreedingSection from '../../components/animals/BreedingSection'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -941,6 +943,14 @@ export default function BatchDetailsScreen() {
 
         {/* RECORDS */}
         {storeBatch && <RecordsSection batch={storeBatch} />}
+
+        {/* ANIMALS */}
+        {storeBatch && storeBatch.model === 'individual' && <AnimalsSection batch={storeBatch} />}
+
+        {/* BREEDING */}
+        {storeBatch && storeBatch.model === 'individual' && (
+          <BreedingSection batchId={storeBatch.id} livestockType={storeBatch.livestockType} />
+        )}
 
         {/* SMART INSIGHTS */}
         <Animated.View entering={FadeInUp.duration(500).delay(400).springify()}>

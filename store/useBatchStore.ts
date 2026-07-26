@@ -15,10 +15,13 @@ export interface HarvestSummary {
   notes?: string
 }
 
+export type BatchModel = 'flock' | 'individual'
+
 export interface Batch {
   id: string
   batchName: string
   livestockType: string
+  model?: BatchModel
   quantity: number
   purchaseCost: number
   feedCost: number
@@ -31,6 +34,9 @@ export interface Batch {
   harvestSummary?: HarvestSummary
   budgetAllocations: BudgetAllocation[]
   lastActivityAt?: number
+  breed?: string
+  sexDistribution?: string
+  herdNotes?: string
 }
 
 interface BatchState {
@@ -66,6 +72,7 @@ const SEED_BATCHES: Batch[] = [
     id: 'batch_a',
     batchName: 'Broiler Batch A',
     livestockType: 'Broilers',
+    model: 'flock',
     quantity: 500,
     purchaseCost: 150000,
     feedCost: 850000,
@@ -81,6 +88,7 @@ const SEED_BATCHES: Batch[] = [
     id: 'batch_b',
     batchName: 'Layer Batch B',
     livestockType: 'Layers',
+    model: 'flock',
     quantity: 350,
     purchaseCost: 180000,
     feedCost: 920000,
@@ -96,6 +104,7 @@ const SEED_BATCHES: Batch[] = [
     id: 'batch_c',
     batchName: 'Broiler Batch C',
     livestockType: 'Broilers',
+    model: 'flock',
     quantity: 350,
     purchaseCost: 105000,
     feedCost: 620000,

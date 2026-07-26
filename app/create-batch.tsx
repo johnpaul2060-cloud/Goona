@@ -29,13 +29,20 @@ function usePressScale() {
   }
 }
 
-const LIVESTOCK_TYPES = ['Broilers', 'Layers', 'Fish Farming', 'Goat/Sheep', 'Piggery', 'Mixed Farming'] as const
+const LIVESTOCK_TYPES = ['Broilers', 'Layers', 'Fish Farming', 'Goat/Sheep', 'Piggery', 'Grasscutter', 'Mixed Farming'] as const
+
+const FLOCK_TYPES = new Set(['Broilers', 'Layers', 'Fish Farming', 'Mixed Farming'])
+const INDIVIDUAL_TYPES = new Set(['Goat/Sheep', 'Piggery', 'Grasscutter'])
+
+function getModel(type: string): 'flock' | 'individual' {
+  return INDIVIDUAL_TYPES.has(type) ? 'individual' : 'flock'
+}
 
 const DURATION_OPTIONS = ['4 Weeks', '6 Weeks', '8 Weeks', 'Custom'] as const
 
 const LIVESTOCK_COLORS: Record<string, string> = {
   Broilers: '#D97706', Layers: '#2563EB', 'Fish Farming': '#0891B2',
-  'Goat/Sheep': '#7C3AED', Piggery: '#DB2777', 'Mixed Farming': '#16A34A',
+  'Goat/Sheep': '#7C3AED', Piggery: '#DB2777', Grasscutter: '#0F766E', 'Mixed Farming': '#16A34A',
 }
 
 const DURATION_COLORS: Record<string, string> = {
@@ -98,6 +105,15 @@ function LivestockIcon({ type, selected }: { type: string; selected: boolean }) 
           <Circle cx="11" cy="10" r="4.5" stroke={c} strokeWidth="1.2" fill="none" />
           <Circle cx="9.5" cy="9.5" r="0.7" fill={c} />
           <Circle cx="12.5" cy="9.5" r="0.7" fill={c} />
+        </>
+      )}
+      {type === 'Grasscutter' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="5" ry="4" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="9" r="4.5" stroke={c} strokeWidth="1.2" fill="none" />
+          <Circle cx="9.5" cy="8.5" r="0.7" fill={c} />
+          <Circle cx="12.5" cy="8.5" r="0.7" fill={c} />
+          <Path d="M7 12.5L8 14L14 14L15 12.5" stroke={c} strokeWidth="1" fill="none" strokeLinecap="round" />
         </>
       )}
       {type === 'Mixed Farming' && (
@@ -184,7 +200,12 @@ export default function CreateBatchScreen() {
   const [customDurationVal, setCustomDurationVal] = useState('')
   const [customDurationUnit, setCustomDurationUnit] = useState<'weeks' | 'months'>('weeks')
   const [customDurationTouched, setCustomDurationTouched] = useState(false)
+  const [breed, setBreed] = useState('')
+  const [sexDistribution, setSexDistribution] = useState('')
+  const [herdNotes, setHerdNotes] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
+
+  const model = getModel(livestockType)
 
   const addBatch = useBatchStore((s) => s.addBatch)
 
@@ -289,16 +310,23 @@ export default function CreateBatchScreen() {
       }
     }
 
-    addBatch({
+    const batchData: Parameters<typeof addBatch>[0] = {
       batchName: batchName.trim(),
       livestockType,
+      model,
       quantity: parseInt(quantityStr, 10),
       purchaseCost: purchaseVal,
       feedCost: feedVal,
       medicationCost: medicationVal,
       startDate: startDate.toISOString(),
       duration: resolvedDuration,
-    })
+    }
+    if (model === 'individual') {
+      batchData.breed = breed.trim() || undefined
+      batchData.sexDistribution = sexDistribution || undefined
+      batchData.herdNotes = herdNotes.trim() || undefined
+    }
+    addBatch(batchData)
 
     setShowSuccess(true)
     setTimeout(() => {
@@ -356,8 +384,8 @@ export default function CreateBatchScreen() {
           {/* HEADER */}
           <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.headerSection}>
             <Text style={styles.headerLabel}>Production Setup</Text>
-            <Text style={styles.headerTitle}>Start a New{'\n'}Livestock Cycle</Text>
-            <Text style={styles.headerSub}>Create a new batch to track livestock growth, feeding, expenses, and profitability.</Text>
+            <Text style={styles.headerTitle}>{model === 'individual' ? 'Register a New\nHerd Group' : 'Start a New\nLivestock Cycle'}</Text>
+            <Text style={styles.headerSub}>{model === 'individual' ? 'Create a new herd batch to track individual animals, breeding, and lineage.' : 'Create a new batch to track livestock growth, feeding, expenses, and profitability.'}</Text>
           </Animated.View>
 
           {/* ILLUSTRATION */}
@@ -676,8 +704,63 @@ export default function CreateBatchScreen() {
               </View>
             )}
 
+            {/* INDIVIDUAL-MODEL FIELDS */}
+            {model === 'individual' && (
+              <>
+                <Animated.View entering={FadeInUp.duration(500).delay(260).springify()} style={styles.formSection}>
+                  <Text style={styles.formLabel}>Breed (optional)</Text>
+                  <TextInput
+                    value={breed}
+                    onChangeText={setBreed}
+                    placeholder="e.g. Boer, Duroc, Nigerian Dwarf"
+                    placeholderTextColor="#A0AEA1"
+                    style={styles.batchNameInput}
+                  />
+                  <Text style={styles.formNote}>Helps track lineage and breed-specific performance.</Text>
+                </Animated.View>
+
+                <Animated.View entering={FadeInUp.duration(500).delay(280).springify()} style={styles.formSection}>
+                  <Text style={styles.formLabel}>Sex Distribution (optional)</Text>
+                  <View style={styles.fieldWrap}>
+                    <View style={styles.fieldIco}>
+                      <GoonaIcon icon={Icons.users} size={17} color="#A0AEA1" />
+                    </View>
+                    <View style={styles.fieldInner}>
+                      <Text style={styles.fieldLbl}>Male / Female split</Text>
+                      <TextInput
+                        value={sexDistribution}
+                        onChangeText={setSexDistribution}
+                        placeholder="e.g. 2 males, 8 females"
+                        placeholderTextColor="#A0AEA1"
+                        style={[styles.fieldInput, { padding: 0 }]}
+                      />
+                    </View>
+                  </View>
+                </Animated.View>
+
+                <Animated.View entering={FadeInUp.duration(500).delay(300).springify()} style={styles.formSection}>
+                  <Text style={styles.formLabel}>Herd Notes (optional)</Text>
+                  <View style={[styles.fieldWrap, { height: 88, alignItems: 'flex-start', paddingTop: 16 }]}>
+                    <View style={styles.fieldIco}>
+                      <GoonaIcon icon={Icons.fileText} size={17} color="#A0AEA1" />
+                    </View>
+                    <View style={[styles.fieldInner, { justifyContent: 'flex-start' }]}>
+                      <TextInput
+                        value={herdNotes}
+                        onChangeText={setHerdNotes}
+                        placeholder="Any additional details about this herd..."
+                        placeholderTextColor="#A0AEA1"
+                        multiline
+                        style={[styles.fieldInput, { padding: 0, height: 60 }]}
+                      />
+                    </View>
+                  </View>
+                </Animated.View>
+              </>
+            )}
+
             {/* FORECAST CARD */}
-            <Animated.View entering={FadeInUp.duration(500).delay(300).springify()} style={styles.forecastCard}>
+            <Animated.View entering={FadeInUp.duration(500).delay(320).springify()} style={styles.forecastCard}>
               <LinearGradient colors={['#E8F5E9', '#F0FDF4']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
               <View style={styles.forecastHead}>
                 <Text style={styles.forecastTitle}>Projected Production Summary</Text>
