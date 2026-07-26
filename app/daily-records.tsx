@@ -130,14 +130,23 @@ const ffStyles = StyleSheet.create({
   errorText: { marginTop: 6, marginBottom: 10, fontSize: 11, fontWeight: '700', color: '#EF4444' },
 })
 
+let lineIdCounter = 0
+function nextLineId(): string {
+  return `ql_${Date.now()}_${lineIdCounter++}`
+}
+
 /* ─── Quick Log Bottom Sheet (keyboard-aware) ─── */
 function QuickLogSheet({
-  visible, type, onClose, batch, batchId, batchItems, dateStr, timeStr, selectedDate, selectedTime, lastFeedType, onTypeChange, onBatchSelect, onDateSelect, onTimeSelect, onSave,
+  visible, type, onClose, batch, batchId, batchItems, dateStr, timeStr, selectedDate, selectedTime, lastFeedType, onTypeChange, onBatchSelect, onDateSelect, onTimeSelect, onSave, onBatchSave,
 }: {
   visible: boolean; type: RecordKey; onClose: () => void
   batch: string; batchId?: string; batchItems: { name: string; id: string }[]; dateStr: string; timeStr: string; selectedDate: Date; selectedTime: Date; lastFeedType?: string
-  onTypeChange: (type: RecordKey) => void; onBatchSelect: (name: string, id: string) => void; onDateSelect: (date: Date) => void; onTimeSelect: (date: Date) => void; onSave?: (values: QuickLogValues) => void
+  onTypeChange: (type: RecordKey) => void; onBatchSelect: (name: string, id: string) => void; onDateSelect: (date: Date) => void; onTimeSelect: (date: Date) => void; onSave?: (values: QuickLogValues) => void; onBatchSave?: (items: { type: RecordKey; values: QuickLogValues }[]) => void
 }) {
+  const [mode, setMode] = useState<'single' | 'batch'>('single')
+  const [lineItems, setLineItems] = useState<{ id: string; type: RecordKey; values: QuickLogValues }[]>([])
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const [savingAll, setSavingAll] = useState(false)
   const scrollRef = useRef<ScrollView>(null)
   const [showBatchOptions, setShowBatchOptions] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -169,6 +178,7 @@ function QuickLogSheet({
     setShowBatchOptions(false)
     setShowDatePicker(false)
     setShowTimePicker(false)
+    setEditingIndex(null)
   }, [visible, type, batch, lastFeedType])
 
   const validate = (next: QuickLogValues) => {
@@ -208,6 +218,49 @@ function QuickLogSheet({
     })
   }
 
+  const addLine = useCallback(() => {
+    const allKeys = Object.keys(values)
+    setTouched(new Set(allKeys))
+    const { errors } = validate(values)
+    if (Object.keys(errors).length > 0) return
+    const item = { id: nextLineId(), type, values: { ...values } }
+    setLineItems((prev) => {
+      if (editingIndex != null) {
+        const copy = [...prev]
+        copy.splice(editingIndex, 0, item)
+        return copy
+      }
+      return [...prev, item]
+    })
+    setValues(type === 'feed' ? { feedType: values.feedType || lastFeedType || activeFeedType } : {})
+    setFieldErrors({})
+    setTouched(new Set())
+    setFormWarning('')
+    setEditingIndex(null)
+  }, [type, values, editingIndex, validate, lastFeedType, activeFeedType])
+
+  const startEdit = useCallback((index: number) => {
+    const item = lineItems[index]
+    if (item.type !== type) onTypeChange(item.type)
+    setValues(item.values)
+    setLineItems((prev) => prev.filter((_, i) => i !== index))
+    setEditingIndex(index)
+  }, [lineItems, type, onTypeChange])
+
+  const removeLine = useCallback((index: number) => {
+    setLineItems((prev) => prev.filter((_, i) => i !== index))
+    if (editingIndex === index) setEditingIndex(null)
+  }, [editingIndex])
+
+  const handleBatchSave = useCallback(() => {
+    if (lineItems.length === 0) return
+    setSavingAll(true)
+    onBatchSave?.(lineItems.map((l) => ({ type: l.type, values: l.values })))
+    setLineItems([])
+    setSavingAll(false)
+    onClose()
+  }, [lineItems, onBatchSave, onClose])
+
   const handleCancel = () => {
     const dirty = Object.values(values).some((v) => v?.trim())
     if (!dirty) { onClose(); return }
@@ -227,6 +280,7 @@ function QuickLogSheet({
       setFormWarning(`${warning} Tap Save again to confirm.`)
       return
     }
+    if (mode === 'batch') { addLine(); return }
     onSave?.(values)
   }
 
@@ -249,6 +303,25 @@ function QuickLogSheet({
         <TouchableOpacity style={qsStyles.backdrop} activeOpacity={1} onPress={handleCancel} />
         <Animated.View entering={FadeInDown.duration(350).springify()} style={qsStyles.sheet}>
           <View style={qsStyles.handle} />
+
+          {/* ─── MODE TOGGLE ─── */}
+          <View style={qsStyles.modeToggle}>
+            <TouchableOpacity
+              style={[qsStyles.modeOption, mode === 'single' && qsStyles.modeOptionActive]}
+              activeOpacity={0.7}
+              onPress={() => { setMode('single'); setEditingIndex(null) }}
+            >
+              <Text style={[qsStyles.modeText, mode === 'single' && qsStyles.modeTextActive]}>Single</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[qsStyles.modeOption, mode === 'batch' && qsStyles.modeOptionActive]}
+              activeOpacity={0.7}
+              onPress={() => setMode('batch')}
+            >
+              <Text style={[qsStyles.modeText, mode === 'batch' && qsStyles.modeTextActive]}>Multiple</Text>
+            </TouchableOpacity>
+          </View>
+
           <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={qsStyles.scrollContent}>
             <View style={qsStyles.logContext}>
               <Text style={qsStyles.contextTitle}>Details</Text>
@@ -304,8 +377,64 @@ function QuickLogSheet({
               </View>
             )}
             {type === 'observation' && <View><Text style={qsStyles.sheetTitle}>Add Observation Note</Text><FormField label="Notes" placeholder="Describe what you observed..." value={values.notes} onChangeText={(v) => setField('notes', v)} icon={<GoonaIcon icon={Icons.eye} size={16} color="#A0AEA1" />} multiline autoFocus error={fieldErrors.notes} /></View>}
+
+          {/* ─── LINE ITEMS (batch mode) ─── */}
+          {mode === 'batch' && (
+            <View style={qsStyles.linesSection}>
+              <View style={qsStyles.linesHeader}>
+                <Text style={qsStyles.linesTitle}>Line Items {lineItems.length > 0 && <Text style={qsStyles.linesCount}> · {lineItems.length}</Text>}</Text>
+              </View>
+              {lineItems.length === 0 ? (
+                <View style={qsStyles.linesEmpty}>
+                  <GoonaIcon icon={Icons.receipt} size={22} color="#CBD5E1" />
+                  <Text style={qsStyles.linesEmptyText}>No entries added yet</Text>
+                  <Text style={qsStyles.linesEmptyHint}>Fill in the fields and tap Add Entry</Text>
+                </View>
+              ) : (
+                <>
+                  {lineItems.map((item, i) => {
+                    const rt = RECORD_TYPES.find((r) => r.key === item.type)
+                    return (
+                      <View key={item.id} style={qsStyles.lineCard}>
+                        <View style={[qsStyles.lineCatIcon, { backgroundColor: (rt?.iconBg ?? '#F1F5F9') }]}>
+                          <GoonaIcon icon={rt?.icon ?? Icons.fileText} size={14} color={rt?.iconColor ?? '#64748B'} />
+                        </View>
+                        <View style={qsStyles.lineBody}>
+                          <Text style={qsStyles.lineType}>{rt?.label ?? item.type}</Text>
+                          {item.values.notes?.trim() ? <Text style={qsStyles.lineNote} numberOfLines={1}>{item.values.notes.trim()}</Text> : null}
+                        </View>
+                        <View style={qsStyles.lineActions}>
+                          <TouchableOpacity style={qsStyles.lineEditBtn} activeOpacity={0.7} onPress={() => startEdit(i)}>
+                            <GoonaIcon icon={Icons.edit3} size={13} color="#64748B" />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={qsStyles.lineRemoveBtn} activeOpacity={0.7} onPress={() => removeLine(i)}>
+                            <GoonaIcon icon={Icons.x} size={13} color="#EF4444" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )
+                  })}
+                  <TouchableOpacity
+                    style={[qsStyles.saveAllBtn, (savingAll || lineItems.length === 0) && qsStyles.saveAllBtnDisabled]}
+                    activeOpacity={0.85}
+                    onPress={handleBatchSave}
+                    disabled={savingAll || lineItems.length === 0}
+                  >
+                    <GoonaIcon icon={Icons.save} size={16} color="#FFF" />
+                    <Text style={qsStyles.saveAllText}>Save All ({lineItems.length})</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          )}
           </ScrollView>
-          <View style={qsStyles.actionRow}><TouchableOpacity style={qsStyles.cancelBtn} activeOpacity={0.85} onPress={handleCancel}><Text style={qsStyles.cancelText}>Cancel</Text></TouchableOpacity><TouchableOpacity style={[qsStyles.saveBtn, saveDisabled && qsStyles.saveBtnDisabled]} activeOpacity={0.9} disabled={saveDisabled} onPress={handleSave}><GoonaIcon icon={Icons.checkCircle} size={18} color="white" /><Text style={qsStyles.saveText}>Save Record</Text></TouchableOpacity></View>
+          <View style={qsStyles.actionRow}>
+            <TouchableOpacity style={qsStyles.cancelBtn} activeOpacity={0.85} onPress={handleCancel}><Text style={qsStyles.cancelText}>Cancel</Text></TouchableOpacity>
+            <TouchableOpacity style={[qsStyles.saveBtn, saveDisabled && qsStyles.saveBtnDisabled]} activeOpacity={0.9} disabled={saveDisabled} onPress={handleSave}>
+              <GoonaIcon icon={Icons.checkCircle} size={18} color="white" />
+              <Text style={qsStyles.saveText}>{mode === 'batch' ? 'Add Entry' : 'Save Record'}</Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
@@ -512,6 +641,57 @@ const qsStyles = StyleSheet.create({
   errorText: { fontSize: 12, fontWeight: '700', color: '#EF4444', marginTop: -10, marginBottom: 12 },
   scrollContent: { paddingBottom: 12 },
   sheetTitle: { fontSize: 18, fontWeight: '700', color: '#1B1B1B', marginBottom: 18 },
+  // ─── MODE TOGGLE ───
+  modeToggle: {
+    flexDirection: 'row', marginBottom: 14,
+    backgroundColor: '#F1F5F9', borderRadius: 10, padding: 3,
+  },
+  modeOption: {
+    flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 8,
+  },
+  modeOptionActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+  },
+  modeText: { fontSize: 13, fontWeight: '600', color: '#94A3B8' },
+  modeTextActive: { color: '#1B1B1B', fontWeight: '800' },
+
+  // ─── LINE ITEMS ───
+  linesSection: { marginTop: 16 },
+  linesHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  linesTitle: { fontSize: 15, fontWeight: '800', color: '#1B1B1B' },
+  linesCount: { fontSize: 13, fontWeight: '600', color: '#94A3B8' },
+  linesEmpty: {
+    alignItems: 'center', paddingVertical: 24, gap: 4,
+    backgroundColor: '#F8FAF7', borderRadius: 16,
+    borderWidth: 1, borderColor: '#E2E8F0', borderStyle: 'dashed',
+  },
+  linesEmptyText: { fontSize: 13, fontWeight: '600', color: '#94A3B8', marginTop: 4 },
+  linesEmptyHint: { fontSize: 11, fontWeight: '500', color: '#CBD5E1' },
+  lineCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#FFFFFF', borderRadius: 14, padding: 10, marginBottom: 6,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
+  },
+  lineCatIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  lineBody: { flex: 1 },
+  lineType: { fontSize: 12, fontWeight: '700', color: '#1B1B1B' },
+  lineNote: { fontSize: 11, fontWeight: '500', color: '#94A3B8', marginTop: 1 },
+  lineActions: { flexDirection: 'row', gap: 4 },
+  lineEditBtn: { width: 28, height: 28, borderRadius: 7, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
+  lineRemoveBtn: { width: 28, height: 28, borderRadius: 7, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center' },
+  saveAllBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: '#1A56FF', borderRadius: 14, paddingVertical: 14, marginTop: 8,
+  },
+  saveAllBtnDisabled: { opacity: 0.5 },
+  saveAllText: { fontSize: 14, fontWeight: '800', color: '#FFFFFF' },
+
   actionRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   cancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F8FAF7', borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center' },
   cancelText: { fontSize: 15, fontWeight: '800', color: '#64748B' },
@@ -596,7 +776,7 @@ function buildFarmFeedPost(type: RecordKey, values: QuickLogValues, batch: strin
 
 /* ─── MAIN ─── */
 export default function DailyRecordsScreen() {
-  const { type: initialType } = useLocalSearchParams<{ type?: string }>()
+  const { type: initialType, batchId: routeBatchId, batch: routeBatchName } = useLocalSearchParams<{ type?: string; batchId?: string; batch?: string }>()
   const storeBatches = useBatchStore((s) => s.batches)
   const activeBatches = useMemo(() => storeBatches.filter((b) => b.status === 'active'), [storeBatches])
   const batchItems = useMemo(() => {
@@ -610,9 +790,20 @@ export default function DailyRecordsScreen() {
     ]
   }, [activeBatches])
 
+  const initBatch = (() => {
+    if (routeBatchId && batchItems.some(b => b.id === routeBatchId)) {
+      const m = batchItems.find(b => b.id === routeBatchId)!
+      return { name: m.name, id: m.id }
+    }
+    if (routeBatchName && batchItems.some(b => b.name === routeBatchName)) {
+      const m = batchItems.find(b => b.name === routeBatchName)!
+      return { name: m.name, id: m.id }
+    }
+    return { name: batchItems[0]?.name ?? 'Layer Batch B', id: batchItems[0]?.id ?? '' }
+  })()
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [selectedBatch, setSelectedBatch] = useState(batchItems[0]?.name ?? 'Layer Batch B')
-  const [selectedBatchId, setSelectedBatchId] = useState(batchItems[0]?.id ?? '')
+  const [selectedBatch, setSelectedBatch] = useState(initBatch.name)
+  const [selectedBatchId, setSelectedBatchId] = useState(initBatch.id)
   const [selectedTime, setSelectedTime] = useState(new Date())
   const [quickLogType, setQuickLogType] = useState<RecordKey | null>(
     RECORD_TYPES.some(t => t.key === initialType) ? (initialType as RecordKey) : null
@@ -645,6 +836,110 @@ export default function DailyRecordsScreen() {
       return { ...metric, value: snapshotOverrides[metric.label] ?? metric.value }
     })
   }, [snapshotOverrides])
+  const saveOneRecord = useCallback((type: RecordKey, values: QuickLogValues) => {
+    const ts = new Date(selectedDate)
+    ts.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0)
+    const timestamp = ts.getTime()
+
+    try {
+      if (type === 'feed') {
+        const qty = parseFormattedNumber(values.quantity)
+        const feedName = values.feedType
+        const recordId = useHistoryStore.getState().addRecord({
+          type: 'feed', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          quantity: qty, unit: 'kg',
+          notes: values.notes?.trim(),
+          metadata: { feedType: feedName },
+        })
+        const waterQty = parseFormattedNumber(values.water)
+        if (waterQty > 0) {
+          useHistoryStore.getState().addRecord({
+            type: 'water', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+            quantity: waterQty, unit: 'L',
+            notes: values.notes?.trim(),
+            feedPostId: recordId,
+          })
+        }
+        setSnapshotOverrides((current) => ({ ...current, 'Feed Logged': `${formatNumberWithCommas(String(qty), 1)} kg` }))
+        if (feedName) setLastFeedByBatch((current) => ({ ...current, [selectedBatch]: feedName }))
+      }
+      if (type === 'water') {
+        useHistoryStore.getState().addRecord({
+          type: 'water', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          quantity: parseFormattedNumber(values.water), unit: 'L',
+          notes: values.notes?.trim(),
+        })
+        setSnapshotOverrides((current) => ({ ...current, 'Water Logged': `${formatNumberWithCommas(String(parseFormattedNumber(values.water)), 1)} L` }))
+      }
+      if (type === 'eggs') {
+        useHistoryStore.getState().addRecord({
+          type: 'eggs', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          quantity: parseFormattedNumber(values.eggs), unit: 'eggs',
+          cost: parseFormattedNumber(values.value) || undefined,
+          notes: values.notes?.trim(),
+        })
+        setSnapshotOverrides((current) => ({ ...current, 'Egg Production': `${formatNumberWithCommas(String(parseFormattedNumber(values.eggs)))} eggs` }))
+      }
+      if (type === 'mortality') {
+        useHistoryStore.getState().addRecord({
+          type: 'mortality', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          quantity: parseFormattedNumber(values.mortality), unit: 'birds',
+          notes: values.notes?.trim(),
+          metadata: { cause: values.cause?.trim() },
+        })
+        setSnapshotOverrides((current) => ({ ...current, Mortality: `${formatNumberWithCommas(String(parseFormattedNumber(values.mortality)))} birds` }))
+      }
+      if (type === 'inventory') {
+        const qty = parseFormattedNumber(values.quantity)
+        const cost = parseFormattedNumber(values.cost)
+        useHistoryStore.getState().addRecord({
+          type: 'inventory', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          quantity: qty, unit: 'kg', cost,
+          itemName: values.itemName?.trim(),
+          supplier: values.supplier?.trim(),
+          notes: values.notes?.trim(),
+        })
+      }
+      if (type === 'medication') {
+        useHistoryStore.getState().addRecord({
+          type: 'medication', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          notes: values.notes?.trim(),
+          metadata: { medicationName: values.medication?.trim(), dose: values.dose?.trim() },
+        })
+      }
+      if (type === 'observation') {
+        useHistoryStore.getState().addRecord({
+          type: 'observation', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          notes: values.notes?.trim(),
+        })
+      }
+      if (type === 'observation' || type === 'medication' || type === 'feed' || type === 'eggs' || type === 'mortality' || type === 'inventory') {
+        const post = buildFarmFeedPost(type, values, selectedBatch, dateStr, timeStr)
+        addFeedPost(post)
+      }
+      return true
+    } catch {
+      return false
+    }
+  }, [selectedBatch, selectedBatchId, selectedDate, selectedTime, dateStr, timeStr, addFeedPost])
+
+  const handleQuickLogBatchSave = useCallback((items: { type: RecordKey; values: QuickLogValues }[]) => {
+    if (items.length === 0) return
+    let saved = 0
+    for (const item of items) {
+      const ok = saveOneRecord(item.type, item.values)
+      if (ok) {
+        saved++
+        setLoggedToday((current) => current.includes(item.type) ? current : [...current, item.type])
+      }
+    }
+    if (saved > 0 && selectedBatchId) {
+      useBatchStore.getState().touchBatch(selectedBatchId)
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+    showToast(`${saved} of ${items.length} records saved`)
+  }, [saveOneRecord, selectedBatchId, showToast])
+
   const handleQuickLogSave = (values: QuickLogValues) => {
     if (!quickLogType) return
     const ts = new Date(selectedDate)
@@ -712,18 +1007,19 @@ export default function DailyRecordsScreen() {
           supplier: values.supplier?.trim(),
           notes: values.notes?.trim(),
         })
-        // Also save an expense record for budget attribution
-        if (cost > 0) {
-          const itemName = (values.itemName || '').toLowerCase()
-          const category = itemName.includes('feed') ? 'feed' : 'other'
-          useHistoryStore.getState().addRecord({
-            type: 'expense', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
-            cost,
-            itemName: category,
-            notes: `${values.itemName?.trim() || 'Stock'} purchase · ${qty}kg`,
-            supplier: values.supplier?.trim() || undefined,
-          })
-        }
+      }
+      if (quickLogType === 'medication') {
+        recordId = useHistoryStore.getState().addRecord({
+          type: 'medication', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          notes: values.notes?.trim(),
+          metadata: { medicationName: values.medication?.trim(), dose: values.dose?.trim() },
+        })
+      }
+      if (quickLogType === 'observation') {
+        recordId = useHistoryStore.getState().addRecord({
+          type: 'observation', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+          notes: values.notes?.trim(),
+        })
       }
 
       if (selectedBatchId) {
@@ -920,6 +1216,7 @@ export default function DailyRecordsScreen() {
           onTimeSelect={setSelectedTime}
           onClose={closeQuickLog}
           onSave={handleQuickLogSave}
+          onBatchSave={handleQuickLogBatchSave}
         />
       )}
 

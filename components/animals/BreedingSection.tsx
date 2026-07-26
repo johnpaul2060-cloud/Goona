@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet,
+  StyleSheet, Platform,
 } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
 import GoonaIcon from '../ui/GoonaIcon'
 import { Icons } from '../../shared/icons'
@@ -83,9 +84,13 @@ export default function BreedingSection({ batchId, livestockType }: Props) {
               <Text style={styles.secTitle}>Breeding</Text>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.addPill} activeOpacity={0.85} onPress={() => setShowMatingSheet(true)}>
-                <GoonaIcon icon={Icons.plus} size={14} color="#FFFFFF" />
-                <Text style={styles.addPillText}>Record Mating</Text>
+              <TouchableOpacity
+                style={styles.matePill}
+                activeOpacity={0.85}
+                onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowMatingSheet(true) }}
+              >
+                <GoonaIcon icon={Icons.plus} size={13} color="#FFFFFF" />
+                <Text style={styles.matePillText}>Record Mating</Text>
               </TouchableOpacity>
               <View style={styles.chevron}>
                 <GoonaIcon icon={Icons.chevronDown} size={16} color="#64748B" />
@@ -121,13 +126,21 @@ export default function BreedingSection({ batchId, livestockType }: Props) {
             )}
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.addPill} activeOpacity={0.85} onPress={() => setShowMatingSheet(true)}>
-              <GoonaIcon icon={Icons.heart} size={12} color="#FFFFFF" />
-              <Text style={styles.addPillText}>Mate</Text>
+            <TouchableOpacity
+              style={styles.matePill}
+              activeOpacity={0.85}
+              onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowMatingSheet(true) }}
+            >
+              <GoonaIcon icon={Icons.heart} size={11} color="#FFFFFF" />
+              <Text style={styles.matePillText}>Mate</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.birthPill} activeOpacity={0.85} onPress={() => setShowBirthSheet(true)}>
-              <GoonaIcon icon={Icons.userPlus} size={12} color="#FFFFFF" />
-              <Text style={styles.addPillText}>Birth</Text>
+            <TouchableOpacity
+              style={styles.birthPill}
+              activeOpacity={0.85}
+              onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowBirthSheet(true) }}
+            >
+              <GoonaIcon icon={Icons.userPlus} size={11} color="#FFFFFF" />
+              <Text style={styles.birthPillText}>Birth</Text>
             </TouchableOpacity>
             <View style={[styles.chevron, expanded && styles.chevronOpen]}>
               <GoonaIcon icon={Icons.chevronDown} size={16} color="#64748B" />
@@ -336,7 +349,8 @@ const styles = StyleSheet.create({
   secTitle: { fontSize: 17, fontWeight: '800', color: '#15291A' },
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 28, marginHorizontal: 16, marginTop: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 2,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
     paddingHorizontal: 20, paddingVertical: 16,
   },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -348,15 +362,16 @@ const styles = StyleSheet.create({
   pregBadgeText: { fontSize: 11, fontWeight: '700', color: '#7C3AED' },
   chevron: { width: 28, height: 28, borderRadius: 999, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
   chevronOpen: { backgroundColor: '#E2E8F0' },
-  addPill: {
+  matePill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#E11D48', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+    backgroundColor: '#D9566A', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
   },
+  matePillText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
   birthPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#7C3AED', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+    backgroundColor: '#8B7EC3', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
   },
-  addPillText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
+  birthPillText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
   chips: { paddingVertical: 12, gap: 8 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 8,

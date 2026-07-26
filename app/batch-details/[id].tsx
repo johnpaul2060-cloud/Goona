@@ -3,20 +3,26 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Modal, TextInput, Alert,
   KeyboardAvoidingView, Platform, AccessibilityInfo,
+  Pressable,
 } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
+import * as Haptics from 'expo-haptics'
 import { Icons } from '../../shared/icons'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeInUp, FadeInDown, SlideInUp } from 'react-native-reanimated'
+import Animated, {
+  FadeInUp, FadeInDown, SlideInUp,
+  useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing,
+} from 'react-native-reanimated'
 import { useBatchStore, type BudgetAllocation } from '../../store/useBatchStore'
 import { useHistoryStore } from '../../store/useHistoryStore'
 import { useFarmChatStore } from '../../store/useFarmChatStore'
 import AnimalsSection from '../../components/animals/AnimalsSection'
 import BreedingSection from '../../components/animals/BreedingSection'
+import SmartInsightsSection from '../../components/SmartInsightsSection'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -50,7 +56,8 @@ function formatNaira(amount: number): string {
 }
 
 function formatNairaFull(amount: number): string {
-  return `\u20A6${amount.toLocaleString('en-NG')}`
+  if (amount == null || isNaN(amount)) return '\u20A60'
+  return `\u20A6${Math.round(Math.abs(amount)).toLocaleString('en-US')}`
 }
 
 // ─── RECORDS SECTION ───
@@ -106,10 +113,11 @@ function RecordsSection({ batch }: { batch: import('../../store/useBatchStore').
     }
     if (grouped.sale) {
       const total = grouped.sale.reduce((s, r) => s + (r.cost || 0), 0)
-      result.push({ key: 'sale', label: 'Sales', icon: Icons.trendingUp, color: '#16A34A', value: formatNairaFull(total) })
+      result.push({ key: 'sale', label: 'Sales', icon: Icons.trendingUp, color: '#2E7D32', value: formatNairaFull(total) })
     }
     if (grouped.inventory) {
-      result.push({ key: 'inventory', label: 'Stock', icon: Icons.package, color: '#0F766E', value: `${grouped.inventory.length} purchases` })
+      const total = grouped.inventory.reduce((s, r) => s + (r.cost || 0), 0)
+      result.push({ key: 'inventory', label: 'Stock', icon: Icons.package, color: '#EF4444', value: formatNairaFull(total) })
     }
     return result
   }, [grouped])
@@ -129,12 +137,6 @@ function RecordsSection({ batch }: { batch: import('../../store/useBatchStore').
             </View>
           </View>
           <View style={styles.recordsHeaderRight}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.push(`/(tabs)/records/sales-revenue?batchFilter=${encodeURIComponent(batch.batchName)}` as any)}
-            >
-              <Text style={styles.secLink}>View all \u2192</Text>
-            </TouchableOpacity>
             <View style={[styles.recordsChevron, expanded && styles.recordsChevronOpen]}>
               <GoonaIcon icon={Icons.chevronDown} size={16} color="#64748B" />
             </View>
@@ -448,15 +450,19 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
   const allocations = batch.budgetAllocations ?? []
   const totalBudget = allocations.reduce((s, a) => s + a.amount, 0)
 
-  // Compute spend per category from expense records
+  // Compute spend per category from expense + inventory records
   const spendByCategory = useMemo(() => {
     const batchRecords = records.filter(
-      (r) => (r.batchId === batch.id || r.batch === batch.batchName) && r.type === 'expense' && r.cost
+      (r) => (r.batchId === batch.id || r.batch === batch.batchName) && r.cost
     )
     const result: Record<string, number> = {}
     for (const r of batchRecords) {
-      const cat = r.itemName || ''
-      result[cat] = (result[cat] || 0) + (r.cost || 0)
+      if (r.type === 'expense') {
+        const cat = r.itemName || ''
+        result[cat] = (result[cat] || 0) + (r.cost || 0)
+      } else if (r.type === 'inventory') {
+        result['purchase'] = (result['purchase'] || 0) + (r.cost || 0)
+      }
     }
     return result
   }, [records, batch.id, batch.batchName])
@@ -493,6 +499,17 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
     overallStatusLabelColor = '#F59E0B'; statusLabel = 'Near Limit'
   }
 
+  const progressAnim = useSharedValue(0)
+
+  useEffect(() => {
+    progressAnim.value = withTiming(overallPct, { duration: 800, easing: Easing.out(Easing.cubic) })
+  }, [overallPct])
+
+  const animatedFillStyle = useAnimatedStyle(() => ({
+    width: `${progressAnim.value * 100}%`,
+    backgroundColor: overallStatus,
+  }))
+
   const toggleExpand = useCallback(() => setExpanded((v) => !v), [])
 
   return (
@@ -504,17 +521,18 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
             <Text style={styles.secTitle}>Batch Budget</Text>
             {totalBudget > 0 && (
               <View style={[styles.budgetStatusChip, { backgroundColor: overallStatusLabelColor + '15', borderColor: overallStatusLabelColor + '30' }]}>
+                <View style={[styles.budgetStatusDot, { backgroundColor: overallStatusLabelColor }]} />
                 <Text style={[styles.budgetStatusText, { color: overallStatusLabelColor }]}>{statusLabel}</Text>
               </View>
             )}
           </View>
           <View style={styles.budgetHeaderRight}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.push(`/batch-details/budget-setup?id=${batch.id}` as any)}
+            <Pressable
+              onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/batch-details/budget-setup?id=${batch.id}` as any) }}
+              style={({ pressed }) => [styles.budgetEditBtn, { transform: [{ scale: pressed ? 0.95 : 1 }] }]}
             >
-              <Text style={styles.secLink}>Edit Allocation</Text>
-            </TouchableOpacity>
+              <GoonaIcon icon={Icons.edit3} size={14} color="#17663A" />
+            </Pressable>
             <View style={[styles.budgetChevron, expanded && styles.budgetChevronOpen]}>
               <GoonaIcon icon={Icons.chevronDown} size={16} color="#64748B" />
             </View>
@@ -539,10 +557,10 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
               </View>
             </View>
 
-            {/* Slim progress bar */}
+            {/* Slim animated progress bar */}
             <View style={styles.budgetOverallCompactBar}>
               <View style={styles.budgetOverallCompactTrack}>
-                <View style={[styles.budgetOverallCompactFill, { width: `${overallPct * 100}%`, backgroundColor: overallStatus }]} />
+                <Animated.View style={[styles.budgetOverallCompactFill, animatedFillStyle]} />
               </View>
               <Text style={[styles.budgetOverallCompactPct, { color: overallStatus }]}>{Math.round(overallPct * 100)}%</Text>
             </View>
@@ -621,7 +639,7 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
                   <View style={styles.revenueGrid}>
                     <View style={styles.revenueItem}>
                       <Text style={styles.revenueLabel}>Revenue</Text>
-                      <Text style={styles.revenueValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(batchRevenue)}</Text>
+                      <Text style={[styles.revenueValue, { color: '#2E7D32' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(batchRevenue)}</Text>
                     </View>
                     <View style={styles.revenueItem}>
                       <Text style={styles.revenueLabel}>Spent</Text>
@@ -629,7 +647,7 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
                     </View>
                     <View style={styles.revenueItem}>
                       <Text style={styles.revenueLabel}>Profit</Text>
-                      <Text style={[styles.revenueValue, { color: batchRevenue - totalSpent >= 0 ? '#16A34A' : '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>
+                      <Text style={[styles.revenueValue, { color: batchRevenue - totalSpent >= 0 ? '#2E7D32' : '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>
                         {batchRevenue - totalSpent >= 0 ? '' : '-'}{formatNairaFull(Math.abs(batchRevenue - totalSpent))}
                       </Text>
                     </View>
@@ -638,7 +656,7 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
                     <View style={styles.marginRow}>
                       <Text style={styles.marginLabel}>Margin</Text>
                       <View style={[styles.marginBadge, { backgroundColor: batchRevenue - totalSpent >= 0 ? '#F0FDF4' : '#FEF2F2' }]}>
-                        <Text style={[styles.marginText, { color: batchRevenue - totalSpent >= 0 ? '#16A34A' : '#EF4444' }]}>
+                        <Text style={[styles.marginText, { color: batchRevenue - totalSpent >= 0 ? '#2E7D32' : '#EF4444' }]}>
                           {totalSpent > 0
                             ? `${((batchRevenue - totalSpent) / totalSpent * 100).toFixed(0)}%`
                             : batchRevenue > 0 ? '∞' : '—'}
@@ -953,29 +971,7 @@ export default function BatchDetailsScreen() {
         )}
 
         {/* SMART INSIGHTS */}
-        <Animated.View entering={FadeInUp.duration(500).delay(400).springify()}>
-          <View style={styles.sec}>
-            <Text style={styles.secTitle}>Smart Insights</Text>
-            <Text style={styles.secMeta}>GOONA IQ</Text>
-          </View>
-        </Animated.View>
-
-        {batch.insights.map((ins, i) => (
-          <Animated.View
-            key={i}
-            entering={FadeInUp.duration(500).delay(400 + i * 80).springify()}
-            style={[styles.ins, i % 2 === 0 ? styles.insGreen : styles.insBlue]}
-          >
-            <View style={styles.iIco}>
-              <Text style={{ fontSize: 18 }}>{i % 2 === 0 ? '\uD83D\uDCC8' : '\uD83C\uDF3E'}</Text>
-            </View>
-            <Text style={styles.iTxt}>
-              {ins.text.split(/(\d+%|\d+\.?\d*%)/).map((part, j) => (
-                /\d/.test(part) ? <Text key={j} style={styles.iBold}>{part}</Text> : part
-              ))}
-            </Text>
-          </Animated.View>
-        ))}
+        <SmartInsightsSection storeBatch={storeBatch ?? undefined} />
 
         {/* COMPLETE CYCLE / RESTORE (BOTTOM) */}
         <Animated.View entering={FadeInUp.duration(500).delay(460).springify()}>
@@ -1309,50 +1305,59 @@ const styles = StyleSheet.create({
 
   /* budget section */
   budgetCard: {
-    backgroundColor: 'white', borderRadius: 24, padding: 20, marginTop: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04, shadowRadius: 16, elevation: 1,
+    backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, marginTop: 14,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 2,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
   },
   budgetHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginBottom: 14,
   },
-  budgetHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  budgetHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  budgetHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
+  budgetHeaderRight: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, flex: 1 },
   budgetChevron: {
     width: 26, height: 26, borderRadius: 8, backgroundColor: '#F1F5F9',
     alignItems: 'center', justifyContent: 'center',
   },
   budgetChevronOpen: { transform: [{ rotate: '180deg' }] },
-  budgetStatusChip: {
-    paddingVertical: 2, paddingHorizontal: 8, borderRadius: 8,
-    borderWidth: 1,
+  budgetEditBtn: {
+    width: 28, height: 28, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(23,102,58,0.2)',
+    backgroundColor: 'rgba(23,102,58,0.06)',
   },
-  budgetStatusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+  budgetStatusChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingVertical: 4, paddingHorizontal: 11, borderRadius: 999,
+    borderWidth: 1.5,
+  },
+  budgetStatusDot: { width: 7, height: 7, borderRadius: 3.5 },
+  budgetStatusText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.3 },
   budgetSummaryCompact: {
     flexDirection: 'row', justifyContent: 'space-between',
-    backgroundColor: '#F8FAF7', borderRadius: 14, padding: 14, marginBottom: 10,
+    backgroundColor: '#F2F6F1', borderRadius: 20, padding: 16, marginBottom: 12,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)',
   },
   budgetCompactItem: { alignItems: 'center', flex: 1 },
-  budgetCompactLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', marginBottom: 2 },
-  budgetCompactValue: { fontSize: 14, fontWeight: '800', color: '#1B1B1B' },
+  budgetCompactLabel: { fontSize: 10, fontWeight: '500', color: '#64748B', marginBottom: 4, letterSpacing: 0.5, textTransform: 'uppercase' as any },
+  budgetCompactValue: { fontSize: 17, fontWeight: '800', color: '#1B1B1B', fontVariant: ['tabular-nums'] },
   budgetOverallCompactBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14,
   },
   budgetOverallCompactTrack: {
-    flex: 1, height: 6, borderRadius: 3, backgroundColor: '#F1F5F9', overflow: 'hidden',
+    flex: 1, height: 10, borderRadius: 5, backgroundColor: '#E8EDE7', overflow: 'hidden',
   },
-  budgetOverallCompactFill: { height: '100%', borderRadius: 3 },
-  budgetOverallCompactPct: { fontSize: 11, fontWeight: '700', width: 34, textAlign: 'right' },
-  budgetCatPills: { flexDirection: 'row', gap: 8, paddingRight: 20, paddingBottom: 2 },
+  budgetOverallCompactFill: { height: '100%', borderRadius: 5 },
+  budgetOverallCompactPct: { fontSize: 12, fontWeight: '700', width: 38, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  budgetCatPills: { flexDirection: 'row', gap: 8, paddingRight: 48, paddingBottom: 2 },
   budgetCatPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingVertical: 5, paddingHorizontal: 10, borderRadius: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999,
     borderWidth: 1,
   },
-  budgetCatPillDot: { width: 6, height: 6, borderRadius: 3 },
-  budgetCatPillLabel: { fontSize: 10, fontWeight: '600', color: '#64748B' },
-  budgetCatPillValue: { fontSize: 10, fontWeight: '800' },
+  budgetCatPillDot: { width: 7, height: 7, borderRadius: 3.5 },
+  budgetCatPillLabel: { fontSize: 11, fontWeight: '600', color: '#475569' },
+  budgetCatPillValue: { fontSize: 11, fontWeight: '800' },
   budgetEmptyCompact: { alignItems: 'center', paddingVertical: 12, gap: 8 },
   budgetEmptyText: { fontSize: 12, fontWeight: '600', color: '#94A3B8' },
   budgetSetBtn: {
@@ -1396,8 +1401,9 @@ const styles = StyleSheet.create({
 
   /* records section */
   recordsCard: {
-    backgroundColor: 'white', borderRadius: 24, padding: 20, marginTop: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 1,
+    backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, marginTop: 14,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 2,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
   },
   recordsEmpty: { alignItems: 'center', paddingVertical: 28, gap: 6 },
   recordsEmptyText: { fontSize: 14, fontWeight: '600', color: '#94A3B8', marginTop: 4 },
@@ -1408,9 +1414,9 @@ const styles = StyleSheet.create({
   },
   recordsHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   recordsCountBadge: {
-    backgroundColor: '#F1F5F9', paddingVertical: 2, paddingHorizontal: 8, borderRadius: 8,
+    backgroundColor: '#15291A', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 2,
   },
-  recordsCountText: { fontSize: 11, fontWeight: '700', color: '#64748B' },
+  recordsCountText: { fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
   recordsHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   recordsChevron: {
     width: 26, height: 26, borderRadius: 8, backgroundColor: '#F1F5F9',

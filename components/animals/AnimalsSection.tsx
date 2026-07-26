@@ -1,9 +1,13 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet,
+  StyleSheet, Platform,
 } from 'react-native'
-import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
+import * as Haptics from 'expo-haptics'
+import Animated, {
+  FadeInUp, FadeInDown,
+  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, Easing,
+} from 'react-native-reanimated'
 import GoonaIcon from '../ui/GoonaIcon'
 import { Icons } from '../../shared/icons'
 import { useAnimalStore, type Animal, type AnimalStatus } from '../../store/useAnimalStore'
@@ -55,6 +59,27 @@ export default function AnimalsSection({ batch }: Props) {
     return result
   }, [activeCount, soldCount, deceasedCount])
 
+  const countUpValue = useSharedValue(0)
+  useEffect(() => {
+    countUpValue.value = withTiming(activeCount, { duration: 600, easing: Easing.out(Easing.cubic) })
+  }, [activeCount])
+
+  const animatedCountText = useAnimatedStyle(() => ({
+    opacity: withTiming(countUpValue.value > 0 ? 1 : 0, { duration: 300 }),
+  }))
+
+  const pulseDot = useSharedValue(1)
+  useEffect(() => {
+    if (activeCount > 0) {
+      pulseDot.value = withRepeat(withSequence(withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) }), withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) })), -1, true)
+    }
+  }, [activeCount])
+
+  const animatedDotStyle = useAnimatedStyle(() => ({
+    opacity: pulseDot.value,
+    transform: [{ scale: pulseDot.value }],
+  }))
+
   const toggleExpand = useCallback(() => setExpanded((v) => !v), [])
 
   const handleEdit = useCallback((animal: Animal) => {
@@ -103,11 +128,15 @@ export default function AnimalsSection({ batch }: Props) {
           <View style={styles.animalsHeaderLeft}>
             <Text style={styles.secTitle}>Animals</Text>
             <View style={styles.animalsCountBadge}>
-              <Text style={styles.animalsCountText}>{batchAnimals.length}</Text>
+              <Animated.Text style={[styles.animalsCountText, animatedCountText]}>{batchAnimals.length}</Animated.Text>
             </View>
           </View>
           <View style={styles.animalsHeaderRight}>
-            <TouchableOpacity style={styles.addPill} activeOpacity={0.85} onPress={handleAddNew}>
+            <TouchableOpacity
+              style={styles.addPill}
+              activeOpacity={0.85}
+              onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleAddNew() }}
+            >
               <GoonaIcon icon={Icons.plus} size={14} color="#FFFFFF" />
               <Text style={styles.addPillText}>Add</Text>
             </TouchableOpacity>
@@ -120,22 +149,28 @@ export default function AnimalsSection({ batch }: Props) {
         {/* Premium summary pills (always visible) */}
         {summaries.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.animalsChips} decelerationRate="fast" snapToInterval={120}>
-            {summaries.map((s) => (
-              <TouchableOpacity
-                key={s.key}
-                activeOpacity={0.8}
-                style={[styles.animalsChipPremium, { backgroundColor: s.color + '0D', borderColor: s.color + '25' }]}
-                onPress={() => { if (!expanded) setExpanded(true) }}
-              >
-                <View style={[styles.animalsChipIcon, { backgroundColor: s.color + '18' }]}>
-                  <GoonaIcon icon={s.icon} size={14} color={s.color} />
-                </View>
-                <View style={styles.animalsChipBody}>
-                  <Text style={[styles.animalsChipLabel, { color: s.color }]}>{s.label}</Text>
-                  <Text style={[styles.animalsChipValue, { color: s.color }]}>{s.value}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+            {summaries.map((s) => {
+              const isActive = s.key === 'active'
+              return (
+                <TouchableOpacity
+                  key={s.key}
+                  activeOpacity={0.8}
+                  style={[styles.animalsChipPremium, { backgroundColor: s.color + '0D', borderColor: s.color + '25' }]}
+                  onPress={() => { if (!expanded) setExpanded(true) }}
+                >
+                  <View style={[styles.animalsChipIcon, { backgroundColor: s.color + '18' }]}>
+                    <GoonaIcon icon={s.icon} size={14} color={s.color} />
+                  </View>
+                  <View style={styles.animalsChipBody}>
+                    <View style={styles.animalsChipLabelRow}>
+                      <Text style={[styles.animalsChipLabel, { color: s.color }]}>{s.label}</Text>
+                      {isActive && <Animated.View style={[styles.animalsPulseDot, { backgroundColor: s.color }, animatedDotStyle]} />}
+                    </View>
+                    <Text style={[styles.animalsChipValue, { color: s.color }]}>{s.value}</Text>
+                  </View>
+                </TouchableOpacity>
+              )
+            })}
           </ScrollView>
         )}
 
@@ -208,7 +243,8 @@ const styles = StyleSheet.create({
   secTitle: { fontSize: 17, fontWeight: '800', color: '#15291A' },
   animalsCard: {
     backgroundColor: '#FFFFFF', borderRadius: 28, marginHorizontal: 16, marginTop: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 2,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
     paddingHorizontal: 20, paddingVertical: 16,
   },
   animalsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -231,6 +267,8 @@ const styles = StyleSheet.create({
   },
   animalsChipIcon: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   animalsChipBody: {},
+  animalsChipLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  animalsPulseDot: { width: 6, height: 6, borderRadius: 3 },
   animalsChipLabel: { fontSize: 11, fontWeight: '600' },
   animalsChipValue: { fontSize: 16, fontWeight: '800' },
   animalsDivider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 8 },

@@ -57,13 +57,34 @@ function isLayer(batch: Batch): boolean {
   return text.includes('layer') || text.includes('egg') || text.includes('pullet')
 }
 
+function isFish(batch: Batch): boolean {
+  const text = `${batch.livestockType} ${batch.batchName}`.toLowerCase()
+  return text.includes('fish') || text.includes('catfish')
+}
+
+function getCountLabel(batch: Batch): string {
+  if (batch.model === 'individual') return 'Animals'
+  if (isFish(batch)) return 'Fish'
+  return 'Birds'
+}
+
+function getTypeIcon(batch: Batch): typeof Icons.egg {
+  if (batch.model === 'individual') return Icons.user
+  if (isLayer(batch)) return Icons.egg
+  return Icons.sprout
+}
+
 function getPhaseData(batch: Batch, progress: number): { phases: string[]; phaseIndex: number; phaseName: string } {
+  if (batch.model === 'individual') {
+    return { phases: [], phaseIndex: -1, phaseName: '' }
+  }
   const phases = isLayer(batch) ? ['Brooding', 'Laying', 'Peak', 'Harvest'] : ['Brooding', 'Growing', 'Finishing', 'Harvest']
   const phaseIndex = progress >= 86 ? 3 : progress >= 62 ? 2 : progress >= 25 ? 1 : 0
   return { phases, phaseIndex, phaseName: phases[phaseIndex] }
 }
 
 function deriveHealthFlag(batch: Batch, progress: number, currentWeek: number): boolean {
+  if (batch.model === 'individual') return false
   const medPerBird = batch.quantity > 0 ? batch.medicationCost / batch.quantity : 0
   const feedPerBird = batch.quantity > 0 ? batch.feedCost / batch.quantity : 0
   const broilerGrowthCheck = !isLayer(batch) && currentWeek >= 4 && currentWeek <= 5 && progress < 60
@@ -82,12 +103,13 @@ function enrichBatch(batch: Batch): EnrichedBatch {
   const isNearHarvest = isReady || daysToHarvest <= NEAR_HARVEST_DAYS || progress >= 85
   const hasHealthFlag = deriveHealthFlag(batch, progress, currentWeek)
   const phaseData = getPhaseData(batch, progress)
-  const typeLayer = isLayer(batch)
-  const typeLabel = typeLayer ? 'Layers' : 'Broilers'
-  const typeIcon = typeLayer ? Icons.egg : Icons.sprout
+  const typeLabel = batch.livestockType
+  const typeIcon = getTypeIcon(batch)
+  const isIndiv = batch.model === 'individual'
   const healthTone: HealthTone = hasHealthFlag ? 'red' : isNearHarvest ? 'amber' : 'green'
   const accent = healthTone === 'red' ? '#EF4444' : healthTone === 'amber' ? '#F59E0B' : '#2E7D32'
-  const statusText = hasHealthFlag ? 'Attention' : isNearHarvest ? 'Near Harvest' : 'Active'
+  let statusText = hasHealthFlag ? 'Attention' : 'Active'
+  if (!hasHealthFlag && isNearHarvest) statusText = isIndiv ? 'Near Complete' : 'Near Harvest'
   const statusBg = hasHealthFlag ? 'rgba(239,68,68,0.10)' : isNearHarvest ? 'rgba(245,158,11,0.14)' : 'rgba(46,125,50,0.10)'
   const statusColor = hasHealthFlag ? '#DC2626' : isNearHarvest ? '#B45309' : '#2E7D32'
 
@@ -112,11 +134,6 @@ function enrichBatch(batch: Batch): EnrichedBatch {
   }
 }
 
-function formatHarvest(batch: EnrichedBatch): string {
-  if (batch.isReady) return 'Ready'
-  return `${batch.daysToHarvest} day${batch.daysToHarvest === 1 ? '' : 's'}`
-}
-
 function goToBatch(batch: EnrichedBatch) {
   router.push({ pathname: '/batch-details/[id]', params: { id: batch.id } } as any)
 }
@@ -125,9 +142,30 @@ function Meta({ label, value }: { label: string; value: string }) {
   return <View style={styles.metaBlock}><Text style={styles.metaLabel}>{label}</Text><Text style={styles.metaValue} numberOfLines={1}>{value}</Text></View>
 }
 
+function formatDuration(days: number): string {
+  if (days === 0) return 'Ready'
+  if (days < 90) return `${days} day${days === 1 ? '' : 's'}`
+  if (days < 365) {
+    const weeks = Math.round(days / 7)
+    return `${weeks} wk${weeks === 1 ? '' : 's'}`
+  }
+  const yrs = Math.round(days / 365.25 * 10) / 10
+  return `${yrs} yr${yrs === 1 ? '' : 's'}`
+}
+
+function formatCycleLabel(batch: EnrichedBatch): { label: string; value: string } {
+  if (batch.isReady) return { label: 'Ready', value: 'Ready' }
+  const value = formatDuration(batch.daysToHarvest)
+  if (batch.model === 'individual') return { label: 'Cycle', value }
+  return { label: 'To harvest', value }
+}
+
 const BatchCard = memo(function BatchCard({ batch, index }: { batch: EnrichedBatch; index: number }) {
   const healthDot = batch.healthTone === 'red' ? '#EF4444' : batch.healthTone === 'amber' ? '#F59E0B' : '#22C55E'
   const trackColor = batch.isNearHarvest ? '#F59E0B' : '#2E7D32'
+  const countLabel = getCountLabel(batch)
+  const cycleLabel = formatCycleLabel(batch)
+  const isIndiv = batch.model === 'individual'
   return (
     <Animated.View entering={FadeInUp.duration(380).delay(Math.min(index * 45, 240)).springify()}>
       <Pressable onPress={() => goToBatch(batch)} style={[styles.batchCard, { borderLeftColor: batch.accent }, batch.isNearHarvest && styles.batchCardPop]}>
@@ -140,16 +178,22 @@ const BatchCard = memo(function BatchCard({ batch, index }: { batch: EnrichedBat
         </View>
         <View style={styles.batchMetaRow}>
           <Meta label="Type" value={batch.typeLabel} />
-          <Meta label="Birds" value={batch.quantity.toLocaleString()} />
+          <Meta label={countLabel} value={batch.quantity.toLocaleString()} />
           <Meta label="Week" value={`${batch.currentWeek}/${batch.totalWeeks}`} />
-          <View style={styles.harvestMeta}><Text style={styles.metaLabel}>{batch.isReady ? 'Harvest' : 'To harvest'}</Text><Text style={[styles.metaValue, { color: batch.isNearHarvest ? '#B45309' : '#2E7D32' }]}>{formatHarvest(batch)}</Text></View>
+          <View style={styles.harvestMeta}><Text style={styles.metaLabel}>{cycleLabel.label}</Text><Text style={[styles.metaValue, { color: batch.isNearHarvest ? '#B45309' : '#2E7D32' }]}>{cycleLabel.value}</Text></View>
         </View>
         <View style={styles.phaseWrap}>
-          <View style={styles.phaseLabels}>
-            {batch.phases.map((phase, phaseIndex) => (
-              <Text key={phase} style={[styles.phaseLabel, phaseIndex < batch.phaseIndex && styles.phaseDone, phaseIndex === batch.phaseIndex && styles.phaseCurrent, phaseIndex === 0 && styles.phaseFirst, phaseIndex === batch.phases.length - 1 && styles.phaseLast]} numberOfLines={1}>{phase}</Text>
-            ))}
-          </View>
+          {isIndiv ? (
+            <View style={styles.phaseLabels}>
+              <Text style={[styles.phaseLabel, styles.phaseCurrent]}>Cycle</Text>
+            </View>
+          ) : (
+            <View style={styles.phaseLabels}>
+              {batch.phases.map((phase, phaseIndex) => (
+                <Text key={phase} style={[styles.phaseLabel, phaseIndex < batch.phaseIndex && styles.phaseDone, phaseIndex === batch.phaseIndex && styles.phaseCurrent, phaseIndex === 0 && styles.phaseFirst, phaseIndex === batch.phases.length - 1 && styles.phaseLast]} numberOfLines={1}>{phase}</Text>
+              ))}
+            </View>
+          )}
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${batch.progress}%`, backgroundColor: trackColor }]} />
             {[25, 50, 75].map((point) => <View key={point} style={[styles.progressNode, { left: `${point}%` }]} />)}
