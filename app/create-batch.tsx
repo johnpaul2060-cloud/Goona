@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useMemo } from 'react'
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, Alert,
@@ -181,6 +181,9 @@ export default function CreateBatchScreen() {
   const [startDate, setStartDate] = useState(new Date())
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [duration, setDuration] = useState('6 Weeks')
+  const [customDurationVal, setCustomDurationVal] = useState('')
+  const [customDurationUnit, setCustomDurationUnit] = useState<'weeks' | 'months'>('weeks')
+  const [customDurationTouched, setCustomDurationTouched] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
   const addBatch = useBatchStore((s) => s.addBatch)
@@ -231,6 +234,33 @@ export default function CreateBatchScreen() {
   const forecastProfit = expectedRevenue - totalCost
   const reinvestmentGoal = Math.round(forecastProfit * 0.3)
 
+  const resolvedDuration = useMemo(() => {
+    if (duration !== 'Custom') return duration
+    const num = parseInt(customDurationVal, 10)
+    if (!num || num < 1) return ''
+    return customDurationUnit === 'months'
+      ? `${num * 4} Weeks`
+      : `${num} Weeks`
+  }, [duration, customDurationVal, customDurationUnit])
+
+  const resolvedDurationDisplay = useMemo(() => {
+    if (duration !== 'Custom') return ''
+    const num = parseInt(customDurationVal, 10)
+    if (!num || num < 1) return ''
+    const weeks = customDurationUnit === 'months' ? num * 4 : num
+    const months = customDurationUnit === 'months' ? num : Math.round(num / 4.33)
+    if (weeks >= 12) {
+      const yrs = Math.floor(months / 12)
+      const remMonths = months % 12
+      const yearsStr = yrs > 0 ? `${yrs} yr${yrs > 1 ? 's' : ''}` : ''
+      const monthsStr = remMonths > 0 ? ` ${remMonths} mo` : ''
+      return `${weeks} weeks (~${yearsStr}${monthsStr})`.trim()
+    }
+    return `${weeks} weeks`
+  }, [duration, customDurationVal, customDurationUnit])
+
+  const isCustomValid = duration !== 'Custom' || (parseInt(customDurationVal, 10) >= 1)
+
   const onDateChange = (_event: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS === 'android') setShowDatePicker(false)
     if (date) setStartDate(date)
@@ -250,6 +280,14 @@ export default function CreateBatchScreen() {
       Alert.alert('Required', 'Please enter a valid livestock quantity.')
       return
     }
+    if (duration === 'Custom') {
+      setCustomDurationTouched(true)
+      const num = parseInt(customDurationVal, 10)
+      if (!num || num < 1) {
+        Alert.alert('Required', 'Please enter a valid custom duration (minimum 1).')
+        return
+      }
+    }
 
     addBatch({
       batchName: batchName.trim(),
@@ -259,13 +297,13 @@ export default function CreateBatchScreen() {
       feedCost: feedVal,
       medicationCost: medicationVal,
       startDate: startDate.toISOString(),
-      duration,
+      duration: resolvedDuration,
     })
 
     setShowSuccess(true)
     setTimeout(() => {
       setShowSuccess(false)
-      router.replace('/batches?from=batch-management')
+      router.replace('/(tabs)/records/all-batches' as any)
     }, 2200)
   }
 
@@ -577,11 +615,66 @@ export default function CreateBatchScreen() {
                     opt={opt}
                     selected={duration === opt}
                     accent={DURATION_COLORS[opt]}
-                    onSelect={() => setDuration(opt)}
+                    onSelect={() => {
+                      setDuration(opt)
+                      if (opt !== 'Custom') {
+                        setCustomDurationTouched(false)
+                      }
+                    }}
                   />
                 ))}
               </ScrollView>
             </View>
+
+            {/* CUSTOM DURATION INPUT */}
+            {duration === 'Custom' && (
+              <View style={styles.customDurationSection}>
+                <View style={styles.customDurationRow}>
+                  <TextInput
+                    style={[
+                      styles.customDurationInput,
+                      customDurationTouched && !isCustomValid && styles.customDurationInputError,
+                    ]}
+                    value={customDurationVal}
+                    onChangeText={(v) => {
+                      setCustomDurationVal(v.replace(/\D/g, ''))
+                      setCustomDurationTouched(true)
+                    }}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor="#A0AEA1"
+                  />
+                  <View style={styles.customDurationUnitRow}>
+                    {(['weeks', 'months'] as const).map((unit) => (
+                      <TouchableOpacity
+                        key={unit}
+                        activeOpacity={0.85}
+                        style={[
+                          styles.customDurationUnitBtn,
+                          customDurationUnit === unit && styles.customDurationUnitBtnActive,
+                        ]}
+                        onPress={() => setCustomDurationUnit(unit)}
+                      >
+                        <Text
+                          style={[
+                            styles.customDurationUnitText,
+                            customDurationUnit === unit && styles.customDurationUnitTextActive,
+                          ]}
+                        >
+                          {unit === 'weeks' ? 'Weeks' : 'Months'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                {customDurationTouched && !isCustomValid && (
+                  <Text style={styles.customDurationError}>Enter a whole number (minimum 1)</Text>
+                )}
+                {resolvedDurationDisplay ? (
+                  <Text style={styles.customDurationResolved}>{resolvedDurationDisplay}</Text>
+                ) : null}
+              </View>
+            )}
 
             {/* FORECAST CARD */}
             <Animated.View entering={FadeInUp.duration(500).delay(300).springify()} style={styles.forecastCard}>
@@ -604,6 +697,15 @@ export default function CreateBatchScreen() {
                 <View>
                   <Text style={styles.forecastLbl}>Forecast Profit</Text>
                   <Text style={[styles.forecastVal, { color: '#16A34A' }]}>₦{forecastProfit.toLocaleString('en-NG')}</Text>
+                </View>
+                <View>
+                  <Text style={styles.forecastLbl}>Cycle Length</Text>
+                  <Text style={styles.forecastVal}>
+                    {duration === 'Custom'
+                      ? resolvedDurationDisplay || '—'
+                      : duration
+                    }
+                  </Text>
                 </View>
                 <View>
                   <Text style={styles.forecastLbl}>Reinvestment Goal</Text>
@@ -794,6 +896,26 @@ const styles = StyleSheet.create({
   durationPillBg: { height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   durationPillBgSelected: { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   durationPillText: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
+
+  /* custom duration */
+  customDurationSection: { marginTop: -12, marginBottom: 20 },
+  customDurationRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  customDurationInput: {
+    flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F2F6F1',
+    borderWidth: 1.5, borderColor: '#E2E8F0', paddingHorizontal: 16,
+    fontSize: 18, fontWeight: '700', color: '#1B1B1B', fontFamily: 'Inter',
+  },
+  customDurationInputError: { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
+  customDurationUnitRow: { flexDirection: 'row', gap: 6 },
+  customDurationUnitBtn: {
+    paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12,
+    backgroundColor: '#F2F6F1', borderWidth: 1.5, borderColor: '#E2E8F0',
+  },
+  customDurationUnitBtnActive: { backgroundColor: '#17663A', borderColor: '#17663A' },
+  customDurationUnitText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  customDurationUnitTextActive: { color: '#FFFFFF' },
+  customDurationError: { fontSize: 12, fontWeight: '500', color: '#EF4444', marginTop: 6 },
+  customDurationResolved: { fontSize: 12, fontWeight: '600', color: '#16A34A', marginTop: 6 },
 
   /* forecast card */
   forecastCard: {

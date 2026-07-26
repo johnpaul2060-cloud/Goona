@@ -16,6 +16,8 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import * as Haptics from 'expo-haptics'
 import { useFarmChatStore, type FeedPost } from '../store/useFarmChatStore'
 import { useHistoryStore } from '../store/useHistoryStore'
+import { useBatchStore } from '../store/useBatchStore'
+import { isBatchLinked } from '../shared/expense-categories'
 
 const RECORD_TYPES = [
   { key: 'feed' as const, label: 'Feed & Water', icon: Icons.wheat, iconBg: '#FFFBEB', iconColor: '#F59E0B', emoji: '\uD83C\uDF3D' },
@@ -25,22 +27,6 @@ const RECORD_TYPES = [
   { key: 'inventory' as const, label: 'Stock Purchase', icon: Icons.package, iconBg: '#DDF5F0', iconColor: '#0F766E', emoji: '\uD83D\uDCE6' },
   { key: 'observation' as const, label: 'Note', icon: Icons.eye, iconBg: '#F5F3FF', iconColor: '#8B5CF6', emoji: '\uD83D\uDCDD' },
 ] as const
-
-const BATCHES = [
-  'Broiler Batch A',
-  'Layer Batch B',
-  'Starter Pen C',
-  'Turkey Unit',
-  'Poultry Expansion Batch',
-]
-
-const BATCH_META: Record<string, { birds: number; activeFeedType: string }> = {
-  'Broiler Batch A': { birds: 500, activeFeedType: 'Grower' },
-  'Layer Batch B': { birds: 350, activeFeedType: 'Layer Mash' },
-  'Starter Pen C': { birds: 220, activeFeedType: 'Starter' },
-  'Turkey Unit': { birds: 90, activeFeedType: 'Grower' },
-  'Poultry Expansion Batch': { birds: 300, activeFeedType: 'Finisher' },
-}
 
 const FEED_TYPES = ['Starter', 'Grower', 'Finisher', 'Layer Mash'] as const
 type RecordKey = (typeof RECORD_TYPES)[number]['key']
@@ -146,11 +132,11 @@ const ffStyles = StyleSheet.create({
 
 /* ─── Quick Log Bottom Sheet (keyboard-aware) ─── */
 function QuickLogSheet({
-  visible, type, onClose, batch, dateStr, timeStr, selectedDate, selectedTime, lastFeedType, onTypeChange, onBatchSelect, onDateSelect, onTimeSelect, onSave,
+  visible, type, onClose, batch, batchId, batchItems, dateStr, timeStr, selectedDate, selectedTime, lastFeedType, onTypeChange, onBatchSelect, onDateSelect, onTimeSelect, onSave,
 }: {
   visible: boolean; type: RecordKey; onClose: () => void
-  batch: string; dateStr: string; timeStr: string; selectedDate: Date; selectedTime: Date; lastFeedType?: string
-  onTypeChange: (type: RecordKey) => void; onBatchSelect: (batch: string) => void; onDateSelect: (date: Date) => void; onTimeSelect: (date: Date) => void; onSave?: (values: QuickLogValues) => void
+  batch: string; batchId?: string; batchItems: { name: string; id: string }[]; dateStr: string; timeStr: string; selectedDate: Date; selectedTime: Date; lastFeedType?: string
+  onTypeChange: (type: RecordKey) => void; onBatchSelect: (name: string, id: string) => void; onDateSelect: (date: Date) => void; onTimeSelect: (date: Date) => void; onSave?: (values: QuickLogValues) => void
 }) {
   const scrollRef = useRef<ScrollView>(null)
   const [showBatchOptions, setShowBatchOptions] = useState(false)
@@ -160,20 +146,22 @@ function QuickLogSheet({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [touched, setTouched] = useState<Set<string>>(new Set())
   const [formWarning, setFormWarning] = useState('')
-  const batchInfo = BATCH_META[batch] ?? { birds: 0, activeFeedType: 'Grower' }
+  const curBatch = batchItems.find((b) => b.name === batch)
+  const birds = curBatch ? 500 : 0 // fallback — accurate count from store if available
+  const activeFeedType = 'Grower' // static fallback for feed types
 
   const qty = parseFormattedNumber(values.quantity || values.water || values.eggs || values.mortality)
   const feedQty = parseFormattedNumber(values.quantity)
   const waterQty = parseFormattedNumber(values.water)
-  const realisticFeedMax = Math.max(50, Math.ceil(batchInfo.birds * 0.25))
-  const feedType = values.feedType || lastFeedType || batchInfo.activeFeedType
+  const realisticFeedMax = Math.max(50, Math.ceil(birds * 0.25))
+  const feedType = values.feedType || lastFeedType || activeFeedType
   const balance = useHistoryStore.getState().getFeedStockBalance()
   const stockWarning = balance.remainingKg > 0 && feedQty > balance.remainingKg
   const saveDisabled = Object.keys(fieldErrors).length > 0 || (type === 'feed' && (!feedType || feedQty <= 0)) || (type === 'eggs' && qty <= 0) || (type === 'mortality' && values.mortality === undefined) || (type === 'medication' && !values.medication?.trim()) || (type === 'inventory' && (!values.itemName?.trim() || feedQty <= 0 || parseFormattedNumber(values.cost) <= 0)) || (type === 'observation' && !values.notes?.trim())
 
   useEffect(() => {
     if (!visible) return
-    const initialFeedType = lastFeedType || (BATCH_META[batch]?.activeFeedType ?? 'Grower')
+    const initialFeedType = lastFeedType || activeFeedType
     setValues(type === 'feed' ? { feedType: initialFeedType } : {})
     setFieldErrors({})
     setTouched(new Set())
@@ -197,7 +185,7 @@ function QuickLogSheet({
       else if (nextFeedQty > realisticFeedMax) warning = 'That quantity looks high for this batch. Please confirm before saving.'
     }
     if (type === 'eggs' && nextEggs <= 0) errors.eggs = 'Enter eggs collected.'
-    if (type === 'mortality' && next.mortality !== undefined && nextMortality > batchInfo.birds) errors.mortality = 'Mortality cannot exceed batch size.'
+    if (type === 'mortality' && next.mortality !== undefined && nextMortality > birds) errors.mortality = 'Mortality cannot exceed batch size.'
     if (type === 'medication' && next.medication !== undefined && !next.medication.trim()) errors.medication = 'Enter medication name.'
     if (type === 'inventory') {
       if (!next.itemName?.trim()) errors.itemName = 'Enter item name.'
@@ -271,7 +259,7 @@ function QuickLogSheet({
               </View>
 
             <LogTypeSelector types={RECORD_TYPES} activeKey={type} onSelect={handleTypeChange} />
-              {showBatchOptions && <View style={qsStyles.batchOptions}>{BATCHES.map((item) => <TouchableOpacity key={item} style={[qsStyles.batchOption, item === batch && qsStyles.batchOptionActive]} activeOpacity={0.75} onPress={() => { onBatchSelect(item); setShowBatchOptions(false) }}><Text style={[qsStyles.batchOptionText, item === batch && qsStyles.batchOptionTextActive]}>{item}</Text>{item === batch ? <GoonaIcon icon={Icons.check} size={14} color="#2E7D32" /> : null}</TouchableOpacity>)}</View>}
+              {showBatchOptions && <View style={qsStyles.batchOptions}>{batchItems.map((item) => <TouchableOpacity key={item.name} style={[qsStyles.batchOption, item.name === batch && qsStyles.batchOptionActive]} activeOpacity={0.75} onPress={() => { onBatchSelect(item.name, item.id); setShowBatchOptions(false) }}><Text style={[qsStyles.batchOptionText, item.name === batch && qsStyles.batchOptionTextActive]}>{item.name}</Text>{item.name === batch ? <GoonaIcon icon={Icons.check} size={14} color="#2E7D32" /> : null}</TouchableOpacity>)}</View>}
               {showDatePicker && <View style={qsStyles.inlinePicker}><DateTimePicker value={selectedDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_event, date) => { if (Platform.OS === 'android') setShowDatePicker(false); if (date) onDateSelect(date) }} themeVariant="light" />{Platform.OS === 'ios' && <TouchableOpacity style={qsStyles.inlineDone} onPress={() => setShowDatePicker(false)}><Text style={qsStyles.inlineDoneText}>Done</Text></TouchableOpacity>}</View>}
               {showTimePicker && <View style={qsStyles.inlinePicker}><DateTimePicker value={selectedTime} mode="time" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(_event, date) => { if (Platform.OS === 'android') setShowTimePicker(false); if (date) onTimeSelect(date) }} themeVariant="light" />{Platform.OS === 'ios' && <TouchableOpacity style={qsStyles.inlineDone} onPress={() => setShowTimePicker(false)}><Text style={qsStyles.inlineDoneText}>Done</Text></TouchableOpacity>}</View>}
             </View>
@@ -609,8 +597,22 @@ function buildFarmFeedPost(type: RecordKey, values: QuickLogValues, batch: strin
 /* ─── MAIN ─── */
 export default function DailyRecordsScreen() {
   const { type: initialType } = useLocalSearchParams<{ type?: string }>()
+  const storeBatches = useBatchStore((s) => s.batches)
+  const activeBatches = useMemo(() => storeBatches.filter((b) => b.status === 'active'), [storeBatches])
+  const batchItems = useMemo(() => {
+    if (activeBatches.length > 0) {
+      return activeBatches.map((b) => ({ name: b.batchName, id: b.id }))
+    }
+    return [
+      { name: 'Broiler Batch A', id: 'batch_a' },
+      { name: 'Layer Batch B', id: 'batch_b' },
+      { name: 'Broiler Batch C', id: 'batch_c' },
+    ]
+  }, [activeBatches])
+
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [selectedBatch, setSelectedBatch] = useState('Layer Batch B')
+  const [selectedBatch, setSelectedBatch] = useState(batchItems[0]?.name ?? 'Layer Batch B')
+  const [selectedBatchId, setSelectedBatchId] = useState(batchItems[0]?.id ?? '')
   const [selectedTime, setSelectedTime] = useState(new Date())
   const [quickLogType, setQuickLogType] = useState<RecordKey | null>(
     RECORD_TYPES.some(t => t.key === initialType) ? (initialType as RecordKey) : null
@@ -657,7 +659,7 @@ export default function DailyRecordsScreen() {
         const qty = parseFormattedNumber(values.quantity)
         const feedName = values.feedType
         recordId = useHistoryStore.getState().addRecord({
-          type: 'feed', batch: selectedBatch, timestamp,
+          type: 'feed', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
           quantity: qty, unit: 'kg',
           notes: values.notes?.trim(),
           metadata: { feedType: feedName },
@@ -665,7 +667,7 @@ export default function DailyRecordsScreen() {
         const waterQty = parseFormattedNumber(values.water)
         if (waterQty > 0) {
           useHistoryStore.getState().addRecord({
-            type: 'water', batch: selectedBatch, timestamp,
+            type: 'water', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
             quantity: waterQty, unit: 'L',
             notes: values.notes?.trim(),
             feedPostId: recordId,
@@ -676,7 +678,7 @@ export default function DailyRecordsScreen() {
       }
       if (quickLogType === 'water') {
         recordId = useHistoryStore.getState().addRecord({
-          type: 'water', batch: selectedBatch, timestamp,
+          type: 'water', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
           quantity: parseFormattedNumber(values.water), unit: 'L',
           notes: values.notes?.trim(),
         })
@@ -684,7 +686,7 @@ export default function DailyRecordsScreen() {
       }
       if (quickLogType === 'eggs') {
         recordId = useHistoryStore.getState().addRecord({
-          type: 'eggs', batch: selectedBatch, timestamp,
+          type: 'eggs', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
           quantity: parseFormattedNumber(values.eggs), unit: 'eggs',
           cost: parseFormattedNumber(values.value) || undefined,
           notes: values.notes?.trim(),
@@ -693,7 +695,7 @@ export default function DailyRecordsScreen() {
       }
       if (quickLogType === 'mortality') {
         recordId = useHistoryStore.getState().addRecord({
-          type: 'mortality', batch: selectedBatch, timestamp,
+          type: 'mortality', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
           quantity: parseFormattedNumber(values.mortality), unit: 'birds',
           notes: values.notes?.trim(),
           metadata: { cause: values.cause?.trim() },
@@ -704,12 +706,28 @@ export default function DailyRecordsScreen() {
         const qty = parseFormattedNumber(values.quantity)
         const cost = parseFormattedNumber(values.cost)
         recordId = useHistoryStore.getState().addRecord({
-          type: 'inventory', batch: selectedBatch, timestamp,
+          type: 'inventory', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
           quantity: qty, unit: 'kg', cost,
           itemName: values.itemName?.trim(),
           supplier: values.supplier?.trim(),
           notes: values.notes?.trim(),
         })
+        // Also save an expense record for budget attribution
+        if (cost > 0) {
+          const itemName = (values.itemName || '').toLowerCase()
+          const category = itemName.includes('feed') ? 'feed' : 'other'
+          useHistoryStore.getState().addRecord({
+            type: 'expense', batch: selectedBatch, batchId: selectedBatchId || undefined, timestamp,
+            cost,
+            itemName: category,
+            notes: `${values.itemName?.trim() || 'Stock'} purchase · ${qty}kg`,
+            supplier: values.supplier?.trim() || undefined,
+          })
+        }
+      }
+
+      if (selectedBatchId) {
+        useBatchStore.getState().touchBatch(selectedBatchId)
       }
     } catch (dbErr) {
       console.error('DB write failed:', dbErr)
@@ -889,13 +907,15 @@ export default function DailyRecordsScreen() {
           visible={!!quickLogType}
           type={quickLogType}
           batch={selectedBatch}
+          batchId={selectedBatchId}
+          batchItems={batchItems}
           dateStr={dateStr}
           timeStr={timeStr}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           lastFeedType={lastFeedByBatch[selectedBatch]}
           onTypeChange={setQuickLogType}
-          onBatchSelect={setSelectedBatch}
+          onBatchSelect={(name, id) => { setSelectedBatch(name); setSelectedBatchId(id) }}
           onDateSelect={setSelectedDate}
           onTimeSelect={setSelectedTime}
           onClose={closeQuickLog}

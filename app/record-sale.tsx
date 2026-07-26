@@ -213,6 +213,9 @@ export default function RecordSaleScreen() {
           customProductName: product === 'other' ? customProductName : undefined,
         },
       })
+      if (selectedBatchId) {
+        useBatchStore.getState().touchBatch(selectedBatchId)
+      }
       useFarmChatStore.getState().addFeedPost({
         id: `feed-${recordId}`,
         type: 'sale',

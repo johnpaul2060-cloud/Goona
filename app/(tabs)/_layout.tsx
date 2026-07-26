@@ -10,7 +10,6 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="dashboard" />
-      <Tabs.Screen name="batches" />
       <Tabs.Screen name="farmchat" />
       <Tabs.Screen name="records" />
       <Tabs.Screen name="recapitalization" />

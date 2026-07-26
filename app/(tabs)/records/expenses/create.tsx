@@ -173,6 +173,9 @@ export default function CreateExpenseScreen() {
         itemName: selectedCategory,
         supplier: vendor || undefined,
       })
+      if (showBatch && selectedBatchId) {
+        useBatchStore.getState().touchBatch(selectedBatchId)
+      }
       useFarmChatStore.getState().addFeedPost({
         id: `feed-${recordId}`,
         type: 'feed_record',
@@ -235,6 +238,10 @@ export default function CreateExpenseScreen() {
       } catch {
         errors.push({ category: line.category, amount: line.amount })
       }
+    }
+
+    if (saved.length > 0 && selectedBatchId) {
+      useBatchStore.getState().touchBatch(selectedBatchId)
     }
 
     setSavingAll(false)

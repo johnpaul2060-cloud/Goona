@@ -12,6 +12,7 @@ export default function RecordsLayout() {
       <Stack.Screen name="index" options={gestureDisabledOptions} />
       <Stack.Screen name="daily-operations" />
       <Stack.Screen name="batch-management" />
+      <Stack.Screen name="all-batches" />
       <Stack.Screen name="sales-revenue" />
       <Stack.Screen name="analytics" />
       <Stack.Screen name="expenses" />

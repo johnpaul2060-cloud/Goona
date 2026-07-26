@@ -536,7 +536,7 @@ export default function DashboardScreen() {
           <>
             <View style={styles.secHead}>
               <Text style={styles.secTitle}>Active Batches</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/batches' as any)}><Text style={styles.secLink}>See All</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/records/batch-management' as any)}><Text style={styles.secLink}>See All</Text></TouchableOpacity>
             </View>
             {batches.slice(0, 2).map((b) => {
               const prog = computeProgress(b.startDate, b.duration)

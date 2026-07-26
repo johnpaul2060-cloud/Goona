@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Modal, TextInput, Alert,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, AccessibilityInfo,
 } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
@@ -11,7 +11,7 @@ import { Icons } from '../../shared/icons'
 import GoonaIcon from '../../components/ui/GoonaIcon'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeInUp, SlideInUp } from 'react-native-reanimated'
+import Animated, { FadeInUp, FadeInDown, SlideInUp } from 'react-native-reanimated'
 import { useBatchStore, type BudgetAllocation } from '../../store/useBatchStore'
 import { useHistoryStore } from '../../store/useHistoryStore'
 import { useFarmChatStore } from '../../store/useFarmChatStore'
@@ -48,7 +48,208 @@ function formatNaira(amount: number): string {
 }
 
 function formatNairaFull(amount: number): string {
-  return `₦${amount.toLocaleString('en-NG')}`
+  return `\u20A6${amount.toLocaleString('en-NG')}`
+}
+
+// ─── RECORDS SECTION ───
+
+function RecordsSection({ batch }: { batch: import('../../store/useBatchStore').Batch }) {
+  const records = useHistoryStore((s) => s.records)
+  const [expanded, setExpanded] = useState(false)
+  const [reduceMotion, setReduceMotion] = useState(false)
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion)
+  }, [])
+
+  const batchRecords = useMemo(() => {
+    return records
+      .filter((r) => (r.batchId === batch.id || r.batch === batch.batchName))
+      .sort((a, b) => b.timestamp - a.timestamp)
+  }, [records, batch.id, batch.batchName])
+
+  const grouped = useMemo(() => {
+    const groups: Record<string, import('../../store/useHistoryStore').HistoryRecord[]> = {}
+    for (const r of batchRecords) {
+      if (!groups[r.type]) groups[r.type] = []
+      groups[r.type].push(r)
+    }
+    return groups
+  }, [batchRecords])
+
+  const summaries = useMemo(() => {
+    const result: { key: string; label: string; icon: any; color: string; value: string }[] = []
+    if (grouped.feed) {
+      const total = grouped.feed.reduce((s, r) => s + (r.quantity || 0), 0)
+      result.push({ key: 'feed', label: 'Feed', icon: Icons.wheat, color: '#F59E0B', value: `${total.toLocaleString()} kg` })
+    }
+    if (grouped.water) {
+      const total = grouped.water.reduce((s, r) => s + (r.quantity || 0), 0)
+      result.push({ key: 'water', label: 'Water', icon: Icons.droplets, color: '#0EA5E9', value: `${total.toLocaleString()} L` })
+    }
+    if (grouped.mortality) {
+      const total = grouped.mortality.reduce((s, r) => s + (r.quantity || 0), 0)
+      result.push({ key: 'mortality', label: 'Mortality', icon: Icons.skull, color: '#EF4444', value: `${total} birds` })
+    }
+    if (grouped.eggs) {
+      const total = grouped.eggs.reduce((s, r) => s + (r.quantity || 0), 0)
+      result.push({ key: 'eggs', label: 'Eggs', icon: Icons.egg, color: '#16A34A', value: `${total.toLocaleString()} eggs` })
+    }
+    if (grouped.medication) {
+      result.push({ key: 'medication', label: 'Medication', icon: Icons.pill, color: '#1A56FF', value: `${grouped.medication.length} logs` })
+    }
+    if (grouped.expense) {
+      const total = grouped.expense.reduce((s, r) => s + (r.cost || 0), 0)
+      result.push({ key: 'expense', label: 'Spent', icon: Icons.receipt, color: '#EF4444', value: formatNairaFull(total) })
+    }
+    if (grouped.sale) {
+      const total = grouped.sale.reduce((s, r) => s + (r.cost || 0), 0)
+      result.push({ key: 'sale', label: 'Sales', icon: Icons.trendingUp, color: '#16A34A', value: formatNairaFull(total) })
+    }
+    if (grouped.inventory) {
+      result.push({ key: 'inventory', label: 'Stock', icon: Icons.package, color: '#0F766E', value: `${grouped.inventory.length} purchases` })
+    }
+    return result
+  }, [grouped])
+
+  const recent = batchRecords.slice(0, 20)
+  const toggleExpand = useCallback(() => setExpanded((v) => !v), [])
+
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(420).springify()}>
+      <View style={styles.recordsCard}>
+        {/* Header with chevron */}
+        <TouchableOpacity style={styles.recordsHeader} activeOpacity={0.7} onPress={toggleExpand}>
+          <View style={styles.recordsHeaderLeft}>
+            <Text style={styles.secTitle}>Records</Text>
+            <View style={styles.recordsCountBadge}>
+              <Text style={styles.recordsCountText}>{batchRecords.length}</Text>
+            </View>
+          </View>
+          <View style={styles.recordsHeaderRight}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push(`/(tabs)/records/sales-revenue?batchFilter=${encodeURIComponent(batch.batchName)}` as any)}
+            >
+              <Text style={styles.secLink}>View all \u2192</Text>
+            </TouchableOpacity>
+            <View style={[styles.recordsChevron, expanded && styles.recordsChevronOpen]}>
+              <GoonaIcon icon={Icons.chevronDown} size={16} color="#64748B" />
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* Premium summary pills (always visible) */}
+        {summaries.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recordsChips} decelerationRate="fast" snapToInterval={140}>
+            {summaries.map((s) => (
+              <TouchableOpacity
+                key={s.key}
+                activeOpacity={0.8}
+                style={[styles.recordsChipPremium, { backgroundColor: s.color + '0D', borderColor: s.color + '25' }]}
+                onPress={() => { if (!expanded) setExpanded(true) }}
+              >
+                <View style={[styles.recordsChipIcon, { backgroundColor: s.color + '18' }]}>
+                  <GoonaIcon icon={s.icon} size={14} color={s.color} />
+                </View>
+                <View style={styles.recordsChipBody}>
+                  <Text style={[styles.recordsChipLabel, { color: s.color }]}>{s.label}</Text>
+                  <Text style={[styles.recordsChipValue, { color: s.color }]}>{s.value}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Expanded timeline */}
+        {expanded && (
+          <Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(250).springify()}>
+            <View style={styles.recordsDivider} />
+
+            {recent.map((r) => {
+              const ts = new Date(r.timestamp)
+              const dateStr = `${ts.getDate()} ${ts.toLocaleString('en-US', { month: 'short' })}`
+              const timeStr = ts.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+
+              let icon: any = Icons.clipboardList
+              let color = '#64748B'
+              let label = r.type
+              let detail = ''
+
+              switch (r.type) {
+                case 'feed':
+                  icon = Icons.wheat; color = '#F59E0B'; label = 'Feed'
+                  detail = r.metadata?.feedType ? `${r.metadata.feedType} \u00B7 ` : ''
+                  detail += `${(r.quantity || 0).toLocaleString()} kg`
+                  break
+                case 'water':
+                  icon = Icons.droplets; color = '#0EA5E9'; label = 'Water'
+                  detail = `${(r.quantity || 0).toLocaleString()} L`
+                  break
+                case 'eggs':
+                  icon = Icons.egg; color = '#16A34A'; label = 'Eggs'
+                  detail = `${(r.quantity || 0).toLocaleString()} eggs`
+                  if (r.cost) detail += ` \u00B7 ${formatNairaFull(r.cost)}`
+                  break
+                case 'mortality':
+                  icon = Icons.skull; color = '#EF4444'; label = 'Mortality'
+                  detail = `${(r.quantity || 0)} bird${r.quantity === 1 ? '' : 's'}`
+                  break
+                case 'medication':
+                  icon = Icons.pill; color = '#1A56FF'; label = 'Medication'
+                  detail = r.metadata?.cause ? `\u2014 ${r.metadata.cause}` : 'Logged'
+                  break
+                case 'expense':
+                  icon = Icons.receipt; color = '#EF4444'; label = 'Expense'
+                  detail = r.itemName ? `${r.itemName} \u00B7 ` : ''
+                  detail += formatNairaFull(r.cost || 0)
+                  break
+                case 'sale':
+                  icon = Icons.trendingUp; color = '#16A34A'; label = 'Sale'
+                  detail = formatNairaFull(r.cost || 0)
+                  break
+                case 'inventory':
+                  icon = Icons.package; color = '#0F766E'; label = 'Stock'
+                  detail = r.itemName || 'Item'
+                  if (r.quantity) detail += ` \u00B7 ${r.quantity} kg`
+                  break
+                case 'observation':
+                  icon = Icons.eye; color = '#8B5CF6'; label = 'Note'
+                  detail = r.notes?.slice(0, 50) || ''
+                  break
+              }
+
+              return (
+                <View key={r.id} style={styles.recordsRow}>
+                  <View style={[styles.recordsRowIcon, { backgroundColor: color + '15' }]}>
+                    <GoonaIcon icon={icon} size={13} color={color} />
+                  </View>
+                  <View style={styles.recordsRowBody}>
+                    <View style={styles.recordsRowTop}>
+                      <Text style={[styles.recordsRowLabel, { color }]}>{label}</Text>
+                      <Text style={styles.recordsRowDetail}>{detail}</Text>
+                    </View>
+                    {r.notes ? <Text style={styles.recordsRowNotes}>{r.notes}</Text> : null}
+                  </View>
+                  <Text style={styles.recordsRowTime}>{dateStr}<Text style={styles.recordsRowTimeSep}> </Text>{timeStr}</Text>
+                </View>
+              )
+            })}
+
+            {batchRecords.length > 20 && (
+              <TouchableOpacity
+                style={styles.recordsViewAll}
+                activeOpacity={0.7}
+                onPress={() => router.push(`/(tabs)/records/sales-revenue?batchFilter=${encodeURIComponent(batch.batchName)}` as any)}
+              >
+                <Text style={styles.recordsViewAllText}>View all {batchRecords.length} records \u2192</Text>
+              </TouchableOpacity>
+            )}
+          </Animated.View>
+        )}
+      </View>
+    </Animated.View>
+  )
 }
 
 function estimateFeedKgStr(quantity: number, livestockType: string, weeks: number): string {
@@ -235,6 +436,12 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
 function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/useBatchStore').Batch; batchRevenue?: number }) {
   const records = useHistoryStore((s) => s.records)
   const updateBudgetAllocations = useBatchStore((s) => s.updateBudgetAllocations)
+  const [expanded, setExpanded] = useState(false)
+  const [reduceMotion, setReduceMotion] = useState(false)
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion)
+  }, [])
 
   const allocations = batch.budgetAllocations ?? []
   const totalBudget = allocations.reduce((s, a) => s + a.amount, 0)
@@ -276,112 +483,171 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
   if (totalBudget > 0 && totalSpent > totalBudget) overallStatus = '#EF4444'
   else if (totalBudget > 0 && totalSpent / totalBudget > 0.8) overallStatus = '#F59E0B'
 
+  let statusLabel = 'On Track'
+  let overallStatusLabelColor = '#16A34A'
+  if (totalBudget > 0 && totalSpent > totalBudget) {
+    overallStatusLabelColor = '#EF4444'; statusLabel = 'Over Budget'
+  } else if (totalBudget > 0 && totalSpent / totalBudget > 0.8) {
+    overallStatusLabelColor = '#F59E0B'; statusLabel = 'Near Limit'
+  }
+
+  const toggleExpand = useCallback(() => setExpanded((v) => !v), [])
+
   return (
     <Animated.View entering={FadeInUp.duration(500).delay(360).springify()}>
       <View style={styles.budgetCard}>
-        {/* Section header */}
-        <View style={styles.sec}>
-          <Text style={styles.secTitle}>Budget</Text>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push(`/batch-details/budget-setup?id=${batch.id}` as any)}
-          >
-            <Text style={styles.secLink}>Edit</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Overall summary */}
-        <View style={styles.budgetSummary}>
-          <View style={styles.budgetSummaryItem}>
-            <Text style={styles.budgetSummaryLabel}>Allocated</Text>
-            <Text style={styles.budgetSummaryValue}>{formatNairaFull(totalBudget)}</Text>
-          </View>
-          <View style={styles.budgetSummaryDiv} />
-          <View style={styles.budgetSummaryItem}>
-            <Text style={styles.budgetSummaryLabel}>Spent</Text>
-            <Text style={[styles.budgetSummaryValue, { color: '#EF4444' }]}>{formatNairaFull(totalSpent)}</Text>
-          </View>
-          <View style={styles.budgetSummaryDiv} />
-          <View style={styles.budgetSummaryItem}>
-            <Text style={styles.budgetSummaryLabel}>Remaining</Text>
-            <Text style={[styles.budgetSummaryValue, { color: totalRemaining < 0 ? '#EF4444' : '#16A34A' }]}>
-              {formatNairaFull(Math.max(0, totalRemaining))}
-            </Text>
-          </View>
-        </View>
-
-        {/* Overall progress bar */}
-        <View style={styles.budgetOverallBar}>
-          <View style={styles.budgetOverallTrack}>
-            <View style={[styles.budgetOverallFill, { width: `${overallPct * 100}%`, backgroundColor: overallStatus }]} />
-          </View>
-          <Text style={[styles.budgetOverallPct, { color: overallStatus }]}>
-            {totalBudget > 0 ? `${Math.round(overallPct * 100)}%` : '—'}
-          </Text>
-        </View>
-
-        {/* Per-category breakdown */}
-        <View style={styles.budgetCategories}>
-          {allocSpend.map((a) => (
-            <View key={a.key} style={styles.budgetCatRow}>
-              <View style={styles.budgetCatLeft}>
-                <View style={[styles.budgetCatDot, { backgroundColor: a.statusColor }]} />
-                <Text style={styles.budgetCatLabel}>{a.label}</Text>
+        {/* Header with chevron */}
+        <TouchableOpacity style={styles.budgetHeader} activeOpacity={0.7} onPress={toggleExpand}>
+          <View style={styles.budgetHeaderLeft}>
+            <Text style={styles.secTitle}>Batch Budget</Text>
+            {totalBudget > 0 && (
+              <View style={[styles.budgetStatusChip, { backgroundColor: overallStatusLabelColor + '15', borderColor: overallStatusLabelColor + '30' }]}>
+                <Text style={[styles.budgetStatusText, { color: overallStatusLabelColor }]}>{statusLabel}</Text>
               </View>
-              <View style={styles.budgetCatRight}>
-                <View style={styles.budgetCatAmounts}>
-                  <Text style={styles.budgetCatAlloc}>{formatNairaFull(a.amount)}</Text>
-                  <Text style={[styles.budgetCatSpent, { color: a.statusColor }]}>{formatNairaFull(a.spent)}</Text>
-                </View>
-                <View style={styles.budgetCatBar}>
-                  <View
-                    style={[styles.budgetCatBarFill, {
-                      width: `${a.amount > 0 ? Math.min(a.spent / a.amount, 1) * 100 : 0}%`,
-                      backgroundColor: a.statusColor,
-                    }]}
-                  />
-                </View>
+            )}
+          </View>
+          <View style={styles.budgetHeaderRight}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push(`/batch-details/budget-setup?id=${batch.id}` as any)}
+            >
+              <Text style={styles.secLink}>Edit Allocation</Text>
+            </TouchableOpacity>
+            <View style={[styles.budgetChevron, expanded && styles.budgetChevronOpen]}>
+              <GoonaIcon icon={Icons.chevronDown} size={16} color="#64748B" />
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* Compact premium summary (always visible) */}
+        {totalBudget > 0 && (
+          <>
+            <View style={styles.budgetSummaryCompact}>
+              <View style={styles.budgetCompactItem}>
+                <Text style={styles.budgetCompactLabel}>Allocated</Text>
+                <Text style={styles.budgetCompactValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(totalBudget)}</Text>
+              </View>
+              <View style={styles.budgetCompactItem}>
+                <Text style={styles.budgetCompactLabel}>Spent</Text>
+                <Text style={[styles.budgetCompactValue, { color: '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(totalSpent)}</Text>
+              </View>
+              <View style={styles.budgetCompactItem}>
+                <Text style={styles.budgetCompactLabel}>Remaining</Text>
+                <Text style={[styles.budgetCompactValue, { color: totalRemaining < 0 ? '#EF4444' : '#16A34A' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(Math.max(0, totalRemaining))}</Text>
               </View>
             </View>
-          ))}
-        </View>
 
-        {/* Revenue & Profit */}
-        {batchRevenue != null && (
-          <>
-            <View style={styles.budgetDivider} />
-            <View style={styles.revenueSection}>
-              <Text style={styles.revenueSectionTitle}>Revenue & Profit</Text>
-              <View style={styles.revenueGrid}>
-                <View style={styles.revenueItem}>
-                  <Text style={styles.revenueLabel}>Revenue</Text>
-                  <Text style={styles.revenueValue}>{formatNairaFull(batchRevenue)}</Text>
-                </View>
-                <View style={styles.revenueItem}>
-                  <Text style={styles.revenueLabel}>Spent</Text>
-                  <Text style={[styles.revenueValue, { color: '#EF4444' }]}>{formatNairaFull(totalSpent)}</Text>
-                </View>
-                <View style={styles.revenueItem}>
-                  <Text style={styles.revenueLabel}>Profit</Text>
-                  <Text style={[styles.revenueValue, { color: batchRevenue - totalSpent >= 0 ? '#16A34A' : '#EF4444' }]}>
-                    {batchRevenue - totalSpent >= 0 ? '' : '-'}{formatNairaFull(Math.abs(batchRevenue - totalSpent))}
-                  </Text>
-                </View>
+            {/* Slim progress bar */}
+            <View style={styles.budgetOverallCompactBar}>
+              <View style={styles.budgetOverallCompactTrack}>
+                <View style={[styles.budgetOverallCompactFill, { width: `${overallPct * 100}%`, backgroundColor: overallStatus }]} />
               </View>
-              {totalBudget > 0 && (
-                <View style={styles.marginRow}>
-                  <Text style={styles.marginLabel}>Margin</Text>
-                  <View style={[styles.marginBadge, { backgroundColor: batchRevenue - totalSpent >= 0 ? '#F0FDF4' : '#FEF2F2' }]}>
-                    <Text style={[styles.marginText, { color: batchRevenue - totalSpent >= 0 ? '#16A34A' : '#EF4444' }]}>
-                      {totalSpent > 0
-                        ? `${((batchRevenue - totalSpent) / totalSpent * 100).toFixed(0)}%`
-                        : batchRevenue > 0 ? '∞' : '—'}
-                    </Text>
+              <Text style={[styles.budgetOverallCompactPct, { color: overallStatus }]}>{Math.round(overallPct * 100)}%</Text>
+            </View>
+
+            {/* Category status pills (horizontal scroll) */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.budgetCatPills} decelerationRate="fast">
+              {allocSpend.map((a) => {
+                const pct = a.amount > 0 ? Math.round((a.spent / a.amount) * 100) : 0
+                return (
+                  <TouchableOpacity
+                    key={a.key}
+                    activeOpacity={0.8}
+                    style={[styles.budgetCatPill, { backgroundColor: a.statusColor + '0D', borderColor: a.statusColor + '25' }]}
+                    onPress={() => { if (!expanded) setExpanded(true) }}
+                  >
+                    <View style={[styles.budgetCatPillDot, { backgroundColor: a.statusColor }]} />
+                    <Text style={styles.budgetCatPillLabel}>{a.label}</Text>
+                    <Text style={[styles.budgetCatPillValue, { color: a.statusColor }]}>{pct}%</Text>
+                  </TouchableOpacity>
+                )
+              })}
+            </ScrollView>
+          </>
+        )}
+
+        {totalBudget === 0 && (
+          <View style={styles.budgetEmptyCompact}>
+            <Text style={styles.budgetEmptyText}>No budget set for this batch yet</Text>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.budgetSetBtn}
+              onPress={() => router.push(`/batch-details/budget-setup?id=${batch.id}` as any)}
+            >
+              <Text style={styles.budgetSetBtnText}>Set Batch Budget</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Expanded detail */}
+        {expanded && totalBudget > 0 && (
+          <Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(250).springify()}>
+            <View style={styles.budgetDivider} />
+
+            {/* Per-category breakdown */}
+            <View style={styles.budgetCategories}>
+              {allocSpend.map((a) => (
+                <View key={a.key} style={styles.budgetCatRow}>
+                  <View style={styles.budgetCatLeft}>
+                    <View style={[styles.budgetCatDot, { backgroundColor: a.statusColor }]} />
+                    <Text style={styles.budgetCatLabel}>{a.label}</Text>
+                  </View>
+                  <View style={styles.budgetCatRight}>
+                    <View style={styles.budgetCatAmounts}>
+                      <Text style={styles.budgetCatAlloc} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(a.amount)}</Text>
+                      <Text style={[styles.budgetCatSpent, { color: a.statusColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(a.spent)}</Text>
+                    </View>
+                    <View style={styles.budgetCatBar}>
+                      <View
+                        style={[styles.budgetCatBarFill, {
+                          width: `${a.amount > 0 ? Math.min(a.spent / a.amount, 1) * 100 : 0}%`,
+                          backgroundColor: a.statusColor,
+                        }]}
+                      />
+                    </View>
                   </View>
                 </View>
-              )}
+              ))}
             </View>
-          </>
+
+            {/* Revenue & Profit */}
+            {batchRevenue != null && (
+              <>
+                <View style={styles.budgetDivider} />
+                <View style={styles.revenueSection}>
+                  <Text style={styles.revenueSectionTitle}>Revenue & Profit</Text>
+                  <View style={styles.revenueGrid}>
+                    <View style={styles.revenueItem}>
+                      <Text style={styles.revenueLabel}>Revenue</Text>
+                      <Text style={styles.revenueValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(batchRevenue)}</Text>
+                    </View>
+                    <View style={styles.revenueItem}>
+                      <Text style={styles.revenueLabel}>Spent</Text>
+                      <Text style={[styles.revenueValue, { color: '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(totalSpent)}</Text>
+                    </View>
+                    <View style={styles.revenueItem}>
+                      <Text style={styles.revenueLabel}>Profit</Text>
+                      <Text style={[styles.revenueValue, { color: batchRevenue - totalSpent >= 0 ? '#16A34A' : '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>
+                        {batchRevenue - totalSpent >= 0 ? '' : '-'}{formatNairaFull(Math.abs(batchRevenue - totalSpent))}
+                      </Text>
+                    </View>
+                  </View>
+                  {totalBudget > 0 && (
+                    <View style={styles.marginRow}>
+                      <Text style={styles.marginLabel}>Margin</Text>
+                      <View style={[styles.marginBadge, { backgroundColor: batchRevenue - totalSpent >= 0 ? '#F0FDF4' : '#FEF2F2' }]}>
+                        <Text style={[styles.marginText, { color: batchRevenue - totalSpent >= 0 ? '#16A34A' : '#EF4444' }]}>
+                          {totalSpent > 0
+                            ? `${((batchRevenue - totalSpent) / totalSpent * 100).toFixed(0)}%`
+                            : batchRevenue > 0 ? '∞' : '—'}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </>
+            )}
+          </Animated.View>
         )}
       </View>
     </Animated.View>
@@ -455,7 +721,7 @@ export default function BatchDetailsScreen() {
     if (router.canGoBack()) {
       router.back()
     } else {
-      router.replace('/(tabs)/records/batch-management' as any)
+      router.replace('/(tabs)/records/all-batches' as any)
     }
   }
 
@@ -465,7 +731,7 @@ export default function BatchDetailsScreen() {
     if (router.canGoBack()) {
       router.back()
     } else {
-      router.replace('/(tabs)/records/batch-management' as any)
+      router.replace('/(tabs)/records/all-batches' as any)
     }
   }
 
@@ -481,7 +747,7 @@ export default function BatchDetailsScreen() {
           if (router.canGoBack()) {
             router.back()
           } else {
-            router.replace('/(tabs)/records/batch-management' as any)
+            router.replace('/(tabs)/records/all-batches' as any)
           }
         }},
       ]
@@ -587,15 +853,15 @@ export default function BatchDetailsScreen() {
           {/* stat cells */}
           <View style={styles.heroStats}>
             <View style={styles.hstat}>
-              <Text style={styles.hstatV}>{batch.mortality}</Text>
+              <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{batch.mortality}</Text>
               <Text style={styles.hstatL}>Mortality</Text>
             </View>
             <View style={styles.hstat}>
-              <Text style={styles.hstatV}>{batch.feedUsed}</Text>
+              <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{batch.feedUsed}</Text>
               <Text style={styles.hstatL}>Feed Used</Text>
             </View>
             <View style={styles.hstat}>
-              <Text style={[styles.hstatV, styles.hstatVLime]}>{batchRevenue > 0 ? formatNairaFull(batchRevenue) : batch.revenue}</Text>
+              <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{batchRevenue > 0 ? formatNairaFull(batchRevenue) : batch.revenue}</Text>
               <Text style={styles.hstatL}>{batchRevenue > 0 ? 'Revenue (actual)' : 'Est. Revenue'}</Text>
             </View>
           </View>
@@ -672,6 +938,9 @@ export default function BatchDetailsScreen() {
         {storeBatch && storeBatch.budgetAllocations && storeBatch.budgetAllocations.length > 0 && (
           <BudgetSection batch={storeBatch} batchRevenue={batchRevenue} />
         )}
+
+        {/* RECORDS */}
+        {storeBatch && <RecordsSection batch={storeBatch} />}
 
         {/* SMART INSIGHTS */}
         <Animated.View entering={FadeInUp.duration(500).delay(400).springify()}>
@@ -910,7 +1179,7 @@ const styles = StyleSheet.create({
     flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8,
   },
-  hstatV: { fontSize: 22, fontWeight: '800', color: 'white' },
+  hstatV: { fontSize: 18, fontWeight: '800', color: 'white' },
   hstatVLime: { color: '#AEEA00' },
   hstatL: { fontSize: 11, fontWeight: '400', color: 'rgba(255,255,255,0.6)', marginTop: 1 },
 
@@ -1034,22 +1303,52 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04, shadowRadius: 16, elevation: 1,
   },
-  budgetSummary: {
+  budgetHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  budgetHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  budgetHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  budgetChevron: {
+    width: 26, height: 26, borderRadius: 8, backgroundColor: '#F1F5F9',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  budgetChevronOpen: { transform: [{ rotate: '180deg' }] },
+  budgetStatusChip: {
+    paddingVertical: 2, paddingHorizontal: 8, borderRadius: 8,
+    borderWidth: 1,
+  },
+  budgetStatusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+  budgetSummaryCompact: {
     flexDirection: 'row', justifyContent: 'space-between',
-    backgroundColor: '#F8FAF7', borderRadius: 16, padding: 16, marginBottom: 12,
+    backgroundColor: '#F8FAF7', borderRadius: 14, padding: 14, marginBottom: 10,
   },
-  budgetSummaryItem: { alignItems: 'center', flex: 1 },
-  budgetSummaryDiv: { width: 1, backgroundColor: '#E2E8F0' },
-  budgetSummaryLabel: { fontSize: 11, fontWeight: '600', color: '#94A3B8', marginBottom: 4 },
-  budgetSummaryValue: { fontSize: 16, fontWeight: '800', color: '#1B1B1B' },
-  budgetOverallBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16,
+  budgetCompactItem: { alignItems: 'center', flex: 1 },
+  budgetCompactLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', marginBottom: 2 },
+  budgetCompactValue: { fontSize: 14, fontWeight: '800', color: '#1B1B1B' },
+  budgetOverallCompactBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12,
   },
-  budgetOverallTrack: {
-    flex: 1, height: 8, borderRadius: 4, backgroundColor: '#F1F5F9', overflow: 'hidden',
+  budgetOverallCompactTrack: {
+    flex: 1, height: 6, borderRadius: 3, backgroundColor: '#F1F5F9', overflow: 'hidden',
   },
-  budgetOverallFill: { height: '100%', borderRadius: 4 },
-  budgetOverallPct: { fontSize: 13, fontWeight: '700', width: 40, textAlign: 'right' },
+  budgetOverallCompactFill: { height: '100%', borderRadius: 3 },
+  budgetOverallCompactPct: { fontSize: 11, fontWeight: '700', width: 34, textAlign: 'right' },
+  budgetCatPills: { flexDirection: 'row', gap: 8, paddingRight: 20, paddingBottom: 2 },
+  budgetCatPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingVertical: 5, paddingHorizontal: 10, borderRadius: 10,
+    borderWidth: 1,
+  },
+  budgetCatPillDot: { width: 6, height: 6, borderRadius: 3 },
+  budgetCatPillLabel: { fontSize: 10, fontWeight: '600', color: '#64748B' },
+  budgetCatPillValue: { fontSize: 10, fontWeight: '800' },
+  budgetEmptyCompact: { alignItems: 'center', paddingVertical: 12, gap: 8 },
+  budgetEmptyText: { fontSize: 12, fontWeight: '600', color: '#94A3B8' },
+  budgetSetBtn: {
+    backgroundColor: '#17663A', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 16,
+  },
+  budgetSetBtnText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
   budgetCategories: { gap: 10 },
   budgetCatRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -1079,9 +1378,67 @@ const styles = StyleSheet.create({
   },
   revenueItem: { alignItems: 'center', flex: 1 },
   revenueLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', marginBottom: 4 },
-  revenueValue: { fontSize: 16, fontWeight: '800', color: '#1B1B1B' },
+  revenueValue: { fontSize: 14, fontWeight: '800', color: '#1B1B1B' },
   marginRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 },
   marginLabel: { fontSize: 13, fontWeight: '600', color: '#64748B' },
   marginBadge: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 8 },
   marginText: { fontSize: 14, fontWeight: '800' },
+
+  /* records section */
+  recordsCard: {
+    backgroundColor: 'white', borderRadius: 24, padding: 20, marginTop: 14,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 1,
+  },
+  recordsEmpty: { alignItems: 'center', paddingVertical: 28, gap: 6 },
+  recordsEmptyText: { fontSize: 14, fontWeight: '600', color: '#94A3B8', marginTop: 4 },
+  recordsEmptyHint: { fontSize: 11, fontWeight: '500', color: '#CBD5E1' },
+  recordsHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  recordsHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  recordsCountBadge: {
+    backgroundColor: '#F1F5F9', paddingVertical: 2, paddingHorizontal: 8, borderRadius: 8,
+  },
+  recordsCountText: { fontSize: 11, fontWeight: '700', color: '#64748B' },
+  recordsHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  recordsChevron: {
+    width: 26, height: 26, borderRadius: 8, backgroundColor: '#F1F5F9',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  recordsChevronOpen: { transform: [{ rotate: '180deg' }] },
+  recordsChips: {
+    flexDirection: 'row', gap: 10, paddingRight: 20, paddingBottom: 2,
+  },
+  recordsChipPremium: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14,
+    borderWidth: 1, minWidth: 130,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+  },
+  recordsChipIcon: {
+    width: 28, height: 28, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  recordsChipBody: {},
+  recordsChipLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 0.3 },
+  recordsChipValue: { fontSize: 13, fontWeight: '800', marginTop: 1 },
+  recordsDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 12 },
+  recordsRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F8FAF7',
+  },
+  recordsRowIcon: {
+    width: 30, height: 30, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  recordsRowBody: { flex: 1, minWidth: 0 },
+  recordsRowTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  recordsRowLabel: { fontSize: 12, fontWeight: '700' },
+  recordsRowDetail: { fontSize: 11, fontWeight: '600', color: '#1B1B1B', flexShrink: 1 },
+  recordsRowNotes: { fontSize: 10, fontWeight: '500', color: '#94A3B8', marginTop: 1 },
+  recordsRowTime: { fontSize: 10, fontWeight: '500', color: '#94A3B8', flexShrink: 0 },
+  recordsRowTimeSep: { fontSize: 8, color: '#CBD5E1' },
+  recordsViewAll: { alignItems: 'center', paddingVertical: 12, marginTop: 4 },
+  recordsViewAllText: { fontSize: 13, fontWeight: '700', color: '#17663A' },
 })

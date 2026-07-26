@@ -707,7 +707,7 @@ export default function WorkerDashboardScreen() {
         <Animated.View entering={FadeInUp.duration(500).delay(400).springify()}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Batch Status</Text>
-            <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/batches')}>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/records/batch-management' as any)}>
               <Text style={styles.sectionLink}>Manage</Text>
             </TouchableOpacity>
           </View>

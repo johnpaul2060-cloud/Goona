@@ -1,5 +1,6 @@
-import { memo, useMemo, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native'
+import { memo, useMemo, useRef, useCallback, useEffect, useState } from 'react'
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, Platform, AccessibilityInfo, Animated as RNAnimated } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -8,7 +9,6 @@ import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { Icons } from '../../../shared/icons'
 import { Batch, useBatchStore } from '../../../store/useBatchStore'
 
-type FilterKey = 'all' | 'active' | 'harvest' | 'attention'
 type PriorityKind = 'harvest' | 'health' | 'phase'
 type HealthTone = 'green' | 'amber' | 'red'
 
@@ -51,20 +51,6 @@ type AttentionItem = {
 const DAY_MS = 24 * 60 * 60 * 1000
 const WEEK_MS = 7 * DAY_MS
 const NEAR_HARVEST_DAYS = 14
-
-const FILTER_LABELS: { key: FilterKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'active', label: 'Active' },
-  { key: 'harvest', label: 'Near Harvest' },
-  { key: 'attention', label: 'Attention' },
-]
-
-const QUICK_ACTIONS = [
-  { label: 'New Batch', icon: Icons.plus, bg: '#EAF6EC', color: '#2E7D32', route: '/create-batch' },
-  { label: 'Records', icon: Icons.clipboardList, bg: '#EAF0FB', color: '#3B66D6', route: '/daily-records' },
-
-  { label: 'Feed', icon: Icons.wheat, bg: '#F0EAFB', color: '#7C3AD6', route: '/daily-records' },
-] as const
 
 function parseWeeks(duration: string): number {
   const parsed = parseInt(duration, 10)
@@ -198,13 +184,6 @@ function buildAttention(enriched: EnrichedBatch[]): AttentionItem[] {
   return items.sort((a, b) => rank[a.kind] - rank[b.kind] || b.batch.actionScore - a.batch.actionScore).slice(0, 3)
 }
 
-function filterBatch(batch: EnrichedBatch, filter: FilterKey): boolean {
-  if (filter === 'all') return true
-  if (filter === 'active') return batch.status === 'active' && !batch.isNearHarvest && !batch.hasHealthFlag
-  if (filter === 'harvest') return batch.isNearHarvest
-  return batch.hasHealthFlag
-}
-
 function goToBatch(batch: EnrichedBatch) {
   router.push({ pathname: '/batch-details/[id]', params: { id: batch.id } } as any)
 }
@@ -269,15 +248,6 @@ function AttentionRow({ item }: { item: AttentionItem }) {
   )
 }
 
-function FilterChip({ filter, label, count, selected, onPress }: { filter: FilterKey; label: string; count: number; selected: boolean; onPress: (filter: FilterKey) => void }) {
-  return (
-    <Pressable onPress={() => onPress(filter)} style={[styles.chip, selected && styles.chipActive]}>
-      <Text style={[styles.chipText, selected && styles.chipTextActive]}>{label}</Text>
-      <Text style={[styles.chipCount, selected && styles.chipCountActive]}>{count}</Text>
-    </Pressable>
-  )
-}
-
 const BatchCard = memo(function BatchCard({ batch, index }: { batch: EnrichedBatch; index: number }) {
   const healthDot = batch.healthTone === 'red' ? '#EF4444' : batch.healthTone === 'amber' ? '#F59E0B' : '#22C55E'
   const trackColor = batch.isNearHarvest ? '#F59E0B' : '#2E7D32'
@@ -321,13 +291,13 @@ function Meta({ label, value }: { label: string; value: string }) {
   return <View style={styles.metaBlock}><Text style={styles.metaLabel}>{label}</Text><Text style={styles.metaValue} numberOfLines={1}>{value}</Text></View>
 }
 
-function EmptyBatches({ hasBatches, filter }: { hasBatches: boolean; filter: FilterKey }) {
+function EmptyBatches() {
   return (
     <View style={styles.emptyState}>
-      <GoonaIcon icon={hasBatches ? Icons.filter : Icons.clipboardList} size={34} color="#8A988C" />
-      <Text style={styles.emptyTitle}>{hasBatches ? 'No batches match this filter' : 'No production batches yet'}</Text>
-      <Text style={styles.emptyDesc}>{hasBatches ? `Switch from ${filter} or create a new batch.` : 'Create your first production batch to start tracking.'}</Text>
-      {!hasBatches && <Pressable style={styles.emptyCta} onPress={() => router.push('/create-batch' as any)}><GoonaIcon icon={Icons.plus} size={17} color="#FFF" /><Text style={styles.emptyCtaText}>Create Batch</Text></Pressable>}
+      <GoonaIcon icon={Icons.clipboardList} size={34} color="#8A988C" />
+      <Text style={styles.emptyTitle}>No production batches yet</Text>
+      <Text style={styles.emptyDesc}>Create your first production batch to start tracking.</Text>
+      <Pressable style={styles.emptyCta} onPress={() => router.push('/create-batch' as any)}><GoonaIcon icon={Icons.plus} size={17} color="#FFF" /><Text style={styles.emptyCtaText}>Create Batch</Text></Pressable>
     </View>
   )
 }
@@ -365,22 +335,86 @@ function GoonaIQ({ item }: { item?: AttentionItem }) {
   )
 }
 
+// ─── FLOATING NEW BATCH PILL ───
+
+function NewBatchFAB({ insets }: { insets: { bottom: number } }) {
+  const mounted = useRef(new RNAnimated.Value(0)).current
+  const scale = useRef(new RNAnimated.Value(1)).current
+  const [reduceMotion, setReduceMotion] = useState(false)
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion)
+    RNAnimated.spring(mounted, {
+      toValue: 1,
+      useNativeDriver: true,
+      ...(reduceMotion ? { speed: 0 } : {}),
+    }).start()
+  }, [])
+
+  const handlePress = useCallback(() => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    router.push('/create-batch')
+  }, [])
+
+  const handlePressIn = useCallback(() => {
+    RNAnimated.spring(scale, { toValue: 0.88, useNativeDriver: true }).start()
+  }, [scale])
+
+  const handlePressOut = useCallback(() => {
+    RNAnimated.spring(scale, { toValue: 1, useNativeDriver: true }).start()
+  }, [scale])
+
+  const translateY = mounted.interpolate({
+    inputRange: [0, 1],
+    outputRange: [60, 0],
+  })
+
+  const animStyle = {
+    opacity: mounted,
+    transform: [{ translateY }, { scale }],
+  }
+
+  return (
+    <RNAnimated.View style={[fabStyles.fab, { bottom: insets.bottom + 24, right: 20 }, animStyle]}>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <LinearGradient
+          colors={['#16A34A', '#0F6B32']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={fabStyles.fabGradient}
+        >
+          <GoonaIcon icon={Icons.plus} size={20} color="#FFFFFF" />
+          <Text style={styles.fabLabel}>New Batch</Text>
+        </LinearGradient>
+      </Pressable>
+    </RNAnimated.View>
+  )
+}
+
 export default function BatchManagementScreen() {
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
-  const [filter, setFilter] = useState<FilterKey>('all')
   const batches = useBatchStore((s) => s.batches)
 
-  const enriched = useMemo(() => batches.filter((batch) => batch.status === 'active').map(enrichBatch).sort((a, b) => b.actionScore - a.actionScore), [batches])
+  const enriched = useMemo(() => batches
+    .filter((batch) => batch.status === 'active')
+    .map(enrichBatch)
+    .sort((a, b) => (b.lastActivityAt ?? 0) - (a.lastActivityAt ?? 0) || b.createdAt.localeCompare(a.createdAt)),
+  [batches])
+
+  const spotlightBatch = enriched[0] ?? null
+
   const attention = useMemo(() => buildAttention(enriched), [enriched])
-  const filtered = useMemo(() => enriched.filter((batch) => filterBatch(batch, filter)), [enriched, filter])
   const counts = useMemo(() => {
     const attentionCount = enriched.filter((batch) => batch.hasHealthFlag).length
     const harvestCount = enriched.filter((batch) => batch.isNearHarvest).length
     const avgProgress = enriched.length > 0 ? Math.round(enriched.reduce((sum, batch) => sum + batch.progress, 0) / enriched.length) : 0
     return {
       all: enriched.length,
-      active: enriched.filter((batch) => filterBatch(batch, 'active')).length,
       harvest: harvestCount,
       attention: attentionCount,
       birds: enriched.reduce((sum, batch) => sum + batch.quantity, 0),
@@ -390,7 +424,6 @@ export default function BatchManagementScreen() {
 
   const contentWidth = Math.min(width, 430) - 44
   const statWidth = Math.max(150, (contentWidth - 11) / 2)
-  const quickWidth = Math.max(74, (contentWidth - 30) / 3)
   const priorityItem = attention[0]
   const statusLine = formatStatusLine(counts.harvest, counts.attention, counts.avgProgress)
 
@@ -399,7 +432,7 @@ export default function BatchManagementScreen() {
       <View style={styles.bgGlow} pointerEvents="none" />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.listContent, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[styles.listContent, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 100 }]}
       >
         <Animated.View entering={FadeInUp.duration(420).springify()} style={styles.topNav}>
           <Pressable style={styles.navButton} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/records' as any)}>
@@ -415,10 +448,10 @@ export default function BatchManagementScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(420).delay(110).springify()} style={styles.statsGrid}>
-          <View style={{ width: statWidth }}><StatTile label="Active batches" value={`${counts.all}`} icon={Icons.egg} colors={['#EAF6EC', '#F4FBF3']} iconColor="#2E7D32" active={filter === 'active'} onPress={() => setFilter('active')} /></View>
-          <View style={{ width: statWidth }}><StatTile label="Total birds" value={counts.birds.toLocaleString()} icon={Icons.users} colors={['#EAF0FB', '#F5F8FE']} iconColor="#3B66D6" active={filter === 'all'} onPress={() => setFilter('all')} /></View>
-          <View style={{ width: statWidth }}><StatTile label="Needs attention" value={`${counts.attention}`} icon={Icons.triangleAlert} colors={['#FBEAEA', '#FEF5F5']} iconColor="#DC2626" active={filter === 'attention'} onPress={() => setFilter('attention')} badge={counts.attention > 0 ? { text: 'Action', color: '#DC2626', bg: 'rgba(239,68,68,0.12)' } : undefined} /></View>
-          <View style={{ width: statWidth }}><StatTile label="Near harvest" value={`${counts.harvest}`} icon={Icons.arrowUpRight} colors={['#FBF2E3', '#FEFAF2']} iconColor="#D97706" active={filter === 'harvest'} onPress={() => setFilter('harvest')} badge={counts.harvest > 0 ? { text: 'Ready', color: '#B45309', bg: 'rgba(245,158,11,0.16)' } : undefined} /></View>
+          <View style={{ width: statWidth }}><StatTile label="Active batches" value={`${counts.all}`} icon={Icons.egg} colors={['#EAF6EC', '#F4FBF3']} iconColor="#2E7D32" active onPress={() => router.push('/(tabs)/records/all-batches' as any)} /></View>
+          <View style={{ width: statWidth }}><StatTile label="Total birds" value={counts.birds.toLocaleString()} icon={Icons.users} colors={['#EAF0FB', '#F5F8FE']} iconColor="#3B66D6" active onPress={() => {}} /></View>
+          <View style={{ width: statWidth }}><StatTile label="Needs attention" value={`${counts.attention}`} icon={Icons.triangleAlert} colors={['#FBEAEA', '#FEF5F5']} iconColor="#DC2626" active badge={counts.attention > 0 ? { text: 'Action', color: '#DC2626', bg: 'rgba(239,68,68,0.12)' } : undefined} onPress={() => {}} /></View>
+          <View style={{ width: statWidth }}><StatTile label="Near harvest" value={`${counts.harvest}`} icon={Icons.arrowUpRight} colors={['#FBF2E3', '#FEFAF2']} iconColor="#D97706" active badge={counts.harvest > 0 ? { text: 'Ready', color: '#B45309', bg: 'rgba(245,158,11,0.16)' } : undefined} onPress={() => {}} /></View>
         </Animated.View>
 
         {attention.length > 0 && (
@@ -428,32 +461,44 @@ export default function BatchManagementScreen() {
           </Animated.View>
         )}
 
-        <Animated.View entering={FadeInUp.duration(420).delay(190).springify()}>
-          <SectionHeader title="Quick actions" />
-          <View style={styles.quickActions}>
-            {QUICK_ACTIONS.map((action) => (
-              <Pressable key={action.label} style={[styles.quickAction, { width: quickWidth, backgroundColor: action.bg }]} onPress={() => router.push(action.route as any)}>
-                <View style={[styles.quickIcon, { backgroundColor: `${action.color}1F` }]}><GoonaIcon icon={action.icon} size={20} color={action.color} /></View>
-                <Text style={[styles.quickLabel, { color: action.color }]}>{action.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </Animated.View>
+        {/* SPOTLIGHT BATCH */}
+        {spotlightBatch && (
+          <Animated.View entering={FadeInUp.duration(420).delay(230).springify()}>
+            <SectionHeader title="Current Batch" right="most recent activity" />
+            <BatchCard batch={spotlightBatch} index={0} />
+          </Animated.View>
+        )}
 
-        <Animated.View entering={FadeInUp.duration(420).delay(230).springify()}>
-          <SectionHeader title="Active batches" right={`${filtered.length} shown`} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll} contentContainerStyle={styles.chipsRow}>
-            {FILTER_LABELS.map((chip) => <FilterChip key={chip.key} filter={chip.key} label={chip.label} count={counts[chip.key]} selected={filter === chip.key} onPress={setFilter} />)}
-          </ScrollView>
-          {filtered.length === 0 ? (
-            <EmptyBatches hasBatches={enriched.length > 0} filter={filter} />
-          ) : (
-            <View style={styles.batchList}>{filtered.map((batch, index) => <BatchCard key={batch.id} batch={batch} index={index} />)}</View>
-          )}
-        </Animated.View>
+        {!spotlightBatch && (
+          <Animated.View entering={FadeInUp.duration(420).delay(230).springify()}>
+            <SectionHeader title="Current Batch" />
+            <EmptyBatches />
+          </Animated.View>
+        )}
+
+        {/* VIEW ALL BATCHES LINK */}
+        {enriched.length > 1 && (
+          <Animated.View entering={FadeInUp.duration(420).delay(270).springify()}>
+            <Pressable
+              style={styles.viewAllCard}
+              onPress={() => router.push('/(tabs)/records/all-batches' as any)}
+            >
+              <View style={styles.viewAllContent}>
+                <GoonaIcon icon={Icons.sprout} size={22} color="#2E7D32" />
+                <View style={styles.viewAllTextWrap}>
+                  <Text style={styles.viewAllTitle}>View all {enriched.length} batches</Text>
+                  <Text style={styles.viewAllSub}>See all active production cycles</Text>
+                </View>
+                <GoonaIcon icon={Icons.chevronRight} size={20} color="#8A988C" />
+              </View>
+            </Pressable>
+          </Animated.View>
+        )}
 
         <GoonaIQ item={priorityItem} />
       </ScrollView>
+
+      <NewBatchFAB insets={insets} />
     </View>
   )
 }
@@ -490,19 +535,11 @@ const styles = StyleSheet.create({
   attentionDetail: { fontSize: 12, lineHeight: 17, color: '#5C6B5E', marginTop: 2, fontWeight: '600' },
   attentionButton: { minWidth: 58, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   attentionButtonText: { color: '#fff', fontSize: 13, fontWeight: '900' },
-  quickActions: { flexDirection: 'row', gap: 10 },
-  quickAction: { minHeight: 90, borderRadius: 20, alignItems: 'center', justifyContent: 'center', padding: 10, shadowColor: '#142819', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.04, shadowRadius: 20, elevation: 2 },
-  quickIcon: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  quickLabel: { fontSize: 12, fontWeight: '900', textAlign: 'center' },
-  chipsScroll: { marginBottom: 14 },
-  chipsRow: { gap: 9, paddingRight: 16 },
-  chip: { height: 38, borderRadius: 19, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E3EBDD' },
-  chipActive: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
-  chipText: { fontSize: 13, color: '#5C6B5E', fontWeight: '800' },
-  chipTextActive: { color: '#FFFFFF' },
-  chipCount: { fontSize: 12, color: '#8A988C', fontWeight: '900' },
-  chipCountActive: { color: 'rgba(255,255,255,0.82)' },
-  batchList: { gap: 12 },
+  viewAllCard: { borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E3EBDD', overflow: 'hidden', shadowColor: '#142819', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 2 },
+  viewAllContent: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
+  viewAllTextWrap: { flex: 1, minWidth: 0 },
+  viewAllTitle: { fontSize: 15, fontWeight: '900', color: '#15291A' },
+  viewAllSub: { fontSize: 12, color: '#8A988C', fontWeight: '600', marginTop: 2 },
   batchCard: { borderRadius: 22, backgroundColor: '#FFFFFF', padding: 18, borderLeftWidth: 4, overflow: 'hidden', shadowColor: '#142819', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.07, shadowRadius: 26, elevation: 3 },
   batchCardPop: { shadowColor: '#F59E0B', shadowOpacity: 0.12 },
   batchGlow: { position: 'absolute', top: -70, right: -50, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(245,158,11,0.12)' },
@@ -544,4 +581,19 @@ const styles = StyleSheet.create({
   iqText: { color: '#FFFFFF', fontSize: 15, lineHeight: 22, fontWeight: '700', marginTop: 14 },
   iqCta: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#AEEA00', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 13, marginTop: 18 },
   iqCtaText: { color: '#1E3A0E', fontSize: 14, fontWeight: '900' },
+  fabLabel: { fontSize: 13, fontWeight: '800', color: '#FFFFFF' },
+})
+
+const fabStyles = StyleSheet.create({
+  fab: {
+    position: 'absolute',
+    zIndex: 100,
+  },
+  fabGradient: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 14, paddingHorizontal: 22,
+    borderRadius: 28,
+    shadowColor: '#16A34A', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35, shadowRadius: 16, elevation: 8,
+  },
 })

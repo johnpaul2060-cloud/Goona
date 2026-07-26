@@ -30,6 +30,7 @@ export interface Batch {
   completedAt?: string
   harvestSummary?: HarvestSummary
   budgetAllocations: BudgetAllocation[]
+  lastActivityAt?: number
 }
 
 interface BatchState {
@@ -41,6 +42,7 @@ interface BatchState {
   restoreBatch: (id: string) => void
   deleteBatch: (id: string) => void
   updateBudgetAllocations: (id: string, allocations: BudgetAllocation[]) => void
+  touchBatch: (id: string) => void
 }
 
 function weeksAgo(weeks: number): string {
@@ -72,6 +74,7 @@ const SEED_BATCHES: Batch[] = [
     duration: '8 Weeks',
     status: 'active',
     createdAt: weeksAgo(4),
+    lastActivityAt: Date.now() - 3600000,
     budgetAllocations: seedAllocations(150000, 850000, 45000),
   },
   {
@@ -86,6 +89,7 @@ const SEED_BATCHES: Batch[] = [
     duration: '8 Weeks',
     status: 'active',
     createdAt: weeksAgo(8),
+    lastActivityAt: Date.now() - 7200000,
     budgetAllocations: seedAllocations(180000, 920000, 38000),
   },
   {
@@ -100,6 +104,7 @@ const SEED_BATCHES: Batch[] = [
     duration: '8 Weeks',
     status: 'active',
     createdAt: weeksAgo(3),
+    lastActivityAt: Date.now() - 86400000,
     budgetAllocations: seedAllocations(105000, 620000, 32000),
   },
 ]
@@ -111,11 +116,13 @@ export const useBatchStore = create<BatchState>()(
     (set, get) => ({
       batches: SEED_BATCHES,
       addBatch: (data) => {
+        const now = Date.now()
         const batch: Batch = {
           ...data,
-          id: `batch_${Date.now()}_${nextId++}`,
+          id: `batch_${now}_${nextId++}`,
           status: 'active',
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(now).toISOString(),
+          lastActivityAt: now,
           budgetAllocations: seedAllocations(data.purchaseCost, data.feedCost, data.medicationCost),
         }
         set((state) => ({ batches: [...state.batches, batch] }))
@@ -137,13 +144,15 @@ export const useBatchStore = create<BatchState>()(
         }))
       },
       completeBatch: (id: string, summary?: HarvestSummary) => {
+        const now = new Date().toISOString()
         set((state) => ({
           batches: state.batches.map((b) =>
             b.id === id
               ? {
                   ...b,
                   status: 'completed' as const,
-                  completedAt: new Date().toISOString(),
+                  completedAt: now,
+                  lastActivityAt: Date.now(),
                   harvestSummary: summary || b.harvestSummary,
                 }
               : b
@@ -157,6 +166,7 @@ export const useBatchStore = create<BatchState>()(
               ? {
                   ...b,
                   status: 'active' as const,
+                  lastActivityAt: Date.now(),
                 }
               : b
           ),
@@ -165,6 +175,13 @@ export const useBatchStore = create<BatchState>()(
       deleteBatch: (id: string) => {
         set((state) => ({
           batches: state.batches.filter((b) => b.id !== id),
+        }))
+      },
+      touchBatch: (id: string) => {
+        set((state) => ({
+          batches: state.batches.map((b) =>
+            b.id === id ? { ...b, lastActivityAt: Date.now() } : b
+          ),
         }))
       },
     }),
