@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Modal, TextInput, Alert,
   KeyboardAvoidingView, Platform, AccessibilityInfo,
-  Pressable,
+  Pressable, Keyboard, Switch,
 } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { StatusBar } from 'expo-status-bar'
@@ -17,9 +17,22 @@ import Animated, {
   FadeInUp, FadeInDown, SlideInUp,
   useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing,
 } from 'react-native-reanimated'
-import { useBatchStore, type BudgetAllocation } from '../../store/useBatchStore'
+import { useBatchStore, type Batch, type BudgetAllocation } from '../../store/useBatchStore'
 import { useHistoryStore } from '../../store/useHistoryStore'
 import { useFarmChatStore } from '../../store/useFarmChatStore'
+import { useBreederEggStore, type BreederEggRecord } from '../../store/useBreederEggStore'
+import { useHatchStore, type HatchBatch } from '../../store/useHatchStore'
+import { computeFlockStats, formatFlockAge, formatFlockAgeShort, type FlockStats } from '../../utils/breeder'
+import {
+  GRADING_FIELDS, isoDateStr, hasGradingBreakdown, computeSettable, summarizeBreederEggs,
+  type BreederEggSummary,
+} from '../../utils/breederEggs'
+import {
+  incubationDaysFor, todayIso as hatchTodayIso, expectedHatchIso,
+  countdownLabel, nextHatchName, computeHatchKpis, hatchStatusMeta,
+} from '../../utils/hatch'
+import { computeHatchAggregates } from '../../utils/breederReports'
+import DateTimePicker from '@react-native-community/datetimepicker'
 import AnimalsSection from '../../components/animals/AnimalsSection'
 import BreedingSection from '../../components/animals/BreedingSection'
 import SmartInsightsSection from '../../components/SmartInsightsSection'
@@ -74,8 +87,11 @@ function RecordsSection({ batch }: { batch: import('../../store/useBatchStore').
   const batchRecords = useMemo(() => {
     return records
       .filter((r) => (r.batchId === batch.id || r.batch === batch.batchName))
+      // breeder eggs live ONLY in the breeder Egg Records system (Phase 2) —
+      // the old layer "eggs" record type must not surface on breeder batches.
+      .filter((r) => !(batch.model === 'breeder' && r.type === 'eggs'))
       .sort((a, b) => b.timestamp - a.timestamp)
-  }, [records, batch.id, batch.batchName])
+  }, [records, batch.id, batch.batchName, batch.model])
 
   const grouped = useMemo(() => {
     const groups: Record<string, import('../../store/useHistoryStore').HistoryRecord[]> = {}
@@ -98,7 +114,7 @@ function RecordsSection({ batch }: { batch: import('../../store/useBatchStore').
     }
     if (grouped.mortality) {
       const total = grouped.mortality.reduce((s, r) => s + (r.quantity || 0), 0)
-      result.push({ key: 'mortality', label: 'Mortality', icon: Icons.skull, color: '#EF4444', value: `${total} birds` })
+      result.push({ key: 'mortality', label: 'Mortality', icon: Icons.skull, color: '#EF4444', value: `${total} ${batch.model === 'breeder' ? 'breeders' : 'birds'}` })
     }
     if (grouped.eggs) {
       const total = grouped.eggs.reduce((s, r) => s + (r.quantity || 0), 0)
@@ -393,6 +409,46 @@ const BATCH_DETAILS: Record<string, {
   },
 }
 
+function deriveBreederDetail(batch: import('../../store/useBatchStore').Batch) {
+  const stats = computeFlockStats(batch)
+  const age = formatFlockAge(batch)
+  const totalCost = batch.purchaseCost + batch.feedCost + batch.medicationCost
+  const estRevenue = Math.round(totalCost * 2.12)
+  const ageShort = formatFlockAgeShort(batch)
+
+  return {
+    id: batch.id,
+    name: batch.batchName,
+    subtitle: `Breeder flock · ${stats.openingTotal} breeders placed`,
+    type: batch.livestockType,
+    week: `Flock age · ${age}`,
+    totalWeeks: 0,
+    progress: stats.alivePct,
+    mortality: `${stats.totalLosses} lost`,
+    feedUsed: `${stats.currentHens} hens`,
+    revenue: formatNaira(estRevenue),
+    birdCount: `${stats.currentPopulation}`,
+    badge: 'Breeder Flock',
+    badgeBg: '#F0FDF4',
+    badgeColor: '#16A34A',
+    timeline: [
+      { title: 'Flock Created', desc: `${batch.batchName} — ${stats.openingTotal} breeders placed`, time: `${ageShort} ago`, warn: false },
+      { title: 'Breeder Flock Active', desc: `${stats.currentHens} hens / ${stats.currentCocks} cocks under management`, time: 'ongoing', warn: false },
+      { title: 'Population Tracking Active', desc: 'Log mortality and culls to keep population live', time: 'ongoing', warn: false },
+    ],
+    analytics: [
+      { metric: `${stats.currentHens}`, label: 'Hens (current)', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [40, 55, 70, 60, 50], activeBars: [2, 4], icon: (c: string) => <GoonaIcon icon={Icons.users} size={16} color={c} /> },
+      { metric: `${stats.currentCocks}`, label: 'Cocks (current)', trend: '', trendColor: '#16A34A', iconBg: '#EEF3FF', iconColor: '#1A56FF', bars: [60, 70, 80, 85, 90], activeBars: [2, 3], icon: (c: string) => <GoonaIcon icon={Icons.user} size={16} color={c} /> },
+      { metric: stats.ratioLabel, label: 'F : M Ratio', trend: '', trendColor: '#F59E0B', iconBg: '#FFFBEB', iconColor: '#F59E0B', bars: [30, 45, 60, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.heart} size={16} color={c} /> },
+      { metric: ageShort, label: 'Flock Age', trend: '', trendColor: '#16A34A', iconBg: '#F0FDF4', iconColor: '#16A34A', bars: [35, 50, 65, 75, 90], activeBars: [2], icon: (c: string) => <GoonaIcon icon={Icons.calendar} size={16} color={c} /> },
+    ],
+    insights: [
+      { bg: '#E8F5E9', iconColor: '#F9A825', text: 'Breeder flock is being tracked. Log mortality and culls to keep the live population accurate.' },
+      { bg: '#E3F2FD', iconColor: '#1A56FF', text: 'Add feed, medication, and expense records for accurate breeder profitability forecasts.' },
+    ],
+  }
+}
+
 function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
   const prog = computeProgress(batch.startDate, batch.duration)
   const weeks = weeksSince(batch.startDate)
@@ -674,6 +730,1280 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
   )
 }
 
+// ─── BREEDER HERO ───
+
+function BreederHero({ batch, stats, flockAge, isCompleted, eggSummary }: {
+  batch: Batch
+  stats: FlockStats
+  flockAge: string
+  isCompleted: boolean
+  eggSummary: BreederEggSummary | null
+}) {
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.hero}>
+      <LinearGradient
+        colors={isCompleted ? ['#374151', '#4B5563', '#6B7280'] : ['#0C3A24', '#17663A', '#2E8B43', '#3FA345']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.heroOrb1} pointerEvents="none" />
+      <View style={styles.heroOrb2} pointerEvents="none" />
+      <View style={styles.heroSheen} pointerEvents="none" />
+      <View style={styles.heroRinglines} pointerEvents="none" />
+
+      <View style={styles.heroTop}>
+        <View>
+          <View style={styles.heroEyebrow}>
+            <View style={styles.heroLiveDot} />
+            <Text style={styles.heroEyebrowText}>{isCompleted ? 'Flock Closed' : 'Breeder Flock · Active'}</Text>
+          </View>
+          <Text style={styles.heroCount}>
+            {stats.currentPopulation} <Text style={styles.heroCountSmall}>{batch.livestockType}</Text>
+          </Text>
+          <Text style={styles.heroWeek}>Flock age · {flockAge || '—'}</Text>
+          <View style={styles.heroChips}>
+            <View style={[styles.heroChip, styles.heroChipHot]}>
+              <Text style={styles.heroChipHotText}>F : M {stats.ratioLabel}</Text>
+            </View>
+            <View style={styles.heroChip}>
+              <Text style={styles.heroChipText} numberOfLines={1}>{batch.breed || batch.livestockType}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ring */}
+        <View style={styles.ringWrap}>
+          <Svg width="96" height="96" viewBox="0 0 96 96">
+            <Circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="8" />
+            <Circle
+              cx="48" cy="48" r="40" fill="none"
+              stroke={isCompleted ? '#9CA3AF' : '#AEEA00'}
+              strokeWidth="8" strokeLinecap="round"
+              strokeDasharray="251.2"
+              strokeDashoffset={251.2 - (stats.alivePct / 100) * 251.2}
+            />
+          </Svg>
+          <View style={styles.ringCenter}>
+            <Text style={[styles.ringPct, isCompleted && { color: '#D1D5DB' }]}>{stats.alivePct}%</Text>
+            <Text style={styles.ringLbl}>Alive</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* stat cells */}
+      <View style={styles.heroStats}>
+        <View style={styles.hstat}>
+          <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{stats.currentHens}</Text>
+          <Text style={styles.hstatL}>Hens</Text>
+        </View>
+        <View style={styles.hstat}>
+          <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{stats.currentCocks}</Text>
+          <Text style={styles.hstatL}>Cocks</Text>
+        </View>
+        <View style={styles.hstat}>
+          <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{stats.currentPopulation}</Text>
+          <Text style={styles.hstatL}>Population now</Text>
+        </View>
+      </View>
+
+      {/* laying performance — Phase 2 */}
+      {eggSummary ? (
+        <View style={styles.heroEggWrap}>
+          <Text style={styles.heroEggTitle}>
+            Laying · this week{' '}
+            <Text style={styles.heroEggSub}> · hen-day on {stats.currentHens} hens</Text>
+          </Text>
+          <View style={styles.heroEggRow}>
+            <View style={styles.heroEggCell}>
+              <Text style={styles.heroEggV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{eggSummary.weeklyEggs.toLocaleString()}</Text>
+              <Text style={styles.heroEggL}>Eggs</Text>
+            </View>
+            <View style={styles.heroEggCell}>
+              <Text style={styles.heroEggV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+                {eggSummary.weeklyDaysActive > 0 && stats.currentHens > 0 ? `${eggSummary.weeklyHenDayPct.toFixed(1)}%` : '—'}
+              </Text>
+              <Text style={styles.heroEggL}>Hen-day</Text>
+            </View>
+            <View style={styles.heroEggCell}>
+              <Text style={styles.heroEggV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+                {eggSummary.weeklyEggs > 0 ? `${eggSummary.weeklySettablePct.toFixed(1)}%` : '—'}
+              </Text>
+              <Text style={styles.heroEggL}>Settable</Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
+      {/* population bar */}
+      <View style={styles.heroProg}>
+        <View style={styles.heroProgRow}>
+          <Text style={styles.heroProgLabel}>{isCompleted ? 'Flock closed' : `Live population · of ${stats.openingTotal} placed`}</Text>
+          <Text style={styles.heroProgVal}>{stats.alivePct}%</Text>
+        </View>
+        <View style={styles.heroTrack}>
+          <View style={[styles.heroTrackFill, { width: `${stats.alivePct}%` as any }]} />
+        </View>
+      </View>
+    </Animated.View>
+  )
+}
+
+// ─── BREEDER FLOCK MORTALITY / CULLS ───
+
+function MortalityCullsCard({ batch }: { batch: Batch }) {
+  const updateBatch = useBatchStore((s) => s.updateBatch)
+  const [femaleDeaths, setFemaleDeaths] = useState('')
+  const [maleDeaths, setMaleDeaths] = useState('')
+  const [culledFemales, setCulledFemales] = useState('')
+  const [culledMales, setCulledMales] = useState('')
+
+  const stats = useMemo(() => computeFlockStats(batch), [batch])
+
+  const num = (v: string) => parseInt(v, 10) || 0
+  const totalNew = num(femaleDeaths) + num(maleDeaths) + num(culledFemales) + num(culledMales)
+
+  const handleAdd = () => {
+    if (totalNew < 1) return
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    updateBatch(batch.id, {
+      femaleDeaths: (batch.femaleDeaths ?? 0) + num(femaleDeaths),
+      maleDeaths: (batch.maleDeaths ?? 0) + num(maleDeaths),
+      culledFemales: (batch.culledFemales ?? 0) + num(culledFemales),
+      culledMales: (batch.culledMales ?? 0) + num(culledMales),
+    })
+    setFemaleDeaths('')
+    setMaleDeaths('')
+    setCulledFemales('')
+    setCulledMales('')
+  }
+
+  const entry = (label: string, value: string, set: (v: string) => void, accent: string) => (
+    <View style={styles.mortFieldWrap}>
+      <View style={[styles.mortFieldDot, { backgroundColor: accent }]} />
+      <View style={styles.mortFieldBody}>
+        <Text style={styles.mortFieldLabel}>{label}</Text>
+        <TextInput
+          style={styles.mortInput}
+          value={value}
+          onChangeText={(v) => set(v.replace(/\D/g, ''))}
+          keyboardType="number-pad"
+          placeholder="0"
+          placeholderTextColor="#94A3B8"
+        />
+      </View>
+    </View>
+  )
+
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(380).springify()}>
+      <View style={styles.recordsCard}>
+        <View style={styles.recordsHeader}>
+          <View style={styles.recordsHeaderLeft}>
+            <Text style={styles.secTitle}>Flock Mortality / Culls</Text>
+          </View>
+        </View>
+
+        {/* single compact figure — heroes owns population/hens/cocks */}
+        <View style={styles.mortSummaryLine}>
+          <GoonaIcon icon={Icons.skull} size={13} color="#DC2626" />
+          <Text style={styles.mortSummaryLineText}>
+            Lost to date — <Text style={styles.mortSummaryLineValue}>{stats.totalLosses}</Text> of {stats.openingTotal} placed
+          </Text>
+        </View>
+
+        {batch.house ? (
+          <View style={styles.mortHouseRow}>
+            <GoonaIcon icon={Icons.house} size={13} color="#17663A" />
+            <Text style={styles.mortHouse}>House / Pen — {batch.house}</Text>
+          </View>
+        ) : null}
+
+        {/* add losses */}
+        <Text style={styles.mortGridLabel}>Add mortality or culls</Text>
+        <View style={styles.mortGrid}>
+          {entry('Female deaths', femaleDeaths, setFemaleDeaths, '#EF4444')}
+          {entry('Male deaths', maleDeaths, setMaleDeaths, '#EF4444')}
+          {entry('Culled females', culledFemales, setCulledFemales, '#F59E0B')}
+          {entry('Culled males', culledMales, setCulledMales, '#F59E0B')}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.mortAddBtn, totalNew < 1 && styles.mortAddBtnDisabled]}
+          activeOpacity={0.85}
+          onPress={handleAdd}
+        >
+          <GoonaIcon icon={Icons.minus} size={16} color="#FFFFFF" />
+          <Text style={styles.mortAddText}>Add losses — update population</Text>
+        </TouchableOpacity>
+        <Text style={styles.mortNote}>
+          Losses are recorded on the flock record, so population and hen count update live. (currentHens is the reserved hen-day denominator for egg records — Phase 2.)
+        </Text>
+      </View>
+    </Animated.View>
+  )
+}
+
+// ─── BREEDER EGG RECORDS (PHASE 2) ───
+
+function formatEggDate(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00`)
+  if (isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })
+}
+
+let eggLineIdCounter = 0
+function nextEggLineId(): string {
+  return `beg_${Date.now()}_${eggLineIdCounter++}`
+}
+
+/** Keyboard-aware bottom sheet helper: shrink-and-scroll body, scroll focused fields into view. */
+function useSheetKeyboard() {
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
+  const scrollRef = useRef<ScrollView>(null)
+  const fieldY = useRef<Record<string, number>>({})
+
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardOpen(true))
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardOpen(false))
+    return () => { show.remove(); hide.remove() }
+  }, [])
+
+  /** capture a field's Y (fields must be direct children of the sheet's ScrollView) */
+  const captureY = (key: string) => (e: { nativeEvent: { layout: { y: number } } }) => {
+    fieldY.current[key] = e.nativeEvent.layout.y
+  }
+
+  /** onFocus: scroll the focused field above the keyboard */
+  const focusScroll = (key: string) => () => {
+    setTimeout(() => {
+      const y = fieldY.current[key]
+      if (y != null && y > 0) scrollRef.current?.scrollTo({ y: Math.max(0, y - 96), animated: true })
+    }, 150)
+  }
+
+  const resetKeyboard = useCallback(() => setKeyboardOpen(false), [])
+
+  return { keyboardOpen, scrollRef, captureY, focusScroll, resetKeyboard }
+}
+
+function EggRecordsSection({ records, currentHens, eggSummary, onLogEggs }: {
+  records: BreederEggRecord[]
+  currentHens: number
+  eggSummary: BreederEggSummary | null
+  onLogEggs: () => void
+}) {
+  const [reduceMotion, setReduceMotion] = useState(false)
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion)
+  }, [])
+
+  const summary = useMemo(
+    () => eggSummary ?? summarizeBreederEggs(records, currentHens),
+    [records, currentHens, eggSummary],
+  )
+
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(380).springify()}>
+      <View style={styles.recordsCard}>
+        <View style={styles.recordsHeader}>
+          <View style={styles.recordsHeaderLeft}>
+            <Text style={styles.secTitle}>Egg Records</Text>
+            <View style={styles.recordsCountBadge}>
+              <Text style={styles.recordsCountText}>{records.length}</Text>
+            </View>
+          </View>
+          <View style={styles.recordsHeaderRight}>
+            <TouchableOpacity style={styles.eggLogBtn} activeOpacity={0.85} onPress={onLogEggs}>
+              <GoonaIcon icon={Icons.plus} size={14} color="#FFFFFF" />
+              <Text style={styles.eggLogBtnText}>Log Eggs</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.recordsDivider} />
+
+        {/* daily list — the weekly hens/egg/settable trio lives in the hero */}
+        {summary.list.length === 0 ? (
+          <View style={styles.recordsEmpty}>
+            <GoonaIcon icon={Icons.egg} size={24} color="#CBD5E1" />
+            <Text style={styles.recordsEmptyText}>No egg records yet</Text>
+            <Text style={styles.recordsEmptyHint}>Tap Log Eggs to record daily collection</Text>
+          </View>
+        ) : (
+          <Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(250).springify()}>
+            {summary.list.map((r) => {
+              const graded = hasGradingBreakdown(r)
+              return (
+                <View key={r.id} style={styles.eggRow}>
+                  <View style={styles.eggRowDateWrap}>
+                    <Text style={styles.eggRowDate}>{formatEggDate(r.date)}</Text>
+                  </View>
+                  <View style={styles.eggRowBody}>
+                    <View style={styles.eggRowTop}>
+                      <Text style={styles.eggRowTotal}>{r.totalEggs.toLocaleString()} eggs</Text>
+                      {graded && (
+                        <View style={styles.eggGradedTag}>
+                          <Text style={styles.eggGradedText}>graded</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.eggRowDetail}>
+                      {graded
+                        ? `${GRADING_FIELDS.filter((f) => (r.grading?.[f.key] ?? 0) > 0).map((f) => f.label).join(' · ')}`
+                        : 'Total only — settable defaults to total'}
+                    </Text>
+                  </View>
+                  <View style={styles.eggRowRight}>
+                    <Text style={styles.eggRowSettable}>{computeSettable(r).toLocaleString()}</Text>
+                    <Text style={styles.eggRowSettableLabel}>settable</Text>
+                  </View>
+                </View>
+              )
+            })}
+          </Animated.View>
+        )}
+
+        {/* settable feed — the only seam this section owns */}
+        <View style={styles.eggSeamNote}>
+          <GoonaIcon icon={Icons.egg} size={12} color="#94A3B8" />
+          <Text style={styles.eggSeamText}>
+            {summary.totalSettable.toLocaleString()} settable eggs tracked — available for hatch batches
+          </Text>
+        </View>
+      </View>
+    </Animated.View>
+  )
+}
+
+// ─── BREEDER LOG EGGS SHEET (records add pattern — single / multiple-day) ───
+
+function LogEggsSheet({ visible, batchId, batchName, currentHens, onClose }: {
+  visible: boolean
+  batchId: string
+  batchName: string
+  currentHens: number
+  onClose: () => void
+}) {
+  const addEggRecords = useBreederEggStore((s) => s.addEggRecords)
+
+  const [mode, setMode] = useState<'single' | 'multiple'>('single')
+  const [lineItems, setLineItems] = useState<{ id: string; date: string; totalEggs: number; grading?: import('../../store/useBreederEggStore').BreederEggGrading }[]>([])
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+
+  const [date, setDate] = useState(new Date())
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [totalStr, setTotalStr] = useState('')
+  const [gradingVisible, setGradingVisible] = useState(false)
+  const [grading, setGrading] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
+
+  const scrollRef = useRef<ScrollView>(null)
+  const totalWrapY = useRef(0)
+  const gridY = useRef(0)
+  const fieldY = useRef<Record<string, number>>({})
+
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardOpen(true))
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardOpen(false))
+    return () => { show.remove(); hide.remove() }
+  }, [])
+
+  useEffect(() => {
+    if (!visible) return
+    setMode('single')
+    setLineItems([])
+    setEditingIndex(null)
+    setDate(new Date())
+    setShowDatePicker(false)
+    setTotalStr('')
+    setGradingVisible(false)
+    setGrading({})
+    setErrors({})
+    setKeyboardOpen(false)
+  }, [visible])
+
+  const focusScroll = (key: string) => () => {
+    setTimeout(() => {
+      const y = key === 'total' ? totalWrapY.current : gridY.current + (fieldY.current[key] ?? 0)
+      if (y > 0) scrollRef.current?.scrollTo({ y: Math.max(0, y - 96), animated: true })
+    }, 150)
+  }
+
+  const num = (v: string) => parseInt(v, 10) || 0
+  const totalEggs = num(totalStr)
+  const gradingSum = GRADING_FIELDS.reduce((s, f) => s + num(grading[f.key]), 0)
+
+  const validate = () => {
+    const next: Record<string, string> = {}
+    if (totalEggs < 1) next.total = 'Enter eggs collected.'
+    else if (gradingSum > totalEggs) next.total = `Grading breakdown (${gradingSum}) exceeds total eggs (${totalEggs}).`
+    setErrors(next)
+    return Object.keys(next).length === 0
+  }
+
+  const buildGrading = () => {
+    const g: import('../../store/useBreederEggStore').BreederEggGrading = {}
+    let has = false
+    for (const f of GRADING_FIELDS) {
+      const v = num(grading[f.key])
+      if (v > 0) {
+        g[f.key] = v
+        has = true
+      }
+    }
+    return has ? g : undefined
+  }
+
+  const setGrade = (key: string, value: string) => {
+    setGrading((cur) => ({ ...cur, [key]: value.replace(/\D/g, '') }))
+  }
+
+  const addEntry = () => {
+    if (!validate()) return
+    const item = { id: nextEggLineId(), date: isoDateStr(date), totalEggs, grading: buildGrading() }
+    setLineItems((prev) => {
+      if (editingIndex != null && editingIndex >= 0 && editingIndex < prev.length) {
+        const copy = [...prev]
+        copy[editingIndex] = item
+        return copy
+      }
+      return [...prev, item]
+    })
+    setEditingIndex(null)
+    setDate(new Date())
+    setTotalStr('')
+    setGrading({})
+    setGradingVisible(false)
+    setErrors({})
+  }
+
+  const saveRows = (rows: { date: string; totalEggs: number; grading?: import('../../store/useBreederEggStore').BreederEggGrading }[]) => {
+    if (!rows.length) return
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    addEggRecords(rows.map((r) => ({ batchId, date: r.date, totalEggs: r.totalEggs, grading: r.grading })))
+    onClose()
+    Alert.alert(
+      'Eggs Saved',
+      `${rows.length} day${rows.length === 1 ? '' : 's'} of eggs logged for ${batchName}. Hen-day % now reflects ${currentHens} hens.`,
+    )
+  }
+
+  const handleSaveSingle = () => {
+    if (!validate()) return
+    saveRows([{ date: isoDateStr(date), totalEggs, grading: buildGrading() }])
+  }
+
+  const handleSaveAll = () => {
+    if (!lineItems.length) return
+    saveRows(lineItems)
+  }
+
+  const startEdit = (index: number) => {
+    const item = lineItems[index]
+    if (!item) return
+    setEditingIndex(index)
+    setDate(new Date(`${item.date}T00:00:00`))
+    setTotalStr(String(item.totalEggs))
+    const g: Record<string, string> = {}
+    for (const f of GRADING_FIELDS) {
+      const v = item.grading?.[f.key]
+      if (v) g[f.key] = String(v)
+    }
+    setGrading(g)
+    setErrors({})
+    setLineItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const removeLine = (index: number) => {
+    setLineItems((prev) => prev.filter((_, i) => i !== index))
+    setEditingIndex(null)
+  }
+
+  const handleCancel = () => {
+    const dirty = totalStr.trim() !== '' || Object.values(grading).some((v) => (v ?? '') !== '') || lineItems.length > 0
+    if (!dirty) { onClose(); return }
+    Alert.alert('Discard egg log?', 'Your entered egg details will be lost.', [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: onClose },
+    ])
+  }
+
+  const primaryDisabled = totalEggs < 1 || Object.keys(errors).length > 0
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleCancel}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetOverlay}>
+        <TouchableOpacity style={styles.sheetBackdrop} activeOpacity={1} onPress={handleCancel} />
+        <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={[styles.sheet, styles.eggSheet]}>
+          <View style={styles.sheetHandle} />
+
+          <View style={styles.sheetHeader}>
+            <View style={styles.sheetIconWrap}>
+              <GoonaIcon icon={Icons.egg} size={28} color="#17663A" />
+            </View>
+            <Text style={styles.sheetTitle}>Log Eggs</Text>
+            <Text style={styles.sheetDesc}>
+              Daily collection for {batchName} · hen-day % divides by {currentHens} hens (mortality-adjusted)
+            </Text>
+          </View>
+
+          {/* mode toggle — records add pattern */}
+          <View style={styles.eggModeToggle}>
+            <TouchableOpacity style={[styles.eggModeOption, mode === 'single' && styles.eggModeOptionActive]} activeOpacity={0.7} onPress={() => { setMode('single'); setEditingIndex(null) }}>
+              <Text style={[styles.eggModeText, mode === 'single' && styles.eggModeTextActive]}>Single</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.eggModeOption, mode === 'multiple' && styles.eggModeOptionActive]} activeOpacity={0.7} onPress={() => setMode('multiple')}>
+              <Text style={[styles.eggModeText, mode === 'multiple' && styles.eggModeTextActive]}>Multiple</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            ref={scrollRef}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            style={styles.eggScroll}
+            contentContainerStyle={[styles.eggSheetBody, keyboardOpen && styles.eggSheetBodyKbOpen]}
+          >
+            {/* date */}
+            <Text style={styles.eggFieldLabel}>Collection Date</Text>
+            <TouchableOpacity style={styles.eggDateField} activeOpacity={0.75} onPress={() => setShowDatePicker(!showDatePicker)}>
+              <GoonaIcon icon={Icons.calendar} size={18} color="#17663A" />
+              <Text style={styles.eggDateValue}>{date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+              <GoonaIcon icon={Icons.chevronDown} size={14} color="#17663A" />
+            </TouchableOpacity>
+            {showDatePicker && (
+              <View style={styles.eggInlinePicker}>
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  maximumDate={new Date()}
+                  onChange={(_event, picked) => {
+                    if (Platform.OS === 'android') setShowDatePicker(false)
+                    if (picked) setDate(picked)
+                  }}
+                  themeVariant="light"
+                />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity style={styles.eggInlineDone} onPress={() => setShowDatePicker(false)}>
+                    <Text style={styles.eggInlineDoneText}>Done</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {/* total */}
+            <View onLayout={(e) => { totalWrapY.current = e.nativeEvent.layout.y }}>
+              <Text style={styles.eggFieldLabel}>Total Eggs Collected (required)</Text>
+              <TextInput
+                style={styles.eggInput}
+                value={totalStr}
+                onChangeText={(v) => {
+                  const clean = v.replace(/\D/g, '')
+                  setTotalStr(clean)
+                  if (Object.keys(errors).length > 0) setErrors({})
+                }}
+                onFocus={focusScroll('total')}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor="#94A3B8"
+              />
+            </View>
+
+            {/* optional grading */}
+            <TouchableOpacity style={styles.eggGradeToggle} activeOpacity={0.75} onPress={() => setGradingVisible((v) => !v)}>
+              <View style={styles.eggGradeToggleLeft}>
+                <GoonaIcon icon={Icons.egg} size={15} color="#17663A" />
+                <Text style={styles.eggGradeToggleText}>Grading (optional)</Text>
+              </View>
+              <View style={[styles.recordsChevron, gradingVisible && styles.recordsChevronOpen]}>
+                <GoonaIcon icon={Icons.chevronDown} size={14} color="#64748B" />
+              </View>
+            </TouchableOpacity>
+            {gradingVisible && (
+              <View style={styles.eggGradeGrid} onLayout={(e) => { gridY.current = e.nativeEvent.layout.y }}>
+                {GRADING_FIELDS.map((f) => (
+                  <View key={f.key} style={styles.eggGradeField} onLayout={(e) => { fieldY.current[f.key] = e.nativeEvent.layout.y }}>
+                    <Text style={styles.eggGradeLabel}>{f.label}</Text>
+                    <TextInput
+                      style={styles.eggGradeInput}
+                      value={grading[f.key] ?? ''}
+                      onChangeText={(v) => setGrade(f.key, v.replace(/\D/g, ''))}
+                      onFocus={focusScroll(f.key)}
+                      keyboardType="number-pad"
+                      placeholder="0"
+                      placeholderTextColor="#B0BEC5"
+                    />
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {errors.total ? <Text style={styles.eggErrorText}>{errors.total}</Text> : null}
+
+            {/* multiple-day line items */}
+            {mode === 'multiple' && (
+              <View style={styles.eggLinesSection}>
+                <View style={styles.eggLinesHeader}>
+                  <Text style={styles.eggLinesTitle}>Line Items{lineItems.length > 0 ? ` · ${lineItems.length}` : ''}</Text>
+                </View>
+                {lineItems.length === 0 ? (
+                  <View style={styles.eggLinesEmpty}>
+                    <GoonaIcon icon={Icons.receipt} size={20} color="#CBD5E1" />
+                    <Text style={styles.eggLinesEmptyText}>No days added yet</Text>
+                    <Text style={styles.eggLinesEmptyHint}>Fill the fields and tap Add Entry</Text>
+                  </View>
+                ) : (
+                  <>
+                    {lineItems.map((item, i) => (
+                      <View key={item.id} style={styles.eggLineCard}>
+                        <View style={styles.eggLineIcon}>
+                          <GoonaIcon icon={Icons.egg} size={14} color="#16A34A" />
+                        </View>
+                        <View style={styles.eggLineBody}>
+                          <Text style={styles.eggLineDate}>{formatEggDate(item.date)}</Text>
+                          <Text style={styles.eggLineMeta}>{item.totalEggs.toLocaleString()} eggs · {item.grading ? 'graded' : 'total only'}</Text>
+                        </View>
+                        <View style={styles.eggLineActions}>
+                          <TouchableOpacity style={styles.eggLineBtn} activeOpacity={0.7} onPress={() => startEdit(i)}>
+                            <GoonaIcon icon={Icons.edit3} size={13} color="#64748B" />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.eggLineBtn} activeOpacity={0.7} onPress={() => removeLine(i)}>
+                            <GoonaIcon icon={Icons.x} size={13} color="#EF4444" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                    <TouchableOpacity
+                      style={[styles.eggSaveAllBtn, lineItems.length === 0 && styles.eggSaveAllBtnDisabled]}
+                      activeOpacity={0.85}
+                      onPress={handleSaveAll}
+                      disabled={lineItems.length === 0}
+                    >
+                      <GoonaIcon icon={Icons.save} size={16} color="#FFFFFF" />
+                      <Text style={styles.eggSaveAllText}>Save All ({lineItems.length})</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            )}
+          </ScrollView>
+
+          <View style={styles.sheetActions}>
+            <TouchableOpacity style={styles.sheetCancelBtn} activeOpacity={0.85} onPress={handleCancel}>
+              <Text style={styles.sheetCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sheetConfirmBtn, primaryDisabled && styles.eggConfirmBtnDisabled]}
+              activeOpacity={0.85}
+              disabled={primaryDisabled}
+              onPress={mode === 'multiple' ? addEntry : handleSaveSingle}
+            >
+              <LinearGradient
+                colors={primaryDisabled ? ['#A7BFAE', '#A7BFAE'] : ['#17663A', '#2E7D32']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <Text style={styles.sheetConfirmText}>{mode === 'multiple' ? 'Add Entry' : 'Save Record'}</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </Modal>
+  )
+}
+
+// ─── BREEDER HATCH BATCHES (PHASE 3) ───
+
+function HatchBatchesSection({ hatchBatches, onSetEggs, onRecord }: {
+  hatchBatches: HatchBatch[]
+  onSetEggs: () => void
+  onRecord: (h: HatchBatch) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [reduceMotion, setReduceMotion] = useState(false)
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion)
+  }, [])
+
+  const kpis = useMemo(() => {
+    let incubating = 0
+    let hatched = 0
+    let chicks = 0
+    for (const h of hatchBatches) {
+      if (h.status === 'incubating') incubating++
+      else if (h.status === 'hatched') hatched++
+      chicks += h.chicksHatched ?? 0
+    }
+    return { incubating, hatched, chicks }
+  }, [hatchBatches])
+
+  const sorted = useMemo(
+    () => [...hatchBatches].sort((a, b) => (a.setDate === b.setDate ? a.createdAt - b.createdAt : a.setDate < b.setDate ? -1 : 1)),
+    [hatchBatches],
+  )
+
+  return (
+    <Animated.View entering={FadeInUp.duration(500).delay(400).springify()}>
+      <View style={styles.recordsCard}>
+        <View style={styles.recordsHeader}>
+          <TouchableOpacity style={styles.recordsHeaderLeft} activeOpacity={0.7} onPress={() => setExpanded((v) => !v)}>
+            <Text style={styles.secTitle}>Hatch Batches</Text>
+            <View style={styles.recordsCountBadge}>
+              <Text style={styles.recordsCountText}>{hatchBatches.length}</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={styles.recordsHeaderRight}>
+            <TouchableOpacity style={styles.eggLogBtn} activeOpacity={0.85} onPress={onSetEggs}>
+              <GoonaIcon icon={Icons.plus} size={14} color="#FFFFFF" />
+              <Text style={styles.eggLogBtnText}>Set Eggs</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.recordsChevron, expanded && styles.recordsChevronOpen]} activeOpacity={0.8} onPress={() => setExpanded((v) => !v)}>
+              <GoonaIcon icon={Icons.chevronDown} size={16} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* collapsed KPIs */}
+        <View style={styles.eggKpis}>
+          <View style={styles.eggKpiItem}>
+            <Text style={styles.eggKpiValue}>{kpis.incubating}</Text>
+            <Text style={styles.eggKpiLabel}>Incubating</Text>
+          </View>
+          <View style={styles.eggKpiItem}>
+            <Text style={styles.eggKpiValue}>{kpis.hatched}</Text>
+            <Text style={styles.eggKpiLabel}>Hatched</Text>
+          </View>
+          <View style={styles.eggKpiItem}>
+            <Text style={styles.eggKpiValue}>{kpis.chicks.toLocaleString()}</Text>
+            <Text style={styles.eggKpiLabel}>Chicks out</Text>
+          </View>
+        </View>
+
+        {/* expanded list */}
+        {expanded && (
+          <Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(250).springify()}>
+            <View style={styles.recordsDivider} />
+            {sorted.length === 0 ? (
+              <View style={styles.recordsEmpty}>
+                <GoonaIcon icon={Icons.egg} size={24} color="#CBD5E1" />
+                <Text style={styles.recordsEmptyText}>No hatch batches yet</Text>
+                <Text style={styles.recordsEmptyHint}>Tap Set Eggs to start an incubation run</Text>
+              </View>
+            ) : (
+              sorted.map((h) => {
+                const meta = hatchStatusMeta(h.status)
+                const kpi = computeHatchKpis(h)
+                const upcoming = h.status === 'incubating' ? ` · due ${formatEggDate(kpi.expectedHatchDate)}` : ''
+                return (
+                  <View key={h.id} style={styles.hbRow}>
+                    <View style={[styles.hbRowIcon, { backgroundColor: meta.bg }]}>
+                      <GoonaIcon
+                        icon={h.status === 'incubating' ? Icons.flame : h.status === 'hatched' ? Icons.egg : Icons.x}
+                        size={16}
+                        color={meta.color}
+                      />
+                    </View>
+                    <View style={styles.hbRowBody}>
+                      <View style={styles.hbRowTop}>
+                        <Text style={styles.hbRowName} numberOfLines={1}>{h.name}</Text>
+                        <View style={[styles.hbStatusPill, { backgroundColor: meta.bg }]}>
+                          <Text style={[styles.hbStatusText, { color: meta.color }]}>{meta.label}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.hbRowMeta}>
+                        {h.status === 'incubating'
+                          ? `${countdownLabel(h, Date.now())}${upcoming} · ${h.eggsSet} eggs set`
+                          : `${kpi.hatchSuccessPct != null ? `${kpi.hatchSuccessPct.toFixed(1)}% hatch · ` : ''}${h.chicksHatched ?? 0} chicks from ${h.eggsSet} eggs`
+                        }
+                      </Text>
+                    </View>
+                    <View style={styles.hbRowRight}>
+                      {h.status === 'incubating' ? (
+                        <TouchableOpacity style={styles.hbRecordBtn} activeOpacity={0.85} onPress={() => onRecord(h)}>
+                          <GoonaIcon icon={Icons.checkCircle} size={13} color="#FFFFFF" />
+                          <Text style={styles.hbRecordText}>Record</Text>
+                        </TouchableOpacity>
+                      ) : (h.chicksHatched ?? 0) > 0 ? (
+                        <TouchableOpacity
+                          style={styles.hbSellBtn}
+                          activeOpacity={0.85}
+                          onPress={() => {
+                            if (Platform.OS !== 'web') Haptics.selectionAsync()
+                            router.push('/record-sale' as never)
+                          }}
+                        >
+                          <GoonaIcon icon={Icons.wallet} size={13} color="#FFFFFF" />
+                          <Text style={styles.hbRecordText}>Sell chicks</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <View style={styles.hbRowRightMeta}>
+                          <Text style={styles.hbRowChickV}>0</Text>
+                          <Text style={styles.hbRowChickL}>chicks</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )
+              })
+            )}
+          </Animated.View>
+        )}
+
+        {/* Phase 4 seam */}
+        <View style={styles.eggSeamNote}>
+          <GoonaIcon icon={Icons.flame} size={12} color="#94A3B8" />
+          <Text style={styles.eggSeamText}>
+            Chicks are a sold output (no animal profiles) · hatch KPIs feed Breeder Reports (Phase 4)
+          </Text>
+        </View>
+      </View>
+    </Animated.View>
+  )
+}
+
+// ─── SET EGGS SHEET (create hatch batch) ───
+
+function SetEggsSheet({ visible, flockId, flockName, livestockType, hatchBatches, availableSettable, onClose }: {
+  visible: boolean
+  flockId: string
+  flockName: string
+  livestockType: string
+  hatchBatches: HatchBatch[]
+  availableSettable: number
+  onClose: () => void
+}) {
+  const addHatch = useHatchStore((s) => s.addHatch)
+  const kb = useSheetKeyboard()
+  const resetKeyboard = kb.resetKeyboard
+
+  const [nameStr, setNameStr] = useState('')
+  const [date, setDate] = useState(new Date())
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [eggsStr, setEggsStr] = useState('')
+  const [incubationStr, setIncubationStr] = useState('21')
+  const [trackFertility, setTrackFertility] = useState(false)
+  const [notes, setNotes] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!visible) return
+    const suggested = nextHatchName(hatchBatches, flockName)
+    setNameStr(suggested)
+    setDate(new Date())
+    setShowDatePicker(false)
+    setEggsStr('')
+    setIncubationStr(String(incubationDaysFor(livestockType)))
+    setTrackFertility(false)
+    setNotes('')
+    setErrors({})
+    resetKeyboard()
+  }, [visible, hatchBatches, flockName, livestockType, resetKeyboard])
+
+  const num = (v: string) => parseInt(v, 10) || 0
+  const eggsSet = num(eggsStr)
+  const incubationDays = num(incubationStr)
+  const setDateIso = isoDateStr(date)
+  const expected = incubationDays >= 1 ? expectedHatchIso({ setDate: setDateIso, incubationDays }) : ''
+  const eggsWarn = eggsStr.trim() !== '' && eggsSet > availableSettable
+
+  const validate = () => {
+    const next: Record<string, string> = {}
+    if (!nameStr.trim()) next.name = 'Enter a hatch batch name.'
+    if (eggsSet < 1) next.eggs = 'Enter eggs set to incubate.'
+    if (incubationDays < 1) next.days = 'Enter incubation days (21 for chicken, 28 for turkey).'
+    setErrors(next)
+    return Object.keys(next).length === 0
+  }
+
+  const handleSave = () => {
+    if (!validate()) return
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    addHatch({
+      breederFlockId: flockId,
+      name: nameStr.trim(),
+      eggsSet,
+      setDate: setDateIso,
+      incubationDays,
+      trackFertility,
+      status: 'incubating',
+      notes: notes.trim() || undefined,
+    })
+    onClose()
+    Alert.alert('Incubation Started', `${nameStr.trim()} set with ${eggsSet} eggs · hatches ${formatEggDate(expected)}.`)
+  }
+
+  const handleCancel = () => {
+    const dirty = nameStr.trim() !== '' || eggsStr.trim() !== '' || notes.trim() !== ''
+    if (!dirty) { onClose(); return }
+    Alert.alert('Discard hatch batch?', 'Your entered batch details will be lost.', [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: onClose },
+    ])
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleCancel}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetOverlay}>
+        <TouchableOpacity style={styles.sheetBackdrop} activeOpacity={1} onPress={handleCancel} />
+        <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={[styles.sheet, styles.eggSheet]}>
+          <View style={styles.sheetHandle} />
+
+          <View style={styles.sheetHeader}>
+            <View style={styles.sheetIconWrap}>
+              <GoonaIcon icon={Icons.egg} size={28} color="#17663A" />
+            </View>
+            <Text style={styles.sheetTitle}>Set Eggs to Incubate</Text>
+            <Text style={styles.sheetDesc}>
+              {flockName} · available settable eggs: {availableSettable.toLocaleString()}
+            </Text>
+          </View>
+
+          <ScrollView
+            ref={kb.scrollRef}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            style={styles.eggScroll}
+            contentContainerStyle={[styles.eggSheetBody, kb.keyboardOpen && styles.eggSheetBodyKbOpen]}
+          >
+            <View onLayout={kb.captureY('name')}>
+              <Text style={styles.eggFieldLabel}>Hatch Batch Name</Text>
+              <TextInput
+                style={styles.eggInput}
+                value={nameStr}
+                onChangeText={(v) => {
+                  setNameStr(v)
+                  if (errors.name) setErrors((cur) => ({ ...cur, name: '' }))
+                }}
+                onFocus={kb.focusScroll('name')}
+                placeholder={`e.g. ${nextHatchName(hatchBatches, flockName)}`}
+                placeholderTextColor="#94A3B8"
+              />
+              {errors.name ? <Text style={styles.eggErrorText}>{errors.name}</Text> : null}
+            </View>
+
+            <View onLayout={kb.captureY('date')}>
+              <Text style={styles.eggFieldLabel}>Set Date</Text>
+              <TouchableOpacity style={styles.eggDateField} activeOpacity={0.75} onPress={() => setShowDatePicker(!showDatePicker)}>
+                <GoonaIcon icon={Icons.calendar} size={18} color="#17663A" />
+                <Text style={styles.eggDateValue}>{date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+                <GoonaIcon icon={Icons.chevronDown} size={14} color="#17663A" />
+              </TouchableOpacity>
+              {showDatePicker && (
+                <View style={styles.eggInlinePicker}>
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    maximumDate={new Date()}
+                    onChange={(_event, picked) => {
+                      if (Platform.OS === 'android') setShowDatePicker(false)
+                      if (picked) setDate(picked)
+                    }}
+                    themeVariant="light"
+                  />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity style={styles.eggInlineDone} onPress={() => setShowDatePicker(false)}>
+                      <Text style={styles.eggInlineDoneText}>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
+
+            <View onLayout={kb.captureY('eggs')}>
+              <Text style={styles.eggFieldLabel}>Eggs Set (required)</Text>
+              <TextInput
+                style={styles.eggInput}
+                value={eggsStr}
+                onChangeText={(v) => {
+                  setEggsStr(v.replace(/\D/g, ''))
+                  if (errors.eggs) setErrors((cur) => ({ ...cur, eggs: '' }))
+                }}
+                onFocus={kb.focusScroll('eggs')}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor="#94A3B8"
+              />
+              {errors.eggs ? <Text style={styles.eggErrorText}>{errors.eggs}</Text> : null}
+            </View>
+
+            {eggsWarn && (
+              <View style={styles.eggWarnBox}>
+                <GoonaIcon icon={Icons.alertTriangle} size={14} color="#D97706" />
+                <Text style={styles.eggWarnText}>
+                  You have {availableSettable.toLocaleString()} settable eggs on record — {eggsSet.toLocaleString()} set exceeds this. Continue only if using stored or home-produced eggs. (Not blocked — your choice.)
+                </Text>
+              </View>
+            )}
+
+            <View onLayout={kb.captureY('days')}>
+              <Text style={styles.eggFieldLabel}>Incubation Days (required)</Text>
+              <TextInput
+                style={styles.eggInput}
+                value={incubationStr}
+                onChangeText={(v) => {
+                  setIncubationStr(v.replace(/\D/g, ''))
+                  if (errors.days) setErrors((cur) => ({ ...cur, days: '' }))
+                }}
+                onFocus={kb.focusScroll('days')}
+                keyboardType="number-pad"
+                placeholder="21"
+                placeholderTextColor="#94A3B8"
+              />
+              {errors.days ? <Text style={styles.eggErrorText}>{errors.days}</Text> : null}
+              {expected ? (
+                <Text style={styles.eggExpectedNote}>Expected hatch — {formatEggDate(expected)} ({countdownDaysLabel(expected)})</Text>
+              ) : null}
+            </View>
+
+            <View style={styles.eggToggleRow}>
+              <View style={styles.eggToggleBody}>
+                <Text style={styles.eggToggleLabel}>Track fertility (true fertility)</Text>
+                <Text style={styles.eggToggleDesc}>Adds a simple break-out — count clear / infertile eggs when recording the hatch.</Text>
+              </View>
+              <Switch
+                value={trackFertility}
+                onValueChange={(v) => setTrackFertility(v)}
+                trackColor={{ false: '#E2E8F0', true: '#2E7D32' }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <View onLayout={kb.captureY('notes')}>
+              <Text style={styles.eggFieldLabel}>Notes (optional)</Text>
+              <TextInput
+                style={[styles.eggInput, styles.eggNotesInput]}
+                value={notes}
+                onChangeText={setNotes}
+                onFocus={kb.focusScroll('notes')}
+                multiline
+                numberOfLines={3}
+                placeholder="Any notes…"
+                placeholderTextColor="#94A3B8"
+                textAlignVertical="top"
+              />
+            </View>
+          </ScrollView>
+
+          <View style={styles.sheetActions}>
+            <TouchableOpacity style={styles.sheetCancelBtn} activeOpacity={0.85} onPress={handleCancel}>
+              <Text style={styles.sheetCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sheetConfirmBtn, (eggsSet < 1 || incubationDays < 1 || !nameStr.trim()) && styles.eggConfirmBtnDisabled]}
+              activeOpacity={0.85}
+              disabled={eggsSet < 1 || incubationDays < 1 || !nameStr.trim()}
+              onPress={handleSave}
+            >
+              <LinearGradient
+                colors={eggsSet < 1 || incubationDays < 1 || !nameStr.trim() ? ['#A7BFAE', '#A7BFAE'] : ['#17663A', '#2E7D32']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <Text style={styles.sheetConfirmText}>Set Eggs</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </Modal>
+  )
+}
+
+function countdownDaysLabel(expectedIso: string): string {
+  const due = new Date(`${expectedIso}T00:00:00`).getTime()
+  const nowMid = new Date(); nowMid.setHours(0, 0, 0, 0)
+  const diff = Math.round((due - nowMid.getTime()) / (24 * 60 * 60 * 1000))
+  if (diff === 0) return 'hatch due today'
+  if (diff > 0) return `${diff} day${diff === 1 ? '' : 's'} from now`
+  return `${Math.abs(diff)} day${Math.abs(diff) === 1 ? '' : 's'} overdue`
+}
+
+// ─── RECORD HATCH SHEET ───
+
+function RecordHatchSheet({ visible, hatch, onClose }: {
+  visible: boolean
+  hatch: HatchBatch | null
+  onClose: () => void
+}) {
+  const updateHatch = useHatchStore((s) => s.updateHatch)
+  const kb = useSheetKeyboard()
+  const resetKeyboard = kb.resetKeyboard
+
+  const [chicksStr, setChicksStr] = useState('')
+  const [clearStr, setClearStr] = useState('')
+  const [notes, setNotes] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!visible) return
+    setChicksStr('')
+    setClearStr('')
+    setNotes('')
+    setErrors({})
+    resetKeyboard()
+  }, [visible, hatch?.id, resetKeyboard])
+
+  const num = (v: string) => parseInt(v, 10) || 0
+  const chicks = num(chicksStr)
+  const clearEggs = num(clearStr)
+  const kpi = useMemo(() => (hatch ? computeHatchKpis(hatch) : null), [hatch])
+  const due = hatch ? new Date(`${kpi?.expectedHatchDate ?? ''}T00:00:00`) : null
+
+  const validate = () => {
+    const next: Record<string, string> = {}
+    if (chicksStr.trim() === '') next.chicks = 'Enter chicks hatched (0 marks the batch failed).'
+    else if (clearStr.trim() !== '' && clearEggs > hatch!.eggsSet) next.clear = `Break-out (${clearEggs}) exceeds eggs set (${hatch!.eggsSet}).`
+    setErrors(next)
+    return Object.keys(next).length === 0
+  }
+
+  const handleSave = () => {
+    if (!hatch) return
+    if (!validate()) return
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    const status = chicks > 0 ? 'hatched' : 'failed'
+    updateHatch(hatch.id, {
+      status,
+      hatchDate: hatchTodayIso(),
+      chicksHatched: chicks,
+      clearEggs: hatch.trackFertility && clearStr.trim() !== '' ? clearEggs : undefined,
+      notes: notes.trim() || undefined,
+    })
+    onClose()
+    Alert.alert(
+      chicks > 0 ? 'Hatch Recorded' : 'Hatch Failed',
+      chicks > 0
+        ? `${chicks} chicks hatched from ${hatch.name} — record sales via the Sales flow to capture revenue.`
+        : `${hatch.name} recorded as failed — no chicks.`,
+    )
+  }
+
+  const handleCancel = () => {
+    const dirty = chicksStr.trim() !== '' || clearStr.trim() !== '' || notes.trim() !== ''
+    if (!dirty) { onClose(); return }
+    Alert.alert('Discard hatch record?', 'Your entered hatch details will be lost.', [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: onClose },
+    ])
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleCancel}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetOverlay}>
+        <TouchableOpacity style={styles.sheetBackdrop} activeOpacity={1} onPress={handleCancel} />
+        <Animated.View entering={SlideInUp.duration(350).springify().damping(20)} style={[styles.sheet, styles.eggSheet]}>
+          <View style={styles.sheetHandle} />
+
+          {hatch ? (
+            <>
+              <View style={styles.sheetHeader}>
+                <View style={styles.sheetIconWrap}>
+                  <GoonaIcon icon={Icons.egg} size={28} color="#17663A" />
+                </View>
+                <Text style={styles.sheetTitle}>Record Hatch</Text>
+                <Text style={styles.sheetDesc}>
+                  {hatch.name} · {hatch.eggsSet} eggs set · expected {due ? due.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                </Text>
+              </View>
+
+              <ScrollView
+                ref={kb.scrollRef}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                style={styles.eggScroll}
+                contentContainerStyle={[styles.eggSheetBody, kb.keyboardOpen && styles.eggSheetBodyKbOpen]}
+              >
+                <View onLayout={kb.captureY('chicks')}>
+                  <Text style={styles.eggFieldLabel}>Chicks Hatched (required)</Text>
+                  <TextInput
+                    style={styles.eggInput}
+                    value={chicksStr}
+                    onChangeText={(v) => {
+                      setChicksStr(v.replace(/\D/g, ''))
+                      if (errors.chicks) setErrors((cur) => ({ ...cur, chicks: '' }))
+                    }}
+                    onFocus={kb.focusScroll('chicks')}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor="#94A3B8"
+                  />
+                  <Text style={styles.eggHintText}>0 chicks marks this batch as failed.</Text>
+                  {errors.chicks ? <Text style={styles.eggErrorText}>{errors.chicks}</Text> : null}
+                </View>
+
+                {hatch.trackFertility && (
+                  <View onLayout={kb.captureY('clear')}>
+                    <Text style={styles.eggFieldLabel}>Clear / Infertile Eggs — break-out (optional)</Text>
+                    <TextInput
+                      style={styles.eggInput}
+                      value={clearStr}
+                      onChangeText={(v) => {
+                        setClearStr(v.replace(/\D/g, ''))
+                        if (errors.clear) setErrors((cur) => ({ ...cur, clear: '' }))
+                      }}
+                      onFocus={kb.focusScroll('clear')}
+                      keyboardType="number-pad"
+                      placeholder="0"
+                      placeholderTextColor="#94A3B8"
+                    />
+                    {errors.clear ? <Text style={styles.eggErrorText}>{errors.clear}</Text> : null}
+                    {hatch.trackFertility && clearStr.trim() !== '' && clearEggs <= hatch.eggsSet && hatch.eggsSet > 0 ? (
+                      <Text style={styles.eggExpectedNote}>
+                        Fertility — {Math.round(((hatch.eggsSet - clearEggs) / hatch.eggsSet) * 1000) / 10}%
+                      </Text>
+                    ) : null}
+                  </View>
+                )}
+
+                <View onLayout={kb.captureY('notes')}>
+                  <Text style={styles.eggFieldLabel}>Notes (optional)</Text>
+                  <TextInput
+                    style={[styles.eggInput, styles.eggNotesInput]}
+                    value={notes}
+                    onChangeText={setNotes}
+                    onFocus={kb.focusScroll('notes')}
+                    multiline
+                    numberOfLines={3}
+                    placeholder="Any hatch notes…"
+                    placeholderTextColor="#94A3B8"
+                    textAlignVertical="top"
+                  />
+                </View>
+              </ScrollView>
+
+              <View style={styles.sheetActions}>
+                <TouchableOpacity style={styles.sheetCancelBtn} activeOpacity={0.85} onPress={handleCancel}>
+                  <Text style={styles.sheetCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.sheetConfirmBtn, chicksStr.trim() === '' && styles.eggConfirmBtnDisabled]}
+                  activeOpacity={0.85}
+                  disabled={chicksStr.trim() === ''}
+                  onPress={handleSave}
+                >
+                  <LinearGradient
+                    colors={chicksStr.trim() === '' ? ['#A7BFAE', '#A7BFAE'] : ['#17663A', '#2E7D32']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <Text style={styles.sheetConfirmText}>Record Hatch{chicks > 0 ? '' : ' — Failed'}</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : null}
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </Modal>
+  )
+}
+
 export default function BatchDetailsScreen() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -681,6 +2011,7 @@ export default function BatchDetailsScreen() {
   const completeBatch = useBatchStore((s) => s.completeBatch)
   const restoreBatch = useBatchStore((s) => s.restoreBatch)
   const deleteBatch = useBatchStore((s) => s.deleteBatch)
+  const updateBatch = useBatchStore((s) => s.updateBatch)
   const addFeedPost = useFarmChatStore((s) => s.addFeedPost)
 
   const isCompleted = storeBatch?.status === 'completed'
@@ -698,14 +2029,101 @@ export default function BatchDetailsScreen() {
   const [harvestRevenue, setHarvestRevenue] = useState('')
   const [harvestNotes, setHarvestNotes] = useState('')
 
+  const [showEggSheet, setShowEggSheet] = useState(false)
+  const [showSetEggsSheet, setShowSetEggsSheet] = useState(false)
+  const [recordHatchTarget, setRecordHatchTarget] = useState<HatchBatch | null>(null)
+
   const batch = useMemo(() => {
     if (!id) return BATCH_DETAILS.batch_a
     if (BATCH_DETAILS[id]) return BATCH_DETAILS[id]
-    if (storeBatch) return deriveBatchDetail(storeBatch)
+    if (storeBatch) {
+      if (storeBatch.model === 'breeder') return deriveBreederDetail(storeBatch)
+      return deriveBatchDetail(storeBatch)
+    }
     return BATCH_DETAILS.batch_a
   }, [id, storeBatch])
 
-  const displayProgress = isCompleted ? 100 : batch.progress
+  const isBreeder = storeBatch?.model === 'breeder'
+
+  const breederStats = useMemo(
+    () => (storeBatch && isBreeder ? computeFlockStats(storeBatch) : null),
+    [storeBatch, isBreeder]
+  )
+  const flockAge = useMemo(
+    () => (storeBatch && isBreeder ? formatFlockAge(storeBatch) : ''),
+    [storeBatch, isBreeder]
+  )
+
+  const breedEggs = useBreederEggStore((s) => s.eggs)
+  const batchEggRecords = useMemo(
+    () => breedEggs.filter((r) => r.batchId === (storeBatch?.id ?? '')),
+    [breedEggs, storeBatch?.id]
+  )
+  const eggSummary = useMemo(
+    () => (isBreeder && breederStats ? summarizeBreederEggs(batchEggRecords, breederStats.currentHens) : null),
+    [batchEggRecords, isBreeder, breederStats]
+  )
+
+  const hatchBatches = useHatchStore((s) => s.hatches)
+  const flockHatches = useMemo(
+    () => (storeBatch ? hatchBatches.filter((h) => h.breederFlockId === storeBatch.id) : []),
+    [hatchBatches, storeBatch]
+  )
+
+  /** Production Analytics for breeders = PERFORMANCE (never repeats the hero's flock stats). */
+  const breederPerformance = useMemo(() => {
+    if (!isBreeder) return []
+    const agg = computeHatchAggregates(flockHatches)
+    const pct = (v: number | null) => (v != null ? `${v.toFixed(1)}%` : '—')
+    return [
+      {
+        metric: pct(agg.overallHatchSuccessPct),
+        label: 'Hatch Success',
+        trend: 'weighted',
+        trendColor: '#2E7D32' as string,
+        iconBg: '#F0FDF4',
+        iconColor: '#16A34A',
+        bars: [40, 55, 70, 60, 50],
+        activeBars: [2, 4],
+        icon: (c: string) => <GoonaIcon icon={Icons.checkCircle} size={16} color={c} />,
+      },
+      {
+        metric: pct(agg.overallFertilityPct),
+        label: 'Fertility',
+        trend: `tracked ${agg.trackedBatches}/${agg.recordedBatches}`,
+        trendColor: '#3B66D6' as string,
+        iconBg: '#EEF3FF',
+        iconColor: '#1A56FF',
+        bars: [60, 70, 80, 85, 90],
+        activeBars: [2, 3],
+        icon: (c: string) => <GoonaIcon icon={Icons.target} size={16} color={c} />,
+      },
+      {
+        metric: pct(agg.overallHatchabilityPct),
+        label: 'Hatchability',
+        trend: 'of fertile',
+        trendColor: '#D97706' as string,
+        iconBg: '#FFFBEB',
+        iconColor: '#D97706',
+        bars: [30, 45, 60, 75, 90],
+        activeBars: [2],
+        icon: (c: string) => <GoonaIcon icon={Icons.activity} size={16} color={c} />,
+      },
+      {
+        metric: eggSummary ? eggSummary.totalEggs.toLocaleString() : '—',
+        label: 'Total Eggs',
+        trend: 'all-time',
+        trendColor: '#7C3AD6' as string,
+        iconBg: 'rgba(124,58,214,0.10)',
+        iconColor: '#7C3AD6',
+        bars: [35, 50, 65, 75, 90],
+        activeBars: [2],
+        icon: (c: string) => <GoonaIcon icon={Icons.egg} size={16} color={c} />,
+      },
+    ]
+  }, [isBreeder, flockHatches, eggSummary])
+
+  const displayProgress = isCompleted ? 100 : isBreeder ? (breederStats?.alivePct ?? 100) : batch.progress
 
   function handleOpenCompleteSheet() {
     const qty = storeBatch?.quantity ?? (parseInt(batch.birdCount, 10) || 0)
@@ -724,19 +2142,35 @@ export default function BatchDetailsScreen() {
       totalRevenue: totalRevenue || undefined,
       notes: harvestNotes.trim() || undefined,
     })
-    addFeedPost({
-      id: `harvest-${Date.now()}`,
-      type: 'announcement',
-      timestamp: Date.now(),
-      actorName: 'GOONA Harvest',
-      actorRole: 'Auto · Module',
-      actorInitials: 'GH',
-      actorColor: '#2E7D32',
-      detail: `${storeBatch.batchName} cycle completed — ${finalCount} ${storeBatch.livestockType.toLowerCase()} harvested`,
-      highlight: `${finalCount} birds`,
-      tags: [storeBatch.batchName],
-      batch: storeBatch.batchName,
-    })
+    if (storeBatch.model === 'breeder') {
+      addFeedPost({
+        id: `harvest-${Date.now()}`,
+        type: 'announcement',
+        timestamp: Date.now(),
+        actorName: 'GOONA Flock',
+        actorRole: 'Auto · Module',
+        actorInitials: 'GF',
+        actorColor: '#2E7D32',
+        detail: `${storeBatch.batchName} breeder flock closed — ${finalCount} breeders`,
+        highlight: `${finalCount} breeders`,
+        tags: [storeBatch.batchName],
+        batch: storeBatch.batchName,
+      })
+    } else {
+      addFeedPost({
+        id: `harvest-${Date.now()}`,
+        type: 'announcement',
+        timestamp: Date.now(),
+        actorName: 'GOONA Harvest',
+        actorRole: 'Auto · Module',
+        actorInitials: 'GH',
+        actorColor: '#2E7D32',
+        detail: `${storeBatch.batchName} cycle completed — ${finalCount} ${storeBatch.livestockType.toLowerCase()} harvested`,
+        highlight: `${finalCount} birds`,
+        tags: [storeBatch.batchName],
+        batch: storeBatch.batchName,
+      })
+    }
     setShowCompleteSheet(false)
     if (router.canGoBack()) {
       router.back()
@@ -811,6 +2245,9 @@ export default function BatchDetailsScreen() {
         </Animated.View>
 
         {/* ===== PREMIUM HERO ===== */}
+        {isBreeder && storeBatch && breederStats ? (
+          <BreederHero batch={storeBatch} stats={breederStats} flockAge={flockAge} isCompleted={isCompleted} eggSummary={eggSummary} />
+        ) : (
         <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.hero}>
           <LinearGradient
             colors={isCompleted ? ['#374151', '#4B5563', '#6B7280'] : ['#0C3A24', '#17663A', '#2E8B43', '#3FA345']}
@@ -897,19 +2334,26 @@ export default function BatchDetailsScreen() {
             </View>
           </View>
         </Animated.View>
+        )}
 
         {/* PRODUCTION ANALYTICS */}
         <Animated.View entering={FadeInUp.duration(500).delay(140).springify()}>
           <View style={styles.sec}>
             <Text style={styles.secTitle}>Production Analytics</Text>
-            <TouchableOpacity>
-              <Text style={styles.secLink}>Full Report</Text>
+            <TouchableOpacity
+              onPress={
+                isBreeder
+                  ? () => router.push(`/batch-details/breeder-reports?id=${encodeURIComponent(storeBatch?.id ?? '')}` as never)
+                  : undefined
+              }
+            >
+              <Text style={styles.secLink}>{isBreeder ? 'Open Report' : 'Full Report'}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
 
         <View style={styles.analytics}>
-          {batch.analytics.map((a, i) => {
+          {(isBreeder && storeBatch ? breederPerformance : batch.analytics).map((a, i) => {
             const colorClass = i === 0 ? 'green' : i === 1 ? 'blue' : i === 2 ? 'amber' : 'purple'
             const iconBgMap: Record<string, string> = { green: 'rgba(46,125,50,0.10)', blue: 'rgba(59,102,214,0.10)', amber: 'rgba(217,119,6,0.12)', purple: 'rgba(124,58,214,0.10)' }
             const iconColorMap: Record<string, string> = { green: '#2E7D32', blue: '#3B66D6', amber: '#D97706', purple: '#7C3AD6' }
@@ -961,6 +2405,27 @@ export default function BatchDetailsScreen() {
 
         {/* RECORDS */}
         {storeBatch && <RecordsSection batch={storeBatch} />}
+
+        {/* BREEDER FLOCK MORTALITY / CULLS */}
+        {storeBatch && storeBatch.model === 'breeder' && <MortalityCullsCard batch={storeBatch} />}
+
+        {/* BREEDER EGG RECORDS (PHASE 2) */}
+{storeBatch && isBreeder && (
+          <EggRecordsSection
+            records={batchEggRecords}
+            currentHens={breederStats?.currentHens ?? 0}
+            eggSummary={eggSummary}
+            onLogEggs={() => setShowEggSheet(true)}
+          />
+        )}
+
+{storeBatch && isBreeder && (
+          <HatchBatchesSection
+            hatchBatches={flockHatches}
+            onSetEggs={() => setShowSetEggsSheet(true)}
+            onRecord={(h) => setRecordHatchTarget(h)}
+          />
+        )}
 
         {/* ANIMALS */}
         {storeBatch && storeBatch.model === 'individual' && <AnimalsSection batch={storeBatch} />}
@@ -1029,8 +2494,8 @@ export default function BatchDetailsScreen() {
                 <GoonaIcon icon={Icons.checkCheck} size={24} color="#FFFFFF" />
               </View>
               <View style={styles.cBody}>
-                <Text style={styles.cTitle}>Complete Cycle / Harvest</Text>
-                <Text style={styles.cSub}>Move to Farm History · restore anytime</Text>
+                <Text style={styles.cTitle}>{isBreeder ? 'Close Flock / Sell Out' : 'Complete Cycle / Harvest'}</Text>
+                <Text style={styles.cSub}>{isBreeder ? 'Archive the breeder flock to Farm History · restore anytime' : 'Move to Farm History · restore anytime'}</Text>
               </View>
               <GoonaIcon icon={Icons.chevronRight} size={22} color="#FFFFFF" />
             </TouchableOpacity>
@@ -1038,7 +2503,9 @@ export default function BatchDetailsScreen() {
           <Text style={styles.completeNote}>
             {isCompleted
               ? 'Batch is in Farm History — all records preserved.'
-              : 'This archives the batch to Farm History — it won\'t delete your records.'
+              : isBreeder
+                ? 'This archives the flock to Farm History — it won\'t delete your records.'
+                : 'This archives the batch to Farm History — it won\'t delete your records.'
             }
           </Text>
         </Animated.View>
@@ -1054,19 +2521,18 @@ export default function BatchDetailsScreen() {
             <View style={styles.sheetHandle} />
 
             <View style={styles.sheetHeader}>
-              <View style={styles.sheetIconWrap}>
+<View style={styles.sheetIconWrap}>
                 <GoonaIcon icon={Icons.checkCheck} size={28} color="#F59E0B" />
               </View>
-              <Text style={styles.sheetTitle}>Complete This Cycle?</Text>
+              <Text style={styles.sheetTitle}>{isBreeder ? 'Close This Flock?' : 'Complete This Cycle?'}</Text>
               <Text style={styles.sheetDesc}>
                 {batch.name} will move to Farm History and leave Active Batches. You can restore it anytime.
               </Text>
             </View>
 
             <View style={styles.sheetBody}>
-              <Text style={styles.sheetSectionTitle}>Harvest Summary (optional)</Text>
-
-              <Text style={styles.sheetInputLabel}>Final Bird Count</Text>
+              <Text style={styles.sheetSectionTitle}>{isBreeder ? 'Close-out Summary (optional)' : 'Harvest Summary (optional)'}</Text>
+              <Text style={styles.sheetInputLabel}>{isBreeder ? 'Final Breeder Count' : 'Final Bird Count'}</Text>
               <TextInput
                 style={styles.sheetInput}
                 value={harvestFinalCount}
@@ -1118,12 +2584,45 @@ export default function BatchDetailsScreen() {
                   end={{ x: 1, y: 1 }}
                   style={StyleSheet.absoluteFill}
                 />
-                <Text style={styles.sheetConfirmText}>Complete Cycle</Text>
+                <Text style={styles.sheetConfirmText}>{isBreeder ? 'Close Flock' : 'Complete Cycle'}</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* BREEDER LOG EGGS SHEET (PHASE 2) */}
+      {storeBatch && isBreeder && (
+        <LogEggsSheet
+          visible={showEggSheet}
+          batchId={storeBatch.id}
+          batchName={storeBatch.batchName}
+          currentHens={breederStats?.currentHens ?? 0}
+          onClose={() => setShowEggSheet(false)}
+        />
+      )}
+
+      {/* BREEDER SET EGGS SHEET (PHASE 3) */}
+      {storeBatch && isBreeder && (
+        <SetEggsSheet
+          visible={showSetEggsSheet}
+          flockId={storeBatch.id}
+          flockName={storeBatch.batchName}
+          livestockType={storeBatch.livestockType}
+          hatchBatches={flockHatches}
+          availableSettable={eggSummary?.totalSettable ?? 0}
+          onClose={() => setShowSetEggsSheet(false)}
+        />
+      )}
+
+      {/* BREEDER RECORD HATCH SHEET (PHASE 3) */}
+      {storeBatch && isBreeder && (
+        <RecordHatchSheet
+          visible={recordHatchTarget !== null}
+          hatch={recordHatchTarget}
+          onClose={() => setRecordHatchTarget(null)}
+        />
+      )}
     </View>
   )
 }
@@ -1457,4 +2956,206 @@ const styles = StyleSheet.create({
   recordsRowTimeSep: { fontSize: 8, color: '#CBD5E1' },
   recordsViewAll: { alignItems: 'center', paddingVertical: 12, marginTop: 4 },
   recordsViewAllText: { fontSize: 13, fontWeight: '700', color: '#17663A' },
+
+  /* breeder mortality / culls */
+  mortSummaryLine: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#F2F6F1', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12,
+    marginBottom: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)',
+  },
+  mortSummaryLineText: { flex: 1, fontSize: 11.5, fontWeight: '600', color: '#64748B' },
+  mortSummaryLineValue: { fontSize: 13, fontWeight: '800', color: '#DC2626', fontVariant: ['tabular-nums'] },
+  mortHouseRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  mortHouse: { fontSize: 12, fontWeight: '600', color: '#17663A' },
+  mortGridLabel: { fontSize: 12, fontWeight: '700', color: '#1B1B1B', marginBottom: 8 },
+  mortGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mortFieldWrap: {
+    flex: 1, minWidth: '45%', flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+    paddingHorizontal: 12, height: 52,
+  },
+  mortFieldDot: { width: 7, height: 7, borderRadius: 3.5, flexShrink: 0 },
+  mortFieldBody: { flex: 1, minWidth: 0 },
+  mortFieldLabel: { fontSize: 10, fontWeight: '600', color: '#64748B' },
+  mortInput: { fontSize: 15, fontWeight: '700', color: '#1B1B1B', padding: 0, margin: 0, fontFamily: 'Inter' },
+  mortAddBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    height: 50, borderRadius: 16, marginTop: 12,
+    backgroundColor: '#17663A',
+  },
+  mortAddBtnDisabled: { backgroundColor: '#A7BFAE' },
+  mortAddText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  mortNote: { fontSize: 11, fontWeight: '500', color: '#94A3B8', marginTop: 10, lineHeight: 16 },
+
+  /* breeder hero laying strip (Phase 2) */
+  heroEggWrap: { marginTop: 16 },
+  heroEggTitle: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.85)', letterSpacing: 0.3, marginBottom: 8 },
+  heroEggSub: { fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
+  heroEggRow: { flexDirection: 'row', gap: 8 },
+  heroEggCell: {
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 14,
+    paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
+  },
+  heroEggV: { fontSize: 16, fontWeight: '800', color: '#FFFFFF', fontVariant: ['tabular-nums'] },
+  heroEggL: { fontSize: 9.5, fontWeight: '600', color: 'rgba(255,255,255,0.78)', marginTop: 2, textTransform: 'uppercase' as any, letterSpacing: 0.4 },
+
+  /* egg records section (Phase 2) */
+  eggLogBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: '#17663A', borderRadius: 999, paddingVertical: 7, paddingHorizontal: 13,
+  },
+  eggLogBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
+  eggKpis: {
+    flexDirection: 'row', justifyContent: 'space-between', gap: 8,
+    backgroundColor: '#F2F6F1', borderRadius: 20, padding: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)',
+  },
+  eggKpiItem: { alignItems: 'center', flex: 1 },
+  eggKpiValue: { fontSize: 17, fontWeight: '800', color: '#15291A', fontVariant: ['tabular-nums'] },
+  eggKpiLabel: { fontSize: 9, fontWeight: '600', color: '#64748B', marginTop: 3, letterSpacing: 0.3, textTransform: 'uppercase' as any },
+  eggSeamNote: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  eggSeamText: { fontSize: 10.5, fontWeight: '500', color: '#94A3B8', lineHeight: 15 },
+  eggRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F8FAF7',
+  },
+  eggRowDateWrap: {
+    width: 52, height: 44, borderRadius: 12, backgroundColor: '#F2F6F1',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  eggRowDate: { fontSize: 12, fontWeight: '800', color: '#17663A' },
+  eggRowBody: { flex: 1, minWidth: 0 },
+  eggRowTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  eggRowTotal: { fontSize: 13, fontWeight: '700', color: '#1B1B1B' },
+  eggGradedTag: { backgroundColor: '#F0FDF4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1.5 },
+  eggGradedText: { fontSize: 9, fontWeight: '800', color: '#16A34A', letterSpacing: 0.3, textTransform: 'uppercase' as any },
+  eggRowDetail: { fontSize: 10, fontWeight: '500', color: '#94A3B8', marginTop: 2 },
+  eggRowRight: { alignItems: 'flex-end', flexShrink: 0 },
+  eggRowSettable: { fontSize: 14, fontWeight: '800', color: '#15291A', fontVariant: ['tabular-nums'] },
+  eggRowSettableLabel: { fontSize: 9, fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase' as any, letterSpacing: 0.4 },
+
+  /* log eggs sheet (Phase 2) */
+  eggSheet: { maxHeight: '88%' },
+  eggSheetBody: { paddingVertical: 4, paddingBottom: 12 },
+  /* lets the scroll area shrink (and scroll) when the keyboard reduces the sheet — content is never squeezed or clipped */
+  eggScroll: { flexShrink: 1 },
+  /* keeps the last fields + line items scrollable above the action row while the keyboard is up */
+  eggSheetBodyKbOpen: { paddingBottom: 160 },
+  eggFieldLabel: { fontSize: 12, fontWeight: '600', color: '#64748B', marginBottom: 6, marginTop: 12 },
+  eggDateField: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    height: 50, borderRadius: 14, backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0',
+    paddingHorizontal: 14,
+  },
+  eggDateValue: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1B1B1B' },
+  eggInlinePicker: { borderRadius: 14, backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0', overflow: 'hidden', marginTop: 8 },
+  eggInlineDone: { alignItems: 'center', paddingVertical: 10 },
+  eggInlineDoneText: { fontSize: 14, fontWeight: '700', color: '#17663A' },
+  eggInput: {
+    height: 50, borderRadius: 14, backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0',
+    paddingHorizontal: 14, fontSize: 15, fontWeight: '700', color: '#1B1B1B', fontVariant: ['tabular-nums'],
+  },
+  eggGradeToggle: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: 14, paddingVertical: 8, paddingHorizontal: 2,
+  },
+  eggGradeToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  eggGradeToggleText: { fontSize: 13, fontWeight: '700', color: '#15291A' },
+  eggGradeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  eggGradeField: {
+    flex: 1, minWidth: '45%', backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0',
+    borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8, height: 54, justifyContent: 'center',
+  },
+  eggGradeLabel: { fontSize: 10, fontWeight: '600', color: '#64748B' },
+  eggGradeInput: { fontSize: 14, fontWeight: '700', color: '#1B1B1B', padding: 0, margin: 0 },
+  eggErrorText: { marginTop: 8, fontSize: 11, fontWeight: '700', color: '#EF4444' },
+  eggConfirmBtnDisabled: { opacity: 0.6 },
+  eggModeToggle: {
+    flexDirection: 'row', gap: 8, backgroundColor: '#F1F5F9', borderRadius: 14, padding: 4,
+    marginTop: 16, marginBottom: 4,
+  },
+  eggModeOption: {
+    flex: 1, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
+  },
+  eggModeOptionActive: { backgroundColor: '#17663A' },
+  eggModeText: { fontSize: 13, fontWeight: '700', color: '#64748B' },
+  eggModeTextActive: { color: '#FFFFFF' },
+  eggLinesSection: { marginTop: 18 },
+  eggLinesHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  eggLinesTitle: { fontSize: 13, fontWeight: '700', color: '#15291A' },
+  eggLinesEmpty: { alignItems: 'center', paddingVertical: 22, gap: 4, backgroundColor: '#F8FAF7', borderRadius: 16 },
+  eggLinesEmptyText: { fontSize: 12, fontWeight: '600', color: '#94A3B8', marginTop: 2 },
+  eggLinesEmptyHint: { fontSize: 10, fontWeight: '500', color: '#CBD5E1' },
+  eggLineCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#F8FAF7', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 14,
+    padding: 10, marginBottom: 8,
+  },
+  eggLineIcon: {
+    width: 30, height: 30, borderRadius: 10, backgroundColor: '#F0FDF4',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  eggLineBody: { flex: 1, minWidth: 0 },
+  eggLineDate: { fontSize: 13, fontWeight: '700', color: '#1B1B1B' },
+  eggLineMeta: { fontSize: 10, fontWeight: '500', color: '#94A3B8', marginTop: 1 },
+  eggLineActions: { flexDirection: 'row', gap: 8 },
+  eggLineBtn: {
+    width: 28, height: 28, borderRadius: 8, backgroundColor: '#FFFFFF',
+    borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center',
+  },
+  eggSaveAllBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    height: 50, borderRadius: 16, marginTop: 8, backgroundColor: '#17663A',
+  },
+  eggSaveAllBtnDisabled: { backgroundColor: '#A7BFAE' },
+  eggSaveAllText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+
+  /* hatch batches section (Phase 3) */
+  hbRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+  },
+  hbRowIcon: {
+    width: 36, height: 36, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  hbRowBody: { flex: 1, minWidth: 0 },
+  hbRowTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  hbRowName: { flex: 1, fontSize: 13, fontWeight: '700', color: '#15291A' },
+  hbStatusPill: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
+  hbStatusText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.3, textTransform: 'uppercase' as any },
+  hbRowMeta: { fontSize: 11, fontWeight: '500', color: '#64748B', marginTop: 3 },
+  hbRowRight: { flexShrink: 0 },
+  hbRecordBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#17663A', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
+  },
+  hbSellBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#2E7D32', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
+  },
+  hbRecordText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+  hbRowRightMeta: { alignItems: 'flex-end' },
+  hbRowChickV: { fontSize: 14, fontWeight: '800', color: '#15291A', fontVariant: ['tabular-nums'] },
+  hbRowChickL: { fontSize: 9, fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase' as any, letterSpacing: 0.4 },
+
+  /* hatch sheets (Phase 3) */
+  eggWarnBox: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', borderRadius: 12,
+    padding: 10, marginTop: 12,
+  },
+  eggWarnText: { flex: 1, fontSize: 11, fontWeight: '600', color: '#92400E', lineHeight: 16 },
+  eggExpectedNote: { marginTop: 8, fontSize: 11, fontWeight: '600', color: '#17663A' },
+  eggHintText: { marginTop: 6, fontSize: 11, fontWeight: '500', color: '#94A3B8' },
+  eggToggleRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    marginTop: 14, paddingVertical: 12, paddingHorizontal: 14,
+    backgroundColor: '#F8FAF7', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 14,
+  },
+  eggToggleBody: { flex: 1 },
+  eggToggleLabel: { fontSize: 13, fontWeight: '700', color: '#15291A' },
+  eggToggleDesc: { fontSize: 10.5, fontWeight: '500', color: '#64748B', marginTop: 2, lineHeight: 14 },
+  eggNotesInput: { height: 84, paddingTop: 12 },
 })

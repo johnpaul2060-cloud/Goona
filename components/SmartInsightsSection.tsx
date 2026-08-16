@@ -65,6 +65,8 @@ export default function SmartInsightsSection({ storeBatch }: Props) {
     try {
       const result: Insight[] = []
       const isIndividual = batch.model === 'individual'
+      const isBreeder = batch.model === 'breeder'
+      const isFlock = !isIndividual && !isBreeder
       const daysActive = batch.startDate ? daysSince(batch.startDate) : 0
       const batchRecords = records.filter(
         (r) => r.batchId === batch.id || r.batch === batch.batchName
@@ -87,7 +89,7 @@ export default function SmartInsightsSection({ storeBatch }: Props) {
       const batchAnimals = animals.filter((a) => a.batchId === batch.id)
       const profiledCount = batchAnimals.length
       const livestockLabel = (batch.livestockType ?? '').toLowerCase() || 'batch'
-      const unitLabel = isIndividual ? 'animals' : 'birds'
+      const unitLabel = isIndividual ? 'animals' : isBreeder ? 'breeders' : 'birds'
 
       // HERO INSIGHT: highest priority, most important
       if (recordCount === 0) {
@@ -126,7 +128,7 @@ export default function SmartInsightsSection({ storeBatch }: Props) {
           severity: 'action',
           icon: Icons.wheat,
           title: 'Feed tracking not started',
-          body: 'Feed is your largest variable cost. Log feed entries to track efficiency and cost per bird.',
+          body: `Feed is your largest variable cost. Log feed entries to track efficiency and cost per ${unitLabel}.`,
           cta: { label: 'Log Feed', route: '/daily-records', params: { batchId: batch.id } },
         })
       } else if (estRevenue > 0 && progress < 90) {
@@ -143,7 +145,7 @@ export default function SmartInsightsSection({ storeBatch }: Props) {
           id: 'hero-harvest',
           severity: 'positive',
           icon: Icons.checkCheck,
-          title: isIndividual ? 'Approaching cycle end' : 'Approaching harvest window',
+          title: isFlock ? 'Approaching harvest window' : 'Approaching cycle end',
           body: `Batch is at ${progress}% of its cycle. Start planning sales channels and completing your final records for a full cycle review.`,
           metric: { label: 'Progress', value: `${progress}%` },
         })
@@ -160,7 +162,7 @@ export default function SmartInsightsSection({ storeBatch }: Props) {
       }
 
       // SECONDARY INSIGHTS (sorted by severity)
-      if (!isIndividual && totalMortality > 0) {
+      if (isFlock && totalMortality > 0) {
         const mortalityRate = batch.quantity > 0 ? ((totalMortality / batch.quantity) * 100).toFixed(1) : '0'
         const isHigh = parseFloat(mortalityRate) > 5
         result.push({

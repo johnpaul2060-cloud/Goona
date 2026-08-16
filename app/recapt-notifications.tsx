@@ -15,7 +15,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import BottomDock from '../components/navigation/BottomDock'
 import {
   fmtDateFromParts, type DayRecord,
   buildCalendarRecords, computeStreakByDay,
@@ -383,7 +382,7 @@ export default function RecaptNotificationsScreen() {
 
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={[s.scrollInner, { paddingTop: TOP + 100, paddingBottom: insets.bottom + 130 }]}
+        contentContainerStyle={[s.scrollInner, { paddingTop: TOP + 100, paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Filter Tabs */}
@@ -447,7 +446,6 @@ export default function RecaptNotificationsScreen() {
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      <BottomDock />
     </View>
   )
 }

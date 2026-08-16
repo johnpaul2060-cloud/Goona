@@ -29,12 +29,14 @@ function usePressScale() {
   }
 }
 
-const LIVESTOCK_TYPES = ['Broilers', 'Layers', 'Fish Farming', 'Goat/Sheep', 'Piggery', 'Grasscutter', 'Mixed Farming'] as const
+const LIVESTOCK_TYPES = ['Broilers', 'Layers', 'Fish Farming', 'Goat/Sheep', 'Piggery', 'Grasscutter', 'Mixed Farming', 'Turkey PS', 'Noiler PS', 'ISA Brown PS', 'Broiler PS'] as const
 
 const FLOCK_TYPES = new Set(['Broilers', 'Layers', 'Fish Farming', 'Mixed Farming'])
 const INDIVIDUAL_TYPES = new Set(['Goat/Sheep', 'Piggery', 'Grasscutter'])
+const BREEDER_TYPES = new Set(['Turkey PS', 'Noiler PS', 'ISA Brown PS', 'Broiler PS'])
 
-function getModel(type: string): 'flock' | 'individual' {
+function getModel(type: string): 'flock' | 'individual' | 'breeder' {
+  if (BREEDER_TYPES.has(type)) return 'breeder'
   return INDIVIDUAL_TYPES.has(type) ? 'individual' : 'flock'
 }
 
@@ -43,6 +45,7 @@ const DURATION_OPTIONS = ['4 Weeks', '6 Weeks', '8 Weeks', 'Custom'] as const
 const LIVESTOCK_COLORS: Record<string, string> = {
   Broilers: '#D97706', Layers: '#2563EB', 'Fish Farming': '#0891B2',
   'Goat/Sheep': '#7C3AED', Piggery: '#DB2777', Grasscutter: '#0F766E', 'Mixed Farming': '#16A34A',
+  'Turkey PS': '#7C2D12', 'Noiler PS': '#A16207', 'ISA Brown PS': '#92400E', 'Broiler PS': '#D97706',
 }
 
 const DURATION_COLORS: Record<string, string> = {
@@ -65,8 +68,18 @@ function parseNumeric(val: string): number {
 function LivestockIcon({ type, selected }: { type: string; selected: boolean }) {
   const c = selected ? 'white' : '#1B1B1B'
   const opacity = selected ? 1 : 0.3
+  const isPS = type === 'Turkey PS' || type === 'Noiler PS' || type === 'ISA Brown PS' || type === 'Broiler PS'
   return (
     <Svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      {isPS && (
+        <>
+          <Ellipse cx="11" cy="14" rx="6" ry="4.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="10" r="3.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="10.5" cy="9.5" r="1" fill={c} />
+          <Ellipse cx="14.5" cy="16.5" rx="1.7" ry="2.2" fill={c} opacity={0.8} />
+          <Path d="M9.5 6.5L11.5 6" stroke="#F9A825" strokeWidth="1.2" strokeLinecap="round" />
+        </>
+      )}
       {type === 'Broilers' && (
         <>
           <Ellipse cx="11" cy="14" rx="6" ry="4.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
@@ -203,9 +216,19 @@ export default function CreateBatchScreen() {
   const [breed, setBreed] = useState('')
   const [sexDistribution, setSexDistribution] = useState('')
   const [herdNotes, setHerdNotes] = useState('')
+  const [hensStr, setHensStr] = useState('')
+  const [cocksStr, setCocksStr] = useState('')
+  const [flockDateKind, setFlockDateKind] = useState<'placed' | 'hatched'>('placed')
+  const [house, setHouse] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
 
   const model = getModel(livestockType)
+  const hens = parseNumeric(hensStr)
+  const cocks = parseNumeric(cocksStr)
+  const ratioPreview = useMemo(() => {
+    if (model !== 'breeder') return ''
+    return cocks > 0 ? `1 : ${(hens / cocks).toFixed(1)}` : '—'
+  }, [model, hens, cocks])
 
   const addBatch = useBatchStore((s) => s.addBatch)
 
@@ -301,6 +324,12 @@ export default function CreateBatchScreen() {
       Alert.alert('Required', 'Please enter a valid livestock quantity.')
       return
     }
+    if (model === 'breeder') {
+      if (hens < 1 || cocks < 1) {
+        Alert.alert('Required', 'Please enter the number of hens and cocks for this breeder flock.')
+        return
+      }
+    }
     if (duration === 'Custom') {
       setCustomDurationTouched(true)
       const num = parseInt(customDurationVal, 10)
@@ -325,6 +354,19 @@ export default function CreateBatchScreen() {
       batchData.breed = breed.trim() || undefined
       batchData.sexDistribution = sexDistribution || undefined
       batchData.herdNotes = herdNotes.trim() || undefined
+    }
+    if (model === 'breeder') {
+      batchData.breed = breed.trim() || undefined
+      batchData.totalBreeders = parseInt(quantityStr, 10)
+      batchData.hens = hens
+      batchData.cocks = cocks
+      batchData.house = house.trim() || undefined
+      batchData.startDate = startDate.toISOString()
+      if (flockDateKind === 'placed') {
+        batchData.datePlaced = startDate.toISOString()
+      } else {
+        batchData.dateHatched = startDate.toISOString()
+      }
     }
     addBatch(batchData)
 
@@ -384,8 +426,20 @@ export default function CreateBatchScreen() {
           {/* HEADER */}
           <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.headerSection}>
             <Text style={styles.headerLabel}>Production Setup</Text>
-            <Text style={styles.headerTitle}>{model === 'individual' ? 'Register a New\nHerd Group' : 'Start a New\nLivestock Cycle'}</Text>
-            <Text style={styles.headerSub}>{model === 'individual' ? 'Create a new herd batch to track individual animals, breeding, and lineage.' : 'Create a new batch to track livestock growth, feeding, expenses, and profitability.'}</Text>
+            <Text style={styles.headerTitle}>
+              {model === 'individual'
+                ? 'Register a New\nHerd Group'
+                : model === 'breeder'
+                  ? 'Register a New\nBreeder Flock'
+                  : 'Start a New\nLivestock Cycle'}
+            </Text>
+            <Text style={styles.headerSub}>
+              {model === 'individual'
+                ? 'Create a new herd batch to track individual animals, breeding, and lineage.'
+                : model === 'breeder'
+                  ? 'Create a parent-stock breeder flock to track hens, cocks, flock age, and live population.'
+                  : 'Create a new batch to track livestock growth, feeding, expenses, and profitability.'}
+            </Text>
           </Animated.View>
 
           {/* ILLUSTRATION */}
@@ -463,7 +517,7 @@ export default function CreateBatchScreen() {
 
             {/* INITIAL QUANTITY */}
             <View style={styles.formSection}>
-              <Text style={styles.formLabel}>Initial Livestock Quantity</Text>
+              <Text style={styles.formLabel}>{model === 'breeder' ? 'Total Breeders' : 'Initial Livestock Quantity'}</Text>
               <View style={styles.stepperWrap}>
                 <View style={styles.fieldIco}>
                   <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -496,7 +550,7 @@ export default function CreateBatchScreen() {
                   <Text style={styles.stepperBtnText}>+</Text>
                 </TouchableOpacity>
               </View>
-              <Text style={styles.formNote}>Estimated mortality projections will be based on this quantity.</Text>
+              <Text style={styles.formNote}>{model === 'breeder' ? 'Opening breeder flock size — mortality and culls reduce this over time.' : 'Estimated mortality projections will be based on this quantity.'}</Text>
             </View>
 
             {/* PURCHASE COST */}
@@ -576,9 +630,35 @@ export default function CreateBatchScreen() {
               </View>
             </View>
 
-            {/* START DATE */}
+            {/* START DATE / FLOCK DATE */}
             <View style={styles.formSection}>
-              <Text style={styles.formLabel}>Production Start Date</Text>
+              <Text style={styles.formLabel}>
+                {model === 'breeder' ? 'Flock Start Date' : 'Production Start Date'}
+              </Text>
+              {model === 'breeder' && (
+                <View style={styles.flockKindRow}>
+                  {(['placed', 'hatched'] as const).map((kind) => (
+                    <TouchableOpacity
+                      key={kind}
+                      activeOpacity={0.85}
+                      style={[
+                        styles.flockKindBtn,
+                        flockDateKind === kind && styles.flockKindBtnActive,
+                      ]}
+                      onPress={() => setFlockDateKind(kind)}
+                    >
+                      <Text
+                        style={[
+                          styles.flockKindText,
+                          flockDateKind === kind && styles.flockKindTextActive,
+                        ]}
+                      >
+                        {kind === 'placed' ? 'Date Placed' : 'Date Hatched'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
               <TouchableOpacity
                 style={styles.fieldWrap}
                 activeOpacity={0.85}
@@ -593,7 +673,7 @@ export default function CreateBatchScreen() {
                   </Svg>
                 </View>
                 <View style={styles.fieldInner}>
-                  <Text style={styles.fieldLbl}>Start Date</Text>
+                  <Text style={styles.fieldLbl}>{model === 'breeder' ? 'Flock Date' : 'Start Date'}</Text>
                   <Text style={styles.fieldInputText}>{formatDate(startDate)}</Text>
                 </View>
                 <View style={styles.fieldRight}>
@@ -752,6 +832,106 @@ export default function CreateBatchScreen() {
                         placeholderTextColor="#A0AEA1"
                         multiline
                         style={[styles.fieldInput, { padding: 0, height: 60 }]}
+                      />
+                    </View>
+                  </View>
+                </Animated.View>
+              </>
+            )}
+
+            {/* BREEDER FLOCK FIELDS */}
+            {model === 'breeder' && (
+              <>
+                <Animated.View entering={FadeInUp.duration(500).delay(260).springify()} style={styles.formSection}>
+                  <Text style={styles.formLabel}>Breed / Strain</Text>
+                  <TextInput
+                    value={breed}
+                    onChangeText={setBreed}
+                    placeholder="e.g. Turkey PS, Noiler, ISA Brown"
+                    placeholderTextColor="#A0AEA1"
+                    style={styles.batchNameInput}
+                  />
+                  <Text style={styles.formNote}>Parent-stock strain or line identification.</Text>
+                </Animated.View>
+
+                <Animated.View entering={FadeInUp.duration(500).delay(280).springify()} style={styles.formSection}>
+                  <Text style={styles.formLabel}>Flock Composition</Text>
+                  <View style={styles.breederSplitRow}>
+                    <View style={[styles.stepperWrap, styles.breederSplitCol]}>
+                      <TouchableOpacity
+                        style={styles.stepperBtn}
+                        activeOpacity={0.85}
+                        onPress={() => setHensStr(String(Math.max(0, (hens - 1))))}
+                      >
+                        <Text style={styles.stepperBtnText}>−</Text>
+                      </TouchableOpacity>
+                      <TextInput
+                        style={styles.stepperInput}
+                        value={formatInput(hensStr)}
+                        onChangeText={(v) => setHensStr(v.replace(/\D/g, ''))}
+                        keyboardType="number-pad"
+                        placeholder="0"
+                        placeholderTextColor="#A0AEA1"
+                      />
+                      <TouchableOpacity
+                        style={styles.stepperBtn}
+                        activeOpacity={0.85}
+                        onPress={() => setHensStr(String(hens + 1))}
+                      >
+                        <Text style={styles.stepperBtnText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={[styles.stepperWrap, styles.breederSplitCol]}>
+                      <TouchableOpacity
+                        style={styles.stepperBtn}
+                        activeOpacity={0.85}
+                        onPress={() => setCocksStr(String(Math.max(0, (cocks - 1))))}
+                      >
+                        <Text style={styles.stepperBtnText}>−</Text>
+                      </TouchableOpacity>
+                      <TextInput
+                        style={styles.stepperInput}
+                        value={formatInput(cocksStr)}
+                        onChangeText={(v) => setCocksStr(v.replace(/\D/g, ''))}
+                        keyboardType="number-pad"
+                        placeholder="0"
+                        placeholderTextColor="#A0AEA1"
+                      />
+                      <TouchableOpacity
+                        style={styles.stepperBtn}
+                        activeOpacity={0.85}
+                        onPress={() => setCocksStr(String(cocks + 1))}
+                      >
+                        <Text style={styles.stepperBtnText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={styles.breederLabelsRow}>
+                    <Text style={styles.breederLabelText}>Hens (female)</Text>
+                    <Text style={styles.breederLabelText}>Cocks (male)</Text>
+                  </View>
+                  <View style={[styles.ratioChip, { opacity: hens > 0 || cocks > 0 ? 1 : 0.45 }]}>
+                    <GoonaIcon icon={Icons.users} size={13} color="#2E7D32" />
+                    <Text style={styles.ratioChipText}>
+                      Female : Male ratio (auto) — {ratioPreview}
+                    </Text>
+                  </View>
+                </Animated.View>
+
+                <Animated.View entering={FadeInUp.duration(500).delay(300).springify()} style={styles.formSection}>
+                  <Text style={styles.formLabel}>House / Pen</Text>
+                  <View style={styles.fieldWrap}>
+                    <View style={styles.fieldIco}>
+                      <GoonaIcon icon={Icons.house} size={17} color="#A0AEA1" />
+                    </View>
+                    <View style={styles.fieldInner}>
+                      <Text style={styles.fieldLbl}>House / Pen</Text>
+                      <TextInput
+                        value={house}
+                        onChangeText={setHouse}
+                        placeholder="e.g. Pen A, House 2"
+                        placeholderTextColor="#A0AEA1"
+                        style={[styles.fieldInput, { padding: 0 }]}
                       />
                     </View>
                   </View>
@@ -1036,6 +1216,28 @@ const styles = StyleSheet.create({
   datePickerWrap: { backgroundColor: 'white', borderRadius: 24, marginTop: 8, paddingTop: 8, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 2 },
   dateDoneBtn: { height: 48, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9', marginHorizontal: 16 },
   dateDoneText: { fontSize: 15, fontWeight: '600', color: '#2E7D32' },
+
+  /* flock date kind toggle */
+  flockKindRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  flockKindBtn: {
+    flex: 1, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#F2F6F1', borderWidth: 1.5, borderColor: '#E2E8F0',
+  },
+  flockKindBtnActive: { backgroundColor: '#17663A', borderColor: '#17663A' },
+  flockKindText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  flockKindTextActive: { color: '#FFFFFF' },
+
+  /* breeder flock composition */
+  breederSplitRow: { flexDirection: 'row', gap: 10 },
+  breederSplitCol: { flex: 1 },
+  breederLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 8, marginTop: 6 },
+  breederLabelText: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
+  ratioChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12,
+    backgroundColor: '#E8F5E9', borderRadius: 100, paddingHorizontal: 12, paddingVertical: 6,
+    alignSelf: 'flex-start',
+  },
+  ratioChipText: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
 
   /* success overlay */
   successOverlay: {

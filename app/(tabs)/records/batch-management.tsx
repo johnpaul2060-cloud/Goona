@@ -8,6 +8,7 @@ import Animated, { FadeInUp } from 'react-native-reanimated'
 import GoonaIcon from '../../../components/ui/GoonaIcon'
 import { Icons } from '../../../shared/icons'
 import { Batch, useBatchStore } from '../../../store/useBatchStore'
+import { computeFlockStats, formatFlockAgeShort } from '../../../utils/breeder'
 
 type PriorityKind = 'harvest' | 'health' | 'phase'
 type HealthTone = 'green' | 'amber' | 'red'
@@ -33,6 +34,8 @@ type EnrichedBatch = Batch & {
   priorityReason?: string
   typeLabel: string
   typeIcon: typeof Icons.egg
+  breederAlivePct?: number
+  breederAgeShort?: string
 }
 
 type AttentionItem = {
@@ -81,18 +84,20 @@ function isFish(batch: Batch): boolean {
 
 function getCountLabel(batch: Batch): string {
   if (batch.model === 'individual') return 'Animals'
+  if (batch.model === 'breeder') return 'Breeders'
   if (isFish(batch)) return 'Fish'
   return 'Birds'
 }
 
 function getTypeIcon(batch: Batch): typeof Icons.egg {
   if (batch.model === 'individual') return Icons.user
+  if (batch.model === 'breeder') return Icons.egg
   if (isLayer(batch)) return Icons.egg
   return Icons.sprout
 }
 
 function getPhaseData(batch: Batch, progress: number): { phases: string[]; phaseIndex: number; phaseName: string } {
-  if (batch.model === 'individual') {
+  if (batch.model === 'individual' || batch.model === 'breeder') {
     return { phases: [], phaseIndex: -1, phaseName: '' }
   }
   const phases = isLayer(batch) ? ['Brooding', 'Laying', 'Peak', 'Harvest'] : ['Brooding', 'Growing', 'Finishing', 'Harvest']
@@ -101,7 +106,7 @@ function getPhaseData(batch: Batch, progress: number): { phases: string[]; phase
 }
 
 function deriveHealthFlag(batch: Batch, progress: number, currentWeek: number): boolean {
-  if (batch.model === 'individual') return false
+  if (batch.model === 'individual' || batch.model === 'breeder') return false
   const medPerBird = batch.quantity > 0 ? batch.medicationCost / batch.quantity : 0
   const feedPerBird = batch.quantity > 0 ? batch.feedCost / batch.quantity : 0
   const broilerGrowthCheck = !isLayer(batch) && currentWeek >= 4 && currentWeek <= 5 && progress < 60
@@ -116,20 +121,22 @@ function enrichBatch(batch: Batch): EnrichedBatch {
   const progress = Math.min(100, Math.max(0, Math.round((daysElapsed / Math.max(cycleDays, 1)) * 100)))
   const daysToHarvest = Math.max(0, cycleDays - daysElapsed)
   const currentWeek = Math.min(totalWeeks, Math.max(1, elapsed + 1))
-  const isReady = daysToHarvest === 0 || progress >= 100
-  const isNearHarvest = isReady || daysToHarvest <= NEAR_HARVEST_DAYS || progress >= 85
+  const isBreeder = batch.model === 'breeder'
+  const breederStats = isBreeder ? computeFlockStats(batch) : null
+  const isReady = !isBreeder && (daysToHarvest === 0 || progress >= 100)
+  const isNearHarvest = !isBreeder && (isReady || daysToHarvest <= NEAR_HARVEST_DAYS || progress >= 85)
   const hasHealthFlag = deriveHealthFlag(batch, progress, currentWeek)
   const phaseData = getPhaseData(batch, progress)
   const typeLabel = batch.livestockType
   const typeIcon = getTypeIcon(batch)
   const isIndiv = batch.model === 'individual'
-  const healthTone: HealthTone = hasHealthFlag ? 'red' : isNearHarvest ? 'amber' : 'green'
+  const healthTone: HealthTone = hasHealthFlag ? 'red' : isBreeder ? 'green' : isNearHarvest ? 'amber' : 'green'
   const accent = healthTone === 'red' ? '#EF4444' : healthTone === 'amber' ? '#F59E0B' : '#2E7D32'
   let statusText = hasHealthFlag ? 'Attention' : 'Active'
   if (!hasHealthFlag && isNearHarvest) statusText = isIndiv ? 'Near Complete' : 'Near Harvest'
   const statusBg = hasHealthFlag ? 'rgba(239,68,68,0.10)' : isNearHarvest ? 'rgba(245,158,11,0.14)' : 'rgba(46,125,50,0.10)'
   const statusColor = hasHealthFlag ? '#DC2626' : isNearHarvest ? '#B45309' : '#2E7D32'
-  const phaseBoundary = !isReady && [25, 62, 86].some((point) => Math.abs(progress - point) <= 3)
+  const phaseBoundary = !isBreeder && !isReady && [25, 62, 86].some((point) => Math.abs(progress - point) <= 3)
   const actionScore = (isReady ? 400 : 0) + (isNearHarvest ? 220 : 0) + (hasHealthFlag ? 180 : 0) + (phaseBoundary ? 80 : 0) + progress
 
   return {
@@ -152,6 +159,8 @@ function enrichBatch(batch: Batch): EnrichedBatch {
     typeIcon,
     typeLabel,
     ...phaseData,
+    breederAlivePct: breederStats?.alivePct,
+    breederAgeShort: breederStats ? formatFlockAgeShort(batch) : undefined,
   }
 }
 
@@ -186,7 +195,7 @@ function buildAttention(enriched: EnrichedBatch[]): AttentionItem[] {
         bg: '#FDEDED',
       })
     }
-    const onPhaseBoundary = !batch.isReady && batch.progress > 0 && [25, 62, 86].some((point) => Math.abs(batch.progress - point) <= 3)
+    const onPhaseBoundary = !batch.isReady && batch.progress > 0 && batch.phaseName !== '' && [25, 62, 86].some((point) => Math.abs(batch.progress - point) <= 3)
     if (onPhaseBoundary) {
       items.push({
         id: `${batch.id}-phase`,
@@ -236,6 +245,7 @@ function formatDuration(days: number): string {
 }
 
 function formatCycleLabel(batch: EnrichedBatch): { label: string; value: string } {
+  if (batch.model === 'breeder') return { label: 'F : M', value: `${batch.hens ?? 0}:${batch.cocks ?? 0}` }
   if (batch.isReady) return { label: 'Ready', value: 'Ready' }
   const value = formatDuration(batch.daysToHarvest)
   if (batch.model === 'individual') return { label: 'Cycle', value }
@@ -289,6 +299,8 @@ const BatchCard = memo(function BatchCard({ batch, index }: { batch: EnrichedBat
   const countLabel = getCountLabel(batch)
   const cycleLabel = formatCycleLabel(batch)
   const isIndiv = batch.model === 'individual'
+  const isBreeder = batch.model === 'breeder'
+  const displayProgress = isBreeder ? (batch.breederAlivePct ?? 100) : batch.progress
   return (
     <Animated.View entering={FadeInUp.duration(380).delay(Math.min(index * 45, 240)).springify()}>
       <Pressable onPress={() => goToBatch(batch)} style={[styles.batchCard, { borderLeftColor: batch.accent }, batch.isNearHarvest && styles.batchCardPop]}>
@@ -301,12 +313,16 @@ const BatchCard = memo(function BatchCard({ batch, index }: { batch: EnrichedBat
         </View>
         <View style={styles.batchMetaRow}>
           <Meta label="Type" value={batch.typeLabel} />
-          <Meta label={countLabel} value={batch.quantity.toLocaleString()} />
-          <Meta label="Week" value={`${batch.currentWeek}/${batch.totalWeeks}`} />
+          <Meta label={countLabel} value={isBreeder ? ((batch.hens ?? 0) + (batch.cocks ?? 0)).toLocaleString() : batch.quantity.toLocaleString()} />
+          <Meta label={isBreeder ? 'Flock age' : 'Week'} value={isBreeder ? (batch.breederAgeShort ?? '—') : `${batch.currentWeek}/${batch.totalWeeks}`} />
           <View style={styles.harvestMeta}><Text style={styles.metaLabel}>{cycleLabel.label}</Text><Text style={[styles.metaValue, { color: batch.isNearHarvest ? '#B45309' : '#2E7D32' }]}>{cycleLabel.value}</Text></View>
         </View>
         <View style={styles.phaseWrap}>
-          {isIndiv ? (
+          {isBreeder ? (
+            <View style={styles.phaseLabels}>
+              <Text style={[styles.phaseLabel, styles.phaseCurrent]}>Flock age</Text>
+            </View>
+          ) : isIndiv ? (
             <View style={styles.phaseLabels}>
               <Text style={[styles.phaseLabel, styles.phaseCurrent]}>Cycle</Text>
             </View>
@@ -318,12 +334,12 @@ const BatchCard = memo(function BatchCard({ batch, index }: { batch: EnrichedBat
             </View>
           )}
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${batch.progress}%`, backgroundColor: trackColor }]} />
-            {[25, 50, 75].map((point) => <View key={point} style={[styles.progressNode, { left: `${point}%` }]} />)}
+            <View style={[styles.progressFill, { width: `${displayProgress}%`, backgroundColor: trackColor }]} />
+            {!isBreeder && [25, 50, 75].map((point) => <View key={point} style={[styles.progressNode, { left: `${point}%` }]} />)}
           </View>
           <View style={styles.progressLine}>
-            <Text style={styles.progressHint} numberOfLines={1}>{batch.hasHealthFlag ? 'Cycle progress - health review due' : 'Cycle progress'}</Text>
-            <Text style={styles.progressPct}>{batch.progress}%</Text>
+            <Text style={styles.progressHint} numberOfLines={1}>{batch.hasHealthFlag ? 'Cycle progress - health review due' : isBreeder ? `Flock age · ${batch.breederAgeShort ?? '—'}` : 'Cycle progress'}</Text>
+            <Text style={styles.progressPct}>{displayProgress}%</Text>
           </View>
         </View>
       </Pressable>

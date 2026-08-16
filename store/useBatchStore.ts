@@ -15,7 +15,7 @@ export interface HarvestSummary {
   notes?: string
 }
 
-export type BatchModel = 'flock' | 'individual'
+export type BatchModel = 'flock' | 'individual' | 'breeder'
 
 export interface Batch {
   id: string
@@ -37,6 +37,22 @@ export interface Batch {
   breed?: string
   sexDistribution?: string
   herdNotes?: string
+  // ─── breeder flock (model === 'breeder') ───
+  totalBreeders?: number
+  hens?: number
+  cocks?: number
+  // exactly one of datePlaced / dateHatched is set (the farmer's flock date)
+  datePlaced?: string
+  dateHatched?: string
+  house?: string
+  // flock mortality/culls, added over time (cumulative totals)
+  femaleDeaths?: number
+  maleDeaths?: number
+  culledFemales?: number
+  culledMales?: number
+  // Reserved seams: egg records (P2), hatch batches (P3), breeder reports (P4)
+  // are NOT implemented in Phase 1. Chicken(s)/eggs/offspring are never tracked
+  // animals here — chicks are a sold OUTPUT of later phases.
 }
 
 interface BatchState {
