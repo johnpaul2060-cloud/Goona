@@ -57,7 +57,7 @@ export interface Batch {
 
 interface BatchState {
   batches: Batch[]
-  addBatch: (batch: Omit<Batch, 'id' | 'status' | 'createdAt' | 'budgetAllocations'>) => Batch
+  addBatch: (batch: Omit<Batch, 'id' | 'status' | 'createdAt' | 'budgetAllocations' | 'feedCost' | 'medicationCost'> & { feedCost?: number; medicationCost?: number; budgetAllocations?: BudgetAllocation[] }) => Batch
   getBatchById: (id: string) => Batch | undefined
   updateBatch: (id: string, updates: Partial<Batch>) => void
   completeBatch: (id: string, summary?: HarvestSummary) => void
@@ -142,13 +142,21 @@ export const useBatchStore = create<BatchState>()(
       batches: SEED_BATCHES,
       addBatch: (data) => {
         const now = Date.now()
+        const { budgetAllocations, ...rest } = data
+        const allocations = budgetAllocations && budgetAllocations.length > 0
+          ? budgetAllocations.filter((a) => a.amount > 0)
+          : []
+        const feedAmt = allocations.find((a) => a.key === 'feed')?.amount ?? 0
+        const medAmt = allocations.find((a) => a.key === 'medication')?.amount ?? 0
         const batch: Batch = {
-          ...data,
+          ...rest,
+          feedCost: rest.feedCost ?? feedAmt,
+          medicationCost: rest.medicationCost ?? medAmt,
           id: `batch_${now}_${nextId++}`,
           status: 'active',
           createdAt: new Date(now).toISOString(),
           lastActivityAt: now,
-          budgetAllocations: seedAllocations(data.purchaseCost, data.feedCost, data.medicationCost),
+          budgetAllocations: allocations,
         }
         set((state) => ({ batches: [...state.batches, batch] }))
         return batch

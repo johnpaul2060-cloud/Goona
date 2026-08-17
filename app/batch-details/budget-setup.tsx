@@ -11,6 +11,10 @@ import Animated, { FadeInUp, Layout } from 'react-native-reanimated'
 import { formatInput, parseAmount, formatNaira } from '../../utils/format'
 import { useBatchStore, type BudgetAllocation } from '../../store/useBatchStore'
 import { BUDGET_ALLOCATION_CATEGORIES } from '../../shared/expense-categories'
+import {
+  smartAllocationPercents, smartAllocationAmounts,
+  evenAllocationPercents, evenAllocationAmounts, pctString,
+} from '../../shared/smart-allocate'
 
 const ALLOCATION_CATEGORIES = BUDGET_ALLOCATION_CATEGORIES
 
@@ -97,83 +101,32 @@ export default function BatchBudgetSetupScreen() {
   const autoAllocate = useCallback((mode: 'even' | 'smart') => {
     const keys = ALLOCATION_CATEGORIES.map((c) => c.key)
 
+    if (mode === 'smart') {
+      const batchModel = storeBatch
+        && (storeBatch.model === 'individual' || storeBatch.model === 'breeder')
+        ? storeBatch.model
+        : 'flock'
+      if (allocationMode === 'percentage') {
+        const vals = smartAllocationPercents(batchModel, keys)
+        const newPcts: Record<string, string> = {}
+        for (const k of keys) newPcts[k] = pctString(vals[k])
+        setPcts(newPcts)
+        setAmounts(Object.fromEntries(keys.map((k) => [k, 0])))
+      } else {
+        setAmounts(smartAllocationAmounts(batchModel, keys, totalBudget))
+        setPcts(Object.fromEntries(keys.map((k) => [k, ''])))
+      }
+      return
+    }
+
     if (allocationMode === 'percentage') {
-      let pctValues: Record<string, number>
-      if (mode === 'smart' && storeBatch) {
-        const total = storeBatch.purchaseCost + storeBatch.feedCost + storeBatch.medicationCost
-        if (total > 0) {
-          pctValues = {
-            purchase: Math.round((storeBatch.purchaseCost / total) * 100),
-            feed: Math.round((storeBatch.feedCost / total) * 100),
-            medication: Math.round((storeBatch.medicationCost / total) * 100),
-            labour: 0,
-            utilities: 0,
-            other: 0,
-          }
-          const sum = Object.values(pctValues).reduce((s, v) => s + v, 0)
-          if (sum > 0) {
-            const diff = 100 - sum
-            const maxKey = (Object.entries(pctValues).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'feed') as string
-            pctValues[maxKey] += diff
-          }
-          const newPcts: Record<string, string> = {}
-          for (const k of keys) newPcts[k] = pctValues[k] > 0 ? String(pctValues[k]) : ''
-          setPcts(newPcts)
-          setAmounts(Object.fromEntries(keys.map((k) => [k, 0])))
-          return
-        }
-      }
-      const perPct = keys.length > 0 ? (100 / keys.length).toFixed(1) : '0'
+      const vals = evenAllocationPercents(keys)
       const newPcts: Record<string, string> = {}
-      let assigned = 0
-      for (let i = 0; i < keys.length; i++) {
-        const val = i < keys.length - 1 ? parseInt(perPct, 10) : 100 - assigned
-        newPcts[keys[i]] = val > 0 ? String(val) : ''
-        assigned += val
-      }
+      for (const k of keys) newPcts[k] = pctString(vals[k])
       setPcts(newPcts)
       setAmounts(Object.fromEntries(keys.map((k) => [k, 0])))
     } else {
-      if (mode === 'smart' && storeBatch) {
-        const total = storeBatch.purchaseCost + storeBatch.feedCost + storeBatch.medicationCost
-        if (total > 0) {
-          const ratios: Record<string, number> = {
-            purchase: storeBatch.purchaseCost / total,
-            feed: storeBatch.feedCost / total,
-            medication: storeBatch.medicationCost / total,
-            labour: 0,
-            utilities: 0,
-            other: 0,
-          }
-          let sumAllocated = 0
-          const newAmounts: Record<string, number> = {}
-          for (let i = 0; i < keys.length; i++) {
-            const k = keys[i]
-            if (i < keys.length - 1) {
-              newAmounts[k] = Math.round(totalBudget * ratios[k])
-            } else {
-              newAmounts[k] = Math.max(0, totalBudget - sumAllocated)
-            }
-            sumAllocated += newAmounts[k]
-          }
-          const diff = totalBudget - sumAllocated
-          if (diff !== 0) {
-            const maxKey = (Object.entries(newAmounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'feed') as string
-            newAmounts[maxKey] += diff
-          }
-          setAmounts(newAmounts)
-          setPcts(Object.fromEntries(keys.map((k) => [k, ''])))
-          return
-        }
-      }
-      const perCategory = Math.floor(totalBudget / keys.length)
-      const newAmounts: Record<string, number> = {}
-      let sum = 0
-      for (let i = 0; i < keys.length; i++) {
-        newAmounts[keys[i]] = i < keys.length - 1 ? perCategory : Math.max(0, totalBudget - sum)
-        sum += newAmounts[keys[i]]
-      }
-      setAmounts(newAmounts)
+      setAmounts(evenAllocationAmounts(keys, totalBudget))
       setPcts(Object.fromEntries(keys.map((k) => [k, ''])))
     }
   }, [allocationMode, totalBudget, storeBatch])

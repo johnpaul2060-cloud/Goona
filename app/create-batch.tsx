@@ -16,6 +16,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { useBatchStore } from '../store/useBatchStore'
+import type { BudgetAllocation } from '../store/useBatchStore'
+import BudgetAllocatorSection from '../components/BudgetAllocatorSection'
 import { formatInput, parseAmount } from '../utils/format'
 
 
@@ -29,22 +31,54 @@ function usePressScale() {
   }
 }
 
-const LIVESTOCK_TYPES = ['Broilers', 'Layers', 'Fish Farming', 'Goat/Sheep', 'Piggery', 'Grasscutter', 'Mixed Farming', 'Turkey PS', 'Noiler PS', 'ISA Brown PS', 'Broiler PS'] as const
-
-const FLOCK_TYPES = new Set(['Broilers', 'Layers', 'Fish Farming', 'Mixed Farming'])
-const INDIVIDUAL_TYPES = new Set(['Goat/Sheep', 'Piggery', 'Grasscutter'])
+const FLOCK_TYPES = new Set(['Broilers', 'Layers', 'Fish Farming', 'Turkey', 'Noiler'])
+const INDIVIDUAL_TYPES = new Set(['Goat', 'Sheep', 'Cattle', 'Piggery', 'Grasscutter'])
 const BREEDER_TYPES = new Set(['Turkey PS', 'Noiler PS', 'ISA Brown PS', 'Broiler PS'])
+
+const TYPE_GROUPS: { key: 'flock' | 'individual' | 'breeder'; title: string; sub: string; tag: string | null; model: 'flock' | 'individual' | 'breeder'; types: Set<string> }[] = [
+  {
+    key: 'flock',
+    title: 'Poultry & Fish (raised in flocks)',
+    sub: 'Tracked as a group — feed, mortality, eggs in totals.',
+    tag: null,
+    model: 'flock',
+    types: FLOCK_TYPES,
+  },
+  {
+    key: 'individual',
+    title: 'Livestock (tracked individually)',
+    sub: 'Each animal has its own profile — breeding, births, weights.',
+    tag: null,
+    model: 'individual',
+    types: INDIVIDUAL_TYPES,
+  },
+  {
+    key: 'breeder',
+    title: 'Breeder / Parent Stock',
+    sub: 'Parent birds kept for eggs & hatching — track fertility, hatch rate, chicks.',
+    tag: 'BreederPro',
+    model: 'breeder',
+    types: BREEDER_TYPES,
+  },
+]
 
 function getModel(type: string): 'flock' | 'individual' | 'breeder' {
   if (BREEDER_TYPES.has(type)) return 'breeder'
   return INDIVIDUAL_TYPES.has(type) ? 'individual' : 'flock'
 }
 
+function groupKeyLabel(model: 'flock' | 'individual' | 'breeder'): string {
+  if (model === 'individual') return 'a herd with individual profiles'
+  if (model === 'breeder') return 'a breeder flock with egg & hatch tracking'
+  return 'a flock raised as a group'
+}
+
 const DURATION_OPTIONS = ['4 Weeks', '6 Weeks', '8 Weeks', 'Custom'] as const
 
 const LIVESTOCK_COLORS: Record<string, string> = {
   Broilers: '#D97706', Layers: '#2563EB', 'Fish Farming': '#0891B2',
-  'Goat/Sheep': '#7C3AED', Piggery: '#DB2777', Grasscutter: '#0F766E', 'Mixed Farming': '#16A34A',
+  Turkey: '#B45309', Noiler: '#0E7490',
+  Goat: '#7C3AED', Sheep: '#8B5CF6', Cattle: '#92400E', Piggery: '#DB2777', Grasscutter: '#0F766E',
   'Turkey PS': '#7C2D12', 'Noiler PS': '#A16207', 'ISA Brown PS': '#92400E', 'Broiler PS': '#D97706',
 }
 
@@ -103,12 +137,51 @@ function LivestockIcon({ type, selected }: { type: string; selected: boolean }) 
           <Path d="M15 12.5L16 12" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
         </>
       )}
-      {type === 'Goat/Sheep' && (
+      {type === 'Turkey' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="6" ry="4.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="10" r="3.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="10.5" cy="9.5" r="1" fill={c} />
+          <Path d="M9 6.5L9.3 7.6" stroke="#F9A825" strokeWidth="1.2" strokeLinecap="round" />
+          <Path d="M13.2 8.5C14.6 9.8 14.7 12.3 13.4 14.8" stroke={c} strokeWidth="1.1" fill="none" strokeLinecap="round" />
+          <Path d="M6 10.5C5.5 13 7.5 17 11 17C14.5 17 16.5 13 16 10.5" stroke={c} strokeWidth="1.1" fill="none" strokeLinecap="round" />
+        </>
+      )}
+      {type === 'Noiler' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="6" ry="4.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="10" r="3.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="9.5" r="1" fill={c} />
+          <Path d="M10 11.5L8.5 10.5" stroke="#F9A825" strokeWidth="1.2" strokeLinecap="round" />
+          <Path d="M8.7 8.6C9.1 7.6 10.5 7.6 10.9 8.4" stroke={c} strokeWidth="1" fill="none" strokeLinecap="round" />
+          <Path d="M10.9 8.4C11.3 7.4 12.7 7.5 13.1 8.7" stroke={c} strokeWidth="1" fill="none" strokeLinecap="round" />
+        </>
+      )}
+      {type === 'Goat' && (
         <>
           <Path d="M8 16C8 16 7 12 11 12C15 12 14 16 14 16" stroke={c} strokeWidth="1.3" fill="none" strokeLinecap="round" />
           <Circle cx="11" cy="9" r="4" stroke={c} strokeWidth="1.3" fill="none" />
           <Circle cx="10" cy="8" r="0.8" fill={c} />
           <Path d="M13 8L14.5 7" stroke={c} strokeWidth="1.2" strokeLinecap="round" />
+        </>
+      )}
+      {type === 'Sheep' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="6.5" ry="4.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="9.5" r="4" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="10" cy="9" r="0.8" fill={c} />
+          <Circle cx="12.4" cy="9.2" r="0.8" fill={c} />
+        </>
+      )}
+      {type === 'Cattle' && (
+        <>
+          <Ellipse cx="11" cy="14" rx="6.5" ry="4.5" fill={selected ? 'rgba(255,255,255,0.15)' : '#D4C9B8'} fillOpacity={opacity} />
+          <Circle cx="11" cy="9" r="4" stroke={c} strokeWidth="1.2" fill="none" />
+          <Circle cx="10" cy="8.5" r="0.8" fill={c} />
+          <Circle cx="12.3" cy="8.6" r="0.8" fill={c} />
+          <Path d="M8 6L6.5 4L7.5 3.5" stroke={c} strokeWidth="1.2" strokeLinecap="round" fill="none" />
+          <Path d="M14 6L15.5 4L14.5 3.5" stroke={c} strokeWidth="1.2" strokeLinecap="round" fill="none" />
+          <Path d="M9 10.8C9.6 11.7 12.4 11.7 13 10.8" stroke={c} strokeWidth="1" fill="none" strokeLinecap="round" />
         </>
       )}
       {type === 'Piggery' && (
@@ -127,14 +200,6 @@ function LivestockIcon({ type, selected }: { type: string; selected: boolean }) 
           <Circle cx="9.5" cy="8.5" r="0.7" fill={c} />
           <Circle cx="12.5" cy="8.5" r="0.7" fill={c} />
           <Path d="M7 12.5L8 14L14 14L15 12.5" stroke={c} strokeWidth="1" fill="none" strokeLinecap="round" />
-        </>
-      )}
-      {type === 'Mixed Farming' && (
-        <>
-          <Ellipse cx="11" cy="14" rx="7" ry="5" fill={selected ? 'rgba(255,255,255,0.15)' : '#E8F5E9'} fillOpacity={opacity} />
-          <Path d="M6 11C7.5 9.5 9 11 11 9.5C13 11 14.5 9.5 16 11" stroke={c} strokeWidth="1.2" fill="none" strokeLinecap="round" />
-          <Circle cx="7.5" cy="13" r="1.5" fill="#F5F5F0" stroke="#D4C9B8" strokeWidth="0.6" />
-          <Circle cx="14.5" cy="13" r="1.5" fill="#F5F5F0" stroke="#D4C9B8" strokeWidth="0.6" />
         </>
       )}
     </Svg>
@@ -171,6 +236,85 @@ function LivestockTile({ type, selected, accent, onSelect }: { type: string; sel
   )
 }
 
+function OthersTile({ selected, onSelect }: { selected: boolean; onSelect: () => void }) {
+  const ps = usePressScale()
+  return (
+    <Animated.View style={[ps.style, styles.othersWrap]}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={onSelect}
+        onPressIn={ps.onPressIn}
+        onPressOut={ps.onPressOut}
+        style={styles.othersCardWrap}
+      >
+        <View style={[styles.othersCard, selected && styles.othersCardSelected]}>
+          {selected && (
+            <View style={[styles.typeCheck, { backgroundColor: '#17663A' }]}>
+              <GoonaIcon icon={Icons.check} size={12} color="#FFF" />
+            </View>
+          )}
+          <View style={[styles.othersChip, selected && styles.othersChipSelected]}>
+            <GoonaIcon icon={Icons.plus} size={18} color={selected ? '#FFFFFF' : '#17663A'} />
+          </View>
+          <View style={styles.othersBody}>
+            <Text style={[styles.othersName, selected && styles.othersNameSelected]}>Others</Text>
+            <Text style={styles.othersHint}>{selected ? 'Name your animal' : 'Custom animal'}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+}
+
+function TypeRow({ group, selectedType, othersGroupKey, onSelectType, onSelectOthers }: {
+  group: (typeof TYPE_GROUPS)[number]
+  selectedType: string
+  othersGroupKey: string | null
+  onSelectType: (t: string) => void
+  onSelectOthers: () => void
+}) {
+  const [layoutW, setLayoutW] = useState(0)
+  const [contentW, setContentW] = useState(0)
+  const [offsetX, setOffsetX] = useState(0)
+  const fadeTo = group.tag ? '#F3F9F2' : '#FFFFFF'
+  const showFade = contentW > layoutW + 4 && offsetX < contentW - layoutW - 8
+  return (
+    <View style={styles.typeGroupRowWrap} onLayout={(e) => setLayoutW(e.nativeEvent.layout.width)}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        style={styles.typeGroupRow}
+        contentContainerStyle={styles.typeGroupRowInner}
+        scrollEventThrottle={16}
+        onContentSizeChange={(w) => setContentW(w)}
+        onScroll={(e) => setOffsetX(e.nativeEvent.contentOffset.x)}
+      >
+        {[...group.types].map((type) => (
+          <LivestockTile
+            key={type}
+            type={type}
+            selected={othersGroupKey === null && selectedType === type}
+            accent={LIVESTOCK_COLORS[type]}
+            onSelect={() => onSelectType(type)}
+          />
+        ))}
+        <OthersTile selected={othersGroupKey === group.key} onSelect={onSelectOthers} />
+      </ScrollView>
+      {showFade ? (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[fadeTo + '00', fadeTo]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.typeGroupFade}
+        />
+      ) : null}
+    </View>
+  )
+}
+
 function DurationPill({ opt, selected, accent, onSelect }: { opt: string; selected: boolean; accent: string; onSelect: () => void }) {
   const ps = usePressScale()
   return (
@@ -202,11 +346,13 @@ function DurationPill({ opt, selected, accent, onSelect }: { opt: string; select
 
 export default function CreateBatchScreen() {
   const [batchName, setBatchName] = useState('')
-  const [livestockType, setLivestockType] = useState<string>('Broilers')
+  const [selectedType, setSelectedType] = useState<string>('Broilers')
+  const [othersGroupKey, setOthersGroupKey] = useState<string | null>(null)
+  const [customTypeName, setCustomTypeName] = useState('')
+  const [customTypeTouched, setCustomTypeTouched] = useState(false)
   const [quantityStr, setQuantityStr] = useState('')
   const [purchaseCost, setPurchaseCost] = useState('')
-  const [feedCost, setFeedCost] = useState('')
-  const [medicationCost, setMedicationCost] = useState('')
+  const [budgetAllocs, setBudgetAllocs] = useState<BudgetAllocation[]>([])
   const [startDate, setStartDate] = useState(new Date())
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [duration, setDuration] = useState('6 Weeks')
@@ -222,12 +368,22 @@ export default function CreateBatchScreen() {
   const [house, setHouse] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
 
-  const model = getModel(livestockType)
+  const othersGroup = TYPE_GROUPS.find((g) => g.key === othersGroupKey) ?? null
+  const model = othersGroup ? othersGroup.model : getModel(selectedType)
+  const effectiveType = othersGroup ? customTypeName.trim() : selectedType
   const hens = parseNumeric(hensStr)
   const cocks = parseNumeric(cocksStr)
+  const stepperValueFont = (raw: string) => {
+    const digits = raw.replace(/[^0-9]/g, '').length
+    if (digits <= 4) return 20
+    if (digits <= 6) return 18
+    if (digits <= 8) return 16
+    return 14
+  }
   const ratioPreview = useMemo(() => {
     if (model !== 'breeder') return ''
-    return cocks > 0 ? `1 : ${(hens / cocks).toFixed(1)}` : '—'
+    if (cocks > 0) return `${(hens / cocks).toFixed(1)} : 1`
+    return '—'
   }, [model, hens, cocks])
 
   const addBatch = useBatchStore((s) => s.addBatch)
@@ -271,8 +427,8 @@ export default function CreateBatchScreen() {
   }
 
   const purchaseVal = parseNumeric(purchaseCost)
-  const feedVal = parseNumeric(feedCost)
-  const medicationVal = parseNumeric(medicationCost)
+  const feedVal = budgetAllocs.find((a) => a.key === 'feed')?.amount ?? 0
+  const medicationVal = budgetAllocs.find((a) => a.key === 'medication')?.amount ?? 0
   const totalCost = purchaseVal + feedVal + medicationVal
   const expectedRevenue = Math.round(totalCost * 2.12)
   const forecastProfit = expectedRevenue - totalCost
@@ -298,7 +454,7 @@ export default function CreateBatchScreen() {
       const remMonths = months % 12
       const yearsStr = yrs > 0 ? `${yrs} yr${yrs > 1 ? 's' : ''}` : ''
       const monthsStr = remMonths > 0 ? ` ${remMonths} mo` : ''
-      return `${weeks} weeks (~${yearsStr}${monthsStr})`.trim()
+      return `${weeks} weeks (${yearsStr}${monthsStr})`.trim()
     }
     return `${weeks} weeks`
   }, [duration, customDurationVal, customDurationUnit])
@@ -316,12 +472,22 @@ export default function CreateBatchScreen() {
       Alert.alert('Required', 'Please enter a batch name.')
       return
     }
-    if (!livestockType) {
+    if (othersGroup) {
+      setCustomTypeTouched(true)
+      if (!customTypeName.trim()) {
+        Alert.alert('Required', 'Please name the animal you are rearing.')
+        return
+      }
+    } else if (!selectedType) {
       Alert.alert('Required', 'Please select a livestock type.')
       return
     }
     if (!quantityStr || parseInt(quantityStr, 10) < 1) {
       Alert.alert('Required', 'Please enter a valid livestock quantity.')
+      return
+    }
+    if (!purchaseVal || purchaseVal < 1) {
+      Alert.alert('Required', 'Please enter the initial purchase cost — it is required to create the batch.')
       return
     }
     if (model === 'breeder') {
@@ -341,12 +507,11 @@ export default function CreateBatchScreen() {
 
     const batchData: Parameters<typeof addBatch>[0] = {
       batchName: batchName.trim(),
-      livestockType,
+      livestockType: effectiveType,
       model,
       quantity: parseInt(quantityStr, 10),
       purchaseCost: purchaseVal,
-      feedCost: feedVal,
-      medicationCost: medicationVal,
+      budgetAllocations: budgetAllocs,
       startDate: startDate.toISOString(),
       duration: resolvedDuration,
     }
@@ -419,7 +584,7 @@ export default function CreateBatchScreen() {
             </TouchableOpacity>
             <Text style={styles.topTitle}>Create New Batch</Text>
             <View style={styles.progressPill}>
-              <Text style={styles.progressPillText}>Step 1 of 2</Text>
+              <Text style={styles.progressPillText}>Batch Setup</Text>
             </View>
           </Animated.View>
 
@@ -483,36 +648,71 @@ export default function CreateBatchScreen() {
           {/* FORM CARD */}
           <Animated.View entering={FadeInUp.duration(500).delay(180).springify()} style={styles.formCard}>
             {/* BATCH NAME */}
-            <TextInput
-              value={batchName}
-              onChangeText={setBatchName}
-              placeholder="e.g. Broiler Batch A"
-              placeholderTextColor="#A0AEA1"
-              style={styles.batchNameInput}
-            />
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Batch Name</Text>
+              <TextInput
+                value={batchName}
+                onChangeText={setBatchName}
+                placeholder="e.g. Broiler Batch A"
+                placeholderTextColor="#A0AEA1"
+                style={styles.batchNameInput}
+              />
+            </View>
 
             {/* LIVESTOCK TYPE */}
             <View style={styles.formSection}>
               <Text style={styles.formLabel}>Livestock Type</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                style={styles.typeScroll}
-                contentContainerStyle={styles.typeScrollInner}
-                snapToInterval={136}
-                decelerationRate="fast"
-              >
-                {LIVESTOCK_TYPES.map((type) => (
-                  <LivestockTile
-                    key={type}
-                    type={type}
-                    selected={livestockType === type}
-                    accent={LIVESTOCK_COLORS[type]}
-                    onSelect={() => setLivestockType(type)}
+              {TYPE_GROUPS.map((group) => (
+                <View key={group.key} style={[styles.typeGroup, group.tag && styles.typeGroupBreeder]}>
+                  <View style={styles.typeGroupHead}>
+                    <View style={[styles.typeGroupDot, { backgroundColor: group.model === 'breeder' ? '#17663A' : group.model === 'individual' ? '#7C3AED' : '#16A34A' }]} />
+                    <Text style={styles.typeGroupTitle}>{group.title}</Text>
+                    {group.tag ? (
+                      <LinearGradient
+                        colors={['#17663A', '#0E4D2A']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.typeGroupBadge}
+                      >
+                        <Text style={styles.typeGroupBadgeText}>{group.tag}</Text>
+                      </LinearGradient>
+                    ) : null}
+                  </View>
+                  <Text style={styles.typeGroupSub}>{group.sub}</Text>
+                  <TypeRow
+                    group={group}
+                    selectedType={selectedType}
+                    othersGroupKey={othersGroupKey}
+                    onSelectType={(t) => {
+                      setSelectedType(t)
+                      setOthersGroupKey(null)
+                    }}
+                    onSelectOthers={() => setOthersGroupKey(group.key)}
                   />
-                ))}
-              </ScrollView>
+                  {group.key === othersGroupKey && (
+                    <View style={styles.othersInputWrap}>
+                      <Text style={styles.othersInputLabel}>What animal are you rearing?</Text>
+                      <TextInput
+                        value={customTypeName}
+                        onChangeText={(v) => {
+                          setCustomTypeName(v)
+                          if (v.trim()) setCustomTypeTouched(false)
+                        }}
+                        placeholder="e.g. Ducks, Rabbits, Snails"
+                        placeholderTextColor="#A0AEA1"
+                        autoCapitalize="words"
+                        maxLength={28}
+                        style={[styles.othersInput, customTypeTouched && !customTypeName.trim() && styles.othersInputError]}
+                      />
+                      {customTypeTouched && !customTypeName.trim() ? (
+                        <Text style={styles.othersErrorText}>Please name the animal before continuing.</Text>
+                      ) : (
+                        <Text style={styles.othersInputHint}>Tracks as a {groupKeyLabel(group.model)} — exactly like the types above.</Text>
+                      )}
+                    </View>
+                  )}
+                </View>
+              ))}
             </View>
 
             {/* INITIAL QUANTITY */}
@@ -555,7 +755,12 @@ export default function CreateBatchScreen() {
 
             {/* PURCHASE COST */}
             <View style={styles.formSection}>
-              <Text style={styles.formLabel}>Initial Purchase Cost</Text>
+              <View style={styles.requiredLabelRow}>
+                <Text style={styles.formLabel}>Initial Purchase Cost</Text>
+                <View style={styles.requiredPill}>
+                  <Text style={styles.requiredPillText}>Required</Text>
+                </View>
+              </View>
               <View style={styles.fieldWrap}>
                 <View style={styles.fieldIco}>
                   <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -577,57 +782,7 @@ export default function CreateBatchScreen() {
                   />
                 </View>
               </View>
-              <Text style={styles.formNote}>Used for profitability and reinvestment calculations.</Text>
-            </View>
-
-            {/* FEED COST */}
-            <View style={styles.formSection}>
-              <Text style={styles.formLabel}>Estimated Feed Cost</Text>
-              <View style={styles.fieldWrap}>
-                <View style={styles.fieldIco}>
-                  <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <Rect x="4" y="5" width="12" height="10" rx="2" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-                    <Path d="M7 5V4C7 3 8 2.5 10 2.5C12 2.5 13 3 13 4V5" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-                  </Svg>
-                </View>
-                <Text style={styles.fieldPrefix}>₦</Text>
-                <View style={styles.fieldInner}>
-                  <Text style={styles.fieldLbl}>Feed Cost</Text>
-                  <TextInput
-                    style={styles.fieldInput}
-                    value={formatInput(feedCost)}
-                    onChangeText={(v) => setFeedCost(v.replace(/\D/g, ''))}
-                    placeholder="0.00"
-                    placeholderTextColor="#A0AEA1"
-                    keyboardType="number-pad"
-                  />
-                </View>
-              </View>
-            </View>
-
-            {/* MEDICATION COST */}
-            <View style={styles.formSection}>
-              <Text style={styles.formLabel}>Estimated Medication Cost</Text>
-              <View style={styles.fieldWrap}>
-                <View style={styles.fieldIco}>
-                  <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <Rect x="7" y="3" width="6" height="14" rx="2" stroke="#A0AEA1" strokeWidth="1.4" fill="none" />
-                    <Line x1="7" y1="7" x2="13" y2="7" stroke="#A0AEA1" strokeWidth="1.2" strokeLinecap="round" />
-                  </Svg>
-                </View>
-                <Text style={styles.fieldPrefix}>₦</Text>
-                <View style={styles.fieldInner}>
-                  <Text style={styles.fieldLbl}>Medication Cost</Text>
-                  <TextInput
-                    style={styles.fieldInput}
-                    value={formatInput(medicationCost)}
-                    onChangeText={(v) => setMedicationCost(v.replace(/\D/g, ''))}
-                    placeholder="0.00"
-                    placeholderTextColor="#A0AEA1"
-                    keyboardType="number-pad"
-                  />
-                </View>
-              </View>
+              <Text style={styles.formNote}>Required — used for profitability and reinvestment calculations.</Text>
             </View>
 
             {/* START DATE / FLOCK DATE */}
@@ -857,58 +1012,54 @@ export default function CreateBatchScreen() {
                 <Animated.View entering={FadeInUp.duration(500).delay(280).springify()} style={styles.formSection}>
                   <Text style={styles.formLabel}>Flock Composition</Text>
                   <View style={styles.breederSplitRow}>
-                    <View style={[styles.stepperWrap, styles.breederSplitCol]}>
+                    <Text style={styles.breederLabelTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>Hens (female)</Text>
+                    <View style={[styles.stepperWrap, styles.breederStepper]}>
                       <TouchableOpacity
-                        style={styles.stepperBtn}
+                        style={styles.stepperBtnCompact}
                         activeOpacity={0.85}
                         onPress={() => setHensStr(String(Math.max(0, (hens - 1))))}
                       >
-                        <Text style={styles.stepperBtnText}>−</Text>
+                        <Text style={styles.stepperBtnTextCompact}>−</Text>
                       </TouchableOpacity>
                       <TextInput
-                        style={styles.stepperInput}
+                        style={[styles.stepperInputCompact, { fontSize: stepperValueFont(hensStr) }]}
                         value={formatInput(hensStr)}
                         onChangeText={(v) => setHensStr(v.replace(/\D/g, ''))}
                         keyboardType="number-pad"
                         placeholder="0"
-                        placeholderTextColor="#A0AEA1"
-                      />
+                        placeholderTextColor="#A0AEA1"/>
                       <TouchableOpacity
-                        style={styles.stepperBtn}
+                        style={styles.stepperBtnCompact}
                         activeOpacity={0.85}
                         onPress={() => setHensStr(String(hens + 1))}
                       >
-                        <Text style={styles.stepperBtnText}>+</Text>
+                        <Text style={styles.stepperBtnTextCompact}>+</Text>
                       </TouchableOpacity>
                     </View>
-                    <View style={[styles.stepperWrap, styles.breederSplitCol]}>
+                    <Text style={styles.breederLabelTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>Cocks (male)</Text>
+                    <View style={[styles.stepperWrap, styles.breederStepper]}>
                       <TouchableOpacity
-                        style={styles.stepperBtn}
+                        style={styles.stepperBtnCompact}
                         activeOpacity={0.85}
                         onPress={() => setCocksStr(String(Math.max(0, (cocks - 1))))}
                       >
-                        <Text style={styles.stepperBtnText}>−</Text>
+                        <Text style={styles.stepperBtnTextCompact}>−</Text>
                       </TouchableOpacity>
                       <TextInput
-                        style={styles.stepperInput}
+                        style={[styles.stepperInputCompact, { fontSize: stepperValueFont(cocksStr) }]}
                         value={formatInput(cocksStr)}
                         onChangeText={(v) => setCocksStr(v.replace(/\D/g, ''))}
                         keyboardType="number-pad"
                         placeholder="0"
-                        placeholderTextColor="#A0AEA1"
-                      />
+                        placeholderTextColor="#A0AEA1"/>
                       <TouchableOpacity
-                        style={styles.stepperBtn}
+                        style={styles.stepperBtnCompact}
                         activeOpacity={0.85}
                         onPress={() => setCocksStr(String(cocks + 1))}
                       >
-                        <Text style={styles.stepperBtnText}>+</Text>
+                        <Text style={styles.stepperBtnTextCompact}>+</Text>
                       </TouchableOpacity>
                     </View>
-                  </View>
-                  <View style={styles.breederLabelsRow}>
-                    <Text style={styles.breederLabelText}>Hens (female)</Text>
-                    <Text style={styles.breederLabelText}>Cocks (male)</Text>
                   </View>
                   <View style={[styles.ratioChip, { opacity: hens > 0 || cocks > 0 ? 1 : 0.45 }]}>
                     <GoonaIcon icon={Icons.users} size={13} color="#2E7D32" />
@@ -938,6 +1089,11 @@ export default function CreateBatchScreen() {
                 </Animated.View>
               </>
             )}
+
+            {/* BUDGET ALLOCATIONS (OPTIONAL) */}
+            <Animated.View entering={FadeInUp.duration(500).delay(300).springify()} style={styles.formSection}>
+              <BudgetAllocatorSection model={model} onChange={setBudgetAllocs} />
+            </Animated.View>
 
             {/* FORECAST CARD */}
             <Animated.View entering={FadeInUp.duration(500).delay(320).springify()} style={styles.forecastCard}>
@@ -1082,6 +1238,13 @@ const styles = StyleSheet.create({
   formLabel: { fontSize: 14, fontWeight: '600', color: '#1F2937', marginBottom: 8 },
   formNote: { fontSize: 12, fontWeight: '400', color: '#94A3B8', marginTop: 6, lineHeight: 18 },
 
+  requiredLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  requiredPill: {
+    backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA',
+    borderRadius: 100, paddingHorizontal: 9, paddingVertical: 3,
+  },
+  requiredPillText: { fontSize: 9, fontWeight: '800', color: '#DC2626', letterSpacing: 0.6, textTransform: 'uppercase' },
+
   /* field */
   fieldWrap: {
     flexDirection: 'row', alignItems: 'center', height: 60, borderRadius: 20,
@@ -1106,22 +1269,69 @@ const styles = StyleSheet.create({
   fieldPrefix: { fontSize: 16, fontWeight: '600', color: '#1B1B1B', flexShrink: 0 },
   fieldRight: { flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
 
-  /* type grid */
-  typeScroll: { marginBottom: 4 },
-  typeScrollInner: { gap: 10 },
-  typeCardWrap: { width: 126 },
+  /* type groups (Step 1 — poultry/livestock/breeder sections) */
+  typeGroup: {
+    marginTop: 16, padding: 16, borderRadius: 22,
+    backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8EFE4',
+    shadowColor: '#0F3D22', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 2,
+  },
+  typeGroupBreeder: { backgroundColor: '#F3F9F2', borderColor: '#B3D6BC' },
+  typeGroupHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  typeGroupDot: { width: 6, height: 6, borderRadius: 3 },
+  typeGroupTitle: { fontSize: 13.5, fontWeight: '700', color: '#15291A', flexShrink: 1 },
+  typeGroupBadge: {
+    borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4,
+    shadowColor: '#0E4D2A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 2,
+  },
+  typeGroupBadgeText: { fontSize: 9, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.7, textTransform: 'uppercase' as any },
+  typeGroupSub: { fontSize: 11, color: '#64748B', marginTop: 4, lineHeight: 16, paddingLeft: 14 },
+  typeGroupRowWrap: { position: 'relative', marginTop: 16 },
+  typeGroupRow: { marginHorizontal: -16 },
+  typeGroupRowInner: { paddingHorizontal: 16, gap: 12 },
+  typeGroupFade: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 44 },
+  typeCardWrap: { width: 122, flexShrink: 0 },
   typeCard: {
-    borderRadius: 18, borderWidth: 1.5, overflow: 'hidden',
+    borderRadius: 20, borderWidth: 1.5, overflow: 'hidden',
     backgroundColor: 'white', paddingVertical: 14, paddingHorizontal: 8, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
   },
   typeCheck: {
     position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: 9,
     alignItems: 'center', justifyContent: 'center', zIndex: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 4, elevation: 3,
   },
-  typeIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
-  typeIconSelected: { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
+  typeIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  typeIconSelected: { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.14, shadowRadius: 8, elevation: 4 },
   typeName: { fontSize: 12, fontWeight: '700', textAlign: 'center' },
+
+  /* Others tile (custom animal per group) */
+  othersWrap: { width: 170, flexShrink: 0 },
+  othersCardWrap: { flex: 1 },
+  othersCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: 18, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#B7C9B3',
+    backgroundColor: 'rgba(255,255,255,0.7)', paddingVertical: 12, paddingHorizontal: 14,
+  },
+  othersCardSelected: { borderStyle: 'solid', borderColor: '#17663A', backgroundColor: '#F0F7F1' },
+  othersChip: {
+    width: 36, height: 36, borderRadius: 12, backgroundColor: '#E8F3EA',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  othersChipSelected: { backgroundColor: '#17663A' },
+  othersBody: { flex: 1, minWidth: 0 },
+  othersName: { fontSize: 13, fontWeight: '800', color: '#17663A' },
+  othersNameSelected: { color: '#0E4D2A' },
+  othersHint: { fontSize: 10, fontWeight: '600', color: '#7A9C81', marginTop: 1 },
+  othersInputWrap: { marginTop: 14 },
+  othersInputLabel: { fontSize: 12, fontWeight: '700', color: '#1B1B1B', marginBottom: 8 },
+  othersInput: {
+    height: 48, borderRadius: 16, borderWidth: 1.5, borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF', paddingHorizontal: 14,
+    fontSize: 14, fontWeight: '500', color: '#1B1B1B',
+  },
+  othersInputError: { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
+  othersErrorText: { marginTop: 6, fontSize: 11, fontWeight: '700', color: '#EF4444' },
+  othersInputHint: { marginTop: 6, fontSize: 11, fontWeight: '500', color: '#7A9C81' },
 
   /* stepper */
   stepperWrap: {
@@ -1140,6 +1350,18 @@ const styles = StyleSheet.create({
   },
   stepperInput: {
     flex: 1, textAlign: 'center', fontSize: 24, fontWeight: '800', color: '#1B1B1B',
+    padding: 0, margin: 0, fontFamily: 'Inter',
+  },
+  /* compact variant for the breeder flock composition steppers (full-width rows, fixed buttons, value takes the rest) */
+  breederStepper: { height: 56, paddingHorizontal: 6, gap: 8, borderRadius: 18 },
+  stepperBtnCompact: {
+    width: 42, height: 42, borderRadius: 14, backgroundColor: 'white',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+  },
+  stepperBtnTextCompact: { fontSize: 19, fontWeight: '600', color: '#1B1B1B' },
+  stepperInputCompact: {
+    flex: 1, minWidth: 0, textAlign: 'center', fontSize: 20, fontWeight: '800', color: '#1B1B1B',
     padding: 0, margin: 0, fontFamily: 'Inter',
   },
 
@@ -1228,10 +1450,8 @@ const styles = StyleSheet.create({
   flockKindTextActive: { color: '#FFFFFF' },
 
   /* breeder flock composition */
-  breederSplitRow: { flexDirection: 'row', gap: 10 },
-  breederSplitCol: { flex: 1 },
-  breederLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 8, marginTop: 6 },
-  breederLabelText: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
+  breederSplitRow: { gap: 12 },
+  breederLabelTitle: { fontSize: 13, fontWeight: '700', color: '#1B1B1B' },
   ratioChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12,
     backgroundColor: '#E8F5E9', borderRadius: 100, paddingHorizontal: 12, paddingVertical: 6,

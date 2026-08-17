@@ -25,7 +25,15 @@ export const BUDGET_ALLOCATION_CATEGORIES: ExpenseCategory[] = [
   ...EXPENSE_CATEGORIES,
 ]
 
+// Create-batch Operating Budget — the cost of RUNNING the batch (feed, medication,
+// labour, utilities, transport, repairs, misc). Stock purchase is captured once by the
+// mandatory Initial Purchase Cost field, so it is deliberately NOT a category here.
+export const OPERATING_BUDGET_CATEGORIES: ExpenseCategory[] =
+  BUDGET_ALLOCATION_CATEGORIES.filter((c) => c.key !== 'purchase')
+
 export const BUDGET_ALLOCATION_KEYS = BUDGET_ALLOCATION_CATEGORIES.map((c) => c.key)
+
+export const OPERATING_BUDGET_KEYS = OPERATING_BUDGET_CATEGORIES.map((c) => c.key)
 
 export function getCategoryByKey(key: string): ExpenseCategory | undefined {
   return EXPENSE_CATEGORIES.find((c) => c.key === key)

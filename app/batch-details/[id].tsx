@@ -698,23 +698,28 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
                       <Text style={[styles.revenueValue, { color: '#2E7D32' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(batchRevenue)}</Text>
                     </View>
                     <View style={styles.revenueItem}>
-                      <Text style={styles.revenueLabel}>Spent</Text>
-                      <Text style={[styles.revenueValue, { color: '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(totalSpent)}</Text>
+                      <Text style={styles.revenueLabel}>Total Cost</Text>
+                      <Text style={[styles.revenueValue, { color: '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull((batch.purchaseCost || 0) + totalSpent)}</Text>
                     </View>
                     <View style={styles.revenueItem}>
                       <Text style={styles.revenueLabel}>Profit</Text>
-                      <Text style={[styles.revenueValue, { color: batchRevenue - totalSpent >= 0 ? '#2E7D32' : '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>
-                        {batchRevenue - totalSpent >= 0 ? '' : '-'}{formatNairaFull(Math.abs(batchRevenue - totalSpent))}
+                      <Text style={[styles.revenueValue, { color: batchRevenue - (batch.purchaseCost || 0) - totalSpent >= 0 ? '#2E7D32' : '#EF4444' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>
+                        {batchRevenue - (batch.purchaseCost || 0) - totalSpent >= 0 ? '' : '-'}{formatNairaFull(Math.abs(batchRevenue - (batch.purchaseCost || 0) - totalSpent))}
                       </Text>
                     </View>
                   </View>
+                  {(batch.purchaseCost || 0) > 0 && (
+                    <Text style={styles.totalCostNote} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                      Total cost = purchase cost {formatNairaFull(batch.purchaseCost || 0)} + operating spend {formatNairaFull(totalSpent)}
+                    </Text>
+                  )}
                   {totalBudget > 0 && (
                     <View style={styles.marginRow}>
                       <Text style={styles.marginLabel}>Margin</Text>
-                      <View style={[styles.marginBadge, { backgroundColor: batchRevenue - totalSpent >= 0 ? '#F0FDF4' : '#FEF2F2' }]}>
-                        <Text style={[styles.marginText, { color: batchRevenue - totalSpent >= 0 ? '#2E7D32' : '#EF4444' }]}>
-                          {totalSpent > 0
-                            ? `${((batchRevenue - totalSpent) / totalSpent * 100).toFixed(0)}%`
+                      <View style={[styles.marginBadge, { backgroundColor: batchRevenue - (batch.purchaseCost || 0) - totalSpent >= 0 ? '#F0FDF4' : '#FEF2F2' }]}>
+                        <Text style={[styles.marginText, { color: batchRevenue - (batch.purchaseCost || 0) - totalSpent >= 0 ? '#2E7D32' : '#EF4444' }]}>
+                          {(batch.purchaseCost || 0) + totalSpent > 0
+                            ? `${((batchRevenue - (batch.purchaseCost || 0) - totalSpent) / ((batch.purchaseCost || 0) + totalSpent) * 100).toFixed(0)}%`
                             : batchRevenue > 0 ? '∞' : '—'}
                         </Text>
                       </View>
@@ -769,6 +774,13 @@ function BreederHero({ batch, stats, flockAge, isCompleted, eggSummary }: {
             <View style={styles.heroChip}>
               <Text style={styles.heroChipText} numberOfLines={1}>{batch.breed || batch.livestockType}</Text>
             </View>
+            {(batch.purchaseCost || 0) > 0 && (
+              <View style={styles.heroChip}>
+                <Text style={styles.heroChipText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  {formatNairaFull(batch.purchaseCost || 0)} · cost of flock
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -804,6 +816,10 @@ function BreederHero({ batch, stats, flockAge, isCompleted, eggSummary }: {
         <View style={styles.hstat}>
           <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{stats.currentPopulation}</Text>
           <Text style={styles.hstatL}>Population now</Text>
+        </View>
+        <View style={styles.hstat}>
+          <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(batch.purchaseCost || 0)}</Text>
+          <Text style={styles.hstatL}>Purchase Cost</Text>
         </View>
       </View>
 
@@ -2285,6 +2301,13 @@ export default function BatchDetailsScreen() {
                 <View style={styles.heroChip}>
                   <Text style={styles.heroChipText}>{batch.type}</Text>
                 </View>
+                {(storeBatch?.purchaseCost ?? 0) > 0 && (
+                  <View style={styles.heroChip}>
+                    <Text style={styles.heroChipText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                      {formatNairaFull(storeBatch?.purchaseCost ?? 0)} · cost of flock
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -2320,6 +2343,10 @@ export default function BatchDetailsScreen() {
             <View style={styles.hstat}>
               <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{batchRevenue > 0 ? formatNairaFull(batchRevenue) : batch.revenue}</Text>
               <Text style={styles.hstatL}>{batchRevenue > 0 ? 'Revenue (actual)' : 'Est. Revenue'}</Text>
+            </View>
+            <View style={styles.hstat}>
+              <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull((storeBatch?.purchaseCost ?? 0) || 0)}</Text>
+              <Text style={styles.hstatL}>Purchase Cost</Text>
             </View>
           </View>
 
@@ -2668,7 +2695,7 @@ const styles = StyleSheet.create({
   heroCount: { fontFamily: 'Poppins', fontWeight: '800', fontSize: 30, color: 'white', marginTop: 0, lineHeight: 36 },
   heroCountSmall: { fontSize: 16, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
   heroWeek: { fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: -2 },
-  heroChips: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   heroChip: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.12)' },
   heroChipHot: { backgroundColor: '#FFFBEB' },
   heroChipHotText: { fontSize: 11, fontWeight: '600', color: '#F59E0B' },
@@ -2893,6 +2920,7 @@ const styles = StyleSheet.create({
   revenueItem: { alignItems: 'center', flex: 1 },
   revenueLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', marginBottom: 4 },
   revenueValue: { fontSize: 14, fontWeight: '800', color: '#1B1B1B' },
+  totalCostNote: { fontSize: 10, fontWeight: '600', color: '#94A3B8', marginTop: 8, marginBottom: 10 },
   marginRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 },
   marginLabel: { fontSize: 13, fontWeight: '600', color: '#64748B' },
   marginBadge: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 8 },
