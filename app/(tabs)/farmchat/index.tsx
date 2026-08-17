@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, KeyboardAvoidingView, Keyboard, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, Keyboard, Platform } from 'react-native'
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Icons } from '../../../shared/icons'
@@ -81,7 +82,7 @@ function CommentSheet({ postId, comments, onClose, onSend }: { postId: string; c
   return (
     <View style={styles.commentOverlay}>
       <TouchableOpacity style={styles.commentBackdrop} onPress={onClose} activeOpacity={1} />
-      <KeyboardAvoidingView behavior="padding" style={styles.commentSheet}>
+      <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={0} enabled style={styles.commentSheet}>
         <View style={styles.commentSheetHandle}>
           <View style={styles.commentHandleBar} />
         </View>
@@ -222,7 +223,7 @@ export default function FarmChatScreen() {
 
       {/* FEED COMPOSER — outside FlatList so re-renders can't remount the TextInput */}
       {internalTab === 'feed' && (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0} enabled>
           <View style={styles.topComposer}>
             <TextInput
               style={styles.topComposerInput}

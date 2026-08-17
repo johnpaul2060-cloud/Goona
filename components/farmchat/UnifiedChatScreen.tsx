@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Keyboard, Platform, PanResponder, Animated, Alert, ToastAndroid } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Keyboard, Platform, PanResponder, Animated, Alert, ToastAndroid } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { Icons } from '../../shared/icons'
 import { FarmChatConversation, FarmChatMessage, MessageReplyTo } from '../../store/useFarmChatStore'
 
@@ -437,7 +438,7 @@ export default function UnifiedChatScreen({ conv, messages, onSend, onBack }: {
   }, [isGroup, prevSenderMap, handleSwipeReply, handleCopyMessage])
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0} enabled>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>

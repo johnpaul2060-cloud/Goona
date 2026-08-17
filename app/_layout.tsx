@@ -4,6 +4,7 @@ import { Stack, router } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import Constants from 'expo-constants'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { enableScreens } from 'react-native-screens'
 import BiometricGate from '../components/Biometric/BiometricGate'
 import { useAuthStore } from '../store/useAuthStore'
@@ -208,38 +209,40 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <BiometricGateManager>
-          <PriorityProvider>
-            <NotificationInitializer />
-            {ready ? (
-              <Stack screenOptions={stackGestureDefaults}>
-                <Stack.Screen name="index" options={gestureDisabledOptions} />
-                <Stack.Screen name="(tabs)" options={gestureDisabledOptions} />
-                <Stack.Screen name="(auth)" options={gestureDisabledOptions} />
-                <Stack.Screen name="(onboarding)" options={gestureDisabledOptions} />
-                <Stack.Screen name="(setup)" options={gestureDisabledOptions} />
-                <Stack.Screen name="modal" options={modalGestureOptions} />
-                <Stack.Screen name="workforce-live" options={edgeGestureOptions} />
-                <Stack.Screen name="goona-academy-challenges" options={edgeGestureOptions} />
-                <Stack.Screen name="goona-academy-tycoon" options={edgeGestureOptions} />
-                <Stack.Screen name="live-simulation" options={edgeGestureOptions} />
-                <Stack.Screen name="geofence-editor" options={gestureDisabledOptions} />
-                <Stack.Screen name="farm-setup" options={gestureDisabledOptions} />
-                <Stack.Screen name="farm-structure" options={gestureDisabledOptions} />
-                <Stack.Screen name="create-batch" options={gestureDisabledOptions} />
-                <Stack.Screen name="daily-records" options={edgeGestureOptions} />
-                <Stack.Screen name="record-sale" options={edgeGestureOptions} />
-                <Stack.Screen name="kyc-step-1" options={gestureDisabledOptions} />
-                <Stack.Screen name="kyc-step-2" options={gestureDisabledOptions} />
-                <Stack.Screen name="kyc-step-3" options={gestureDisabledOptions} />
-                <Stack.Screen name="kyc-step-4" options={gestureDisabledOptions} />
-                <Stack.Screen name="kyc-step-5" options={gestureDisabledOptions} />
-              </Stack>
-            ) : (
-              <View style={{ flex: 1, backgroundColor: '#F8FAF7' }} />
-            )}
-          </PriorityProvider>
-        </BiometricGateManager>
+        <KeyboardProvider>
+          <BiometricGateManager>
+            <PriorityProvider>
+              <NotificationInitializer />
+              {ready ? (
+                <Stack screenOptions={stackGestureDefaults}>
+                  <Stack.Screen name="index" options={gestureDisabledOptions} />
+                  <Stack.Screen name="(tabs)" options={gestureDisabledOptions} />
+                  <Stack.Screen name="(auth)" options={gestureDisabledOptions} />
+                  <Stack.Screen name="(onboarding)" options={gestureDisabledOptions} />
+                  <Stack.Screen name="(setup)" options={gestureDisabledOptions} />
+                  <Stack.Screen name="modal" options={modalGestureOptions} />
+                  <Stack.Screen name="workforce-live" options={edgeGestureOptions} />
+                  <Stack.Screen name="goona-academy-challenges" options={edgeGestureOptions} />
+                  <Stack.Screen name="goona-academy-tycoon" options={edgeGestureOptions} />
+                  <Stack.Screen name="live-simulation" options={edgeGestureOptions} />
+                  <Stack.Screen name="geofence-editor" options={gestureDisabledOptions} />
+                  <Stack.Screen name="farm-setup" options={gestureDisabledOptions} />
+                  <Stack.Screen name="farm-structure" options={gestureDisabledOptions} />
+                  <Stack.Screen name="create-batch" options={gestureDisabledOptions} />
+                  <Stack.Screen name="daily-records" options={edgeGestureOptions} />
+                  <Stack.Screen name="record-sale" options={edgeGestureOptions} />
+                  <Stack.Screen name="kyc-step-1" options={gestureDisabledOptions} />
+                  <Stack.Screen name="kyc-step-2" options={gestureDisabledOptions} />
+                  <Stack.Screen name="kyc-step-3" options={gestureDisabledOptions} />
+                  <Stack.Screen name="kyc-step-4" options={gestureDisabledOptions} />
+                  <Stack.Screen name="kyc-step-5" options={gestureDisabledOptions} />
+                </Stack>
+              ) : (
+                <View style={{ flex: 1, backgroundColor: '#F8FAF7' }} />
+              )}
+            </PriorityProvider>
+          </BiometricGateManager>
+        </KeyboardProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>
   )
