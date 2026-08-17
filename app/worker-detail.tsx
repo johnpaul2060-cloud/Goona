@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { Easing, FadeInUp, interpolate, useAnimatedProps, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming } from 'react-native-reanimated'
 import Svg, { Circle, Defs, G, Line, LinearGradient as SvgLinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg'
 import GoonaIcon from '../components/ui/GoonaIcon'
-import BottomDock from '../components/navigation/BottomDock'
+
 import { Icons } from '../shared/icons'
 import { useFarmChatStore } from '../store/useFarmChatStore'
 
@@ -464,7 +464,6 @@ export default function WorkerDetailScreen() {
         <Section title="This week" tag="38.0h total" />
         <View style={s.weekGrid}>{worker.week.map((d) => <View key={d.day} style={s.weekCard}><Text style={s.weekDay}>{d.day}</Text><Text style={s.weekHours}>{d.hours}</Text></View>)}</View>
       </ScrollView>
-      <BottomDock hidden={false} />
     </View>
   )
 }

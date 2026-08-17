@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import Animated, { FadeInUp, SlideInUp } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
-import BottomDock from '../components/navigation/BottomDock'
 import { useAuthStore } from '../store/useAuthStore'
 import { useSettingsStore } from '../store/useSettingsStore'
 import UserAccessCard, { type FarmUser } from '../components/KillSwitch/UserAccessCard'
@@ -324,8 +323,6 @@ export default function KillSwitchScreen() {
         </View>
       )}
       </View>
-
-      <BottomDock />
 
       {/* SUSPEND MODAL */}
       <ModalShell visible={showSuspendModal} onClose={() => { setShowSuspendModal(false); setSelectedUser(null) }} title="Suspend Access">

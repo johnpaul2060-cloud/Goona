@@ -170,8 +170,14 @@ export default function LoginScreen() {
       Alert.alert('Biometrics Not Set Up', `Please enable Face ID in your device settings first.`)
       return
     }
-    const result = await authenticate({ promptMessage: 'Enroll biometric login', fallbackLabel: 'Not Now' })
-    if (result.success) {
+    if (Platform.OS === 'ios') {
+      const result = await authenticate({ promptMessage: 'Enroll biometric login', fallbackLabel: 'Not Now' })
+      if (!result.success) {
+        if (result.error === 'user_cancel' || result.error === 'user_fallback') setShowEnrollModal(false)
+        return
+      }
+    }
+    try {
       const token = createBiometricToken()
       await saveBiometricCredential({
         token,
@@ -193,9 +199,7 @@ export default function LoginScreen() {
       settingsStore.setSecurityPref('requireBiometricAtLaunch', true)
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setShowEnrollModal(false)
-    } else if (result.error === 'user_cancel') {
-      setShowEnrollModal(false)
-    } else if (result.error === 'user_fallback') {
+    } catch {
       setShowEnrollModal(false)
     }
   }, [checkBiometrics, authenticate, email, authStore, settingsStore])

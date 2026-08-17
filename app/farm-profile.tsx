@@ -13,7 +13,6 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, withSpring, FadeInUp,
 } from 'react-native-reanimated'
-import BottomDock from '../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -1103,8 +1102,6 @@ export default function WorkforceHubScreen() {
 
       {/* Workforce Profile Modal */}
       <WorkforceProfileModal worker={selectedWorker} visible={profileVisible} onClose={() => setProfileVisible(false)} />
-
-      <BottomDock hidden={false} />
     </View>
   )
 }

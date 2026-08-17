@@ -11,7 +11,6 @@ import { router } from 'expo-router'
 import { FARM_NAME } from '../constants/farm'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, FadeInUp } from 'react-native-reanimated'
-import BottomDock from '../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -178,7 +177,6 @@ export default function FarmBoundariesScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-      <BottomDock hidden={false} />
     </View>
   )
 }

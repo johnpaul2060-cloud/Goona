@@ -17,7 +17,6 @@ import Animated, {
   withTiming, withSpring, withDelay, FadeInUp, FadeIn,
   interpolate, Extrapolation, Easing, useDerivedValue,
 } from 'react-native-reanimated'
-import BottomDock from '../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const H_PADDING = 24
@@ -984,8 +983,6 @@ export default function WorkerAlertsScreen() {
 
       {/* notes modal */}
       <NotesModal visible={showNotes} onClose={() => setShowNotes(false)} onSave={handleNotesSave} />
-
-      <BottomDock />
     </View>
   )
 }

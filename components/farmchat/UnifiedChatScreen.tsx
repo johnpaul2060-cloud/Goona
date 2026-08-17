@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, PanResponder, Animated, Alert, ToastAndroid } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Keyboard, Platform, PanResponder, Animated, Alert, ToastAndroid } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Icons } from '../../shared/icons'
@@ -368,6 +368,16 @@ export default function UnifiedChatScreen({ conv, messages, onSend, onBack }: {
     }
   }, [messages.length])
 
+  useEffect(() => {
+    const sub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 120)
+      },
+    )
+    return () => sub.remove()
+  }, [])
+
   const handleSend = useCallback(() => {
     if (!text.trim()) return
     const replyTo: MessageReplyTo | undefined = replyingTo
@@ -427,7 +437,7 @@ export default function UnifiedChatScreen({ conv, messages, onSend, onBack }: {
   }, [isGroup, prevSenderMap, handleSwipeReply, handleCopyMessage])
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>

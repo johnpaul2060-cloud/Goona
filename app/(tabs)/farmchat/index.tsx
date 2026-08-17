@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, KeyboardAvoidingView, Keyboard, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Icons } from '../../../shared/icons'
@@ -50,9 +50,26 @@ function isManagement(role: string) {
 function CommentSheet({ postId, comments, onClose, onSend }: { postId: string; comments: Comment[]; onClose: () => void; onSend: (text: string) => void }) {
   const [text, setText] = useState('')
   const inputRef = useRef<TextInput>(null)
+  const listRef = useRef<FlatList>(null)
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 100)
+  }, [])
+
+  useEffect(() => {
+    if (comments.length > 0) {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80)
+    }
+  }, [comments.length])
+
+  useEffect(() => {
+    const sub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 120)
+      },
+    )
+    return () => sub.remove()
   }, [])
 
   const handleSend = () => {
@@ -64,7 +81,7 @@ function CommentSheet({ postId, comments, onClose, onSend }: { postId: string; c
   return (
     <View style={styles.commentOverlay}>
       <TouchableOpacity style={styles.commentBackdrop} onPress={onClose} activeOpacity={1} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.commentSheet}>
+      <KeyboardAvoidingView behavior="padding" style={styles.commentSheet}>
         <View style={styles.commentSheetHandle}>
           <View style={styles.commentHandleBar} />
         </View>
@@ -75,6 +92,7 @@ function CommentSheet({ postId, comments, onClose, onSend }: { postId: string; c
           </TouchableOpacity>
         </View>
         <FlatList
+          ref={listRef}
           data={comments}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
@@ -204,7 +222,7 @@ export default function FarmChatScreen() {
 
       {/* FEED COMPOSER — outside FlatList so re-renders can't remount the TextInput */}
       {internalTab === 'feed' && (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.topComposer}>
             <TextInput
               style={styles.topComposerInput}

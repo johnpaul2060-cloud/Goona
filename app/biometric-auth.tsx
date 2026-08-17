@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeInUp, SlideInUp, FadeIn } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
-import BottomDock from '../components/navigation/BottomDock'
 import { useAuthStore, type RegisteredDevice } from '../store/useAuthStore'
 import { useSettingsStore } from '../store/useSettingsStore'
 import { useBiometricAuth } from '../hooks/useBiometricAuth'
@@ -74,7 +73,8 @@ export default function BiometricAuthScreen() {
         return
       }
       const result = await authenticate({ promptMessage: 'Enable biometric login', fallbackLabel: 'Cancel' })
-      if (result.success) {
+      if (Platform.OS === 'ios' && !result.success) return
+      try {
         await saveBiometricCredential({
           token: createBiometricToken(),
           email: authStore.email || 'adewale@example.com',
@@ -86,6 +86,8 @@ export default function BiometricAuthScreen() {
         authStore.setAuthenticatedSession(true)
         if (!settingsStore.security.biometric) settingsStore.toggleSecurity('biometric')
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      } catch {
+        return
       }
     }
   }, [isEnabled, checkBiometrics, authenticate, authStore, settingsStore])
@@ -244,8 +246,6 @@ export default function BiometricAuthScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-
-      <BottomDock />
 
       {/* DISABLE CONFIRMATION */}
       <ModalShell visible={showDisableConfirm} onClose={() => setShowDisableConfirm(false)} title="Disable Biometrics">

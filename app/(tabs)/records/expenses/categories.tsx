@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GoonaIcon from '../../../../components/ui/GoonaIcon'
 import { Icons } from '../../../../shared/icons'
 import Animated, { FadeInUp } from 'react-native-reanimated'
-import BottomDock from '../../../../components/navigation/BottomDock'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -93,8 +92,6 @@ export default function CategoriesScreen() {
           </Text>
         </Animated.View>
       </ScrollView>
-
-      <BottomDock />
     </View>
   )
 }

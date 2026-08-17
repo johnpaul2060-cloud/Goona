@@ -8,7 +8,6 @@ import { Icons } from '../../shared/icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInUp } from 'react-native-reanimated'
 import GoonaIcon from '../../components/ui/GoonaIcon'
-import BottomDock from '../../components/navigation/BottomDock'
 import DailyChallenge from '../../components/DailyChallenge'
 
 export default function DailyChallengeScreen() {
@@ -38,8 +37,6 @@ export default function DailyChallengeScreen() {
 
         <View style={{ height: 20 }} />
       </ScrollView>
-
-      <BottomDock />
     </View>
   )
 }

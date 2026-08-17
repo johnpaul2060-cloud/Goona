@@ -23,6 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize",
       "package": "com.goona.goona",
       "permissions": [
         "android.permission.USE_BIOMETRIC",
