@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, SafeAreaView,
+  View, Text, TextInput, TouchableOpacity,
   ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Dimensions,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Path, Circle, Ellipse, Rect, Line } from 'react-native-svg';

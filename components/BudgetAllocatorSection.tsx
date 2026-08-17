@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import {
-  View, Text, TouchableOpacity, TextInput, StyleSheet,
+  View, Text, TouchableOpacity, TextInput, StyleSheet, Keyboard,
 } from 'react-native'
-import Animated, { FadeInUp, Layout } from 'react-native-reanimated'
+import Animated, {
+  FadeInUp, Layout, useSharedValue, useAnimatedStyle, withTiming, Easing,
+} from 'react-native-reanimated'
 import GoonaIcon from './ui/GoonaIcon'
 import { Icons } from '../shared/icons'
 import { formatInput, parseAmount, formatNaira } from '../utils/format'
@@ -127,23 +129,112 @@ export default function BudgetAllocatorSection({ model, onChange }: BudgetAlloca
 
   const overAllocated = remaining < 0
 
+  const [expanded, setExpanded] = useState(false)
+  const [contentH, setContentH] = useState(0)
+  const bodyHeight = useSharedValue(0)
+  const chevronSpin = useSharedValue(0)
+
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronSpin.value}deg` }],
+  }))
+
+  const bodyStyle = useAnimatedStyle(() => ({
+    height: bodyHeight.value,
+  }))
+
+  const toggle = useCallback(() => {
+    const next = !expanded
+    setExpanded(next)
+    if (next) {
+      // Measured content height, floored so the body can never open at 0
+      // if the measurement hasn't landed yet.
+      bodyHeight.value = withTiming(Math.max(contentH, 1000), { duration: 320, easing: Easing.inOut(Easing.cubic) })
+    } else {
+      Keyboard.dismiss()
+      bodyHeight.value = withTiming(0, { duration: 240, easing: Easing.inOut(Easing.cubic) })
+    }
+    chevronSpin.value = withTiming(next ? 180 : 0, { duration: 240, easing: Easing.inOut(Easing.cubic) })
+  }, [expanded, contentH, bodyHeight, chevronSpin])
+
   return (
     <View style={styles.section}>
-      {/* Header */}
-      <View style={styles.head}>
-        <View style={styles.headTextWrap}>
-          <Text style={styles.title}>Operating Budget</Text>
-          <Text style={styles.sub}>
-            Optional — set an upfront budget for running the batch (feed, medication, labour, utilities, transport, repairs). Purchase of the animals is priced separately above.
-          </Text>
-        </View>
-        <View style={styles.optionalPill}>
-          <Text style={styles.optionalPillText}>Optional</Text>
-        </View>
-      </View>
-
-      {/* Total budget */}
+      {/* ONE unified card: header + animated budget body */}
       <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.header}
+          activeOpacity={0.85}
+          onPress={toggle}
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+        >
+          <View style={styles.headRow}>
+            <View style={styles.headIcon}>
+              <GoonaIcon icon={Icons.piggyBank} size={17} color="#2E7D32" />
+            </View>
+            <View style={styles.headTextWrap}>
+              <View style={styles.headTitleRow}>
+                <Text style={styles.title}>Operating Budget</Text>
+                <View style={styles.optionalPill}>
+                  <Text style={styles.optionalPillText}>Optional</Text>
+                </View>
+              </View>
+              <Text style={styles.sub} numberOfLines={expanded ? undefined : 2}>
+                Set an upfront budget for running the batch (feed, medication, labour, utilities, transport, repairs). Purchase of the animals is priced separately above.
+              </Text>
+            </View>
+            <Animated.View style={[styles.chevronWrap, chevronStyle]}>
+              <GoonaIcon icon={Icons.chevronDown} size={15} color="#2E7D32" />
+            </Animated.View>
+          </View>
+
+          {!expanded && (
+            totalBudget > 0 ? (
+              <View style={styles.collapsedSummary}>
+                <View style={styles.cSumChips}>
+                  <View style={styles.cSumChip}>
+                    <Text style={styles.cSumChipLbl}>Budget</Text>
+                    <Text style={styles.cSumChipVal}>{formatNaira(totalBudget)}</Text>
+                  </View>
+                  <View style={styles.cSumChip}>
+                    <Text style={styles.cSumChipLbl}>Allocated</Text>
+                    <Text style={styles.cSumChipVal}>{formatNaira(allocated)}</Text>
+                  </View>
+                  <View style={styles.cSumChip}>
+                    <Text style={styles.cSumChipLbl}>Used</Text>
+                    <Text style={[styles.cSumChipVal, overAllocated ? { color: '#EF4444' } : { color: '#2E7D32' }]}>
+                      {allocatedPct.toFixed(0)}%
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.cSumBarBg}>
+                  <View style={[styles.cSumBarFill, {
+                    width: `${allocationMode === 'percentage'
+                      ? Math.min(allocatedPct, 100)
+                      : totalBudget > 0 ? Math.min((allocated / totalBudget) * 100, 100) : 0}%`,
+                    backgroundColor: overAllocated ? '#EF4444' : allocatedPct > 90 ? '#F59E0B' : '#2E7D32',
+                  }]} />
+                </View>
+              </View>
+            ) : (
+              <View style={styles.collapsedEmpty}>
+                <Text style={styles.collapsedEmptyText}>No budget set yet — budgeting is optional</Text>
+              </View>
+            )
+          )}
+        </TouchableOpacity>
+
+      {/* Animated body — same card, flows under the header */}
+      <Animated.View style={[styles.body, bodyStyle]}>
+        <View
+          style={styles.bodyInner}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height
+            if (h !== contentH) {
+              setContentH(h)
+              if (expanded) bodyHeight.value = h
+            }
+          }}
+        >
         <Text style={styles.label}>Total Budget</Text>
         <View style={styles.fieldWrap}>
           <View style={styles.fieldIco}>
@@ -302,6 +393,8 @@ export default function BudgetAllocatorSection({ model, onChange }: BudgetAlloca
           Smart Allocate suggests an ideal split for {model === 'flock' ? 'flock' : model === 'breeder' ? 'breeder' : 'herd'} operations —
           edit any category afterwards.
         </Text>
+        </View>
+      </Animated.View>
       </View>
     </View>
   )
@@ -309,19 +402,50 @@ export default function BudgetAllocatorSection({ model, onChange }: BudgetAlloca
 
 const styles = StyleSheet.create({
   section: { marginBottom: 4 },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
-  headTextWrap: { flex: 1, minWidth: 0 },
-  title: { fontSize: 16, fontWeight: '800', color: '#1F2937' },
-  sub: { fontSize: 12, color: '#94A3B8', lineHeight: 18, marginTop: 3, textAlign: 'justify' },
-  optionalPill: {
-    backgroundColor: '#E8F5E9', borderRadius: 100, paddingHorizontal: 10, paddingVertical: 5,
-  },
-  optionalPillText: { fontSize: 10, fontWeight: '800', color: '#2E7D32', letterSpacing: 0.6, textTransform: 'uppercase' },
 
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 22, padding: 16,
     borderWidth: 1, borderColor: '#E8EFE4',
     shadowColor: '#0F3D22', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 2,
+  },
+  header: { borderRadius: 14, marginHorizontal: -6, paddingHorizontal: 6, paddingVertical: 2 },
+  headRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  headIcon: {
+    width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#E8F5E9',
+  },
+  headTextWrap: { flex: 1, minWidth: 0 },
+  headTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  title: { fontSize: 15, fontWeight: '800', color: '#1F2937' },
+  sub: { fontSize: 11, color: '#94A3B8', lineHeight: 16, marginTop: 3, textAlign: 'justify' },
+  optionalPill: { backgroundColor: '#E8F5E9', borderRadius: 100, paddingHorizontal: 8, paddingVertical: 3 },
+  optionalPillText: { fontSize: 9, fontWeight: '800', color: '#2E7D32', letterSpacing: 0.6, textTransform: 'uppercase' },
+  chevronWrap: {
+    width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#E8F5E9', marginTop: 2,
+  },
+
+  collapsedSummary: { marginTop: 12, gap: 8 },
+  cSumChips: { flexDirection: 'row', gap: 8 },
+  cSumChip: {
+    flex: 1, backgroundColor: '#F4F8F3', borderRadius: 12,
+    paddingVertical: 8, paddingHorizontal: 10, borderWidth: 1, borderColor: '#E8EFE4',
+  },
+  cSumChipLbl: { fontSize: 9, fontWeight: '700', color: '#94A3B8', letterSpacing: 0.5, textTransform: 'uppercase' },
+  cSumChipVal: { fontSize: 13, fontWeight: '800', color: '#1B1B1B', marginTop: 2, fontVariant: ['tabular-nums'] },
+  cSumBarBg: { height: 4, borderRadius: 2, backgroundColor: '#E8EFE4', overflow: 'hidden' },
+  cSumBarFill: { height: '100%', borderRadius: 2 },
+
+  collapsedEmpty: {
+    marginTop: 10, backgroundColor: '#F8FAF7', borderRadius: 12,
+    paddingVertical: 9, paddingHorizontal: 12, borderWidth: 1, borderColor: '#E8EFE4',
+  },
+  collapsedEmptyText: { fontSize: 11, fontWeight: '600', color: '#94A3B8' },
+
+  body: { overflow: 'hidden' },
+  bodyInner: {
+    borderTopWidth: 1, borderTopColor: '#EEF1EC',
+    marginTop: 14, paddingTop: 14,
   },
   label: { fontSize: 13, fontWeight: '700', color: '#1B1B1B', marginBottom: 8 },
   note: { fontSize: 11, color: '#94A3B8', lineHeight: 16, marginTop: 6 },

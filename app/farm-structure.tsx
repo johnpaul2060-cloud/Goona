@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, SafeAreaView, ScrollView, StyleSheet, Alert,
+  View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import Svg, { Rect, Line } from 'react-native-svg';

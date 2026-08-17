@@ -11,6 +11,7 @@ import Animated, { FadeInUp, Layout } from 'react-native-reanimated'
 import { formatInput, parseAmount, formatNaira } from '../../utils/format'
 import { useBatchStore, type BudgetAllocation } from '../../store/useBatchStore'
 import { BUDGET_ALLOCATION_CATEGORIES } from '../../shared/expense-categories'
+import { categoryTheme } from '../../shared/category-theme'
 import {
   smartAllocationPercents, smartAllocationAmounts,
   evenAllocationPercents, evenAllocationAmounts, pctString,
@@ -22,6 +23,7 @@ export default function BatchBudgetSetupScreen() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const storeBatch = useBatchStore((s) => s.getBatchById(id ?? ''))
+  const t = categoryTheme(storeBatch?.model)
   const updateBudgetAllocations = useBatchStore((s) => s.updateBudgetAllocations)
 
   const existingAllocs = storeBatch?.budgetAllocations ?? []
@@ -196,8 +198,8 @@ export default function BatchBudgetSetupScreen() {
               activeOpacity={0.7}
               onPress={allocationMode === 'amount' ? switchToPct : undefined}
             >
-              <View style={[styles.modeRadio, allocationMode === 'percentage' && styles.modeRadioActive]}>
-                {allocationMode === 'percentage' && <View style={styles.modeRadioInner} />}
+              <View style={[styles.modeRadio, allocationMode === 'percentage' ? { borderColor: t.accent } : undefined]}>
+                {allocationMode === 'percentage' && <View style={[styles.modeRadioInner, { backgroundColor: t.accent }]} />}
               </View>
               <Text style={[styles.modeLabel, allocationMode === 'percentage' && styles.modeLabelActive]}>Percentage</Text>
             </TouchableOpacity>
@@ -206,8 +208,8 @@ export default function BatchBudgetSetupScreen() {
               activeOpacity={0.7}
               onPress={allocationMode === 'percentage' ? switchToAmount : undefined}
             >
-              <View style={[styles.modeRadio, allocationMode === 'amount' && styles.modeRadioActive]}>
-                {allocationMode === 'amount' && <View style={styles.modeRadioInner} />}
+              <View style={[styles.modeRadio, allocationMode === 'amount' ? { borderColor: t.accent } : undefined]}>
+                {allocationMode === 'amount' && <View style={[styles.modeRadioInner, { backgroundColor: t.accent }]} />}
               </View>
               <Text style={[styles.modeLabel, allocationMode === 'amount' && styles.modeLabelActive]}>Amount</Text>
             </TouchableOpacity>
@@ -271,7 +273,7 @@ export default function BatchBudgetSetupScreen() {
                   <View style={styles.allocRight}>
                     {allocationMode === 'percentage' ? (
                       <>
-                        <View style={styles.pctInputWrap}>
+                        <View style={[styles.pctInputWrap, { backgroundColor: t.accentLight, borderColor: `${t.accent}33` }]}>
                           <TextInput
                             style={styles.pctInput}
                             value={pcts[cat.key] || ''}
@@ -280,7 +282,7 @@ export default function BatchBudgetSetupScreen() {
                             placeholder="0"
                             placeholderTextColor="#CBD5E1"
                           />
-                          <Text style={styles.pctSuffix}>%</Text>
+                          <Text style={[styles.pctSuffix, { color: t.accent }]}>%</Text>
                         </View>
                         <Text style={styles.pctAmount}>= {formatNaira(amtVal)}</Text>
                       </>
@@ -306,20 +308,20 @@ export default function BatchBudgetSetupScreen() {
           {/* Auto-allocate */}
           <View style={styles.allocFooter}>
             <TouchableOpacity
-              style={styles.autoAllocBtn}
+              style={[styles.autoAllocBtn, { backgroundColor: t.accentLight, borderColor: t.accent }]}
               activeOpacity={0.7}
               onPress={() => autoAllocate('even')}
             >
-              <GoonaIcon icon={Icons.sparkles} size={14} color="#2E7D32" />
-              <Text style={styles.autoAllocText}>Allocate Even</Text>
+              <GoonaIcon icon={Icons.sparkles} size={14} color={t.accent} />
+              <Text style={[styles.autoAllocText, { color: t.accent }]}>Allocate Even</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.autoAllocBtn}
+              style={[styles.autoAllocBtn, { backgroundColor: t.accentLight, borderColor: t.accent }]}
               activeOpacity={0.7}
               onPress={() => autoAllocate('smart')}
             >
-              <GoonaIcon icon={Icons.brainCircuit} size={14} color="#2E7D32" />
-              <Text style={styles.autoAllocText}>Smart Allocate</Text>
+              <GoonaIcon icon={Icons.brainCircuit} size={14} color={t.accent} />
+              <Text style={[styles.autoAllocText, { color: t.accent }]}>Smart Allocate</Text>
             </TouchableOpacity>
           </View>
 
@@ -340,7 +342,7 @@ export default function BatchBudgetSetupScreen() {
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.saveBtn}
+            style={[styles.saveBtn, { backgroundColor: t.accent, shadowColor: t.accentDark }]}
             activeOpacity={0.8}
             onPress={handleSave}
           >

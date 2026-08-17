@@ -4,13 +4,13 @@ import {
   Text,
   StyleSheet,
   Animated,
-  SafeAreaView,
   useWindowDimensions,
   PanResponder,
   Pressable,
   TouchableOpacity,
   LayoutChangeEvent,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';

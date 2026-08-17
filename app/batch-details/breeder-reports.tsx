@@ -16,7 +16,10 @@ import { useHatchStore } from '../../store/useHatchStore'
 import { computeFlockStats, formatFlockAgeShort, getFlockDate } from '../../utils/breeder'
 import { buildBreederReport, type WeeklyProduction } from '../../utils/breederReports'
 import { hatchStatusMeta } from '../../utils/hatch'
+import { CATEGORY_THEME } from '../../shared/category-theme'
 import type { IconComponent } from '../../shared/icons'
+
+const t = CATEGORY_THEME.breeder
 
 function fmtDate(dateIso: string): string {
   const d = new Date(`${dateIso}T00:00:00`)
@@ -35,7 +38,7 @@ function ProductionChart({ weeks }: { weeks: WeeklyProduction[] }) {
     <>
       <View style={styles.chartLegend}>
         <View style={styles.chartLegendItem}>
-          <View style={[styles.chartLegendDot, { backgroundColor: '#17663A' }]} />
+          <View style={[styles.chartLegendDot, { backgroundColor: t.accent }]} />
           <Text style={styles.chartLegendText}>Eggs</Text>
         </View>
         <View style={styles.chartLegendItem}>
@@ -58,7 +61,7 @@ function ProductionChart({ weeks }: { weeks: WeeklyProduction[] }) {
               </Text>
               <View style={styles.chartBarStack}>
                 <View style={{ height: barHeight(w.settable, peak), backgroundColor: w.settable > 0 ? '#CBD5E1' : 'transparent', borderRadius: 4 }} />
-                <View style={{ height: barHeight(w.eggs, peak), backgroundColor: '#17663A', borderRadius: 4, marginTop: 2 }} />
+                <View style={{ height: barHeight(w.eggs, peak), backgroundColor: t.accent, borderRadius: 4, marginTop: 2 }} />
               </View>
               <Text style={styles.chartWk}>W{w.weekIndex}</Text>
             </View>
@@ -96,8 +99,8 @@ function HatchComparison({ report }: { report: ReturnType<typeof buildBreederRep
     <View>
       <View style={styles.aggRow}>
         <View style={styles.aggBlock}>
-          <View style={[styles.aggIconWrap, { backgroundColor: '#F0FDF4' }]}>
-            <GoonaIcon icon={Icons.checkCircle} size={14} color="#16A34A" />
+          <View style={[styles.aggIconWrap, { backgroundColor: t.accentLight }]}>
+            <GoonaIcon icon={Icons.checkCircle} size={14} color={t.accent} />
           </View>
           <View style={styles.aggBody}>
             <Text style={styles.aggLabel}>Hatch Success (all batches)</Text>
@@ -204,7 +207,7 @@ export default function BreederReportsScreen() {
       <StatusBar style="light" />
       <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 32 + insets.bottom }} showsVerticalScrollIndicator={false}>
         <LinearGradient
-          colors={['#0C3A24', '#17663A', '#2E8B43', '#3FA345']}
+          colors={t.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.hero, { paddingTop: insets.top + 14 }]}
@@ -249,14 +252,14 @@ export default function BreederReportsScreen() {
             <Text style={styles.secTitle}>Lifetime Egg Performance</Text>
             {report && report.lifetime.totalEggs > 0 ? (
               <View style={styles.kpiGrid}>
-                <KpiTile icon={Icons.egg} iconBg="#F0FDF4" iconColor="#16A34A" value={report.lifetime.totalEggs.toLocaleString()} label="Total eggs" caption="All-time collected" />
+                <KpiTile icon={Icons.egg} iconBg={t.accentLight} iconColor={t.accent} value={report.lifetime.totalEggs.toLocaleString()} label="Total eggs" caption="All-time collected" />
                 {report.lifetime.activeDays > 1 ? (
                   <KpiTile icon={Icons.clock} iconBg="#EEF3FF" iconColor="#1A56FF" value={String(report.lifetime.avgEggsPerActiveDay)} label="Avg per logging day" />
                 ) : (
                   <KpiTile icon={Icons.clock} iconBg="#EEF3FF" iconColor="#1A56FF" value="—" label="Avg per logging day" caption="Shown once 2+ days are logged" />
                 )}
                 <KpiTile icon={Icons.activity} iconBg="#FFFBEB" iconColor="#D97706" value={report.lifetime.henDayPct != null ? `${report.lifetime.henDayPct.toFixed(1)}%` : '—'} label="Hen-day production" caption="Eggs ÷ (current hens × days in production)" />
-                <KpiTile icon={Icons.target} iconBg="#F0FDF4" iconColor="#16A34A" value={report.lifetime.totalSettable.toLocaleString()} label="Settable eggs" />
+                <KpiTile icon={Icons.target} iconBg={t.accentLight} iconColor={t.accent} value={report.lifetime.totalSettable.toLocaleString()} label="Settable eggs" />
                 <KpiTile icon={Icons.checkCircle} iconBg="#EEF3FF" iconColor="#1A56FF" value={report.lifetime.settablePct != null ? `${report.lifetime.settablePct.toFixed(1)}%` : '—'} label="Settable rate" caption="Of total eggs collected" />
                 <KpiTile icon={Icons.trendingUp} iconBg="#FFFBEB" iconColor="#D97706" value={report.series.peakWeek != null ? `W${report.series.peakWeek}` : '—'} label="Peak week" caption={report.series.peakEggs > 0 ? `${report.series.peakEggs.toLocaleString()} eggs` : undefined} />
               </View>
@@ -322,7 +325,7 @@ const styles = StyleSheet.create({
 
   hero: {
     borderRadius: 32, padding: 24, marginTop: 14, overflow: 'hidden',
-    shadowColor: '#0C3A24', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.28, shadowRadius: 45, elevation: 8,
+    shadowColor: t.accentDark, shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.28, shadowRadius: 45, elevation: 8,
   },
   heroOrb1: {
     position: 'absolute', top: -20, right: -10, width: 160, height: 160, borderRadius: 80,
@@ -351,7 +354,7 @@ const styles = StyleSheet.create({
   recordsCard: {
     backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18, marginTop: 14,
     borderWidth: 1, borderColor: '#E8EFE6',
-    shadowColor: '#0C3A24', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 2,
+    shadowColor: t.accentDark, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 2,
   },
   secTitle: { fontSize: 14, fontWeight: '800', color: '#15291A' },
   secDesc: { fontSize: 11, fontWeight: '500', color: '#64748B', marginTop: 2 },

@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   FadeInUp, FadeInDown, SlideInUp,
-  useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing,
+  useSharedValue, useAnimatedStyle, useAnimatedProps, withSpring, withTiming, withDelay, Easing,
 } from 'react-native-reanimated'
 import { useBatchStore, type Batch, type BudgetAllocation } from '../../store/useBatchStore'
 import { useHistoryStore } from '../../store/useHistoryStore'
@@ -32,6 +32,7 @@ import {
   countdownLabel, nextHatchName, computeHatchKpis, hatchStatusMeta,
 } from '../../utils/hatch'
 import { computeHatchAggregates } from '../../utils/breederReports'
+import { CATEGORY_THEME, categoryTheme, type CategoryAccent } from '../../shared/category-theme'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import AnimalsSection from '../../components/animals/AnimalsSection'
 import BreedingSection from '../../components/animals/BreedingSection'
@@ -77,6 +78,7 @@ function formatNairaFull(amount: number): string {
 
 function RecordsSection({ batch }: { batch: import('../../store/useBatchStore').Batch }) {
   const records = useHistoryStore((s) => s.records)
+  const t = categoryTheme(batch.model)
   const [expanded, setExpanded] = useState(false)
   const [reduceMotion, setReduceMotion] = useState(false)
 
@@ -262,7 +264,7 @@ function RecordsSection({ batch }: { batch: import('../../store/useBatchStore').
                 activeOpacity={0.7}
                 onPress={() => router.push(`/(tabs)/records/sales-revenue?batchFilter=${encodeURIComponent(batch.batchName)}` as any)}
               >
-                <Text style={styles.recordsViewAllText}>View all {batchRecords.length} records \u2192</Text>
+                <Text style={[styles.recordsViewAllText, { color: t.accent }]}>View all {batchRecords.length} records \u2192</Text>
               </TouchableOpacity>
             )}
           </Animated.View>
@@ -493,7 +495,7 @@ function deriveBatchDetail(batch: import('../../store/useBatchStore').Batch) {
 
 // ─── BUDGET SECTION ───
 
-function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/useBatchStore').Batch; batchRevenue?: number }) {
+function BudgetSection({ batch, batchRevenue, theme }: { batch: import('../../store/useBatchStore').Batch; batchRevenue?: number; theme?: CategoryAccent }) {
   const records = useHistoryStore((s) => s.records)
   const updateBudgetAllocations = useBatchStore((s) => s.updateBudgetAllocations)
   const [expanded, setExpanded] = useState(false)
@@ -587,7 +589,7 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
               onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/batch-details/budget-setup?id=${batch.id}` as any) }}
               style={({ pressed }) => [styles.budgetEditBtn, { transform: [{ scale: pressed ? 0.95 : 1 }] }]}
             >
-              <GoonaIcon icon={Icons.edit3} size={14} color="#17663A" />
+              <GoonaIcon icon={Icons.edit3} size={14} color={theme?.accent ?? '#17663A'} />
             </Pressable>
             <View style={[styles.budgetChevron, expanded && styles.budgetChevronOpen]}>
               <GoonaIcon icon={Icons.chevronDown} size={16} color="#64748B" />
@@ -647,7 +649,7 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
             <Text style={styles.budgetEmptyText}>No budget set for this batch yet</Text>
             <TouchableOpacity
               activeOpacity={0.8}
-              style={styles.budgetSetBtn}
+              style={[styles.budgetSetBtn, { backgroundColor: theme?.accent ?? '#17663A' }]}
               onPress={() => router.push(`/batch-details/budget-setup?id=${batch.id}` as any)}
             >
               <Text style={styles.budgetSetBtnText}>Set Batch Budget</Text>
@@ -737,34 +739,81 @@ function BudgetSection({ batch, batchRevenue }: { batch: import('../../store/use
 
 // ─── BREEDER HERO ───
 
-function BreederHero({ batch, stats, flockAge, isCompleted, eggSummary }: {
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
+
+// Counts a number up from 0 → target once, driven by Reanimated's timing
+// curve (read from JS so the Text can format). Runs once on mount.
+function useCountUp(target: number, decimals = 0, duration = 850, delay = 150): number {
+  const progress = useSharedValue(0)
+  const targetRef = useRef(target)
+  const [display, setDisplay] = useState(0)
+  useEffect(() => {
+    progress.value = 0
+    progress.value = withDelay(delay, withTiming(1, { duration, easing: Easing.out(Easing.cubic) }))
+    const id = setInterval(() => {
+      setDisplay(Number((progress.value * targetRef.current).toFixed(decimals)))
+    }, 33)
+    return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return display
+}
+
+function BreederHero({ batch, stats, flockAge, isCompleted, eggSummary, theme }: {
   batch: Batch
   stats: FlockStats
   flockAge: string
   isCompleted: boolean
   eggSummary: BreederEggSummary | null
+  theme: CategoryAccent
 }) {
+  const heroCount = useCountUp(stats.currentPopulation, 0, 850, 80)
+  const hensCount = useCountUp(stats.currentHens, 0, 850, 250)
+  const cocksCount = useCountUp(stats.currentCocks, 0, 850, 330)
+  const popCount = useCountUp(stats.currentPopulation, 0, 850, 410)
+  const eggsCount = useCountUp(eggSummary?.weeklyEggs ?? 0, 0, 850, 490)
+  const henDayCount = useCountUp(eggSummary?.weeklyHenDayPct ?? 0, 1, 850, 570)
+  const settableCount = useCountUp(eggSummary?.weeklySettablePct ?? 0, 1, 850, 650)
+  const alivePctCount = useCountUp(stats.alivePct, 0, 850, 300)
+
+  const ringProgress = useSharedValue(0)
+  useEffect(() => {
+    ringProgress.value = withDelay(350, withTiming(1, { duration: 1000, easing: Easing.out(Easing.cubic) }))
+  }, [ringProgress])
+  const ringProps = useAnimatedProps(() => ({
+    strokeDashoffset: 251.2 - (stats.alivePct / 100) * 251.2 * ringProgress.value,
+  }))
+
+  const barProgress = useSharedValue(0)
+  useEffect(() => {
+    barProgress.value = withDelay(450, withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) }))
+  }, [barProgress])
+  const barStyle = useAnimatedStyle(() => ({
+    width: `${(stats.alivePct * barProgress.value).toFixed(2)}%` as `${number}%`,
+  }))
+
   return (
     <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.hero}>
       <LinearGradient
-        colors={isCompleted ? ['#374151', '#4B5563', '#6B7280'] : ['#0C3A24', '#17663A', '#2E8B43', '#3FA345']}
+        colors={isCompleted ? ['#374151', '#4B5563', '#6B7280'] : theme.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.heroOrb1} pointerEvents="none" />
       <View style={styles.heroOrb2} pointerEvents="none" />
+      <View style={[styles.heroGlow, { backgroundColor: theme.glow }]} pointerEvents="none" />
       <View style={styles.heroSheen} pointerEvents="none" />
       <View style={styles.heroRinglines} pointerEvents="none" />
 
       <View style={styles.heroTop}>
         <View>
           <View style={styles.heroEyebrow}>
-            <View style={styles.heroLiveDot} />
+            <View style={[styles.heroLiveDot, { backgroundColor: theme.highlight }]} />
             <Text style={styles.heroEyebrowText}>{isCompleted ? 'Flock Closed' : 'Breeder Flock · Active'}</Text>
           </View>
           <Text style={styles.heroCount}>
-            {stats.currentPopulation} <Text style={styles.heroCountSmall}>{batch.livestockType}</Text>
+            {heroCount} <Text style={styles.heroCountSmall}>{batch.livestockType}</Text>
           </Text>
           <Text style={styles.heroWeek}>Flock age · {flockAge || '—'}</Text>
           <View style={styles.heroChips}>
@@ -787,17 +836,18 @@ function BreederHero({ batch, stats, flockAge, isCompleted, eggSummary }: {
         {/* ring */}
         <View style={styles.ringWrap}>
           <Svg width="96" height="96" viewBox="0 0 96 96">
+            <Circle cx="48" cy="48" r="40" fill="none" stroke={isCompleted ? 'rgba(156,163,175,0.22)' : theme.highlightSoft} strokeWidth="12" />
             <Circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="8" />
-            <Circle
+            <AnimatedCircle
               cx="48" cy="48" r="40" fill="none"
-              stroke={isCompleted ? '#9CA3AF' : '#AEEA00'}
+              stroke={isCompleted ? '#9CA3AF' : theme.highlight}
               strokeWidth="8" strokeLinecap="round"
               strokeDasharray="251.2"
-              strokeDashoffset={251.2 - (stats.alivePct / 100) * 251.2}
+              animatedProps={ringProps}
             />
           </Svg>
           <View style={styles.ringCenter}>
-            <Text style={[styles.ringPct, isCompleted && { color: '#D1D5DB' }]}>{stats.alivePct}%</Text>
+            <Text style={[styles.ringPct, isCompleted && { color: '#D1D5DB' }]}>{alivePctCount}%</Text>
             <Text style={styles.ringLbl}>Alive</Text>
           </View>
         </View>
@@ -805,60 +855,56 @@ function BreederHero({ batch, stats, flockAge, isCompleted, eggSummary }: {
 
       {/* stat cells */}
       <View style={styles.heroStats}>
-        <View style={styles.hstat}>
-          <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{stats.currentHens}</Text>
+        <Animated.View entering={FadeInUp.duration(420).delay(250).springify()} style={[styles.hstat, { shadowColor: theme.shadow }]}>
+          <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{hensCount}</Text>
           <Text style={styles.hstatL}>Hens</Text>
-        </View>
-        <View style={styles.hstat}>
-          <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{stats.currentCocks}</Text>
+        </Animated.View>
+        <Animated.View entering={FadeInUp.duration(420).delay(330).springify()} style={[styles.hstat, { shadowColor: theme.shadow }]}>
+          <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{cocksCount}</Text>
           <Text style={styles.hstatL}>Cocks</Text>
-        </View>
-        <View style={styles.hstat}>
-          <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{stats.currentPopulation}</Text>
+        </Animated.View>
+        <Animated.View entering={FadeInUp.duration(420).delay(410).springify()} style={[styles.hstat, { shadowColor: theme.shadow }]}>
+          <Text style={[styles.hstatV, { color: theme.highlight }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{popCount}</Text>
           <Text style={styles.hstatL}>Population now</Text>
-        </View>
-        <View style={styles.hstat}>
-          <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull(batch.purchaseCost || 0)}</Text>
-          <Text style={styles.hstatL}>Purchase Cost</Text>
-        </View>
+        </Animated.View>
       </View>
 
       {/* laying performance — Phase 2 */}
       {eggSummary ? (
-        <View style={styles.heroEggWrap}>
+        <Animated.View entering={FadeInUp.duration(420).delay(470).springify()} style={styles.heroEggWrap}>
           <Text style={styles.heroEggTitle}>
             Laying · this week{' '}
-            <Text style={styles.heroEggSub}> · hen-day on {stats.currentHens} hens</Text>
+            <Text style={styles.heroEggSub}> · hen-day on {hensCount} hens</Text>
           </Text>
           <View style={styles.heroEggRow}>
-            <View style={styles.heroEggCell}>
-              <Text style={styles.heroEggV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{eggSummary.weeklyEggs.toLocaleString()}</Text>
+            <Animated.View entering={FadeInUp.duration(420).delay(490).springify()} style={[styles.heroEggCell, { shadowColor: theme.shadow }]}>
+              <Text style={styles.heroEggV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{eggsCount.toLocaleString()}</Text>
               <Text style={styles.heroEggL}>Eggs</Text>
-            </View>
-            <View style={styles.heroEggCell}>
+            </Animated.View>
+            <Animated.View entering={FadeInUp.duration(420).delay(570).springify()} style={[styles.heroEggCell, { shadowColor: theme.shadow }]}>
               <Text style={styles.heroEggV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
-                {eggSummary.weeklyDaysActive > 0 && stats.currentHens > 0 ? `${eggSummary.weeklyHenDayPct.toFixed(1)}%` : '—'}
+                {eggSummary.weeklyDaysActive > 0 && stats.currentHens > 0 ? `${henDayCount.toFixed(1)}%` : '—'}
               </Text>
               <Text style={styles.heroEggL}>Hen-day</Text>
-            </View>
-            <View style={styles.heroEggCell}>
+            </Animated.View>
+            <Animated.View entering={FadeInUp.duration(420).delay(650).springify()} style={[styles.heroEggCell, { shadowColor: theme.shadow }]}>
               <Text style={styles.heroEggV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
-                {eggSummary.weeklyEggs > 0 ? `${eggSummary.weeklySettablePct.toFixed(1)}%` : '—'}
+                {eggSummary.weeklyEggs > 0 ? `${settableCount.toFixed(1)}%` : '—'}
               </Text>
               <Text style={styles.heroEggL}>Settable</Text>
-            </View>
+            </Animated.View>
           </View>
-        </View>
+        </Animated.View>
       ) : null}
 
       {/* population bar */}
       <View style={styles.heroProg}>
         <View style={styles.heroProgRow}>
           <Text style={styles.heroProgLabel}>{isCompleted ? 'Flock closed' : `Live population · of ${stats.openingTotal} placed`}</Text>
-          <Text style={styles.heroProgVal}>{stats.alivePct}%</Text>
+          <Text style={styles.heroProgVal}>{alivePctCount}%</Text>
         </View>
         <View style={styles.heroTrack}>
-          <View style={[styles.heroTrackFill, { width: `${stats.alivePct}%` as any }]} />
+          <Animated.View style={[styles.heroTrackFill, barStyle, { backgroundColor: theme.highlight, shadowColor: theme.highlight }]} />
         </View>
       </View>
     </Animated.View>
@@ -869,6 +915,7 @@ function BreederHero({ batch, stats, flockAge, isCompleted, eggSummary }: {
 
 function MortalityCullsCard({ batch }: { batch: Batch }) {
   const updateBatch = useBatchStore((s) => s.updateBatch)
+  const t = categoryTheme(batch.model)
   const [femaleDeaths, setFemaleDeaths] = useState('')
   const [maleDeaths, setMaleDeaths] = useState('')
   const [culledFemales, setCulledFemales] = useState('')
@@ -930,8 +977,8 @@ function MortalityCullsCard({ batch }: { batch: Batch }) {
 
         {batch.house ? (
           <View style={styles.mortHouseRow}>
-            <GoonaIcon icon={Icons.house} size={13} color="#17663A" />
-            <Text style={styles.mortHouse}>House / Pen — {batch.house}</Text>
+            <GoonaIcon icon={Icons.house} size={13} color={t.accent} />
+            <Text style={[styles.mortHouse, { color: t.accent }]}>House / Pen — {batch.house}</Text>
           </View>
         ) : null}
 
@@ -945,7 +992,7 @@ function MortalityCullsCard({ batch }: { batch: Batch }) {
         </View>
 
         <TouchableOpacity
-          style={[styles.mortAddBtn, totalNew < 1 && styles.mortAddBtnDisabled]}
+          style={[styles.mortAddBtn, { backgroundColor: t.accent }, totalNew < 1 && styles.mortAddBtnDisabled]}
           activeOpacity={0.85}
           onPress={handleAdd}
         >
@@ -1102,6 +1149,7 @@ function LogEggsSheet({ visible, batchId, batchName, currentHens, onClose }: {
   onClose: () => void
 }) {
   const addEggRecords = useBreederEggStore((s) => s.addEggRecords)
+  const t = CATEGORY_THEME.breeder
 
   const [mode, setMode] = useState<'single' | 'multiple'>('single')
   const [lineItems, setLineItems] = useState<{ id: string; date: string; totalEggs: number; grading?: import('../../store/useBreederEggStore').BreederEggGrading }[]>([])
@@ -1257,7 +1305,7 @@ function LogEggsSheet({ visible, batchId, batchName, currentHens, onClose }: {
 
           <View style={styles.sheetHeader}>
             <View style={styles.sheetIconWrap}>
-              <GoonaIcon icon={Icons.egg} size={28} color="#17663A" />
+              <GoonaIcon icon={Icons.egg} size={28} color={t.accent} />
             </View>
             <Text style={styles.sheetTitle}>Log Eggs</Text>
             <Text style={styles.sheetDesc}>
@@ -1285,9 +1333,9 @@ function LogEggsSheet({ visible, batchId, batchName, currentHens, onClose }: {
             {/* date */}
             <Text style={styles.eggFieldLabel}>Collection Date</Text>
             <TouchableOpacity style={styles.eggDateField} activeOpacity={0.75} onPress={() => setShowDatePicker(!showDatePicker)}>
-              <GoonaIcon icon={Icons.calendar} size={18} color="#17663A" />
+              <GoonaIcon icon={Icons.calendar} size={18} color={t.accent} />
               <Text style={styles.eggDateValue}>{date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
-              <GoonaIcon icon={Icons.chevronDown} size={14} color="#17663A" />
+              <GoonaIcon icon={Icons.chevronDown} size={14} color={t.accent} />
             </TouchableOpacity>
             {showDatePicker && (
               <View style={styles.eggInlinePicker}>
@@ -1331,7 +1379,7 @@ function LogEggsSheet({ visible, batchId, batchName, currentHens, onClose }: {
             {/* optional grading */}
             <TouchableOpacity style={styles.eggGradeToggle} activeOpacity={0.75} onPress={() => setGradingVisible((v) => !v)}>
               <View style={styles.eggGradeToggleLeft}>
-                <GoonaIcon icon={Icons.egg} size={15} color="#17663A" />
+                <GoonaIcon icon={Icons.egg} size={15} color={t.accent} />
                 <Text style={styles.eggGradeToggleText}>Grading (optional)</Text>
               </View>
               <View style={[styles.recordsChevron, gradingVisible && styles.recordsChevronOpen]}>
@@ -1418,7 +1466,7 @@ function LogEggsSheet({ visible, batchId, batchName, currentHens, onClose }: {
               onPress={mode === 'multiple' ? addEntry : handleSaveSingle}
             >
               <LinearGradient
-                colors={primaryDisabled ? ['#A7BFAE', '#A7BFAE'] : ['#17663A', '#2E7D32']}
+                colors={primaryDisabled ? ['#A7BFAE', '#A7BFAE'] : [t.accent, t.accentDark]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -1594,6 +1642,7 @@ function SetEggsSheet({ visible, flockId, flockName, livestockType, hatchBatches
   onClose: () => void
 }) {
   const addHatch = useHatchStore((s) => s.addHatch)
+  const t = CATEGORY_THEME.breeder
   const kb = useSheetKeyboard()
   const resetKeyboard = kb.resetKeyboard
 
@@ -1671,7 +1720,7 @@ function SetEggsSheet({ visible, flockId, flockName, livestockType, hatchBatches
 
           <View style={styles.sheetHeader}>
             <View style={styles.sheetIconWrap}>
-              <GoonaIcon icon={Icons.egg} size={28} color="#17663A" />
+              <GoonaIcon icon={Icons.egg} size={28} color={t.accent} />
             </View>
             <Text style={styles.sheetTitle}>Set Eggs to Incubate</Text>
             <Text style={styles.sheetDesc}>
@@ -1705,9 +1754,9 @@ function SetEggsSheet({ visible, flockId, flockName, livestockType, hatchBatches
             <View onLayout={kb.captureY('date')}>
               <Text style={styles.eggFieldLabel}>Set Date</Text>
               <TouchableOpacity style={styles.eggDateField} activeOpacity={0.75} onPress={() => setShowDatePicker(!showDatePicker)}>
-                <GoonaIcon icon={Icons.calendar} size={18} color="#17663A" />
+                <GoonaIcon icon={Icons.calendar} size={18} color={t.accent} />
                 <Text style={styles.eggDateValue}>{date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
-                <GoonaIcon icon={Icons.chevronDown} size={14} color="#17663A" />
+                <GoonaIcon icon={Icons.chevronDown} size={14} color={t.accent} />
               </TouchableOpacity>
               {showDatePicker && (
                 <View style={styles.eggInlinePicker}>
@@ -1785,7 +1834,7 @@ function SetEggsSheet({ visible, flockId, flockName, livestockType, hatchBatches
               <Switch
                 value={trackFertility}
                 onValueChange={(v) => setTrackFertility(v)}
-                trackColor={{ false: '#E2E8F0', true: '#2E7D32' }}
+                trackColor={{ false: '#E2E8F0', true: t.accent }}
                 thumbColor="#FFFFFF"
               />
             </View>
@@ -1817,7 +1866,7 @@ function SetEggsSheet({ visible, flockId, flockName, livestockType, hatchBatches
               onPress={handleSave}
             >
               <LinearGradient
-                colors={eggsSet < 1 || incubationDays < 1 || !nameStr.trim() ? ['#A7BFAE', '#A7BFAE'] : ['#17663A', '#2E7D32']}
+                colors={eggsSet < 1 || incubationDays < 1 || !nameStr.trim() ? ['#A7BFAE', '#A7BFAE'] : [t.accent, t.accentDark]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -1848,6 +1897,7 @@ function RecordHatchSheet({ visible, hatch, onClose }: {
   onClose: () => void
 }) {
   const updateHatch = useHatchStore((s) => s.updateHatch)
+  const t = CATEGORY_THEME.breeder
   const kb = useSheetKeyboard()
   const resetKeyboard = kb.resetKeyboard
 
@@ -1920,7 +1970,7 @@ function RecordHatchSheet({ visible, hatch, onClose }: {
             <>
               <View style={styles.sheetHeader}>
                 <View style={styles.sheetIconWrap}>
-                  <GoonaIcon icon={Icons.egg} size={28} color="#17663A" />
+                  <GoonaIcon icon={Icons.egg} size={28} color={t.accent} />
                 </View>
                 <Text style={styles.sheetTitle}>Record Hatch</Text>
                 <Text style={styles.sheetDesc}>
@@ -2004,7 +2054,7 @@ function RecordHatchSheet({ visible, hatch, onClose }: {
                   onPress={handleSave}
                 >
                   <LinearGradient
-                    colors={chicksStr.trim() === '' ? ['#A7BFAE', '#A7BFAE'] : ['#17663A', '#2E7D32']}
+                    colors={chicksStr.trim() === '' ? ['#A7BFAE', '#A7BFAE'] : [t.accent, t.accentDark]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={StyleSheet.absoluteFill}
@@ -2060,6 +2110,7 @@ export default function BatchDetailsScreen() {
   }, [id, storeBatch])
 
   const isBreeder = storeBatch?.model === 'breeder'
+  const catTheme = categoryTheme(storeBatch?.model ?? (batch as { model?: string | null }).model)
 
   const breederStats = useMemo(
     () => (storeBatch && isBreeder ? computeFlockStats(storeBatch) : null),
@@ -2262,11 +2313,11 @@ export default function BatchDetailsScreen() {
 
         {/* ===== PREMIUM HERO ===== */}
         {isBreeder && storeBatch && breederStats ? (
-          <BreederHero batch={storeBatch} stats={breederStats} flockAge={flockAge} isCompleted={isCompleted} eggSummary={eggSummary} />
+          <BreederHero batch={storeBatch} stats={breederStats} flockAge={flockAge} isCompleted={isCompleted} eggSummary={eggSummary} theme={catTheme} />
         ) : (
         <Animated.View entering={FadeInUp.duration(500).delay(80).springify()} style={styles.hero}>
           <LinearGradient
-            colors={isCompleted ? ['#374151', '#4B5563', '#6B7280'] : ['#0C3A24', '#17663A', '#2E8B43', '#3FA345']}
+            colors={isCompleted ? ['#374151', '#4B5563', '#6B7280'] : catTheme.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -2274,13 +2325,14 @@ export default function BatchDetailsScreen() {
           {/* depth layers */}
           <View style={styles.heroOrb1} pointerEvents="none" />
           <View style={styles.heroOrb2} pointerEvents="none" />
+          <View style={[styles.heroGlow, { backgroundColor: catTheme.glow }]} pointerEvents="none" />
           <View style={styles.heroSheen} pointerEvents="none" />
           <View style={styles.heroRinglines} pointerEvents="none" />
 
           <View style={styles.heroTop}>
             <View>
               <View style={styles.heroEyebrow}>
-                <View style={styles.heroLiveDot} />
+                <View style={[styles.heroLiveDot, { backgroundColor: catTheme.highlight }]} />
                 <Text style={styles.heroEyebrowText}>{isCompleted ? 'Cycle Completed' : 'Active Production'}</Text>
               </View>
               <Text style={styles.heroCount}>
@@ -2314,10 +2366,11 @@ export default function BatchDetailsScreen() {
             {/* ring */}
             <View style={styles.ringWrap}>
               <Svg width="96" height="96" viewBox="0 0 96 96">
+                <Circle cx="48" cy="48" r="40" fill="none" stroke={isCompleted ? 'rgba(156,163,175,0.22)' : catTheme.highlightSoft} strokeWidth="12" />
                 <Circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="8" />
                 <Circle
                   cx="48" cy="48" r="40" fill="none"
-                  stroke={isCompleted ? '#9CA3AF' : '#AEEA00'}
+                  stroke={isCompleted ? '#9CA3AF' : catTheme.highlight}
                   strokeWidth="8" strokeLinecap="round"
                   strokeDasharray="251.2"
                   strokeDashoffset={251.2 - (displayProgress / 100) * 251.2}
@@ -2332,20 +2385,20 @@ export default function BatchDetailsScreen() {
 
           {/* stat cells */}
           <View style={styles.heroStats}>
-            <View style={styles.hstat}>
+            <View style={[styles.hstat, { shadowColor: catTheme.shadow }]}>
               <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{batch.mortality}</Text>
               <Text style={styles.hstatL}>Mortality</Text>
             </View>
-            <View style={styles.hstat}>
+            <View style={[styles.hstat, { shadowColor: catTheme.shadow }]}>
               <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{batch.feedUsed}</Text>
               <Text style={styles.hstatL}>Feed Used</Text>
             </View>
-            <View style={styles.hstat}>
+            <View style={[styles.hstat, { shadowColor: catTheme.shadow }]}>
               <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{batchRevenue > 0 ? formatNairaFull(batchRevenue) : batch.revenue}</Text>
               <Text style={styles.hstatL}>{batchRevenue > 0 ? 'Revenue (actual)' : 'Est. Revenue'}</Text>
             </View>
-            <View style={styles.hstat}>
-              <Text style={[styles.hstatV, styles.hstatVLime]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull((storeBatch?.purchaseCost ?? 0) || 0)}</Text>
+            <View style={[styles.hstat, { shadowColor: catTheme.shadow }]}>
+              <Text style={styles.hstatV} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>{formatNairaFull((storeBatch?.purchaseCost ?? 0) || 0)}</Text>
               <Text style={styles.hstatL}>Purchase Cost</Text>
             </View>
           </View>
@@ -2357,7 +2410,7 @@ export default function BatchDetailsScreen() {
               <Text style={styles.heroProgVal}>{displayProgress}%</Text>
             </View>
             <View style={styles.heroTrack}>
-              <View style={[styles.heroTrackFill, { width: `${displayProgress}%` as any }]} />
+              <View style={[styles.heroTrackFill, { width: `${displayProgress}%` as any, backgroundColor: catTheme.highlight, shadowColor: catTheme.highlight }]} />
             </View>
           </View>
         </Animated.View>
@@ -2374,7 +2427,7 @@ export default function BatchDetailsScreen() {
                   : undefined
               }
             >
-              <Text style={styles.secLink}>{isBreeder ? 'Open Report' : 'Full Report'}</Text>
+              <Text style={[styles.secLink, { color: catTheme.accent }]}>{isBreeder ? 'Open Report' : 'Full Report'}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -2415,7 +2468,7 @@ export default function BatchDetailsScreen() {
         <Animated.View entering={FadeInUp.duration(500).delay(320).springify()} style={styles.tl}>
           {batch.timeline.map((item, i) => (
             <View key={i} style={styles.tlItem}>
-              <View style={[styles.tlDot, item.warn && styles.tlDotWarn]} />
+              <View style={[styles.tlDot, { backgroundColor: catTheme.accent }, item.warn && styles.tlDotWarn]} />
               <View style={styles.tlBody}>
                 <Text style={styles.tlTitle}>{item.title}</Text>
                 <Text style={styles.tlDesc}>{item.desc}</Text>
@@ -2427,7 +2480,7 @@ export default function BatchDetailsScreen() {
 
         {/* BUDGET */}
         {storeBatch && storeBatch.budgetAllocations && storeBatch.budgetAllocations.length > 0 && (
-          <BudgetSection batch={storeBatch} batchRevenue={batchRevenue} />
+          <BudgetSection batch={storeBatch} batchRevenue={batchRevenue} theme={catTheme} />
         )}
 
         {/* RECORDS */}
@@ -2470,7 +2523,7 @@ export default function BatchDetailsScreen() {
           {isCompleted ? (
             <>
               <TouchableOpacity
-              style={styles.restoreBtn}
+              style={[styles.restoreBtn, { borderColor: catTheme.accent, shadowColor: catTheme.accent }]}
               activeOpacity={0.85}
               onPress={() => {
                 const name = batch.name
@@ -2484,14 +2537,14 @@ export default function BatchDetailsScreen() {
                 )
               }}
             >
-              <View style={styles.restoreIconWrap}>
-                <GoonaIcon icon={Icons.refreshCw} size={20} color="#2E7D32" />
+              <View style={[styles.restoreIconWrap, { backgroundColor: catTheme.accentLight }]}>
+                <GoonaIcon icon={Icons.refreshCw} size={20} color={catTheme.accent} />
               </View>
               <View style={styles.restoreTextWrap}>
                 <Text style={styles.restoreTitle}>Restore to Active</Text>
                 <Text style={styles.restoreSub}>Move batch back to Active Batches</Text>
               </View>
-              <GoonaIcon icon={Icons.chevronRight} size={18} color="#2E7D32" />
+              <GoonaIcon icon={Icons.chevronRight} size={18} color={catTheme.accent} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.deleteBtn}
@@ -2680,6 +2733,10 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: -30, left: -20, width: 120, height: 120, borderRadius: 60,
     backgroundColor: 'rgba(255,255,255,0.05)', zIndex: 0,
   },
+  heroGlow: {
+    position: 'absolute', bottom: -70, left: '15%', width: 240, height: 150, borderRadius: 100,
+    backgroundColor: 'rgba(212,255,77,0.10)', zIndex: 0,
+  },
   heroSheen: {
     position: 'absolute', top: '10%', left: '-20%', width: '60%', height: '30%',
     backgroundColor: 'rgba(255,255,255,0.04)', zIndex: 0, transform: [{ rotate: '-20deg' }],
@@ -2695,11 +2752,16 @@ const styles = StyleSheet.create({
   heroCount: { fontFamily: 'Poppins', fontWeight: '800', fontSize: 30, color: 'white', marginTop: 0, lineHeight: 36 },
   heroCountSmall: { fontSize: 16, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
   heroWeek: { fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: -2 },
-  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  heroChip: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.12)' },
-  heroChipHot: { backgroundColor: '#FFFBEB' },
+  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  heroChip: {
+    paddingVertical: 5, paddingHorizontal: 12, borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+    borderTopColor: 'rgba(255,255,255,0.32)',
+  },
+  heroChipHot: { backgroundColor: '#FFFBEB', borderColor: 'rgba(245,158,11,0.30)', borderTopColor: 'rgba(245,158,11,0.35)' },
   heroChipHotText: { fontSize: 11, fontWeight: '600', color: '#F59E0B' },
-  heroChipText: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.8)' },
+  heroChipText: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.82)' },
 
   ringWrap: { width: 96, height: 96, position: 'relative', flexShrink: 0 },
   ringCenter: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
@@ -2708,19 +2770,26 @@ const styles = StyleSheet.create({
 
   heroStats: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, zIndex: 1, gap: 10 },
   hstat: {
-    flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8,
+    flex: 1, alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderRadius: 18, paddingVertical: 14, paddingHorizontal: 8,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
+    borderTopColor: 'rgba(255,255,255,0.38)',
+    shadowColor: '#062A17', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 5,
   },
-  hstatV: { fontSize: 18, fontWeight: '800', color: 'white' },
-  hstatVLime: { color: '#AEEA00' },
-  hstatL: { fontSize: 11, fontWeight: '400', color: 'rgba(255,255,255,0.6)', marginTop: 1 },
+  hstatV: { fontFamily: 'Poppins', fontSize: 21, fontWeight: '700', color: 'white', fontVariant: ['tabular-nums'] },
+  hstatVLime: { color: '#D4FF4D' },
+  hstatL: { fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.62)', marginTop: 3, letterSpacing: 0.3 },
 
   heroProg: { marginTop: 18, zIndex: 1 },
-  heroProgRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  heroProgRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   heroProgLabel: { fontSize: 12, color: 'rgba(255,255,255,0.6)' },
   heroProgVal: { fontSize: 12, fontWeight: '700', color: 'white' },
-  heroTrack: { width: '100%', height: 8, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 100, marginTop: 6, overflow: 'hidden' },
-  heroTrackFill: { height: '100%', borderRadius: 100, backgroundColor: '#AEEA00' },
+  heroTrack: { width: '100%', height: 8, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 100, marginTop: 6 },
+  heroTrackFill: {
+    height: '100%', borderRadius: 100, backgroundColor: '#AEEA00',
+    shadowColor: '#AEEA00', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.85, shadowRadius: 10, elevation: 4,
+  },
 
   /* section headers */
   sec: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 22, marginBottom: 12 },
@@ -2994,7 +3063,7 @@ const styles = StyleSheet.create({
   mortSummaryLineText: { flex: 1, fontSize: 11.5, fontWeight: '600', color: '#64748B' },
   mortSummaryLineValue: { fontSize: 13, fontWeight: '800', color: '#DC2626', fontVariant: ['tabular-nums'] },
   mortHouseRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
-  mortHouse: { fontSize: 12, fontWeight: '600', color: '#17663A' },
+  mortHouse: { fontSize: 12, fontWeight: '600', color: CATEGORY_THEME.breeder.accent },
   mortGridLabel: { fontSize: 12, fontWeight: '700', color: '#1B1B1B', marginBottom: 8 },
   mortGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   mortFieldWrap: {
@@ -3009,7 +3078,7 @@ const styles = StyleSheet.create({
   mortAddBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     height: 50, borderRadius: 16, marginTop: 12,
-    backgroundColor: '#17663A',
+    backgroundColor: CATEGORY_THEME.breeder.accent,
   },
   mortAddBtnDisabled: { backgroundColor: '#A7BFAE' },
   mortAddText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
@@ -3021,17 +3090,19 @@ const styles = StyleSheet.create({
   heroEggSub: { fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
   heroEggRow: { flexDirection: 'row', gap: 8 },
   heroEggCell: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 14,
-    paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center',
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 16,
+    paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
+    borderTopColor: 'rgba(255,255,255,0.38)',
+    shadowColor: '#062A17', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 4,
   },
-  heroEggV: { fontSize: 16, fontWeight: '800', color: '#FFFFFF', fontVariant: ['tabular-nums'] },
-  heroEggL: { fontSize: 9.5, fontWeight: '600', color: 'rgba(255,255,255,0.78)', marginTop: 2, textTransform: 'uppercase' as any, letterSpacing: 0.4 },
+  heroEggV: { fontFamily: 'Poppins', fontSize: 19, fontWeight: '700', color: '#FFFFFF', fontVariant: ['tabular-nums'] },
+  heroEggL: { fontSize: 9.5, fontWeight: '600', color: 'rgba(255,255,255,0.72)', marginTop: 2, textTransform: 'uppercase' as any, letterSpacing: 0.4 },
 
   /* egg records section (Phase 2) */
   eggLogBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#17663A', borderRadius: 999, paddingVertical: 7, paddingHorizontal: 13,
+    backgroundColor: CATEGORY_THEME.breeder.accent, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 13,
   },
   eggLogBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
   eggKpis: {
@@ -3052,7 +3123,7 @@ const styles = StyleSheet.create({
     width: 52, height: 44, borderRadius: 12, backgroundColor: '#F2F6F1',
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  eggRowDate: { fontSize: 12, fontWeight: '800', color: '#17663A' },
+  eggRowDate: { fontSize: 12, fontWeight: '800', color: CATEGORY_THEME.breeder.accent },
   eggRowBody: { flex: 1, minWidth: 0 },
   eggRowTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   eggRowTotal: { fontSize: 13, fontWeight: '700', color: '#1B1B1B' },
@@ -3079,7 +3150,7 @@ const styles = StyleSheet.create({
   eggDateValue: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1B1B1B' },
   eggInlinePicker: { borderRadius: 14, backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0', overflow: 'hidden', marginTop: 8 },
   eggInlineDone: { alignItems: 'center', paddingVertical: 10 },
-  eggInlineDoneText: { fontSize: 14, fontWeight: '700', color: '#17663A' },
+  eggInlineDoneText: { fontSize: 14, fontWeight: '700', color: CATEGORY_THEME.breeder.accent },
   eggInput: {
     height: 50, borderRadius: 14, backgroundColor: '#F8FAF7', borderWidth: 1.5, borderColor: '#E2E8F0',
     paddingHorizontal: 14, fontSize: 15, fontWeight: '700', color: '#1B1B1B', fontVariant: ['tabular-nums'],
@@ -3106,7 +3177,7 @@ const styles = StyleSheet.create({
   eggModeOption: {
     flex: 1, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
   },
-  eggModeOptionActive: { backgroundColor: '#17663A' },
+  eggModeOptionActive: { backgroundColor: CATEGORY_THEME.breeder.accent },
   eggModeText: { fontSize: 13, fontWeight: '700', color: '#64748B' },
   eggModeTextActive: { color: '#FFFFFF' },
   eggLinesSection: { marginTop: 18 },
@@ -3121,7 +3192,7 @@ const styles = StyleSheet.create({
     padding: 10, marginBottom: 8,
   },
   eggLineIcon: {
-    width: 30, height: 30, borderRadius: 10, backgroundColor: '#F0FDF4',
+    width: 30, height: 30, borderRadius: 10, backgroundColor: CATEGORY_THEME.breeder.accentLight,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   eggLineBody: { flex: 1, minWidth: 0 },
@@ -3134,7 +3205,7 @@ const styles = StyleSheet.create({
   },
   eggSaveAllBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    height: 50, borderRadius: 16, marginTop: 8, backgroundColor: '#17663A',
+    height: 50, borderRadius: 16, marginTop: 8, backgroundColor: CATEGORY_THEME.breeder.accent,
   },
   eggSaveAllBtnDisabled: { backgroundColor: '#A7BFAE' },
   eggSaveAllText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
@@ -3157,11 +3228,11 @@ const styles = StyleSheet.create({
   hbRowRight: { flexShrink: 0 },
   hbRecordBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#17663A', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
+    backgroundColor: CATEGORY_THEME.breeder.accent, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
   },
   hbSellBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#2E7D32', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
+    backgroundColor: CATEGORY_THEME.breeder.accentDark, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
   },
   hbRecordText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
   hbRowRightMeta: { alignItems: 'flex-end' },
@@ -3175,7 +3246,7 @@ const styles = StyleSheet.create({
     padding: 10, marginTop: 12,
   },
   eggWarnText: { flex: 1, fontSize: 11, fontWeight: '600', color: '#92400E', lineHeight: 16 },
-  eggExpectedNote: { marginTop: 8, fontSize: 11, fontWeight: '600', color: '#17663A' },
+  eggExpectedNote: { marginTop: 8, fontSize: 11, fontWeight: '600', color: CATEGORY_THEME.breeder.accent },
   eggHintText: { marginTop: 6, fontSize: 11, fontWeight: '500', color: '#94A3B8' },
   eggToggleRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

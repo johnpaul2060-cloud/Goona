@@ -276,7 +276,7 @@ function TypeRow({ group, selectedType, othersGroupKey, onSelectType, onSelectOt
   const [layoutW, setLayoutW] = useState(0)
   const [contentW, setContentW] = useState(0)
   const [offsetX, setOffsetX] = useState(0)
-  const fadeTo = group.tag ? '#F3F9F2' : '#FFFFFF'
+  const fadeTo = group.tag ? '#F0F7F6' : '#FFFFFF'
   const showFade = contentW > layoutW + 4 && offsetX < contentW - layoutW - 8
   return (
     <View style={styles.typeGroupRowWrap} onLayout={(e) => setLayoutW(e.nativeEvent.layout.width)}>
@@ -665,11 +665,11 @@ export default function CreateBatchScreen() {
               {TYPE_GROUPS.map((group) => (
                 <View key={group.key} style={[styles.typeGroup, group.tag && styles.typeGroupBreeder]}>
                   <View style={styles.typeGroupHead}>
-                    <View style={[styles.typeGroupDot, { backgroundColor: group.model === 'breeder' ? '#17663A' : group.model === 'individual' ? '#7C3AED' : '#16A34A' }]} />
+                    <View style={[styles.typeGroupDot, { backgroundColor: group.model === 'breeder' ? '#0F766E' : group.model === 'individual' ? '#C05F2E' : '#2E7D32' }]} />
                     <Text style={styles.typeGroupTitle}>{group.title}</Text>
                     {group.tag ? (
                       <LinearGradient
-                        colors={['#17663A', '#0E4D2A']}
+                        colors={['#0F766E', '#0B5B55']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.typeGroupBadge}
@@ -1275,13 +1275,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8EFE4',
     shadowColor: '#0F3D22', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 2,
   },
-  typeGroupBreeder: { backgroundColor: '#F3F9F2', borderColor: '#B3D6BC' },
+  typeGroupBreeder: { backgroundColor: '#F0F7F6', borderColor: '#A9D4CF' },
   typeGroupHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   typeGroupDot: { width: 6, height: 6, borderRadius: 3 },
   typeGroupTitle: { fontSize: 13.5, fontWeight: '700', color: '#15291A', flexShrink: 1 },
   typeGroupBadge: {
     borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4,
-    shadowColor: '#0E4D2A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 2,
+    shadowColor: '#0B5B55', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 2,
   },
   typeGroupBadgeText: { fontSize: 9, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.7, textTransform: 'uppercase' as any },
   typeGroupSub: { fontSize: 11, color: '#64748B', marginTop: 4, lineHeight: 16, paddingLeft: 14 },
